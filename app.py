@@ -15,10 +15,11 @@ from flask_cors import CORS
 CORS(app, supports_credentials=True)
 
 # 🔗 Подключение к PostgreSQL через переменную окружения
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL',
-    'postgresql://localhost/fallback_db'
-)
+database_url = os.getenv("DATABASE_URL", "postgresql://localhost/fallback_db")
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT

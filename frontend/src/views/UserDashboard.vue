@@ -1,7 +1,6 @@
 <template>
   <div class="dashboard-container">
 
-    <h1>📊 Панель управления командами</h1>
 
     <div v-if="loading" class="loading">⏳ Загружаем данные...</div>
     <div v-else-if="error" class="error">❌ Ошибка: {{ error }}</div>
@@ -154,7 +153,7 @@ export default {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    return res.data; // 👈 просто отдаём сырые данные
+    return res.data.results; // 👈 просто отдаём сырые данные
   } catch (error) {
     console.error("❌ Ошибка загрузки результатов:", error.response?.data || error);
     return null;
@@ -340,12 +339,11 @@ export default {
 <style scoped>
 /* 🔹 Основной контейнер */
 .dashboard-container {
-  max-width: 1300px;
-  margin: auto;
-  text-align: center;
+  margin-left: 70px; /* чтобы не пересекаться с sidebar */
   padding: 30px;
+  width: calc(100% - 70px);
+  box-sizing: border-box;
   background: #f4f6f9;
-  font-family: "Arial", sans-serif;
 }
 
 /* 🔹 Заголовок */
@@ -358,10 +356,9 @@ h1 {
 /* 🔹 Контейнер команд */
 .teams-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  justify-content: center;
-  padding: 20px;
+  width: 100%;
 }
 
 /* 🔹 Карточка команды */

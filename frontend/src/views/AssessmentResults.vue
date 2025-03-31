@@ -1,6 +1,75 @@
 <template>
   <div class="results-container">
-    <h1>📊 Результаты оценки команды</h1>
+  <!-- 🔹 Общая оценка -->
+  <div class="team-info-card">
+  <div class="info-block team">
+    <h3>🏷️ Команда</h3>
+    <p>{{ teamName || 'Ваша команда' }}</p>
+  </div>
+  <div class="info-block score" :class="scoreColor">
+    <h3>📊 Оценка</h3>
+    <p>{{ averageScore.toFixed(2) }}</p>
+  </div>
+  <div class="info-block level">
+    <h3>🏅 Уровень</h3>
+    <p>{{ teamLevel }}</p>
+  </div>
+  <div class="info-block market">
+    <h3>📈 Относительно среднего по индустрии</h3>
+    <p>
+      <span :class="compareToMarket >= 0 ? 'better' : 'worse'">
+        {{ compareToMarket >= 0 ? '+' : '' }}{{ compareToMarket.toFixed(1) }}%
+      </span>
+    </p>
+    <small v-if="previousAverage !== null" class="previous-diff">
+      {{ performanceChangeText }}
+    </small>
+  </div>
+</div>
+
+
+<div v-if="timelineInfo" class="timeline-modern">
+  <div class="timeline-track">
+    <!-- 🔸 Заливка прогресса -->
+    <div
+      class="timeline-fill"
+      :style="{ width: getTimelinePosition(todayDate) + '%' }"
+    ></div>
+
+    <!-- 📍 Прошлая точка -->
+    <div
+      class="timeline-dot"
+      :style="{ left: getTimelinePosition(timelineInfo.lastDate) + '%' }"
+    >
+      <div class="tooltip always-visible">
+        📍 Команда была оценена: {{ timelineInfo.lastDate }}
+      </div>
+    </div>
+
+    <!-- ➤ Сегодняшняя стрелка -->
+
+
+    <!-- ⏭ Следующая точка -->
+    <div
+      class="timeline-dot"
+      :style="{ left: getTimelinePosition(timelineInfo.nextDate) + '%' }"
+    >
+      <div class="tooltip always-visible">
+        ⏭ Рекомендуемая дата следующей оценки: {{ timelineInfo.nextDate }}
+      </div>
+    </div>
+  </div>
+
+  <!-- 🧾 Подпись под шкалой -->
+  <div class="timeline-days-left">
+    ⏳ До следующей оценки осталось:
+    <strong>{{ timelineInfo.daysLeft }} {{ pluralDays(timelineInfo.daysLeft) }}</strong>
+  </div>
+
+</div>
+
+
+
 
     <!-- 🔹 Если пользователь не авторизован, показываем предложение зарегистрироваться -->
     <div v-if="!isAuthenticated" class="auth-notice">
@@ -8,11 +77,7 @@
       <button @click="goToRegister">🔐 Зарегистрироваться</button>
     </div>
 
-    <!-- 🔹 Общая оценка -->
-    <div class="team-score-card">
-      <h2>Средняя оценка</h2>
-      <p class="score">{{ averageScore.toFixed(2) }}</p>
-    </div>
+
 
     <!-- 🔹 Загрузка / Ошибка -->
     <div v-if="loading" class="loading">⏳ Загрузка данных...</div>
@@ -27,22 +92,81 @@
   :title="category"
   class="radar-chart"
 />
+
+
+</div>
+<div class="improvement-plan-block">
+
+ <button
+  @click="generateImprovementPlan"
+  :disabled="loadingPlan"
+  class="modern-button"
+>
+  🤖 Сгенерировать план улучшений
+</button>
+
+  <div v-if="loadingPlan">⏳ Генерируем план...</div>
+
+  <div v-if="editablePlan.length" class="plan-editable">
+    <ul>
+      <li v-for="(item, index) in editablePlan" :key="index">
+        <input type="checkbox" v-model="item.done" />
+        <textarea
+  v-model="item.text"
+  class="editable-input"
+  :class="{ completed: item.done }"
+  rows="5"
+  @input="autoResize($event)"
+></textarea>
+        <button @click="removeStep(index)">❌</button>
+      </li>
+    </ul>
+
+<div class="plan-buttons">
+  <button class="modern-button blue" @click="addStep">
+    ➕ Добавить пункт в план
+  </button>
+  <button class="modern-button green" @click="saveImprovementPlan">
+    ✔ Сохранить
+  </button>
+</div>
+  </div>
+
+  <div v-else-if="savedPlan.length">
+  <ul class="plan-cards">
+    <li
+      v-for="(item, index) in savedPlan"
+      :key="index"
+      class="plan-card"
+      @click="handleCardClick($event)"
+    >
+      <input
+        type="checkbox"
+        v-model="item.done"
+        @change="saveImprovementPlan"
+        @click.stop
+      />
+      <span :class="{ completed: item.done }">{{ item.text }}</span>
+    </li>
+  </ul>
+</div>
 </div>
    <div class="recommendations-block">
-  <button @click="fetchOpenAIRecommendations" class="submit-btn">
+  <button @click="fetchOpenAIRecommendations" class="modern-button">
     🤖 Получить персональные рекомендации
   </button>
-     <button
-    v-if="recommendationsHtml"
-    @click="saveRecommendations"
-    class="submit-btn"
-  >
-    💾 Сохранить рекомендации
-  </button>
+
 
   <div v-if="loadingDetailedRecs">⏳ Анализируем ответы...</div>
 
   <div v-if="recommendationsHtml" v-html="recommendationsHtml" class="recommendation-html"></div>
+     <button
+    v-if="recommendationsHtml"
+    @click="saveRecommendations"
+    class="modern-button"
+  >
+    💾 Сохранить рекомендации
+  </button>
 </div>
   </div>
 </template>
@@ -68,27 +192,40 @@ export default {
       recommendationsHtml: "",
       chartInstance: null,
       isUnmounted: false, // 🔒 добавляем
+      timelineInfo: null,
+      resultsHistory: {},
+      hoveredPoint: null,
+      teamName: "", // можно получить через props или API
+    previousAverage: null, // если сравниваем с прошлым
+       loadingPlan: false,
+    editablePlan: [],
+    savedPlan: [],
+    editing: false
+
     };
   },
 
   methods: {
-    async fetchOpenAIRecommendations() {
+  async fetchOpenAIRecommendations() {
+  if (!this.savedPlan || this.savedPlan.length === 0) {
+    alert("⚠️ Сначала нужно сгенерировать и сохранить план перед получением рекомендаций.");
+    return;
+  }
+
   this.loadingDetailedRecs = true;
+
   try {
     const response = await axios.post("http://127.0.0.1:5000/openai_recommend", {
-      answer_text: this.prepareFullAnswerSummary(),
+      plan: this.savedPlan,
       assessment_id: this.assessmentId
     });
 
-    console.log("🔍 Ответ от OpenAI:", response.data.content);
-
-    // Обернём текст в HTML (например, заменим \n на <br>)
-    const htmlFormatted = response.data.content
-
+    console.log("📨 Ответ от OpenAI:", response.data.content);
+    const htmlFormatted = response.data.content;
     this.recommendationsHtml = `<p>${htmlFormatted}</p>`;
   } catch (error) {
     console.error("❌ Ошибка при получении рекомендаций:", error.response?.data || error);
-    alert("Ошибка при запросе рекомендаций.");
+    alert("🚫 Ошибка при запросе рекомендаций.");
   } finally {
     this.loadingDetailedRecs = false;
   }
@@ -121,6 +258,74 @@ export default {
     alert("❌ Не удалось сохранить рекомендации.");
   }
 },
+
+    async generateImprovementPlan() {
+  this.loadingPlan = true;
+  try {
+    const res = await axios.post("http://127.0.0.1:5000/generate_plan", {
+      assessment_id: this.assessment_id,
+      answer_text: this.prepareFullAnswerSummary()
+    });
+
+    const rawSteps = res.data.steps || [];
+
+    // 🔥 Вот здесь магия!
+    this.editablePlan = rawSteps.map(step =>
+      typeof step === "string" ? { text: step, done: false } : step
+    );
+
+    this.editing = true;
+  } catch (err) {
+    alert("Ошибка генерации плана");
+    console.error(err);
+  } finally {
+    this.loadingPlan = false;
+  }
+},
+  saveImprovementPlan() {
+  const token = localStorage.getItem("token");
+
+  const planToSave = this.editing ? this.editablePlan : this.savedPlan;
+
+  axios
+    .post(
+      `http://127.0.0.1:5000/assessment/${this.assessment_id}/plan`,
+      { plan: planToSave },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    .then(() => {
+      // 💾 Только в режиме редактирования обновляем savedPlan
+      if (this.editing) {
+        this.savedPlan = JSON.parse(JSON.stringify(this.editablePlan));
+        this.editablePlan = [];
+        this.editing = false;
+      }
+
+    })
+    .catch((err) => {
+      console.error("Ошибка сохранения плана", err);
+      alert("❌ Не удалось сохранить план");
+    });
+}
+,
+  editPlan() {
+    this.editablePlan = JSON.parse(JSON.stringify(this.savedPlan));
+    this.editing = true;
+  },
+  addStep() {
+    this.editablePlan.push({ text: "", done: false });
+  },
+  removeStep(index) {
+    this.editablePlan.splice(index, 1);
+  },
+  async fetchSavedPlan() {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(
+      `http://127.0.0.1:5000/assessment/${this.assessment_id}/plan`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    this.savedPlan = res.data.plan || [];
+  },
 
     async fetchSavedRecommendations() {
   try {
@@ -161,27 +366,31 @@ async fetchResultsHistory() {
     );
 
     const history = res.data;
+    this.resultsHistory = history;
     console.log("📜 История оценок:", history);
 
     const sortedDates = Object.keys(history).sort().reverse();
 
-    if (sortedDates.length >= 2) {
-      // ✅ Показываем два последних измерения по категориям
-      this.buildCombinedRadarDataByCategory(history);
-      this.calculateAverageFromLatestSession(history); // <-- заменили функцию
-    } else if (sortedDates.length === 1) {
-      // ✅ Только одно измерение — используем обычную отрисовку
-      this.prepareRadarData();
-    } else {
-      // ❌ Нет данных вообще
-      this.error = "Пожалуйста, пройдите опрос для вашей команды.";
-    }
+
+    if (sortedDates.length > 0) {
+  this.timelineInfo = this.getNextAssessmentInfo(sortedDates[0]); // <-- Добавь эту строчку
+}
+
+if (sortedDates.length >= 2) {
+  this.buildCombinedRadarDataByCategory(history);
+  this.calculateAverageFromLatestSession(history);
+} else if (sortedDates.length === 1) {
+  this.prepareRadarData();
+} else {
+  this.error = "Пожалуйста, пройдите опрос для вашей команды.";
+}
 
   } catch (error) {
     console.error("❌ Ошибка при получении истории:", error.response?.data || error);
     this.error = "Ошибка при получении истории команды.";
   }
 },
+
 
     async fetchResults() {
       try {
@@ -204,7 +413,8 @@ async fetchResultsHistory() {
         });
 
         console.log("✅ Данные загружены:", res.data);
-        this.results = res.data;
+        this.teamName = res.data.team_name;
+        this.results = res.data.results;
         this.prepareRadarData();
       } catch (error) {
         console.error("❌ Ошибка загрузки данных:", error.response?.data || error);
@@ -213,7 +423,17 @@ async fetchResultsHistory() {
         this.loading = false;
       }
     },
-
+    autoResize(event) {
+  const el = event.target;
+  el.style.height = "auto";         // сброс высоты
+  el.style.height = el.scrollHeight + "px"; // установить по содержимому
+},
+handleCardClick(event) {
+  const isCheckbox = event.target.tagName === "INPUT";
+  if (!isCheckbox) {
+    this.editPlan();
+  }
+},
    isChartDataValid(chartData) {
   return (
     chartData &&
@@ -222,6 +442,44 @@ async fetchResultsHistory() {
     Array.isArray(chartData.datasets) &&
     chartData.datasets.length > 0
   );
+},
+    getTimelinePosition(date) {
+  const start = new Date(this.timelineInfo.lastDate);
+  const end = this.timelineInfo.nextDateObject;
+  const current = new Date(date);
+
+  const total = end - start;
+  const elapsed = current - start;
+
+  const raw = (elapsed / total) * 100;
+
+  // 🔄 Сжимаем расстояние между точками: вместо 0-100% будет 30%-70%
+  const compressed = 30 + (raw * 0.4);
+
+  return Math.min(100, Math.max(0, compressed)).toFixed(1);
+},
+
+    getNextAssessmentInfo(lastDateStr) {
+  const lastDate = new Date(lastDateStr);
+  const today = new Date();
+
+  // Добавляем 10 недель
+  let nextDate = new Date(lastDate);
+  nextDate.setDate(nextDate.getDate() + 70);
+
+  // Если это выходной, переносим на ближайший будний
+  while (nextDate.getDay() === 0 || nextDate.getDay() === 6) {
+    nextDate.setDate(nextDate.getDate() + 1);
+  }
+
+  const daysLeft = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+
+  return {
+    lastDate: lastDate.toLocaleDateString(),
+    nextDate: nextDate.toLocaleDateString(),
+    daysLeft,
+    nextDateObject: nextDate,
+  };
 },
 
 calculateAverageFromLatestSession(history) {
@@ -367,6 +625,12 @@ buildCombinedRadarDataByCategory(history) {
   this.radarData = radarDataByCategory;
 },
 
+pluralDays(n) {
+  const abs = Math.abs(n);
+  if (abs % 10 === 1 && abs % 100 !== 11) return "день";
+  if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) return "дня";
+  return "дней";
+},
 
     prepareRadarData() {
       let totalScore = 0;
@@ -426,11 +690,36 @@ buildCombinedRadarDataByCategory(history) {
     this.fetchResults();
     this.fetchSavedRecommendations();
     this.fetchResultsHistory();
-
-
-
+    this.fetchSavedPlan();
   },
   computed: {
+    teamLevel() {
+    const score = this.averageScore;
+
+    if (score < 2) return "🧱 Начинающий";
+    if (score < 3) return "🌱 Растущий";
+    if (score < 4) return "🚀 Прогрессирующий";
+    return "🏆 Высокоэффективный";
+  },
+  compareToMarket() {
+    const marketAvg = 3.75;
+    return ((this.averageScore - marketAvg) / marketAvg) * 100;
+  },
+  performanceChangeText() {
+    if (this.previousAverage === null) return "";
+    const delta = this.averageScore - this.previousAverage;
+    const percent = Math.abs((delta / this.previousAverage) * 100).toFixed(1);
+    return delta >= 0
+      ? `⬆ Улучшение на ${percent}%`
+      : `⬇ Снижение на ${percent}%`;
+  },
+  scoreColor() {
+    const s = this.averageScore;
+    if (s < 2) return "danger";
+    if (s < 3) return "warning";
+    if (s < 4) return "info";
+    return "success";
+  },
   filteredRadarData() {
     return Object.entries(this.radarData).reduce((acc, [category, chartData]) => {
       if (this.isChartDataValid(chartData)) {
@@ -438,12 +727,53 @@ buildCombinedRadarDataByCategory(history) {
       }
       return acc;
     }, {});
+  },
+  lastAssessmentDate() {
+    const keys = Object.keys(this.resultsHistory);
+    if (keys.length === 0) return null;
+    return new Date(keys.sort().reverse()[0]); // 🔙 Последняя дата (по ключу)
+  },
+  todayDate() {
+    return new Date();
+  },
+  recommendedNextAssessmentDate() {
+    if (!this.lastAssessmentDate) return null;
+    const nextDate = new Date(this.lastAssessmentDate);
+    nextDate.setDate(nextDate.getDate() + 14); // 📅 через 2 недели
+    return nextDate;
   }
-},
+}
 };
 </script>
 
 <style scoped>
+
+.team-info-card {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: linear-gradient(135deg, #3f51b5, #caa6e8);
+  border-radius: 12px;
+  padding: 16px;
+  color: #fff;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-block h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.info-block p {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
 /* 🔹 Общий контейнер */
 .results-container {
   max-width: 1300px;
@@ -492,24 +822,78 @@ h1 {
 }
 
 /* 🔹 Карточка общей оценки */
-.team-score-card {
-  background: linear-gradient(135deg, #33469e, #fad0c4);
-  padding: 5px;
-  border-radius: 5px;
-  color: white;
+.team-info-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  background: linear-gradient(135deg, #3f51b5, #caa6e8);
+  border-radius: 12px;
+  padding: 16px;
+  color: #fff;
   text-align: center;
-  margin-bottom: 5px;
+  gap: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.4s ease;
 }
 
-.team-score-card h2 {
-  font-size: 22px;
+.info-block {
+  padding: 8px;
+  border-radius: 8px;
+  background-color: rgba(175, 87, 87, 0.08);
+  transition: transform 0.2s ease;
 }
 
-.team-score-card .score {
-  font-size: 36px;
+.info-block:hover {
+  transform: scale(1.03);
+}
+
+.info-block h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+  opacity: 0.85;
+}
+
+.info-block p {
+  font-size: 20px;
   font-weight: bold;
-  margin-top: 10px;
+  margin: 0;
 }
+
+/* Цвета для оценки */
+.score.danger {
+  background-color: rgba(220, 53, 69, 0.3);
+}
+.score.warning {
+  background-color: rgba(255, 138, 0, 0.81);
+}
+.score.info {
+  background-color: rgba(23, 162, 184, 0.3);
+}
+.score.success {
+  background-color: rgba(40, 167, 69, 0.3);
+}
+
+/* Цвета сравнения с рынком */
+.market .better {
+  color: #28a745;
+}
+.market .worse {
+  color: #dc3545;
+}
+
+.previous-diff {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+/* Анимация */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 
 /* 🔹 Графики */
 .charts-container {
@@ -534,10 +918,16 @@ h1 {
 }
 .recommendations-block {
   margin-top: 30px;
-  background: #f0f9ff;
-  border: 2px solid #4caf50;
+  background: #f7f8fa;
+  border: 2px solid #6e5fbe;
   padding: 20px;
   border-radius: 12px;
+}
+
+.timeline-dot:hover .tooltip,
+.tooltip:hover {
+  transform: translateX(-50%) scale(1.1);
+  opacity: 1;
 }
 
 .recommendations-block ul {
@@ -545,21 +935,281 @@ h1 {
   padding-left: 20px;
 }
 
+.timeline-modern {
+  position: relative;
+  margin: 40px 0;
+  height: 80px;
+  padding-top: 30px;
+}
+
+.timeline-track {
+  position: relative;
+  background-color: #ddd;
+  height: 10px;
+  border-radius: 3px;
+  top: 30px;
+  overflow: visible;
+}
+
+.timeline-fill {
+  position: absolute;
+  height: 100%;
+  background-color: #4abebe;
+  top: 0;
+  left: 0;
+  border-radius: 1px;
+  z-index: 0; /* самая задняя */
+  transition: width 0.4s ease;
+}
+
+.timeline-dot {
+  position: absolute;
+  top: -3px;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background-color: #007bff;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.timeline-arrow.right {
+  position: absolute;
+  top: -8px;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+.timeline-dot,
+.timeline-arrow {
+  z-index: 3;
+}
+.timeline-arrow .arrow {
+  font-size: 18px;
+  color: #31a35a;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  background: #3497d9;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 9999;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.95;
+}
+
+
+
+.timeline-days-left {
+  text-align: center;
+  margin-top: 38px; /* было 16px — увеличим */
+  font-size: 14px;
+  color: #444;
+  position: relative;
+  z-index: 1;
+}
+
+.tooltip.always-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
 .recommendations-block li {
   margin-bottom: 10px;
   font-size: 16px;
 }
 
-@media (max-width: 992px) {
-  .charts-container {
-    grid-template-columns: repeat(2, 1fr);
+.editable-input {
+  width: 100%;
+  resize: vertical;
+  font-size: 14px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  line-height: 1.4;
+  background: #fff;
+}
+.editable-input:focus {
+  outline: none;
+  border-color: #6699ff;
+  box-shadow: 0 0 4px rgba(102, 153, 255, 0.5);
+}
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+
+
+.improvement-plan-block {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f9fafc;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.plan-editable ul,
+.improvement-plan-block ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+}
+
+.plan-editable li,
+.improvement-plan-block li {
+  flex: 0 0 calc(17% - 7px); /* теперь 5 поместятся */
+  max-width: 240px;
+  min-width: 140px;
+
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* 🔁 плавность */
+}
+
+.plan-editable li:hover,
+.improvement-plan-block li:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.plan-editable textarea {
+  resize: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.4;
+  width: 90%;
+  overflow: hidden;
+  min-height: 170px;
+  transition: 0.2s ease;
+}
+
+.plan-editable textarea.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.plan-editable input[type="checkbox"] {
+  align-self: flex-start;
+  margin-bottom: 8px;
+}
+
+.plan-editable button {
+  align-self: flex-end;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  transition: 0.2s;
+}
+
+
+
+@media (max-width: 1200px) {
+  .plan-editable li {
+    flex: 0 0 calc(33.333% - 16px); /* 3 в ряд */
   }
 }
 
-@media (max-width: 600px) {
-  .charts-container {
-    grid-template-columns: 1fr;
+@media (max-width: 800px) {
+  .plan-editable li {
+    flex: 0 0 calc(50% - 16px); /* 2 в ряд */
   }
 }
+
+@media (max-width: 500px) {
+  .plan-editable li {
+    flex: 1 1 100%; /* 1 в ряд */
+  }
+}
+
+.modern-button {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center; /* ✅ центрирование по горизонтали */
+  text-align: center;       /* ✅ текст по центру */
+  gap: 8px;
+  width: 95%;
+}
+
+.modern-button:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.modern-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.plan-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.modern-button {
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 220px;
+}
+
+
+/* 🎨 Цвета */
+.modern-button.blue {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.modern-button.green {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}
+
 </style>
 

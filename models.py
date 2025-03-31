@@ -1,6 +1,8 @@
 from database import db
 from flask_bcrypt import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
+
 
 # 🔹 Модель пользователя
 class User(db.Model):
@@ -47,3 +49,5 @@ class Assessment(db.Model):
     user = db.relationship('User', backref=db.backref('assessments', lazy=True))
     question = db.relationship('Question', backref=db.backref('assessments', lazy=True))
     recommendations = db.Column(db.Text, nullable=True)
+    plan = db.Column(JSON, nullable=True)
+

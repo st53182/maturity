@@ -1,38 +1,53 @@
 <template>
   <div id="app">
-    <nav></nav>
+   <!-- Sidebar -->
+<aside class="modern-sidebar" v-if="isAuthenticated">
+  <button class="sidebar-btn" @click="$router.push('/dashboard')">
+    <span>🏠</span>
+    <small>Мои команды</small>
+  </button>
+  <button class="sidebar-btn" @click="$router.push('/survey')">
+    <span>📝</span>
+    <small>Зрелость</small>
+  </button>
+  <button class="sidebar-btn" @click="showTeamModal = true">
+    <span>➕</span>
+    <small>Команда</small>
+  </button>
+  <button class="sidebar-btn" @click="logout">
+    <span>🚪</span>
+    <small>Выйти</small>
+  </button>
+</aside>
 
-    <!-- 🔹 Меню доступно только для авторизованных пользователей -->
-    <div v-if="isAuthenticated" class="dashboard-menu">
-      <button @click="$router.push('/dashboard')" class="menu-btn">🏠 Личный кабинет</button>
-      <button @click="$router.push('/survey')" class="menu-btn">📝 Определить зрелость</button>
-      <button @click="showTeamModal = true" class="menu-btn">➕ Создать команду</button>
-      <button @click="logout" class="logout-btn">🚪 Выйти</button>
-    </div>
+    <!-- Основной контент -->
+    <main class="main-content">
+      <router-view />
 
-    <router-view />
 
-    <!-- 🔹 Pop-up для создания команды -->
-    <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
-      <div class="modal">
-        <h2>Создать новую команду</h2>
-        <p class="modal-subtitle"></p>
+    </main>
 
-        <input
-          v-model="newTeamName"
-          placeholder="Название команды"
-          class="team-input"
-          @keyup.enter="createTeam"
-        />
-
-        <div class="modal-buttons">
+<div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
+  <div class="modal">
+    <h2>Создать новую команду</h2>
+    <p class="modal-subtitle"></p>
+    <input
+      v-model="newTeamName"
+      placeholder="Название команды"
+      class="team-input"
+      @keyup.enter="createTeam"
+    />
+    <div class="modal-buttons">
           <button class="confirm-btn" @click="createTeam">✅ Создать</button>
           <button class="cancel-btn" @click="showTeamModal = false">❌ Отмена</button>
-        </div>
-      </div>
+
     </div>
   </div>
+</div>
+
+  </div>
 </template>
+
 
 <script>
 import axios from "axios";
@@ -101,56 +116,59 @@ export default {
     return { isAuthenticated, showTeamModal, newTeamName, logout, createTeam };
   },
 };
+
 </script>
 
 
 <style>
-nav {
-  display: flex;
-  gap: 20px;
-  padding: 10px;
-}
-.dashboard-menu {
-  display: flex;
-  justify-content: left;
+/* Основной контейнер */
 
-  background: rgba(206, 221, 250, 0.56);
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 20px;
+
+.modern-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 70px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
   gap: 15px;
 }
 
-.menu-btn {
-  background: #3498db;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-   padding: 12px 20px;
+.sidebar-btn {
+  background: none;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.menu-btn:hover {
-  background: #2980b9;
-}
-
-.logout-btn {
   color: white;
-  font-size: 16px;
-  font-weight: bold;
-   padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
+  font-size: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  background: #e74c3c;
+  transition: transform 0.2s ease;
 }
 
-.logout-btn:hover {
-  background: #c0392b;
+.sidebar-btn small {
+  font-size: 12px;
+}
+
+.sidebar-btn:hover {
+  transform: scale(1.1);
+}
+
+.sidebar-btn.logout {
+  margin-top: auto;
+  color: #ffcccc;
+}
+.main-content, .results-container {
+  margin-left: 70px; /* равен ширине sidebar */
+  padding: 20px;
+   flex-grow: 1;
 }
 .modal-overlay {
   position: fixed;
@@ -169,35 +187,6 @@ nav {
   border-radius: 10px;
   width: 350px; /* Ширина Pop-up */
   max-width: 90%; /* Адаптация к мобильным экранам */
-}
-.delete-btn {
-  background: #e74c3c;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-}
-
-.team-input {
-  width: 90%;
-  padding: 14px;
-  border: 3px solid #3498db;
-  border-radius: 10px;
-  font-size: 18px;
-  text-align: center;
-  transition: 0.3s;
-  margin-top: 5px;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-evenly; /* Равномерное распределение */
-  align-items: center;
-  margin-top: 25px;
-  gap: 15px;
 }
 
 .confirm-btn,
@@ -233,8 +222,22 @@ nav {
   border-color: #2ecc71;
   outline: none;
 }
+.team-input {
+  width: 90%;
+  padding: 14px;
+  border: 3px solid #3498db;
+  border-radius: 10px;
+  font-size: 18px;
+  text-align: center;
+  transition: 0.3s;
+  margin-top: 5px;
+}
 
-.delete-btn:hover {
-  background: #c0392b;
+.modal-buttons {
+  display: flex;
+  justify-content: space-evenly; /* Равномерное распределение */
+  align-items: center;
+  margin-top: 25px;
+  gap: 15px;
 }
 </style>

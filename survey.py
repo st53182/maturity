@@ -199,6 +199,11 @@ def get_team_average(team_id):
 @jwt_required()
 def get_team_results(team_id):
     try:
+        # Загружаем команду
+        team = Team.query.get(team_id)
+        if not team:
+            return jsonify({"error": "Команда не найдена"}), 404
+
         # Загружаем оценки команды
         assessments = db.session.query(
             Question.category,
@@ -206,21 +211,26 @@ def get_team_results(team_id):
             db.func.avg(Assessment.score).label("average_score")
         ).join(Assessment, Question.id == Assessment.question_id) \
             .filter(Assessment.team_id == team_id) \
-            .group_by(Question.category, Question.subcategory,Assessment.created_at) \
+            .group_by(Question.category, Question.subcategory, Assessment.created_at) \
             .order_by(Assessment.created_at.desc()) \
             .limit(35) \
             .all()
 
-        # Формируем данные для фронта
+        # Формируем структуру данных
         results = {}
         for category, subcategory, avg_score in assessments:
             if category not in results:
                 results[category] = {}
-            results[category][subcategory] = round(avg_score, 2)  # Округляем
+            results[category][subcategory] = round(avg_score, 2)
 
-        return jsonify(results)
+        # Возвращаем имя команды и результаты
+        return jsonify({
+            "team_name": team.name,
+            "results": results
+        })
     except Exception as e:
         return jsonify({"error": "Ошибка при получении результатов", "details": str(e)}), 500
+
 
 @bp_survey.route('/temp_results', methods=['POST'])
 def save_temp_results():

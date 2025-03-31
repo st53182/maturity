@@ -7,19 +7,16 @@ from dashboard import bp_dashboard
 from assessment import bp_assessment
 from datetime import timedelta
 import os
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder="static")
-
-# CORS
-from flask_cors import CORS
 CORS(app, supports_credentials=True)
 
-# 🔗 Подключение к PostgreSQL через переменную окружения
+# 📦 Подключение к базе данных
 database_url = os.getenv("DATABASE_URL", "postgresql://localhost/fallback_db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT
@@ -31,13 +28,16 @@ app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=730)
 db.init_app(app)
 jwt = JWTManager(app)
 
-# Регистрация blueprint'ов
+with app.app_context():
+    db.create_all()
+
+# Blueprints
 app.register_blueprint(bp_auth)
 app.register_blueprint(bp_survey)
 app.register_blueprint(bp_dashboard, url_prefix="/dashboard")
 app.register_blueprint(bp_assessment)
 
-# Отдача фронтенда
+# 🎯 Отдача Vue SPA
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):
@@ -45,10 +45,10 @@ def serve_vue(path):
         return send_from_directory("static", path)
     return send_from_directory("static", "index.html")
 
-# API-заглушка
 @app.route("/api")
 def api_root():
     return {"message": "Scrum Maturity API is working!"}
 
 if __name__ == '__main__':
     app.run()
+

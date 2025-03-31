@@ -1,61 +1,53 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_jwt_extended import JWTManager
 from database import db
 from survey import bp_survey
 from auth import bp_auth
-from flask_cors import CORS
 from dashboard import bp_dashboard
 from assessment import bp_assessment
 from datetime import timedelta
+import os
 
+app = Flask(__name__, static_folder="static")
 
-
-app = Flask(__name__)
-
-CORS(app, resources={r"/*": {"origins": "*"}})
-CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-
+# CORS
+from flask_cors import CORS
 CORS(app, supports_credentials=True)
 
-# Подключение к базе данных
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:st53182@localhost/scrum_db'
+# 🔗 Подключение к PostgreSQL через переменную окружения
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL',
+    'postgresql://localhost/fallback_db'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=365)  # 🔄 Срок действия токена: 1 год
-app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=730)  # 🔄 Refresh-токен: 2 года
 
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "connect_args": {
-        "options": "-c timezone=utc"
-    }
-}
-
-# JWT настройка
+# JWT
 app.config['JWT_SECRET_KEY'] = 'supersecretkey'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=365)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=730)
+
+# Инициализация
+db.init_app(app)
 jwt = JWTManager(app)
 
-# 🟢 Инициализация базы данных
-db.init_app(app)
-
-with app.app_context():  # Важно!
-    db.create_all()  # Создаём таблицы, если их нет
-
-# Регистрация маршрутов
+# Регистрация blueprint'ов
 app.register_blueprint(bp_auth)
 app.register_blueprint(bp_survey)
 app.register_blueprint(bp_dashboard, url_prefix="/dashboard")
-
 app.register_blueprint(bp_assessment)
 
+# Отдача фронтенда
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_vue(path):
+    if path != "" and os.path.exists(os.path.join("static", path)):
+        return send_from_directory("static", path)
+    return send_from_directory("static", "index.html")
 
-
-
-@app.route('/')
-def home():
-    return {"message": "Scrum Maturity App API is running!"}
-
-
-
+# API-заглушка
+@app.route("/api")
+def api_root():
+    return {"message": "Scrum Maturity API is working!"}
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    app.run()

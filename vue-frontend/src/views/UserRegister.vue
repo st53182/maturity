@@ -23,7 +23,7 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await fetch('http://localhost:5000/register', {
+        const response = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: this.username, password: this.password })

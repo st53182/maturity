@@ -215,7 +215,7 @@ export default {
   this.loadingDetailedRecs = true;
 
   try {
-    const response = await axios.post("http://127.0.0.1:5000/openai_recommend", {
+    const response = await axios.post("/openai_recommend", {
       plan: this.savedPlan,
       assessment_id: this.assessmentId
     });
@@ -241,7 +241,7 @@ export default {
     }
 
     await axios.post(
-      `http://127.0.0.1:5000/assessment/${this.assessment_id}/recommendations`,
+      `/assessment/${this.assessment_id}/recommendations`,
       {
         recommendations: this.recommendationsHtml,
       },
@@ -262,7 +262,7 @@ export default {
     async generateImprovementPlan() {
   this.loadingPlan = true;
   try {
-    const res = await axios.post("http://127.0.0.1:5000/generate_plan", {
+    const res = await axios.post("/generate_plan", {
       assessment_id: this.assessment_id,
       answer_text: this.prepareFullAnswerSummary()
     });
@@ -289,7 +289,7 @@ export default {
 
   axios
     .post(
-      `http://127.0.0.1:5000/assessment/${this.assessment_id}/plan`,
+      `/assessment/${this.assessment_id}/plan`,
       { plan: planToSave },
       { headers: { Authorization: `Bearer ${token}` } }
     )
@@ -321,7 +321,7 @@ export default {
   async fetchSavedPlan() {
     const token = localStorage.getItem("token");
     const res = await axios.get(
-      `http://127.0.0.1:5000/assessment/${this.assessment_id}/plan`,
+      `/assessment/${this.assessment_id}/plan`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     this.savedPlan = res.data.plan || [];
@@ -336,7 +336,7 @@ export default {
     }
 
     const res = await axios.get(
-      `http://127.0.0.1:5000/assessment/${this.assessment_id}/recommendations`,
+      `/assessment/${this.assessment_id}/recommendations`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -359,7 +359,7 @@ async fetchResultsHistory() {
     const token = localStorage.getItem("token");
 
     const res = await axios.get(
-      `http://127.0.0.1:5000/team_results_history/${this.team_id}`,
+      `/team_results_history/${this.team_id}`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
@@ -405,8 +405,8 @@ if (sortedDates.length >= 2) {
 
         // Если пользователь не авторизован, загружаем временные данные
         const endpoint = token
-          ? `http://127.0.0.1:5000/team_results/${this.team_id}`
-          : `http://127.0.0.1:5000/temp_results/${this.team_id}`;
+          ? `/team_results/${this.team_id}`
+          : `/temp_results/${this.team_id}`;
 
         const res = await axios.get(endpoint, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},

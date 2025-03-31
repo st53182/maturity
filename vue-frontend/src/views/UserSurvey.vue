@@ -119,7 +119,7 @@ export default {
           return;
         }
 
-        const res = await axios.get("http://127.0.0.1:5000/user_teams", {
+        const res = await axios.get("/user_teams", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -133,7 +133,7 @@ export default {
 
     async fetchQuestions() {
       try {
-        const res = await axios.get("http://127.0.0.1:5000/questions");
+        const res = await axios.get("/questions");
         this.questions = res.data;
       } catch (error) {
         console.error("❌ Ошибка загрузки вопросов:", error);
@@ -163,7 +163,7 @@ export default {
         }
 
         const res = await axios.post(
-          "http://127.0.0.1:5000/create_team",
+          "/create_team",
           { team_name: this.newTeamName },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -204,7 +204,7 @@ export default {
     }
 
     const res = await axios.post(
-      "http://127.0.0.1:5000/submit_assessment",
+      "/submit_assessment",
       {
         team_id: this.selectedTeam,
         answers: this.answers,

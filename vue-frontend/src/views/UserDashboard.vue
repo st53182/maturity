@@ -110,7 +110,7 @@ export default {
           return;
         }
 
-        const res = await axios.get("http://127.0.0.1:5000/user_teams", {
+        const res = await axios.get("/user_teams", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -149,7 +149,7 @@ export default {
       return null;
     }
 
-    const res = await axios.get(`http://127.0.0.1:5000/team_results/${teamId}`, {
+    const res = await axios.get(`/team_results/${teamId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -165,7 +165,7 @@ export default {
     const token = localStorage.getItem("token");
 
     const res = await axios.get(
-      `http://127.0.0.1:5000/team_results_history/${this.team_id}`,
+      `/team_results_history/${this.team_id}`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
@@ -211,7 +211,7 @@ export default {
       return;
     }
 
-    await axios.delete(`http://127.0.0.1:5000/dashboard/delete_team/${teamId}`, {
+    await axios.delete(`/dashboard/delete_team/${teamId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -245,7 +245,7 @@ export default {
     }
 
     const res = await axios.post(
-      "http://127.0.0.1:5000/create_team",
+      "/create_team",
       { team_name: this.newTeamName },
       { headers: { Authorization: `Bearer ${token}` } }
     );

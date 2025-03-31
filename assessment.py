@@ -3,6 +3,7 @@ from openai import OpenAI
 from models import Assessment  # Убедись, что импорт есть
 from database import db        # Импорт SQLAlchemy session
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import os
 
 bp_assessment = Blueprint("assessment", __name__)
 
@@ -13,7 +14,7 @@ def openai_recommendations():
     data = request.json
     plan = data.get("plan", [])
 
-    client = OpenAI(api_key="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")
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     if not plan:
         return jsonify({"error": "План не передан"}), 400
@@ -85,7 +86,7 @@ def generate_improvement_plan():
     answer_text = data.get("answer_text")
     assessment_id = data.get("assessment_id")
 
-    client = OpenAI(api_key="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")
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     try:
         response = client.chat.completions.create(

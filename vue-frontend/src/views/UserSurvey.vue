@@ -504,9 +504,5 @@ h1 {
 .answer-options button:nth-child(4) { background-color: rgba(104, 188, 231, 0.6); }
 .answer-options button:nth-child(5) { background-color: rgba(124, 231, 104, 0.6); }
 
-.answer-options button {
-  color: #000; /* чёрный текст поверх светлого фона */
-  font-weight: 600;
-  border: none;
-}
+
 </style>

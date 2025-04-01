@@ -9,11 +9,14 @@ import jwt
 import os
 from models import User
 
+
+
 bp_auth = Blueprint('auth', __name__)
 
 @bp_auth.route('/register', methods=['POST'])
 def register():
     data = request.json
+    print("📥 Полученные данные:", data)
     email = data.get("email")
     password = data.get("password")
 

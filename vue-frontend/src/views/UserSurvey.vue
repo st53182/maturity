@@ -315,7 +315,7 @@ h1 {
 }
 .answer-options button:hover {
   background: #4caf50;
-  color: white;
+  color: #000000;
   transform: scale(1.03);
 }
 .answer-options button.selected {
@@ -499,9 +499,9 @@ h1 {
   transition: 0.3s;
 }
 
-.answer-options button:nth-child(1) { background: #ffe5e5; } /* red */
-.answer-options button:nth-child(2) { background: #fff5cc; } /* yellow */
-.answer-options button:nth-child(3) { background: #e6ffe6; } /* light green */
-.answer-options button:nth-child(4) { background: #ccffcc; } /* green */
-.answer-options button:nth-child(5) { background: #cce5ff; } /* blue */
+.answer-options button:nth-child(1) { background: #e6896c; }
+.answer-options button:nth-child(2) { background: #e6e06c; }
+.answer-options button:nth-child(3) { background: #e6ffe6; }
+.answer-options button:nth-child(4) { background: #6ce6c6; }
+.answer-options button:nth-child(5) { background: #a4fc83; }
 </style>

@@ -51,3 +51,12 @@ class Assessment(db.Model):
     recommendations = db.Column(db.Text, nullable=True)
     plan = db.Column(JSON, nullable=True)
 
+class Conflict(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=True)  # опционально
+    context = db.Column(db.Text, nullable=False)
+    participants = db.Column(db.Text, nullable=False)
+    attempts = db.Column(db.Text, nullable=False)
+    goal = db.Column(db.Text, nullable=False)
+    ai_response = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -12,7 +12,9 @@ const routes = [
   { path: '/register', component: UserRegister },
   { path: '/survey', name: "UserSurvey", component: UserSurvey, meta: { requiresAuth: true } },
   { path: '/dashboard', component: UserDashboard },
-  { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true }
+  { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true },
+  {path: '/conflicts', name: 'Conflicts', component: () => import('@/views/ConflictResolution.vue')  // или просто import сверху
+}
 ];
 
 const router = createRouter({

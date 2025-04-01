@@ -8,7 +8,7 @@ from assessment import bp_assessment
 from datetime import timedelta
 import os
 from flask_cors import CORS
-
+from conflict import bp_conflict
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
 
@@ -44,6 +44,8 @@ app.register_blueprint(bp_auth)
 app.register_blueprint(bp_survey)
 app.register_blueprint(bp_dashboard, url_prefix="/dashboard")
 app.register_blueprint(bp_assessment)
+app.register_blueprint(bp_conflict)
+
 
 # 🎯 Отдача Vue SPA
 @app.route("/", defaults={"path": ""})

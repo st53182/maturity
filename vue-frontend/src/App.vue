@@ -10,6 +10,10 @@
     <span>📝</span>
     <small>Зрелость</small>
   </button>
+  <button class="sidebar-btn" @click="$router.push('/conflicts')">
+  <span>🤝</span>
+  <small>Конфликты</small>
+</button>
   <button class="sidebar-btn" @click="showTeamModal = true">
     <span>➕</span>
     <small>Команда</small>

@@ -16,7 +16,6 @@
 export default {
   data() {
     return {
-      username: '',
       password: '',
       email: '',
 
@@ -28,7 +27,7 @@ export default {
         const response = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: this.email, password: this.password })
+          body: JSON.stringify({ email: this.email, password: this.password })
         });
         const data = await response.json();
         if (response.ok) {

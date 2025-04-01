@@ -91,7 +91,7 @@ export default {
         }
 
         const res = await axios.post(
-          "http://127.0.0.1:5000/create_team",
+          "/create_team",
           { team_name: newTeamName.value },
           { headers: { Authorization: `Bearer ${token}` } }
         );

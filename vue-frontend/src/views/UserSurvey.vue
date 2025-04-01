@@ -39,6 +39,10 @@
     <!-- 🔹 Опросник -->
     <div v-else>
       <h2 class="team-name">🛠 Команда: {{ selectedTeamName }}</h2>
+      <p class="disclaimer">
+  🧠 <strong>Важно:</strong> Варианты ответов расположены от менее зрелых (1) к более зрелым (5).
+  Выбирая более высокий уровень, предполагается, что предыдущие практики уже реализованы.
+</p>
 
       <!-- 🔹 Прогресс-бар -->
       <div class="progress-bar">
@@ -479,4 +483,25 @@ h1 {
 .cancel-btn:hover {
   background: #c0392b;
 }
+
+.disclaimer {
+  background: #f0f8ff;
+  padding: 12px 16px;
+  border-left: 5px solid #3498db;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  color: #2c3e50;
+  text-align: left;
+}
+
+.answer-options button {
+  transition: 0.3s;
+}
+
+.answer-options button:nth-child(1) { background: #ffe5e5; } /* red */
+.answer-options button:nth-child(2) { background: #fff5cc; } /* yellow */
+.answer-options button:nth-child(3) { background: #e6ffe6; } /* light green */
+.answer-options button:nth-child(4) { background: #ccffcc; } /* green */
+.answer-options button:nth-child(5) { background: #cce5ff; } /* blue */
 </style>

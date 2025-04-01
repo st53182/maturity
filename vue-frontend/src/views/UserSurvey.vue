@@ -499,9 +499,9 @@ h1 {
   transition: 0.3s;
 }
 
-.answer-options button:nth-child(1) { background: #e6896c; }
-.answer-options button:nth-child(2) { background: #deaa67; }
-.answer-options button:nth-child(3) { background: #61c2d2; }
-.answer-options button:nth-child(4) { background: #6ce6c6; }
-.answer-options button:nth-child(5) { background: #07aa3d; }
+.answer-options button:nth-child(1) { background: #dd3f3e; }
+.answer-options button:nth-child(2) { background: #dabd1b; }
+.answer-options button:nth-child(3) { background: #99d2f7; }
+.answer-options button:nth-child(4) { background: #57d2c2; }
+.answer-options button:nth-child(5) { background: #15d07a; }
 </style>

@@ -500,8 +500,8 @@ h1 {
 }
 
 .answer-options button:nth-child(1) { background: #e6896c; }
-.answer-options button:nth-child(2) { background: #e6e06c; }
-.answer-options button:nth-child(3) { background: #e6ffe6; }
+.answer-options button:nth-child(2) { background: #deaa67; }
+.answer-options button:nth-child(3) { background: #61c2d2; }
 .answer-options button:nth-child(4) { background: #6ce6c6; }
-.answer-options button:nth-child(5) { background: #a4fc83; }
+.answer-options button:nth-child(5) { background: #07aa3d; }
 </style>

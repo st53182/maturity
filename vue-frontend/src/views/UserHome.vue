@@ -25,7 +25,7 @@
     </main>
 
     <footer>
-      <p>&copy; 2025 Scrum Maturity. Все права защищены.</p>
+      <p>&copy; 2025 GrowBoard. Все права защищены.</p>
     </footer>
   </div>
 </template>

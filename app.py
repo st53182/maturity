@@ -12,12 +12,20 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
 
+
+
 # 📦 Подключение к базе данных
 database_url = os.getenv("DATABASE_URL", "postgresql://localhost/fallback_db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_pre_ping": True,
+    "connect_args": {
+        "options": "-c timezone=utc"
+    }
+}
 
 # JWT
 app.config['JWT_SECRET_KEY'] = 'supersecretkey'

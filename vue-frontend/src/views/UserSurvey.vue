@@ -498,6 +498,9 @@ h1 {
 .answer-options button {
   transition: 0.3s;
 }
+.answer-options button {
+  opacity: 0.6; /* или чуть меньше: 0.95 */
+}
 
 .answer-options button:nth-child(1) { background: #e7687c; }
 .answer-options button:nth-child(2) { background: #e7d368; }

@@ -3,7 +3,7 @@
     <div class="register-box">
       <h2>Регистрация</h2>
       <form @submit.prevent="register">
-        <input type="text" v-model="username" placeholder="Логин" required />
+        <input type="email" v-model="email" placeholder="Email" required />
         <input type="password" v-model="password" placeholder="Пароль" required />
         <button type="submit">Зарегистрироваться</button>
       </form>
@@ -17,7 +17,9 @@ export default {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      email: '',
+
     };
   },
   methods: {
@@ -26,7 +28,7 @@ export default {
         const response = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: this.username, password: this.password })
+          body: JSON.stringify({ username: this.email, password: this.password })
         });
         const data = await response.json();
         if (response.ok) {
@@ -73,7 +75,7 @@ h2 {
 
 /* Поля ввода */
 input {
-  width: 100%;
+  width: 90%;
   padding: 12px;
   margin: 10px 0;
   border: 1px solid #ccc;

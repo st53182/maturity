@@ -5,22 +5,38 @@
     <div v-if="!aiResponse">
       <div class="step">
         <label>1. Опиши контекст конфликта:</label>
-        <textarea v-model="context" rows="3" />
+        <textarea
+          v-model="context"
+          rows="3"
+          placeholder="Что произошло? Где и когда случилось? В чём суть конфликта? Какие события предшествовали?"
+        />
       </div>
 
       <div class="step">
         <label>2. Опиши участников конфликта (их поведение, эмоции, реакции):</label>
-        <textarea v-model="participants" rows="3" />
+        <textarea
+          v-model="participants"
+          rows="3"
+          placeholder="Кто участвовал? Как себя вели? Какие эмоции проявляли? Как реагировали друг на друга?"
+        />
       </div>
 
       <div class="step">
         <label>3. Какие действия уже были предприняты и с каким результатом?</label>
-        <textarea v-model="attempts" rows="3" />
+        <textarea
+          v-model="attempts"
+          rows="3"
+          placeholder="Что уже пробовали? Кто инициировал? Какие шаги были предприняты? Каков был результат?"
+        />
       </div>
 
       <div class="step">
         <label>4. Какова цель — чего ты хочешь достичь?</label>
-        <textarea v-model="goal" rows="2" />
+        <textarea
+          v-model="goal"
+          rows="2"
+          placeholder="Какой желаемый результат? Чего ты хочешь достичь? Как выглядит идеальное решение?"
+        />
       </div>
 
       <button @click="submitConflict" :disabled="loading">
@@ -35,6 +51,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 export default {

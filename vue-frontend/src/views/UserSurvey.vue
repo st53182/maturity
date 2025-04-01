@@ -498,13 +498,15 @@ h1 {
 .answer-options button {
   transition: 0.3s;
 }
-.answer-options button {
-  opacity: 0.6; /* или чуть меньше: 0.95 */
-}
+.answer-options button:nth-child(1) { background-color: rgba(231, 104, 124, 0.6); }
+.answer-options button:nth-child(2) { background-color: rgba(231, 211, 104, 0.6); }
+.answer-options button:nth-child(3) { background-color: rgba(104, 124, 231, 0.6); }
+.answer-options button:nth-child(4) { background-color: rgba(104, 188, 231, 0.6); }
+.answer-options button:nth-child(5) { background-color: rgba(124, 231, 104, 0.6); }
 
-.answer-options button:nth-child(1) { background: #e7687c; }
-.answer-options button:nth-child(2) { background: #e7d368; }
-.answer-options button:nth-child(3) { background: #687ce7; }
-.answer-options button:nth-child(4) { background: #68bce7; }
-.answer-options button:nth-child(5) { background: #7ce768; }
+.answer-options button {
+  color: #000; /* чёрный текст поверх светлого фона */
+  font-weight: 600;
+  border: none;
+}
 </style>

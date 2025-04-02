@@ -14,6 +14,10 @@
   <span>🤝</span>
   <small>Конфликты</small>
 </button>
+  <button class="sidebar-btn" @click="$router.push('/motivation')">
+    <span>🧠</span>
+    <small>Мотивация</small>
+  </button>
   <button class="sidebar-btn" @click="showTeamModal = true">
     <span>➕</span>
     <small>Команда</small>

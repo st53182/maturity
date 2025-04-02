@@ -1,0 +1,181 @@
+<template>
+  <div class="motivation-container">
+    <h1>🎯 Мотивация сотрудника</h1>
+
+    <!-- Выбор сотрудника -->
+    <div class="form-group">
+      <label>Выберите сотрудника:</label>
+      <select v-model="selectedEmployeeId" @change="loadEmployeeData">
+        <option disabled value="">— Создать нового —</option>
+        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+          {{ emp.name }} — {{ emp.role }}
+        </option>
+      </select>
+    </div>
+
+    <form @submit.prevent="submitMotivation">
+      <div class="form-group">
+        <label>Имя сотрудника:</label>
+        <input v-model="form.name" placeholder="Например: Иван Иванов" required />
+
+        <label>Должность:</label>
+        <input v-model="form.role" placeholder="Например: Аналитик, Разработчик..." required />
+
+        <label>Команда:</label>
+        <select v-model="form.team_id" required>
+          <option disabled value="">Выберите команду</option>
+          <option v-for="team in teams" :key="team.id" :value="team.id">
+            {{ team.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>1. Поведение в стрессовой ситуации</label>
+        <textarea v-model="form.stress" placeholder="Как он реагирует на давление, конфликты..." required></textarea>
+
+        <label>2. Взаимодействие с другими</label>
+        <textarea v-model="form.communication" placeholder="Открытый, сдержанный, любит работать в команде или один..." required></textarea>
+
+        <label>3. Особенности в работе</label>
+        <textarea v-model="form.behavior" placeholder="Привычки, подход, структура, планирование..." required></textarea>
+
+        <label>4. Реакции на критику и изменения</label>
+        <textarea v-model="form.feedback" placeholder="Как принимает фидбек, открыт к переменам..." required></textarea>
+      </div>
+
+      <button type="submit" :disabled="loading">
+        {{ loading ? "Сохраняем и анализируем..." : "Сохранить и получить рекомендации" }}
+      </button>
+    </form>
+
+    <div v-if="result" class="result-block">
+      <h2>📋 Рекомендации</h2>
+      <div v-html="result"></div>
+      <button @click="resetForm">Новый сотрудник</button>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      form: {
+        name: "",
+        role: "",
+        team_id: "",
+        stress: "",
+        communication: "",
+        behavior: "",
+        feedback: ""
+      },
+      selectedEmployeeId: "",
+      teams: [],
+      employees: [],
+      result: "",
+      loading: false
+    };
+  },
+  async mounted() {
+    const teamsRes = await fetch("/teams");
+    const employeesRes = await fetch("/employees");
+    this.teams = (await teamsRes.json()).teams;
+    this.employees = await employeesRes.json();
+  },
+  methods: {
+    async loadEmployeeData() {
+      if (!this.selectedEmployeeId) return this.resetForm();
+
+      const res = await fetch(`/employee/${this.selectedEmployeeId}`);
+      const data = await res.json();
+      this.form = {
+        name: data.name,
+        role: data.role,
+        team_id: data.team_id,
+        stress: data.stress,
+        communication: data.communication,
+        behavior: data.behavior,
+        feedback: data.feedback
+      };
+      this.result = data.ai_analysis || "";
+    },
+    async submitMotivation() {
+      this.loading = true;
+      try {
+        const res = await fetch("/motivation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.form)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          this.result = data.result;
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        alert("Ошибка подключения");
+      } finally {
+        this.loading = false;
+      }
+    },
+    resetForm() {
+      this.selectedEmployeeId = "";
+      this.form = {
+        name: "",
+        role: "",
+        team_id: "",
+        stress: "",
+        communication: "",
+        behavior: "",
+        feedback: ""
+      };
+      this.result = "";
+    }
+  }
+};
+</script>
+
+<style scoped>
+.motivation-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+.form-group {
+  margin-bottom: 20px;
+}
+textarea,
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+button {
+  background: #4caf50;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover {
+  background: #3b8d3f;
+}
+.result-block {
+  margin-top: 30px;
+  background: #f8f8f8;
+  padding: 20px;
+  border-radius: 10px;
+}
+</style>

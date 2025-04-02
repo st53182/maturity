@@ -60,3 +60,16 @@ class Conflict(db.Model):
     goal = db.Column(db.Text, nullable=False)
     ai_response = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Employee(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(120))
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
+    stress = db.Column(db.Text)
+    communication = db.Column(db.Text)
+    behavior = db.Column(db.Text)
+    feedback = db.Column(db.Text)
+    ai_analysis = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    team = db.relationship('Team', backref=db.backref('employees', lazy=True))

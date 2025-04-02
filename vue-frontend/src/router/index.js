@@ -13,8 +13,9 @@ const routes = [
   { path: '/survey', name: "UserSurvey", component: UserSurvey, meta: { requiresAuth: true } },
   { path: '/dashboard', component: UserDashboard },
   { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true },
-  {path: '/conflicts', name: 'Conflicts', component: () => import('@/views/ConflictResolution.vue')  // или просто import сверху
-}
+  {path: '/conflicts', name: 'Conflicts', component: () => import('@/views/ConflictResolution.vue') },
+  {path: '/motivation', name: 'Motivation', component: () => import('@/views/UserMotivation.vue')}
+
 ];
 
 const router = createRouter({

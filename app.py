@@ -9,6 +9,8 @@ from datetime import timedelta
 import os
 from flask_cors import CORS
 from conflict import bp_conflict
+from motivation import bp_motivation
+
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
 
@@ -45,6 +47,7 @@ app.register_blueprint(bp_survey)
 app.register_blueprint(bp_dashboard, url_prefix="/dashboard")
 app.register_blueprint(bp_assessment)
 app.register_blueprint(bp_conflict)
+app.register_blueprint(bp_motivation)
 
 
 # 🎯 Отдача Vue SPA

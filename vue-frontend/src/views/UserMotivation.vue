@@ -65,16 +65,34 @@ export default {
     };
   },
   async mounted() {
-    try {
-      const res = await fetch("/dashboard/teams"); // 🔁 Убедись, что у тебя есть этот маршрут
-      if (!res.ok) throw new Error("Ошибка загрузки команд");
-      const data = await res.json();
-      this.teams = data.teams;
-    } catch (e) {
-      console.error("❌ Ошибка при загрузке команд:", e);
-      this.teams = [];
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("⚠ Вы не авторизованы. Пожалуйста, войдите в систему.");
+      return;
     }
-  },
+
+    const res = await fetch("/user_teams", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Ошибка загрузки команд:", errorText);
+      alert("Не удалось загрузить команды.");
+      return;
+    }
+
+    const data = await res.json();
+    this.teams = data; // data — это массив команд
+  } catch (err) {
+    console.error("Ошибка подключения:", err);
+    alert("Произошла ошибка при загрузке команд.");
+  }
+},
   methods: {
     async submitMotivation() {
       this.loading = true;

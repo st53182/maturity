@@ -122,30 +122,30 @@ export default {
   },
   methods: {
     async submitMotivation() {
-      this.loading = true;
-      try {
-        const res = await fetch("/motivation", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(this.form)
-        });
-        const data = await res.json();
-        if (res.ok) {
-          this.result = data.analysis;
-          this.loadEmployees();
-        } else {
-          alert(data.error || "Ошибка");
-        }
-      } catch (e) {
-        alert("Ошибка соединения");
-      } finally {
-        this.loading = false;
-      }
-    },
+  this.loading = true;
+  try {
+    const res = await fetch("/motivation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(this.form)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      this.result = data.analysis;
+      this.form.id = data.employee_id; // сохраняем id для повторного редактирования
+    } else {
+      alert(data.error);
+    }
+  } catch (err) {
+    alert("Ошибка подключения");
+  } finally {
+    this.loading = false;
+  }
+},
     resetForm() {
       this.form = {
+        id: null,
         name: "",
         role: "",
         team_id: "",

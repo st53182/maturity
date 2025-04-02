@@ -15,22 +15,30 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 @bp_motivation.route("/motivation", methods=["POST"])
 def get_motivation():
     data = request.json
+    emp_id = data.get("id")
 
     try:
-        # 1. Сохраняем нового сотрудника
-        employee = Employee(
-            name=data["name"],
-            role=data["role"],
-            team_id=data["team_id"],
-            stress=data["stress"],
-            communication=data["communication"],
-            behavior=data["behavior"],
-            feedback=data["feedback"]
-        )
+        # 1. Получаем или создаем сотрудника
+        if emp_id:
+            employee = Employee.query.get(emp_id)
+            if not employee:
+                return jsonify({"error": "Сотрудник не найден"}), 404
+        else:
+            employee = Employee()
+
+        # 2. Обновляем или задаем поля
+        employee.name = data["name"]
+        employee.role = data["role"]
+        employee.team_id = data["team_id"]
+        employee.stress = data["stress"]
+        employee.communication = data["communication"]
+        employee.behavior = data["behavior"]
+        employee.feedback = data["feedback"]
+
         db.session.add(employee)
         db.session.commit()
 
-        # 2. Формируем prompt для анализа DISC
+        # 3. Prompt к OpenAI
         prompt = f"""Ты Agile-коуч и DISC-специалист. Проанализируй описание сотрудника, определи тип по DISC и дай рекомендации по мотивации и взаимодействию.
 
 Имя: {employee.name}
@@ -62,7 +70,7 @@ def get_motivation():
 
         result_text = response.choices[0].message.content
 
-        # 3. Сохраняем AI-анализ
+        # 4. Сохраняем результат AI
         employee.ai_analysis = result_text
         db.session.commit()
 
@@ -75,6 +83,7 @@ def get_motivation():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 
 # 🔹 Получить всех сотрудников

@@ -2,17 +2,6 @@
   <div class="motivation-container">
     <h1>🎯 Мотивация сотрудника</h1>
 
-    <!-- Выбор сотрудника -->
-    <div class="form-group">
-      <label>Выберите сотрудника:</label>
-      <select v-model="selectedEmployeeId" @change="loadEmployeeData">
-        <option disabled value="">— Создать нового —</option>
-        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-          {{ emp.name }} — {{ emp.role }}
-        </option>
-      </select>
-    </div>
-
     <form @submit.prevent="submitMotivation">
       <div class="form-group">
         <label>Имя сотрудника:</label>
@@ -22,8 +11,8 @@
         <input v-model="form.role" placeholder="Например: Аналитик, Разработчик..." required />
 
         <label>Команда:</label>
-        <select v-model="form.team_id" required>
-          <option disabled value="">Выберите команду</option>
+        <select v-model="form.team_id">
+          <option disabled value="">-- Не выбрано --</option>
           <option v-for="team in teams" :key="team.id" :value="team.id">
             {{ team.name }}
           </option>
@@ -70,36 +59,23 @@ export default {
         behavior: "",
         feedback: ""
       },
-      selectedEmployeeId: "",
       teams: [],
-      employees: [],
       result: "",
       loading: false
     };
   },
   async mounted() {
-    const teamsRes = await fetch("/teams");
-    const employeesRes = await fetch("/employees");
-    this.teams = (await teamsRes.json()).teams;
-    this.employees = await employeesRes.json();
+    try {
+      const res = await fetch("/dashboard/teams"); // 🔁 Убедись, что у тебя есть этот маршрут
+      if (!res.ok) throw new Error("Ошибка загрузки команд");
+      const data = await res.json();
+      this.teams = data.teams;
+    } catch (e) {
+      console.error("❌ Ошибка при загрузке команд:", e);
+      this.teams = [];
+    }
   },
   methods: {
-    async loadEmployeeData() {
-      if (!this.selectedEmployeeId) return this.resetForm();
-
-      const res = await fetch(`/employee/${this.selectedEmployeeId}`);
-      const data = await res.json();
-      this.form = {
-        name: data.name,
-        role: data.role,
-        team_id: data.team_id,
-        stress: data.stress,
-        communication: data.communication,
-        behavior: data.behavior,
-        feedback: data.feedback
-      };
-      this.result = data.ai_analysis || "";
-    },
     async submitMotivation() {
       this.loading = true;
       try {
@@ -110,18 +86,18 @@ export default {
         });
         const data = await res.json();
         if (res.ok) {
-          this.result = data.result;
+          this.result = data.analysis;
         } else {
-          alert(data.error);
+          alert(data.error || "Ошибка анализа");
         }
       } catch (err) {
-        alert("Ошибка подключения");
+        console.error("❌ Ошибка запроса:", err);
+        alert("Не удалось получить рекомендации.");
       } finally {
         this.loading = false;
       }
     },
     resetForm() {
-      this.selectedEmployeeId = "";
       this.form = {
         name: "",
         role: "",
@@ -136,6 +112,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .motivation-container {

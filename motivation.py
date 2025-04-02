@@ -141,3 +141,12 @@ def get_employee(employee_id):
         "ai_analysis": employee.ai_analysis,
         "created_at": employee.created_at.isoformat() if employee.created_at else None
     })
+@bp_motivation.route("/employee/<int:employee_id>", methods=["DELETE"])
+def delete_employee(employee_id):
+    employee = Employee.query.get(employee_id)
+    if not employee:
+        return jsonify({"error": "Сотрудник не найден"}), 404
+
+    db.session.delete(employee)
+    db.session.commit()
+    return jsonify({"message": "Сотрудник удалён"})

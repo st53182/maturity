@@ -65,32 +65,31 @@ export default {
     };
   },
   async mounted() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.warn("⛔ Нет токена авторизации!");
+    return;
+  }
+
   try {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      alert("⚠ Вы не авторизованы. Пожалуйста, войдите в систему.");
-      return;
-    }
-
-    const res = await fetch("/user_teams", {
+    const response = await fetch("/user_teams", {
       headers: {
-        Authorization: `Bearer ${token}`
+        "Authorization": `Bearer ${token}`
       }
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Ошибка загрузки команд:", errorText);
-      alert("Не удалось загрузить команды.");
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("⛔ Ошибка при получении команд:", errorText);
       return;
     }
 
-    const data = await res.json();
-    this.teams = data; // data — это массив команд
+    const data = await response.json();
+    console.log("✅ Команды загружены:", data);
+    this.teams = data;
+
   } catch (err) {
-    console.error("Ошибка подключения:", err);
-    alert("Произошла ошибка при загрузке команд.");
+    console.error("❌ Ошибка запроса:", err);
   }
 },
   methods: {

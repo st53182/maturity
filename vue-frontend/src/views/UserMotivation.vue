@@ -82,7 +82,6 @@
     <div v-if="result" class="result-block">
       <h2>📋 Рекомендации</h2>
       <div v-html="result"></div>
-      <button @click="resetForm">Новый сотрудник</button>
     </div>
   </div>
 </template>

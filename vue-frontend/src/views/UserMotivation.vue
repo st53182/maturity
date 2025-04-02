@@ -21,7 +21,10 @@
         <button @click.stop="deleteEmployee(employee.id)">🗑</button>
       </div>
     </div>
-
+ <div class="employee-card add-card" @click="resetForm">
+        <span>➕</span>
+        <p>Создать</p>
+      </div>
     <!-- 🔹 Форма -->
     <form @submit.prevent="submitMotivation">
       <div class="form-group">
@@ -124,18 +127,20 @@ export default {
       try {
         const res = await fetch("/motivation", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(this.form)
         });
         const data = await res.json();
         if (res.ok) {
           this.result = data.analysis;
-          this.employees.push({ ...this.form, ai_analysis: data.analysis });
+          this.loadEmployees();
         } else {
           alert(data.error || "Ошибка");
         }
-      } catch (err) {
-        alert("Ошибка при сохранении");
+      } catch (e) {
+        alert("Ошибка соединения");
       } finally {
         this.loading = false;
       }

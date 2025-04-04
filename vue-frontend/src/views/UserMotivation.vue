@@ -161,18 +161,19 @@ export default {
       await fetch(`/employee/${id}`, { method: "DELETE" });
       this.employees = this.employees.filter(e => e.id !== id);
     },
-    selectEmployee(emp) {
-      this.form = {
-        name: emp.name,
-        role: emp.role,
-        team_id: emp.team_id,
-        stress: emp.stress,
-        communication: emp.communication,
-        behavior: emp.behavior,
-        feedback: emp.feedback
-      };
-      this.result = emp.ai_analysis;
-    },
+  selectEmployee(employee) {
+  this.form = {
+    id: employee.id, // 💡 обязательно!
+    name: employee.name,
+    role: employee.role,
+    team_id: employee.team_id,
+    stress: employee.stress,
+    communication: employee.communication,
+    behavior: employee.behavior,
+    feedback: employee.feedback
+  };
+  this.result = employee.ai_analysis; // Показываем существующий анализ
+},
     extractDISCType(text) {
       const match = text?.match(/\*\*Тип DISC:\*\*\s*(.+)/i);
       return match ? match[1].split("\n")[0].trim() : "Неизвестно";

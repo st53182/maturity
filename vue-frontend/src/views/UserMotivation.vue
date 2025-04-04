@@ -193,26 +193,25 @@ export default {
       this.result = employee.ai_analysis;
     },
 
-    extractFactors(text, sectionTitle) {
-      if (!text) return [];
-      const match = text.match(new RegExp(`${sectionTitle}.*?:`, 'i'));
-      if (!match) return [];
+    extractFactors(html, sectionTitle) {
+  if (!html) return [];
 
-      const start = text.indexOf(match[0]);
-      const rest = text.slice(start);
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
 
-      const stopRegex = /^(Мотивирующие|Демотиваторы|Рекомендации)/gmi;
-      const stopMatch = [...rest.matchAll(stopRegex)];
+  // Заголовок с нужным текстом
+  const headers = Array.from(tempDiv.querySelectorAll('h3, h4, strong'));
+  const header = headers.find(h =>
+    h.textContent.toLowerCase().includes(sectionTitle.toLowerCase())
+  );
 
-      let end = rest.length;
-      if (stopMatch.length > 1) end = stopMatch[1].index;
+  if (!header) return [];
 
-      const section = rest.slice(0, end);
-      return section
-        .split(/[-–•●]/)
-        .map(s => s.trim())
-        .filter(s => s.length > 5 && !s.startsWith(sectionTitle));
-    },
+  const ul = header.nextElementSibling;
+  if (!ul || ul.tagName !== 'UL') return [];
+
+  return Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
+},
 
     extractDISCType(text) {
       const match = text?.match(/\*\*Тип DISC:\*\*\s*(.*?)(\*\*|$)/);

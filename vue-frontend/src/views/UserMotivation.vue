@@ -17,11 +17,11 @@
           @error="setDefaultAvatar"
         />
         <div class="card-header">
-          <h4>{{ employee.name }}</h4>
+          <h4 class="employee-name">{{ employee.name }}</h4>
           <button @click.stop="deleteEmployee(employee.id)">🗑</button>
         </div>
-        <p class="team-name">Команда: {{ getTeamName(employee.team_id) || '—' }}</p>
-        <p class="team-name">Тип личности :<span class="disc-type">{{ extractDISCType(employee.ai_analysis) }}</span></p>
+        <p class="team-name">🏢 Команда: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
+        <p class="disc-type-full">🧠 Тип DISC: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
 
         <div v-if="employee.ai_analysis" class="factors">
           <div class="column">
@@ -204,6 +204,12 @@ export default {
   this.form = { ...employee };
   this.result = employee.ai_analysis;
   this.showModal = true;
+},
+
+    extractDISCFullType(aiText) {
+  if (!aiText) return "Неизвестно";
+  const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+\))/i);
+  return match ? match[1].trim() : "Неизвестно";
 },
 
     extractFactors(html, sectionTitle) {
@@ -496,5 +502,19 @@ button:hover {
 .modal-close:hover {
   color: #000;
 }
-
+.employee-name {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+.team-name,
+.disc-type-full {
+  text-align: center;
+  font-size: 14px;
+  color: #444;
+  margin: 0;
+}
+.disc-type-full strong {
+  color: #2c3e50;
+}
 </style>

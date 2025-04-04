@@ -213,10 +213,20 @@ export default {
   return Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
 },
 
-    extractDISCType(text) {
-      const match = text?.match(/\*\*Тип DISC:\*\*\s*(.*?)(\*\*|$)/);
-      return match ? match[1].trim() : "Неизвестно";
-    },
+    extractDISCType(aiText) {
+  if (!aiText) return "Неизвестно";
+
+  // Пробуем искать заголовок или жирный текст
+const match = aiText.match(/Тип DISC[:-]?\s*(?:<\/strong>)?\s*([A-ZА-Я]\s*\(.*?\)|[A-ZА-Я]\s*[-–—]?\s*[^<\n]*)/i);
+
+  if (match) {
+    return match[1].replace(/<\/?[^>]+>/g, '').trim(); // Удалить HTML-теги
+  }
+
+  // Вариант 2: ищем тип в тексте без форматирования
+  const backup = aiText.match(/(Тип DISC.*?:.*?)<br/);
+  return backup ? backup[1].split(":")[1].trim() : "Неизвестно";
+},
 
     getTeamName(teamId) {
       const team = this.teams.find(t => t.id === teamId);
@@ -239,7 +249,8 @@ export default {
 
 
 
-<style>
+<style scoped>
+
 .motivation-container {
   max-width: 1000px;
   margin: 40px auto;

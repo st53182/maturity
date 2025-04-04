@@ -270,10 +270,20 @@ form {
 }
 
 .form-group {
+  max-width: 650px;
+  margin: 1rem auto;
+  padding: 1.5rem 2rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
 input,
@@ -388,8 +398,8 @@ button:hover {
   background: #f9f9f9;
   padding: 12px;
   border-radius: 8px;
-  max-height: 180px;
-  overflow-y: auto;
+  overflow: visible;
+  max-height: none;
 }
 
 .factors h5 {

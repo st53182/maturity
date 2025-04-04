@@ -49,10 +49,7 @@
 
 
     <!-- 🔹 Результат -->
-    <div v-if="result" class="result-block">
-      <h2>📋 Рекомендации</h2>
-      <div class="ai-analysis" v-html="result"></div>
-    </div>
+
   </div>
   <div v-if="showModal" class="modal-overlay">
   <div class="modal-content">
@@ -90,6 +87,10 @@
       <button type="submit" :disabled="loading">
         {{ loading ? "Сохраняем..." : "Сохранить и получить рекомендации" }}
       </button>
+      <div v-if="result" class="result-block">
+      <h2>📋 Рекомендации</h2>
+      <div class="ai-analysis" v-html="result"></div>
+    </div>
     </form>
   </div>
 </div>

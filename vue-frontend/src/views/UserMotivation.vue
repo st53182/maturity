@@ -219,7 +219,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .motivation-container {
   max-width: 900px;
   margin: auto;
@@ -270,6 +270,7 @@ button {
 }
 
 .employee-card {
+  position: relative; /* ✅ добавили */
   width: 320px;
   padding: 1rem;
   border-radius: 12px;

@@ -21,11 +21,11 @@
           <button @click.stop="deleteEmployee(employee.id)">🗑</button>
         </div>
         <p class="team-name">Команда: {{ getTeamName(employee.team_id) || '—' }}</p>
-        <span class="disc-type">{{ extractDISCType(employee.ai_analysis) }}</span>
+        <p class="team-name">Тип личности :<span class="disc-type">{{ extractDISCType(employee.ai_analysis) }}</span></p>
 
         <div v-if="employee.ai_analysis" class="factors">
           <div class="column">
-            <h5>⬆️ Мотивирующие</h5>
+            <h5>⬆️ Мотиваторы</h5>
             <ul>
               <li v-for="item in employee.motivators" :key="item">{{ item }}</li>
             </ul>

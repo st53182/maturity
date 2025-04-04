@@ -46,41 +46,7 @@
     </div>
 
     <!-- 🔹 Форма -->
-    <form @submit.prevent="submitMotivation">
-      <div class="form-group">
-        <label>Имя сотрудника:</label>
-        <input v-model="form.name" placeholder="Например: Иван Иванов" required />
 
-        <label>Должность:</label>
-        <input v-model="form.role" placeholder="Аналитик, Разработчик..." required />
-
-        <label>Команда:</label>
-        <select v-model="form.team_id" required>
-          <option disabled value="">Выберите команду</option>
-          <option v-for="team in teams" :key="team.id" :value="team.id">
-            {{ team.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>1. Поведение в стрессовой ситуации</label>
-        <textarea v-model="form.stress" placeholder="Как он реагирует на давление, конфликты..." required></textarea>
-
-        <label>2. Взаимодействие с другими</label>
-        <textarea v-model="form.communication" placeholder="Открытый, сдержанный, командный игрок?" required></textarea>
-
-        <label>3. Особенности в работе</label>
-        <textarea v-model="form.behavior" placeholder="Подход к задачам, ответственность..." required></textarea>
-
-        <label>4. Реакции на критику и изменения</label>
-        <textarea v-model="form.feedback" placeholder="Как принимает обратную связь..." required></textarea>
-      </div>
-
-      <button type="submit" :disabled="loading">
-        {{ loading ? "Анализируем..." : "Сохранить и получить рекомендации" }}
-      </button>
-    </form>
 
     <!-- 🔹 Результат -->
     <div v-if="result" class="result-block">
@@ -88,6 +54,45 @@
       <div class="ai-analysis" v-html="result"></div>
     </div>
   </div>
+  <div v-if="showModal" class="modal-overlay">
+  <div class="modal-content">
+    <button class="modal-close" @click="showModal = false">✖</button>
+
+    <form @submit.prevent="submitMotivation" class="form-group">
+      <h2 style="text-align: center;">📝 Анкета сотрудника</h2>
+
+      <label>Имя сотрудника:</label>
+      <input v-model="form.name" required />
+
+      <label>Должность:</label>
+      <input v-model="form.role" required />
+
+      <label>Команда:</label>
+      <select v-model="form.team_id" required>
+        <option disabled value="">Выберите команду</option>
+        <option v-for="team in teams" :key="team.id" :value="team.id">
+          {{ team.name }}
+        </option>
+      </select>
+
+      <label>1. Поведение в стрессовой ситуации</label>
+      <textarea v-model="form.stress" required></textarea>
+
+      <label>2. Взаимодействие с другими</label>
+      <textarea v-model="form.communication" required></textarea>
+
+      <label>3. Особенности в работе</label>
+      <textarea v-model="form.behavior" required></textarea>
+
+      <label>4. Реакции на критику и изменения</label>
+      <textarea v-model="form.feedback" required></textarea>
+
+      <button type="submit" :disabled="loading">
+        {{ loading ? "Сохраняем..." : "Сохранить и получить рекомендации" }}
+      </button>
+    </form>
+  </div>
+</div>
 </template>
 
 <script>
@@ -107,7 +112,9 @@ export default {
       teams: [],
       employees: [],
       result: "",
-      loading: false
+      loading: false,
+      showModal: false,
+
     };
   },
 
@@ -172,17 +179,18 @@ export default {
     },
 
     resetForm() {
-      this.form = {
-        id: null,
-        name: "",
-        role: "",
-        team_id: "",
-        stress: "",
-        communication: "",
-        behavior: "",
-        feedback: ""
-      };
-      this.result = "";
+  this.form = {
+    id: null,
+    name: "",
+    role: "",
+    team_id: "",
+    stress: "",
+    communication: "",
+    behavior: "",
+    feedback: ""
+  };
+  this.result = "";
+  this.showModal = true;
     },
 
     async deleteEmployee(id) {
@@ -191,10 +199,11 @@ export default {
       this.employees = this.employees.filter(e => e.id !== id);
     },
 
-    selectEmployee(employee) {
-      this.form = { ...employee };
-      this.result = employee.ai_analysis;
-    },
+ selectEmployee(employee) {
+  this.form = { ...employee };
+  this.result = employee.ai_analysis;
+  this.showModal = true;
+},
 
     extractFactors(html, sectionTitle) {
   if (!html) return [];
@@ -447,4 +456,39 @@ button:hover {
   justify-content: space-between;
   align-items: center;
 }
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.modal-close {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
 </style>

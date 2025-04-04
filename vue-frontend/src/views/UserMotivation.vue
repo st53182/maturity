@@ -56,7 +56,7 @@
   </div>
   <div v-if="showModal" class="modal-overlay">
   <div class="modal-content">
-    <button class="modal-close" @click="showModal = false">✖</button>
+     <button class="modal-close" @click="showModal = false">✖</button>
 
     <form @submit.prevent="submitMotivation" class="form-group">
       <h2 style="text-align: center;">📝 Анкета сотрудника</h2>
@@ -138,45 +138,45 @@ export default {
 
   methods: {
     async submitMotivation() {
-      this.loading = true;
-      try {
-        const res = await fetch("/motivation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(this.form)
-        });
+  this.loading = true;
+  try {
+    const res = await fetch("/motivation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(this.form)
+    });
 
-        const data = await res.json();
-        if (res.ok) {
-          this.result = data.analysis;
-          this.form.id = data.employee_id;
+    const data = await res.json();
+    if (res.ok) {
+      this.result = data.analysis;
+      this.form.id = data.employee_id;
 
-          const updated = {
-            ...this.form,
-            id: data.employee_id,
-            ai_analysis: data.analysis,
-            motivators: this.extractFactors(data.analysis, "Мотивирующие"),
-            demotivators: this.extractFactors(data.analysis, "Демотиваторы")
-          };
+      const updated = {
+        ...this.form,
+        id: data.employee_id,
+        ai_analysis: data.analysis,
+        motivators: this.extractFactors(data.analysis, "Мотивирующие"),
+        demotivators: this.extractFactors(data.analysis, "Демотиваторы")
+      };
 
-          const discRes = await fetch("/static/disc_profiles_for_frontend.json");
-          this.discProfiles = await discRes.json();
-
-          const index = this.employees.findIndex(e => e.id === data.employee_id);
-          if (index !== -1) {
-            this.employees.splice(index, 1, updated);
-          } else {
-            this.employees.push(updated);
-          }
-        } else {
-          alert(data.error);
-        }
-      } catch (err) {
-        alert("Ошибка подключения");
-      } finally {
-        this.loading = false;
+      const index = this.employees.findIndex(e => e.id === data.employee_id);
+      if (index !== -1) {
+        this.employees.splice(index, 1, updated);
+      } else {
+        this.employees.push(updated);
       }
-    },
+
+      // ✅ Закрываем pop-up после сохранения
+      this.showModal = false;
+    } else {
+      alert(data.error);
+    }
+  } catch (err) {
+    alert("Ошибка подключения");
+  } finally {
+    this.loading = false;
+  }
+},
 
     resetForm() {
   this.form = {
@@ -483,12 +483,17 @@ button:hover {
 
 .modal-close {
   position: absolute;
-  right: 16px;
-  top: 12px;
+  top: 10px;
+  right: 14px;
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 22px;
+  color: #999;
   cursor: pointer;
+  transition: 0.2s;
+}
+.modal-close:hover {
+  color: #000;
 }
 
 </style>

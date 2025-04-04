@@ -261,7 +261,7 @@ export default {
 <style scoped>
 
 .motivation-container {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 40px auto;
   background: #fff;
   padding: 30px;

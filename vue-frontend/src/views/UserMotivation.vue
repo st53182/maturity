@@ -106,6 +106,7 @@ export default {
   data() {
     return {
       form: {
+        id: null,
         name: "",
         role: "",
         team_id: "",
@@ -121,6 +122,7 @@ export default {
       loading: false
     };
   },
+
   async mounted() {
     const token = localStorage.getItem("token");
 
@@ -130,34 +132,59 @@ export default {
     this.teams = await teamRes.json();
 
     const empRes = await fetch("/employees");
-    this.employees = await empRes.json();
+    const rawEmployees = await empRes.json();
 
     const discRes = await fetch("/static/disc_profiles_for_frontend.json");
     this.discProfiles = await discRes.json();
+
+    // 💡 добавляем motivators и demotivators
+    this.employees = rawEmployees.map(e => ({
+      ...e,
+      motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
+      demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы")
+    }));
   },
+
   methods: {
     async submitMotivation() {
-  this.loading = true;
-  try {
-    const res = await fetch("/motivation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(this.form)
-    });
+      this.loading = true;
+      try {
+        const res = await fetch("/motivation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.form)
+        });
 
-    const data = await res.json();
-    if (res.ok) {
-      this.result = data.analysis;
-      this.form.id = data.employee_id; // сохраняем id для повторного редактирования
-    } else {
-      alert(data.error);
-    }
-  } catch (err) {
-    alert("Ошибка подключения");
-  } finally {
-    this.loading = false;
-  }
-},
+        const data = await res.json();
+        if (res.ok) {
+          this.result = data.analysis;
+          this.form.id = data.employee_id;
+
+          // 🔁 Обновление или добавление сотрудника
+          const index = this.employees.findIndex(e => e.id === data.employee_id);
+          const updated = {
+            ...this.form,
+            id: data.employee_id,
+            ai_analysis: data.analysis,
+            motivators: this.extractFactors(data.analysis, "Мотивирующие"),
+            demotivators: this.extractFactors(data.analysis, "Демотиваторы")
+          };
+
+          if (index !== -1) {
+            this.employees.splice(index, 1, updated);
+          } else {
+            this.employees.push(updated);
+          }
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        alert("Ошибка подключения");
+      } finally {
+        this.loading = false;
+      }
+    },
+
     resetForm() {
       this.form = {
         id: null,
@@ -171,53 +198,55 @@ export default {
       };
       this.result = "";
     },
+
     async deleteEmployee(id) {
       if (!confirm("Удалить сотрудника?")) return;
       await fetch(`/employee/${id}`, { method: "DELETE" });
       this.employees = this.employees.filter(e => e.id !== id);
     },
 
-    extractFactors(text, type) {
-  const match = text.match(new RegExp(`\\*\\*${type} факторы:\\*\\*(.*?)\\*\\*`, 's'));
-  if (!match) return [];
-  return match[1]
-    .split(/[-–•]/)
-    .map(line => line.trim())
-    .filter(line => line.length > 3); // фильтруем короткие
-},
-  selectEmployee(employee) {
-  this.form = {
-    id: employee.id, // 💡 обязательно!
-    name: employee.name,
-    role: employee.role,
-    team_id: employee.team_id,
-    stress: employee.stress,
-    communication: employee.communication,
-    behavior: employee.behavior,
-    feedback: employee.feedback
-  };
-  this.result = employee.ai_analysis; // Показываем существующий анализ
-},
-    extractDISCType(text) {
-      const match = text?.match(/\*\*Тип DISC:\*\*\s*(.+)/i);
-      return match ? match[1].split("\n")[0].trim() : "Неизвестно";
+    selectEmployee(employee) {
+      this.form = {
+        id: employee.id,
+        name: employee.name,
+        role: employee.role,
+        team_id: employee.team_id,
+        stress: employee.stress,
+        communication: employee.communication,
+        behavior: employee.behavior,
+        feedback: employee.feedback
+      };
+      this.result = employee.ai_analysis;
     },
+
+    extractFactors(text, type) {
+      const match = text?.match(new RegExp(`\\*\\*${type} факторы:\\*\\*(.*?)\\*\\*`, 's'));
+      if (!match) return [];
+      return match[1]
+        .split(/[-–•]/)
+        .map(line => line.trim())
+        .filter(line => line.length > 3);
+    },
+
+    extractDISCType(aiText) {
+      const match = aiText?.match(/\*\*Тип DISC:\*\*\s*(.*?)(\*\*|$)/);
+      return match ? match[1].trim() : "Неизвестно";
+    },
+
     getTeamName(teamId) {
       const team = this.teams.find(t => t.id === teamId);
       return team ? team.name : "—";
     },
- getAvatarUrl(aiText) {
-  const type = this.extractDISCType(aiText);
-  if (!type) {
-    const index = Math.floor(Math.random() * 5) + 1; // 1–5
-    return `/avatars/random${index}.png`;
-  }
-  const key = type.toLowerCase().split(" ")[0].replace(/[^\w]/g, "");
-  return `/avatars/${key || "default"}.png`;
-}
+
+    getAvatarUrl(aiText) {
+      const type = this.extractDISCType(aiText);
+      const key = type?.toLowerCase().split(" ")[0].replace(/[^\w]/g, "");
+      return `/avatars/${key || "default"}.png`;
+    }
   }
 };
 </script>
+
 
 <style>
 .motivation-container {

@@ -3,23 +3,39 @@
     <h1>🎯 Мотивация сотрудника</h1>
 
     <!-- 🔹 Список сотрудников -->
-    <div class="employee-list">
-      <div
-        v-for="employee in employees"
-        :key="employee.id"
-        class="employee-card"
-        @click="selectEmployee(employee)"
-      >
-        <img
-          class="avatar"
-          :src="getAvatarUrl(employee.ai_analysis)"
-          alt="avatar"
-        />
-        <h4>{{ employee.name }}</h4>
-        <p class="team-name">{{ getTeamName(employee.team_id) }}</p>
-        <span class="disc-type">{{ extractDISCType(employee.ai_analysis) }}</span>
-        <button @click.stop="deleteEmployee(employee.id)">🗑</button>
-      </div>
+    <div
+  v-for="employee in employees"
+  :key="employee.id"
+  class="employee-card"
+  @click="selectEmployee(employee)"
+>
+  <img
+    class="avatar"
+    :src="getAvatarUrl(employee.ai_analysis)"
+    alt="avatar"
+  />
+  <div class="card-header">
+    <h4>{{ employee.name }}</h4>
+    <button @click.stop="deleteEmployee(employee.id)">🗑</button>
+  </div>
+  <p class="team-name">Команда: {{ getTeamName(employee.team_id) || '—' }}</p>
+  <span class="disc-type">{{ extractDISCType(employee.ai_analysis) }}</span>
+
+  <div v-if="employee.ai_analysis" class="factors">
+    <div class="column">
+      <h5>⬆️ Мотивирующие</h5>
+      <ul>
+        <li v-for="item in extractFactors(employee.ai_analysis, 'Мотивирующие')" :key="item">{{ item }}</li>
+      </ul>
+    </div>
+    <div class="column">
+      <h5>⬇️ Демотиваторы</h5>
+      <ul>
+        <li v-for="item in extractFactors(employee.ai_analysis, 'Демотиваторы')" :key="item">{{ item }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
     </div>
  <div class="employee-card add-card" @click="resetForm">
         <span>➕</span>
@@ -79,11 +95,10 @@
     </form>
 
     <!-- 🔹 Результат -->
-    <div v-if="result" class="result-block">
-      <h2>📋 Рекомендации</h2>
-      <div v-html="result"></div>
-    </div>
-  </div>
+   <div v-if="result" class="result-block">
+  <h2>📋 Рекомендации</h2>
+  <div class="ai-analysis" v-html="result"></div>
+</div>
 </template>
 
 <script>
@@ -161,6 +176,15 @@ export default {
       await fetch(`/employee/${id}`, { method: "DELETE" });
       this.employees = this.employees.filter(e => e.id !== id);
     },
+
+    extractFactors(text, type) {
+  const match = text.match(new RegExp(`\\*\\*${type} факторы:\\*\\*(.*?)\\*\\*`, 's'));
+  if (!match) return [];
+  return match[1]
+    .split(/[-–•]/)
+    .map(line => line.trim())
+    .filter(line => line.length > 3); // фильтруем короткие
+},
   selectEmployee(employee) {
   this.form = {
     id: employee.id, // 💡 обязательно!
@@ -246,14 +270,15 @@ button {
 }
 
 .employee-card {
-  background: #fefefe;
+  width: 320px;
+  padding: 1rem;
   border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  width: 200px;
-  cursor: pointer;
-  position: relative;
-  text-align: center;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1rem;
 }
 .employee-card:hover {
   transform: translateY(-2px);
@@ -262,6 +287,14 @@ button {
   width: 60px;
   height: 60px;
   object-fit: contain;
+}
+
+.employee-card img.avatar {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border-radius: 50%;
+  margin: 0 auto;
 }
 .employee-card .disc-type {
   font-size: 14px;
@@ -281,6 +314,103 @@ button {
 .team-name {
   font-size: 13px;
   color: #888;
+}
+.ai-analysis {
+  background: #f7f7f7;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
+.ai-analysis h4 {
+  margin-top: 1rem;
+  color: #333;
+}
+
+.ai-analysis h3 {
+  font-size: 18px;
+  margin-top: 1.2rem;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.4rem;
+}
+
+.columns {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.column {
+  flex: 1;
+  min-width: 200px;
+}
+
+.column ul {
+  list-style: disc inside;
+  padding-left: 1rem;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.factors {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.factors .column {
+  flex: 1;
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.factors h5 {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
+}
+
+.factors ul {
+  padding-left: 1rem;
+  margin: 0;
+  font-size: 13px;
+  color: #444;
+  list-style: disc;
+}
+
+.factors li {
+  margin-bottom: 6px;
+}
+.employee-card .columns {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.employee-card .column {
+  flex: 1;
+  min-width: 200px;
+  max-width: 48%;
+  word-wrap: break-word;
+}
+.ai-analysis ul {
+  margin-left: 1rem;
+  padding-left: 1rem;
+  list-style-type: disc;
 }
 </style>
 

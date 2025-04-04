@@ -71,5 +71,6 @@ class Employee(db.Model):
     behavior = db.Column(db.Text)
     feedback = db.Column(db.Text)
     ai_analysis = db.Column(db.Text)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     team = db.relationship('Team', backref=db.backref('employees', lazy=True))

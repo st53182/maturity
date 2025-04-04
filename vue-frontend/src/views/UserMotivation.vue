@@ -181,11 +181,15 @@ export default {
       const team = this.teams.find(t => t.id === teamId);
       return team ? team.name : "—";
     },
-    getAvatarUrl(aiText) {
-      const type = this.extractDISCType(aiText);
-      const key = type?.toLowerCase().split(" ")[0].replace(/[^\w]/g, "");
-      return `/avatars/${key || "default"}.png`;
-    }
+ getAvatarUrl(aiText) {
+  const type = this.extractDISCType(aiText);
+  if (!type) {
+    const index = Math.floor(Math.random() * 5) + 1; // 1–5
+    return `/avatars/random${index}.png`;
+  }
+  const key = type.toLowerCase().split(" ")[0].replace(/[^\w]/g, "");
+  return `/avatars/${key || "default"}.png`;
+}
   }
 };
 </script>

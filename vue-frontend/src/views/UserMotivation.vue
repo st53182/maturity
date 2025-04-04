@@ -219,14 +219,18 @@ export default {
       this.result = employee.ai_analysis;
     },
 
-    extractFactors(text, type) {
-      const match = text?.match(new RegExp(`\\*\\*${type} факторы:\\*\\*(.*?)\\*\\*`, 's'));
-      if (!match) return [];
-      return match[1]
-        .split(/[-–•]/)
-        .map(line => line.trim())
-        .filter(line => line.length > 3);
-    },
+   extractFactors(text, sectionTitle) {
+  if (!text) return [];
+
+  const sectionRegex = new RegExp(`\\*\\*${sectionTitle} факторы:\\*\\*(.*?)(\\*\\*|\\n\\n|$)`, "s");
+  const match = text.match(sectionRegex);
+  if (!match) return [];
+
+  return match[1]
+    .split(/[-–•]/)
+    .map(line => line.trim())
+    .filter(line => line.length > 3);
+},
 
     extractDISCType(aiText) {
       const match = aiText?.match(/\*\*Тип DISC:\*\*\s*(.*?)(\*\*|$)/);

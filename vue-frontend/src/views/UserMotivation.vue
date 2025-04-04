@@ -227,14 +227,14 @@ export default {
 },
 
     extractDISCType(aiText) {
-  if (!aiText || !Array.isArray(this.discProfiles)) return "Неизвестно";
+  if (!aiText) return "Неизвестно";
 
-  const match = aiText.match(/\b([DISC])\b/i);
-  if (!match) return "Неизвестно";
+  const match =
+    aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я][^)<\n:]*\([A-ZА-Я]\))/i) ||
+    aiText.match(/тип\s+[A-ZА-Я]\s*\([^)]+\)/i) ||
+    aiText.match(/тип\s+["«]?(.)["»]?/i);
 
-  const type = match[1].toUpperCase();
-  const profile = this.discProfiles.find(p => p.type === type);
-  return profile ? `${type} (${profile.title})` : type;
+  return match ? match[1].trim() : "Неизвестно";
 },
 
     getTeamName(teamId) {
@@ -329,9 +329,9 @@ button:hover {
 }
 
 .employee-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
   margin-bottom: 30px;
 }
 

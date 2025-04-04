@@ -137,12 +137,20 @@ export default {
     const discRes = await fetch("/static/disc_profiles_for_frontend.json");
     this.discProfiles = await discRes.json();
 
-    // 💡 добавляем motivators и demotivators
     this.employees = rawEmployees.map(e => ({
       ...e,
       motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
       demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы")
     }));
+  },
+
+  computed: {
+    motivators() {
+      return this.extractFactors(this.result, "Мотивирующие");
+    },
+    demotivators() {
+      return this.extractFactors(this.result, "Демотиваторы");
+    }
   },
 
   methods: {
@@ -160,7 +168,6 @@ export default {
           this.result = data.analysis;
           this.form.id = data.employee_id;
 
-          // 🔁 Обновление или добавление сотрудника
           const index = this.employees.findIndex(e => e.id === data.employee_id);
           const updated = {
             ...this.form,
@@ -219,18 +226,30 @@ export default {
       this.result = employee.ai_analysis;
     },
 
-   extractFactors(text, sectionTitle) {
-  if (!text) return [];
+    extractFactors(text, sectionTitle) {
+      if (!text) return [];
 
-  const sectionRegex = new RegExp(`\\*\\*${sectionTitle} факторы:\\*\\*(.*?)(\\*\\*|\\n\\n|$)`, "s");
-  const match = text.match(sectionRegex);
-  if (!match) return [];
+      const match = text.match(new RegExp(`${sectionTitle}:`, "i"));
+      if (!match) return [];
 
-  return match[1]
-    .split(/[-–•]/)
-    .map(line => line.trim())
-    .filter(line => line.length > 3);
-},
+      const start = text.indexOf(match[0]);
+      const rest = text.slice(start);
+
+      const stopRegex = /^(Мотивирующие факторы|Демотиваторы|Рекомендации для руководителя):/gmi;
+      const stopMatch = [...rest.matchAll(stopRegex)];
+
+      let end = rest.length;
+      if (stopMatch.length > 1) {
+        end = stopMatch[1].index;
+      }
+
+      const section = rest.slice(0, end);
+
+      return section
+        .split(/[-–•●]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 3);
+    },
 
     extractDISCType(aiText) {
       const match = aiText?.match(/\*\*Тип DISC:\*\*\s*(.*?)(\*\*|$)/);
@@ -250,6 +269,7 @@ export default {
   }
 };
 </script>
+
 
 
 <style>

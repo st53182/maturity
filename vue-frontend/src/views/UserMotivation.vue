@@ -206,9 +206,12 @@ export default {
   this.showModal = true;
 },
 
-    extractDISCFullType(aiText) {
+extractDISCFullType(aiText) {
   if (!aiText) return "Неизвестно";
-  const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+\))/i);
+
+  const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+?\))/i)
+             || aiText.match(/Тип DISC[:-]?\s*([A-ZА-Я]\s*\([^)]+?\))/i);
+
   return match ? match[1].trim() : "Неизвестно";
 },
 

@@ -217,9 +217,8 @@ export default {
 },
 
     extractDISCType(aiText) {
-  if (!aiText) return "Неизвестно";
+  if (!aiText || !Array.isArray(this.discProfiles)) return "Неизвестно";
 
-  // Находим символ DISC в любом контексте
   const match = aiText.match(/\b([DISC])\b/i);
   if (!match) return "Неизвестно";
 

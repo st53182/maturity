@@ -152,6 +152,9 @@ export default {
             demotivators: this.extractFactors(data.analysis, "Демотиваторы")
           };
 
+          const discRes = await fetch("/static/disc_profiles_for_frontend.json");
+          this.discProfiles = await discRes.json();
+
           const index = this.employees.findIndex(e => e.id === data.employee_id);
           if (index !== -1) {
             this.employees.splice(index, 1, updated);
@@ -216,16 +219,13 @@ export default {
     extractDISCType(aiText) {
   if (!aiText) return "Неизвестно";
 
-  // Пробуем искать заголовок или жирный текст
-const match = aiText.match(/Тип DISC[:-]?\s*(?:<\/strong>)?\s*([A-ZА-Я]\s*\(.*?\)|[A-ZА-Я]\s*[-–—]?\s*[^<\n]*)/i);
+  // Находим символ DISC в любом контексте
+  const match = aiText.match(/\b([DISC])\b/i);
+  if (!match) return "Неизвестно";
 
-  if (match) {
-    return match[1].replace(/<\/?[^>]+>/g, '').trim(); // Удалить HTML-теги
-  }
-
-  // Вариант 2: ищем тип в тексте без форматирования
-  const backup = aiText.match(/(Тип DISC.*?:.*?)<br/);
-  return backup ? backup[1].split(":")[1].trim() : "Неизвестно";
+  const type = match[1].toUpperCase();
+  const profile = this.discProfiles.find(p => p.type === type);
+  return profile ? `${type} (${profile.title})` : type;
 },
 
     getTeamName(teamId) {

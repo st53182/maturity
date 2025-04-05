@@ -40,7 +40,11 @@
         </div>
 
     <div v-if="employee.ai_analysis" class="manager-tips-block" v-html="extractManagerTips(employee.ai_analysis)"></div>
-
+<div class="form-footer">
+  <button class="update-btn" @click="handleEmployeeClick(employee)">
+    🔄 Обновить рекомендации
+  </button>
+</div>
       </div>
 
       <div class="employee-card add-card" @click="resetForm">
@@ -204,11 +208,13 @@ export default {
       await fetch(`/employee/${id}`, { method: "DELETE" });
       this.employees = this.employees.filter(e => e.id !== id);
     },
-
+handleEmployeeClick(employee) {
+  this.selectEmployee(employee);
+  this.showModal = true;
+},
  selectEmployee(employee) {
   this.form = { ...employee };
   this.result = employee.ai_analysis;
-  this.showModal = true;
 },
 
 extractDISCFullType(aiText) {
@@ -548,6 +554,26 @@ button:hover {
   margin-bottom: 10px;
   font-size: 15px;
   color: #222;
+}
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.update-btn {
+  background-color: #3498db;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.update-btn:hover {
+  background-color: #2b82c6;
 }
 
 </style>

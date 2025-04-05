@@ -42,7 +42,7 @@ def resolve_conflict():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Ты профессиональный фасилитатор Agile-команд."},
                 {"role": "user", "content": prompt}

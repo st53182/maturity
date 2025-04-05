@@ -40,10 +40,11 @@
         </div>
 
     <div v-if="employee.ai_analysis" class="manager-tips-block" v-html="extractManagerTips(employee.ai_analysis)"></div>
-<div class="form-footer">
-  <button class="update-btn" @click="handleEmployeeClick(employee)">
+        <button class="update-btn" @click="handleEmployeeClick(employee)">
     🔄 Обновить рекомендации
   </button>
+<div class="form-footer">
+
 </div>
       </div>
 

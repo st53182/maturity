@@ -119,7 +119,7 @@ def save_employee():
     # Обновляем поля
     employee.name = data.get("name")
     employee.role = data.get("role")
-    employee.team_id = data.get("team_id")
+    employee.team_id = data.get("team_id") or None
     employee.stress = data.get("stress")
     employee.communication = data.get("communication")
     employee.behavior = data.get("behavior")

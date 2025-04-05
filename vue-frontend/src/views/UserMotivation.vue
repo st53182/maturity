@@ -68,13 +68,13 @@
       <label>Должность:</label>
       <input v-model="form.role" required />
 
-      <label>Команда:</label>
-      <select v-model="form.team_id" required>
-        <option disabled value="">Выберите команду</option>
-        <option v-for="team in teams" :key="team.id" :value="team.id">
-          {{ team.name }}
-        </option>
-      </select>
+      <label>Команда (необязательно):</label>
+<select v-model="form.team_id">
+  <option value="">— Без команды —</option>
+  <option v-for="team in teams" :key="team.id" :value="team.id">
+    {{ team.name }}
+  </option>
+</select>
 
       <label>1. Поведение в стрессовой ситуации</label>
       <textarea v-model="form.stress" required></textarea>

@@ -18,7 +18,8 @@
         />
         <div class="card-header">
           <h4 class="employee-name">{{ employee.name }}</h4>
-          <button @click.stop="deleteEmployee(employee.id)">🗑</button>
+          <button class="delete-btn" @click.stop="deleteEmployee(employee.id)">🗑</button>
+
         </div>
         <p class="team-name">🏢 Команда: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
         <p class="disc-type-full">🧠 Тип DISC: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
@@ -288,7 +289,6 @@ extractDISCFullType(aiText) {
 
 
 <style scoped>
-
 .motivation-container {
   max-width: 1200px;
   margin: 40px auto;
@@ -320,11 +320,6 @@ form {
   gap: 16px;
 }
 
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
 input,
 textarea,
 select {
@@ -345,6 +340,7 @@ button {
   font-weight: bold;
   transition: background 0.2s ease;
 }
+
 button:hover {
   background: #1c6edb;
 }
@@ -365,17 +361,18 @@ button:hover {
 }
 
 .employee-card {
-  width: 340px;
+  width: 100%;
   min-height: 100px;
   padding: 1rem;
   border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.04);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   gap: 12px;
   position: relative;
 }
+
 .employee-card:hover {
   transform: translateY(-2px);
   transition: 0.2s ease;
@@ -389,20 +386,25 @@ button:hover {
   margin: 0 auto;
 }
 
-.employee-card .disc-type {
-  font-size: 14px;
+.employee-card .employee-name {
+  text-align: center;
+  font-size: 18px;
   font-weight: bold;
+}
+
+.employee-card .team-name,
+.employee-card .disc-type-full {
+  text-align: center;
+  font-size: 14px;
   color: #444;
-  text-align: center;
+  margin: 0;
 }
 
-.employee-card .team-name {
-  font-size: 13px;
-  color: #777;
-  text-align: center;
+.disc-type-full strong {
+  color: #2c3e50;
 }
 
-.employee-card button {
+.employee-card .delete-btn {
   position: absolute;
   top: 6px;
   right: 10px;
@@ -424,6 +426,8 @@ button:hover {
   font-weight: 500;
   color: #666;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .factors {
@@ -462,30 +466,50 @@ button:hover {
   margin-bottom: 6px;
 }
 
-.ai-analysis {
-  padding: 1rem;
-  border-radius: 12px;
-  background: #fdfdfd;
-  border: 1px solid #ddd;
-  margin-top: 20px;
+.manager-tips-block {
+  margin-top: 10px;
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 
-.ai-analysis h3,
-.ai-analysis h4 {
-  margin-top: 1rem;
-  color: #2c3e50;
-}
-
-.ai-analysis ul {
+.manager-tips-block ul {
   padding-left: 1.2rem;
-  margin-bottom: 10px;
+  list-style-type: disc;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.manager-tips-block li {
+  margin-bottom: 6px;
 }
+
+.manager-tips-block h3 {
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #222;
+}
+
+.employee-card-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.update-btn {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.update-btn:hover {
+  background-color: #2c80c0;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -508,7 +532,7 @@ button:hover {
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .modal-close {
@@ -522,82 +546,9 @@ button:hover {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .modal-close:hover {
   color: #000;
 }
-.employee-name {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-}
-.team-name,
-.disc-type-full {
-  text-align: center;
-  font-size: 14px;
-  color: #444;
-  margin: 0;
-}
-.disc-type-full strong {
-  color: #2c3e50;
-}
-.manager-tips-block {
-  margin-top: 10px;
-  background: #f9f9f9;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-.manager-tips-block ul {
-  padding-left: 1.2rem;
-  list-style-type: disc;
-}
-.manager-tips-block li {
-  margin-bottom: 6px;
-}
-.manager-tips-block h3 {
-  margin-bottom: 10px;
-  font-size: 15px;
-  color: #222;
-}
-.form-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.update-btn {
-  background-color: #3498db;
-  color: white;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.update-btn:hover {
-  background-color: #2b82c6;
-  }
-.employee-card-footer {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: center;
-}
-
-.update-btn {
-  padding: 8px 16px;
-  background-color: #3498db;
-  color: #fff;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.update-btn:hover {
-  background-color: #2c80c0;
-}
-
 </style>
+

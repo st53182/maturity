@@ -23,6 +23,11 @@
         </div>
         <p class="team-name">🏢 Команда: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
         <p class="disc-type-full">🧠 Тип DISC: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
+        <div class="employee-card-footer">
+    <button class="update-btn" @click="handleEmployeeClick(employee)">
+      🔄 Обновить рекомендации
+    </button>
+  </div>
 
         <div v-if="employee.ai_analysis" class="factors">
           <div class="column">
@@ -45,11 +50,7 @@
 <div class="form-footer">
 
 </div>
-        <div class="employee-card-footer">
-    <button class="update-btn" @click="handleEmployeeClick(employee)">
-      🔄 Обновить рекомендации
-    </button>
-  </div>
+
       </div>
 
       <div class="employee-card add-card" @click="resetForm">

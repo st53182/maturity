@@ -362,7 +362,7 @@ button:hover {
 }
 
 .employee-card {
-  width: 100%;
+  /* Убери width */
   min-height: 100px;
   padding: 1rem;
   border-radius: 14px;
@@ -417,8 +417,7 @@ button:hover {
 }
 
 .employee-card.add-card {
-  width: 160px;
-  height: 160px;
+  min-height: 240px;
   background: #f3f3f3;
   justify-content: center;
   align-items: center;
@@ -429,6 +428,8 @@ button:hover {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  border-radius: 14px;
+  padding: 1rem;
 }
 
 .factors {

@@ -578,25 +578,26 @@ button:hover {
 
 .update-btn:hover {
   background-color: #2b82c6;
-}
+  }
 .employee-card-footer {
+  margin-top: 1rem;
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
 }
 
 .update-btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   background-color: #3498db;
-  color: white;
+  color: #fff;
   font-weight: bold;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.3s ease;
 }
 
 .update-btn:hover {
-  background-color: #2980b9;
+  background-color: #2c80c0;
 }
+
 </style>

@@ -40,12 +40,15 @@
         </div>
 
     <div v-if="employee.ai_analysis" class="manager-tips-block" v-html="extractManagerTips(employee.ai_analysis)"></div>
-        <button class="update-btn" @click="handleEmployeeClick(employee)">
-    🔄 Обновить рекомендации
-  </button>
+
 <div class="form-footer">
 
 </div>
+        <div class="employee-card-footer">
+    <button class="update-btn" @click="handleEmployeeClick(employee)">
+      🔄 Обновить рекомендации
+    </button>
+  </div>
       </div>
 
       <div class="employee-card add-card" @click="resetForm">
@@ -576,5 +579,24 @@ button:hover {
 .update-btn:hover {
   background-color: #2b82c6;
 }
+.employee-card-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
 
+.update-btn {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.update-btn:hover {
+  background-color: #2980b9;
+}
 </style>

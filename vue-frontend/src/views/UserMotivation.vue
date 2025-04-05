@@ -36,6 +36,12 @@
               <li v-for="item in employee.demotivators" :key="item">{{ item }}</li>
             </ul>
           </div>
+          <div v-if="employee.managerTips?.length" class="column tips-block">
+  <h5>🧑‍💼 Рекомендации для руководителя</h5>
+  <ul>
+    <li v-for="tip in employee.managerTips" :key="tip">{{ tip }}</li>
+  </ul>
+</div>
         </div>
       </div>
 
@@ -133,7 +139,8 @@ export default {
     this.employees = rawEmployees.map(e => ({
       ...e,
       motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
-      demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы")
+      demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы"),
+      managerTips: this.extractManagerTips(e.ai_analysis)
     }));
   },
 
@@ -244,6 +251,20 @@ extractDISCFullType(aiText) {
     aiText.match(/тип\s+["«]?(.)["»]?/i);
 
   return match ? match[1].trim() : "Неизвестно";
+},
+    extractManagerTips(text) {
+  if (!text) return [];
+
+  const match = text.match(/Рекомендации для руководителя:/i);
+  if (!match) return [];
+
+  const start = text.indexOf(match[0]);
+  const section = text.slice(start);
+
+  return section
+    .split(/[-–•●]/)
+    .map(item => item.trim())
+    .filter(item => item.length > 3);
 },
 
     getTeamName(teamId) {
@@ -520,4 +541,29 @@ button:hover {
 .disc-type-full strong {
   color: #2c3e50;
 }
+.tips-block {
+  margin-top: 10px;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.tips-block h5 {
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #222;
+}
+
+.tips-block ul {
+  padding-left: 1.2rem;
+  list-style: disc;
+  margin: 0;
+}
+
+.tips-block li {
+  margin-bottom: 6px;
+  color: #444;
+}
+
 </style>

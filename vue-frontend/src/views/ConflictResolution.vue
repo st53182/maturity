@@ -105,14 +105,25 @@ export default {
     },
 
     async fetchEmployees() {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/employees", {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      this.employees = await res.json();
-    },
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.warn("Токен не найден при попытке загрузки сотрудников");
+    return;
+  }
+
+  const res = await fetch("/api/employees", {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Ошибка загрузки сотрудников:", text);
+  }
+
+  this.employees = await res.json();
+},
 
     getParticipantNames(ids) {
       try {

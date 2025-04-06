@@ -187,21 +187,21 @@ export default {
     },
 
     async waitForTokenAndInit() {
-      let retries = 10;
-      while (!localStorage.getItem("token") && retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        retries--;
-      }
+  let retries = 10;
+  while (!localStorage.getItem("token") && retries > 0) {
+    await new Promise(resolve => setTimeout(resolve, 300)); // ждём 300мс
+    retries--;
+  }
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        this.$router.push("/login");
-        return;
-      }
+  const token = localStorage.getItem("token");
+  if (!token) {
+    this.$router.push("/login");
+    return;
+  }
 
-      await this.fetchConflicts();
-      await this.fetchEmployees();
-    }
+  await this.fetchConflicts();
+  await this.fetchEmployees(); // 👈 будет вызван только когда токен готов
+}
   },
 
   mounted() {

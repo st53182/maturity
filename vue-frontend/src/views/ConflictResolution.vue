@@ -96,7 +96,7 @@ export default {
   methods: {
     async fetchConflicts() {
       const token = localStorage.getItem("token");
-      const res = await fetch("/conflicts", {
+      const res = await fetch("/api/conflicts", {
         headers: {
           "Authorization": `Bearer ${token}`
         }

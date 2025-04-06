@@ -46,7 +46,8 @@ app.register_blueprint(bp_auth)
 app.register_blueprint(bp_survey)
 app.register_blueprint(bp_dashboard, url_prefix="/dashboard")
 app.register_blueprint(bp_assessment)
-app.register_blueprint(bp_conflict)
+app.register_blueprint(bp_conflict, url_prefix="/api")
+
 app.register_blueprint(bp_motivation)
 
 

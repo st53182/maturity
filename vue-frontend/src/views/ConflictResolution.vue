@@ -178,7 +178,7 @@ await this.fetchConflicts();
   async waitForTokenAndInit() {
     let retries = 10;
     while (!localStorage.getItem("token") && retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, 100)); // ждём 100мс
+      await new Promise(resolve => setTimeout(resolve, 1000)); // ждём 100мс
       retries--;
     }
 

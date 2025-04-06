@@ -1,146 +1,335 @@
 <template>
   <div class="conflict-container">
-    <h1>🧠 Разрешение конфликта</h1>
+    <h1>🔥 Конфликты в командах</h1>
 
-    <div v-if="!aiResponse">
-      <div class="step">
-        <label>1. Опиши контекст конфликта:</label>
-        <textarea
-          v-model="context"
-          rows="3"
-          placeholder="Что произошло? Где и когда случилось? В чём суть конфликта? Какие события предшествовали?"
-        />
-      </div>
-
-      <div class="step">
-        <label>2. Опиши участников конфликта (их поведение, эмоции, реакции):</label>
-        <textarea
-          v-model="participants"
-          rows="3"
-          placeholder="Кто участвовал? Как себя вели? Какие эмоции проявляли? Как реагировали друг на друга?"
-        />
-      </div>
-
-      <div class="step">
-        <label>3. Какие действия уже были предприняты и с каким результатом?</label>
-        <textarea
-          v-model="attempts"
-          rows="3"
-          placeholder="Что уже пробовали? Кто инициировал? Какие шаги были предприняты? Каков был результат?"
-        />
-      </div>
-
-      <div class="step">
-        <label>4. Какова цель — чего ты хочешь достичь?</label>
-        <textarea
-          v-model="goal"
-          rows="2"
-          placeholder="Какой желаемый результат? Чего ты хочешь достичь? Как выглядит идеальное решение?"
-        />
-      </div>
-
-      <button @click="submitConflict" :disabled="loading">
-        {{ loading ? "Обработка..." : "Получить рекомендации" }}
+    <!-- 🔹 Фильтр -->
+    <div class="filter-bar">
+      <button
+        v-for="s in statuses"
+        :key="s"
+        :class="{ active: filterStatus === s }"
+        @click="filterStatus = s"
+      >
+        {{ s }}
       </button>
+      <button @click="openModal(null)" class="add-btn">➕ Новый конфликт</button>
     </div>
 
-    <div v-if="aiResponse" class="response-block">
-      <h2>📝 Рекомендации</h2>
-      <div v-html="aiResponse"></div>
-      <button @click="resetForm">Новый запрос</button>
+    <!-- 🔹 Карточки -->
+    <div class="conflict-list">
+      <div
+        v-for="conflict in filteredConflicts"
+        :key="conflict.id"
+        class="conflict-card"
+      >
+        <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
+        <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
+        <p>🎯 Цель: {{ conflict.goal }}</p>
+        <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
+        <button @click="openModal(conflict)">✏️ Редактировать</button>
+        <button class="delete-btn" @click="deleteConflict(conflict.id)">🗑</button>
+      </div>
+    </div>
+
+    <!-- 🔹 Модальное окно -->
+    <div class="modal-overlay" v-if="showModal">
+      <div class="modal-content">
+        <h2>{{ form.id ? 'Редактировать' : 'Новый конфликт' }}</h2>
+        <label>Контекст конфликта</label>
+        <textarea v-model="form.context" rows="3" />
+
+        <label>Участники</label>
+        <select v-model="form.participants" multiple>
+          <option v-for="e in employees" :value="e.id" :key="e.id">{{ e.name }}</option>
+        </select>
+
+        <label>Что предпринималось?</label>
+        <textarea v-model="form.actions_taken" rows="2" />
+
+        <label>Цель разрешения</label>
+        <textarea v-model="form.goal" rows="2" />
+
+        <label>Статус</label>
+        <select v-model="form.status">
+          <option value="Активен">Активен</option>
+          <option value="Закрыт">Закрыт</option>
+          <option value="Обострение">Обострение</option>
+        </select>
+
+        <div class="modal-actions">
+          <button @click="submitConflict">💬 Получить рекомендации</button>
+          <button class="modal-close" @click="showModal = false">✖</button>
+        </div>
+
+        <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
+      </div>
     </div>
   </div>
 </template>
-
 
 <script>
 export default {
   data() {
     return {
-      context: "",
-      participants: "",
-      attempts: "",
-      goal: "",
-      aiResponse: "",
-      loading: false
+      conflicts: [],
+      employees: [],
+      showModal: false,
+      filterStatus: "Все",
+      statuses: ["Все", "Активен", "Закрыт", "Обострение"],
+      form: {
+        id: null,
+        context: "",
+        participants: [],
+        actions_taken: "",
+        goal: "",
+        status: "Активен",
+        ai_response: ""
+      }
     };
   },
-  methods: {
-    async submitConflict() {
-      this.loading = true;
-      try {
-        const response = await fetch("/api/conflict/resolve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            context: this.context,
-            participants: this.participants,
-            attempts: this.attempts,
-            goal: this.goal
-          })
-        });
-
-        const data = await response.json();
-        this.aiResponse = data.response || "Не удалось получить ответ.";
-      } catch (error) {
-        console.error("❌ Ошибка:", error);
-        this.aiResponse = "Произошла ошибка при получении ответа от AI.";
-      } finally {
-        this.loading = false;
-      }
-    },
-    resetForm() {
-      this.context = "";
-      this.participants = "";
-      this.attempts = "";
-      this.goal = "";
-      this.aiResponse = "";
+  computed: {
+    filteredConflicts() {
+      if (this.filterStatus === "Все") return this.conflicts;
+      return this.conflicts.filter(c => c.status === this.filterStatus);
     }
+  },
+  methods: {
+    async fetchConflicts() {
+      const res = await fetch("/conflicts");
+      this.conflicts = await res.json();
+    },
+    async fetchEmployees() {
+      const res = await fetch("/employees");
+      this.employees = await res.json();
+    },
+    getParticipantNames(ids) {
+      if (!ids) return "—";
+      const parsed = Array.isArray(ids) ? ids : JSON.parse(ids);
+      return this.employees
+        .filter(e => parsed.includes(e.id))
+        .map(e => e.name)
+        .join(", ");
+    },
+    openModal(conflict) {
+      if (conflict) {
+        this.form = { ...conflict };
+        this.form.participants = JSON.parse(conflict.participants || "[]");
+      } else {
+        this.form = {
+          id: null,
+          context: "",
+          participants: [],
+          actions_taken: "",
+          goal: "",
+          status: "Активен",
+          ai_response: ""
+        };
+      }
+      this.showModal = true;
+    },
+    async submitConflict() {
+      const payload = { ...this.form };
+      payload.participants = JSON.stringify(payload.participants);
+
+      const res = await fetch("/conflict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      this.form.ai_response = data.analysis;
+      await this.fetchConflicts(); // обновить список
+    },
+    async deleteConflict(id) {
+      if (!confirm("Удалить конфликт?")) return;
+      await fetch(`/conflict/${id}`, { method: "DELETE" });
+      this.fetchConflicts();
+    }
+  },
+  mounted() {
+    this.fetchConflicts();
+    this.fetchEmployees();
   }
 };
 </script>
-
 <style scoped>
 .conflict-container {
-  max-width: 800px;
-  margin: auto;
+  max-width: 1200px;
+  margin: 40px auto;
   padding: 20px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  font-family: "Segoe UI", sans-serif;
 }
 
-.step {
+h1 {
+  font-size: 26px;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-bar button {
+  background: #ecf0f1;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #34495e;
+  transition: 0.3s;
+}
+
+.filter-bar button.active,
+.filter-bar button:hover {
+  background: #3498db;
+  color: white;
+}
+
+.add-btn {
+  background-color: #2ecc71 !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+.conflict-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.conflict-card {
+  background: #fdfdfd;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.conflict-card h3 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.conflict-card p {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+
+.conflict-card button {
+  align-self: flex-start;
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.conflict-card .delete-btn {
+  background: #e74c3c;
+  margin-top: 6px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 30px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h2 {
+  font-size: 20px;
   margin-bottom: 20px;
 }
 
-textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-  resize: vertical;
+.modal-content label {
+  display: block;
+  margin-top: 14px;
+  font-weight: bold;
+  color: #2c3e50;
 }
 
-button {
-  background: #7e57c2;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  font-weight: bold;
+.modal-content textarea,
+.modal-content select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  border: 1px solid #ccc;
   border-radius: 8px;
+  resize: vertical;
+  font-size: 14px;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.modal-actions .modal-close {
+  background: transparent;
+  color: #888;
+  font-size: 20px;
 }
 
-.response-block {
+.modal-actions .modal-close:hover {
+  color: #000;
+}
+
+.ai-analysis {
+  margin-top: 20px;
   background: #f9f9f9;
-  padding: 20px;
-  border-radius: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+.ai-analysis ul {
+  list-style: disc;
+  padding-left: 20px;
 }
 </style>

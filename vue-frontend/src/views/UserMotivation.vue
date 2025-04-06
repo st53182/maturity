@@ -126,6 +126,7 @@ export default {
       result: "",
       loading: false,
       showModal: false,
+      avatar: "default.png"
 
     };
   },

@@ -51,15 +51,24 @@ class Assessment(db.Model):
     recommendations = db.Column(db.Text, nullable=True)
     plan = db.Column(JSON, nullable=True)
 
+# models.py
 class Conflict(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=True)  # опционально
-    context = db.Column(db.Text, nullable=False)
-    participants = db.Column(db.Text, nullable=False)
-    attempts = db.Column(db.Text, nullable=False)
-    goal = db.Column(db.Text, nullable=False)
-    ai_response = db.Column(db.Text, nullable=False)
+    context = db.Column(db.Text)
+    participants = db.Column(db.Text)
+    attempts = db.Column(db.Text)
+    goal = db.Column(db.Text)
+    status = db.Column(db.String(50), default="активен")  # 👈 добавим статус
+    ai_analysis = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    employee_1_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
+    employee_2_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
+
+    employee_1 = db.relationship('Employee', foreign_keys=[employee_1_id])
+    employee_2 = db.relationship('Employee', foreign_keys=[employee_2_id])
+
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)

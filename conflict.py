@@ -1,8 +1,11 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import Conflict, Employee
 from database import db
-from models import Conflict
 import os
 from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 bp_conflict = Blueprint("conflict", __name__)
 
@@ -70,3 +73,81 @@ def resolve_conflict():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+@bp_conflict.route("/conflicts", methods=["POST"])
+@jwt_required()
+def create_conflict():
+    data = request.json
+    user_id = get_jwt_identity()
+
+    try:
+        conflict = Conflict(
+            context=data["context"],
+            participants=data["participants"],
+            attempts=data["attempts"],
+            goal=data["goal"],
+            status=data.get("status", "активен"),
+            employee_1_id=data.get("employee_1_id"),
+            employee_2_id=data.get("employee_2_id")
+        )
+        db.session.add(conflict)
+        db.session.commit()
+
+        # Генерация анализа через OpenAI
+        prompt = f"""Ты фасилитатор конфликтов. На основе описания ситуации и поведения сторон, предложи способы разрешения конфликта и как улучшить взаимодействие.
+Контекст: {conflict.context}
+Участники: {conflict.participants}
+Предпринятые действия: {conflict.attempts}
+Цель: {conflict.goal}
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Ты фасилитатор конфликтов и Agile-коуч."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1500
+        )
+
+        conflict.ai_analysis = response.choices[0].message.content
+        db.session.commit()
+
+        return jsonify({
+            "id": conflict.id,
+            "analysis": conflict.ai_analysis
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+@bp_conflict.route("/conflicts", methods=["GET"])
+@jwt_required()
+def get_conflicts():
+    conflicts = Conflict.query.order_by(Conflict.created_at.desc()).all()
+
+    result = []
+    for c in conflicts:
+        result.append({
+            "id": c.id,
+            "context": c.context,
+            "participants": c.participants,
+            "attempts": c.attempts,
+            "goal": c.goal,
+            "status": c.status,
+            "employee_1": {"id": c.employee_1.id, "name": c.employee_1.name} if c.employee_1 else None,
+            "employee_2": {"id": c.employee_2.id, "name": c.employee_2.name} if c.employee_2 else None,
+            "ai_analysis": c.ai_analysis,
+            "created_at": c.created_at.isoformat()
+        })
+    return jsonify(result)
+
+@bp_conflict.route("/conflict/<int:conflict_id>", methods=["DELETE"])
+@jwt_required()
+def delete_conflict(conflict_id):
+    conflict = Conflict.query.get(conflict_id)
+    if not conflict:
+        return jsonify({"error": "Конфликт не найден"}), 404
+    db.session.delete(conflict)
+    db.session.commit()
+    return jsonify({"message": "Удалено"})

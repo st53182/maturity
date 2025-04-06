@@ -61,10 +61,10 @@
         </select>
 
         <div class="modal-actions">
-  <button @click="submitConflict" :disabled="loading">
+  <button class="generate-btn" @click="submitConflict" :disabled="loading">
     💬 {{ loading ? "Генерация..." : "Получить рекомендации" }}
   </button>
-  <button @click="saveConflict" :disabled="saving">
+  <button class="save-btn" @click="saveConflict" :disabled="saving">
     💾 {{ saving ? "Сохранение..." : "Сохранить и закрыть" }}
   </button>
   <button class="modal-close" @click="showModal = false">✖</button>
@@ -284,144 +284,184 @@ async saveConflict() {
 </script>
 
 <style scoped>
-/* ✅ Контейнер */
+/* Контейнер всей страницы */
 .conflict-container {
   max-width: 1200px;
   margin: 40px auto;
-  padding: 24px;
+  padding: 20px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   font-family: "Segoe UI", sans-serif;
 }
 
-/* ✅ Заголовок */
+/* Заголовок */
 h1 {
-  font-size: 28px;
-  margin-bottom: 24px;
-  font-weight: 700;
+  font-size: 26px;
+  margin-bottom: 20px;
   color: #2c3e50;
 }
 
-/* ✅ Кнопки фильтра */
+/* Панель фильтров */
 .filter-bar {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 20px;
 }
 
 .filter-bar button {
-  background: #f0f4f8;
+  background: #ecf0f1;
   border: none;
   padding: 10px 18px;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
   color: #34495e;
-  transition: 0.3s ease;
+  transition: 0.3s;
 }
 
 .filter-bar button.active,
 .filter-bar button:hover {
   background: #3498db;
-  color: #fff;
+  color: white;
 }
 
 .add-btn {
-  background-color: #27ae60 !important;
+  background-color: #2ecc71 !important;
   color: white !important;
+  font-weight: bold;
 }
 
-/* ✅ Сетка карточек */
+/* Карточки */
 .conflict-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
 }
 
-/* ✅ Карточка конфликта */
 .conflict-card {
-  background: #fafafa;
-  padding: 18px;
-  border-radius: 14px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
+  background: #fdfdfd;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .conflict-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .conflict-card h3 {
-  font-size: 17px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 10px;
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 8px;
 }
 
 .conflict-card p {
   font-size: 14px;
-  color: #555;
-  margin: 2px 0;
+  color: #444;
+  margin: 6px 0 10px;
+  line-height: 1.6;
 }
 
-.conflict-card button {
-  background: #3498db;
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
+.conflict-card p + p {
+  margin-top: 12px;
+}
+
+.conflict-card p strong {
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* Блок рекомендаций */
+.recommendation-title {
+  font-weight: bold;
+  margin-top: 14px;
+  color: #e74c3c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recommendation-text {
+  background: #fcfcfc;
+  border-left: 3px solid #e67e22;
+  padding: 10px 12px;
   border-radius: 8px;
   margin-top: 8px;
-  font-size: 13px;
-  transition: 0.3s ease;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* Кнопки */
+.conflict-card button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.conflict-card button:hover {
+  background: #2b7bbd;
 }
 
 .conflict-card .delete-btn {
   background: #e74c3c;
-  margin-left: 8px;
 }
 
-/* ✅ Модалка */
+.conflict-card .delete-btn:hover {
+  background: #c0392b;
+}
+
+/* Модальное окно */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 99;
 }
 
 .modal-content {
   background: #fff;
   padding: 30px;
   border-radius: 16px;
-  width: 95%;
-  max-width: 750px;
+  width: 90%;
+  max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .modal-content h2 {
   font-size: 22px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   color: #2c3e50;
-  font-weight: bold;
 }
 
 .modal-content label {
   display: block;
-  margin-top: 18px;
-  font-weight: 600;
-  color: #2c3e50;
+  margin-top: 16px;
+  font-weight: bold;
+  color: #34495e;
   font-size: 14px;
 }
 
@@ -429,79 +469,74 @@ h1 {
 .modal-content select {
   width: 100%;
   margin-top: 6px;
-  padding: 12px 14px;
-  border: 1px solid #dcdfe6;
-  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
   font-size: 14px;
-  background: #fff;
-  transition: border 0.2s;
 }
 
-.modal-content textarea:focus,
-.modal-content select:focus {
-  outline: none;
-  border-color: #3498db;
-}
-
-/* ✅ Кнопки в модалке */
+/* Кнопки в модальном окне */
 .modal-actions {
+  margin-top: 24px;
   display: flex;
   justify-content: space-between;
-  margin-top: 30px;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
 .modal-actions button {
-  flex: 1;
-  padding: 12px 20px;
-  font-weight: bold;
+  flex: 1 1 auto;
+  padding: 10px 18px;
   border: none;
   border-radius: 10px;
-  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: 0.25s ease-in-out;
 }
 
-.modal-actions button:disabled {
-  background-color: #ccc !important;
-  cursor: not-allowed;
+.modal-actions button:first-child {
+  background: #2980b9;
+  color: white;
+}
+
+.modal-actions button:first-child:hover {
+  background: #2471a3;
+}
+
+.modal-actions button:nth-child(2) {
+  background: #8e44ad;
+  color: white;
+}
+
+.modal-actions button:nth-child(2):hover {
+  background: #732d91;
 }
 
 .modal-actions .modal-close {
-  background: transparent;
-  color: #aaa;
-  font-size: 22px;
+  background: #eee;
+  color: #333;
+  font-size: 18px;
+  padding: 8px 14px;
 }
 
 .modal-actions .modal-close:hover {
+  background: #ddd;
+  color: #000;
+}
+
+/* AI Анализ */
+.ai-analysis {
+  margin-top: 20px;
+  background: #f9f9f9;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
   color: #333;
 }
 
-.modal-actions .save-btn {
-  background-color: #8e44ad;
-  color: #fff;
-}
-
-.modal-actions .generate-btn {
-  background-color: #3498db;
-  color: #fff;
-}
-
-/* ✅ AI блок */
-.ai-analysis {
-  margin-top: 28px;
-  background: #f3f6f9;
-  padding: 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #2c3e50;
-  border-left: 4px solid #3498db;
-}
-
 .ai-analysis ul {
-  padding-left: 20px;
   list-style: disc;
+  padding-left: 20px;
 }
 </style>

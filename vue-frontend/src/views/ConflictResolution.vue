@@ -95,36 +95,45 @@ export default {
   },
   methods: {
     async fetchConflicts() {
-  const token = localStorage.getItem("token"); // 👈 добавлено
-  const res = await fetch("/conflicts", {
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
-  this.conflicts = await res.json();
-},
-
-async fetchEmployees() {
-  const token = localStorage.getItem("token"); // 👈 добавлено
-  const res = await fetch("/employees", {
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
-  this.employees = await res.json();
-},
-    getParticipantNames(ids) {
-      if (!ids) return "—";
-      const parsed = Array.isArray(ids) ? ids : JSON.parse(ids);
-      return this.employees
-        .filter(e => parsed.includes(e.id))
-        .map(e => e.name)
-        .join(", ");
+      const token = localStorage.getItem("token");
+      const res = await fetch("/conflicts", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      this.conflicts = await res.json();
     },
+
+    async fetchEmployees() {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/employees", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      this.employees = await res.json();
+    },
+
+    getParticipantNames(ids) {
+      try {
+        const parsed = Array.isArray(ids) ? ids : JSON.parse(ids);
+        return this.employees
+          .filter(e => parsed.includes(e.id))
+          .map(e => e.name)
+          .join(", ");
+      } catch (e) {
+        return "—";
+      }
+    },
+
     openModal(conflict) {
       if (conflict) {
         this.form = { ...conflict };
-        this.form.participants = JSON.parse(conflict.participants || "[]");
+        try {
+          this.form.participants = JSON.parse(conflict.participants || "[]");
+        } catch (e) {
+          this.form.participants = [];
+        }
       } else {
         this.form = {
           id: null,
@@ -138,66 +147,69 @@ async fetchEmployees() {
       }
       this.showModal = true;
     },
+
     async deleteConflict(id) {
-  const token = localStorage.getItem("token");
-  await fetch(`/conflict/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
-await this.fetchConflicts();
-},
-    async submitConflict() {
-  const token = localStorage.getItem("token");
-  const payload = { ...this.form };
-
-  payload.participants = JSON.stringify(payload.participants);
-  payload.attempts = payload.actions_taken;
-  delete payload.actions_taken;
-
-  const res = await fetch("/conflicts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
+      const token = localStorage.getItem("token");
+      await fetch(`/conflict/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      await this.fetchConflicts();
     },
-    body: JSON.stringify(payload)
-  });
 
-  const data = await res.json();
+    async submitConflict() {
+      const token = localStorage.getItem("token");
+      const payload = { ...this.form };
 
-  if (res.ok) {
-    this.form.ai_response = data.analysis;
-    await this.fetchConflicts();
-  } else {
-    alert(data.error || "Ошибка при сохранении конфликта");
-  }
-}
-},
-  async waitForTokenAndInit() {
-    let retries = 10;
-    while (!localStorage.getItem("token") && retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // ждём 100мс
-      retries--;
+      payload.participants = JSON.stringify(payload.participants);
+      payload.attempts = payload.actions_taken;
+      delete payload.actions_taken;
+
+      const res = await fetch("/conflicts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        this.form.ai_response = data.analysis;
+        await this.fetchConflicts();
+      } else {
+        alert(data.error || "Ошибка при сохранении конфликта");
+      }
+    },
+
+    async waitForTokenAndInit() {
+      let retries = 10;
+      while (!localStorage.getItem("token") && retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        retries--;
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        this.$router.push("/login");
+        return;
+      }
+
+      await this.fetchConflicts();
+      await this.fetchEmployees();
     }
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      this.$router.push("/login");
-      return;
-    }
-
-    await this.fetchConflicts();
-    await this.fetchEmployees();
   },
 
   mounted() {
     this.waitForTokenAndInit();
-    this.fetchEmployees();
   }
 };
 </script>
+
 <style scoped>
 .conflict-container {
   max-width: 1200px;

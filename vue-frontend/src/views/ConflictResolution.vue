@@ -211,7 +211,7 @@ shortenAnalysis(html) {
 
     if (res.ok) {
       this.form.ai_response = data.analysis;
-      this.showModal = false;
+
       await this.fetchConflicts();
     } else {
       alert(data.error || "Ошибка при сохранении конфликта");

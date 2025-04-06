@@ -225,32 +225,29 @@ def update_conflict(conflict_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@bp_conflict.route("/conflicts/save", methods=["POST"])
+@bp_conflict.route("/api/conflicts/save", methods=["POST"])
 @jwt_required()
 def save_conflict():
     data = request.json
-    user_id = get_jwt_identity()
+    conflict_id = data.get("id")
+
+    if not conflict_id:
+        return jsonify({"error": "ID конфликта не указан"}), 400
+
+    conflict = Conflict.query.get(conflict_id)
+    if not conflict:
+        return jsonify({"error": "Конфликт не найден"}), 404
 
     try:
-        if data.get("id"):
-            conflict = Conflict.query.get(data["id"])
-            if not conflict:
-                return jsonify({"error": "Конфликт не найден"}), 404
-        else:
-            conflict = Conflict()
+        conflict.context = data.get("context", conflict.context)
+        conflict.participants = data.get("participants", conflict.participants)
+        conflict.attempts = data.get("attempts", conflict.attempts)
+        conflict.goal = data.get("goal", conflict.goal)
+        conflict.status = data.get("status", conflict.status)
 
-        conflict.context = data["context"]
-        conflict.participants = data["participants"]
-        conflict.attempts = data["attempts"]
-        conflict.goal = data["goal"]
-        conflict.status = data.get("status", "Активен")
-        conflict.employee_1_id = data.get("employee_1_id")
-        conflict.employee_2_id = data.get("employee_2_id")
-
-        db.session.add(conflict)
         db.session.commit()
 
-        return jsonify({"message": "Сохранено", "id": conflict.id})
+        return jsonify({"message": "Конфликт обновлён"})
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

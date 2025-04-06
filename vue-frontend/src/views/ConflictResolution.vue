@@ -228,29 +228,26 @@ async saveConflict() {
   payload.attempts = payload.actions_taken;
   delete payload.actions_taken;
 
-  try {
-    const res = await fetch("/api/conflicts/save", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
+  const res = await fetch("/api/conflicts/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
 
-    const data = await res.json();
-    if (res.ok) {
-      this.showModal = false;
-      await this.fetchConflicts();
-    } else {
-      alert(data.error || "Ошибка при сохранении");
-    }
-  } catch (err) {
-    alert("Сервер недоступен");
-  } finally {
-    this.saving = false;
+  const data = await res.json();
+
+  this.saving = false;
+  if (res.ok) {
+    this.showModal = false;
+    await this.fetchConflicts();
+  } else {
+    alert(data.error || "Ошибка при сохранении");
   }
-},
+}
+,
     async waitForTokenAndInit() {
   let retries = 10;
   while (!localStorage.getItem("token") && retries > 0) {

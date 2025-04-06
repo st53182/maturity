@@ -194,6 +194,7 @@ await this.fetchConflicts();
 
   mounted() {
     this.waitForTokenAndInit();
+    this.fetchEmployees();
   }
 };
 </script>

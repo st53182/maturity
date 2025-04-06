@@ -26,6 +26,10 @@
         <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
         <p>🎯 Цель: {{ conflict.goal }}</p>
         <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
+        <div v-if="conflict.ai_analysis" class="summary-block">
+    <strong>📝 Рекомендации:</strong>
+    <p v-html="shortenAnalysis(conflict.ai_analysis)"></p>
+  </div>
         <button @click="openModal(conflict)">✏️ Редактировать</button>
         <button class="delete-btn" @click="deleteConflict(conflict.id)">🗑</button>
       </div>
@@ -57,11 +61,14 @@
         </select>
 
         <div class="modal-actions">
-          <button @click="submitConflict" :disabled="loading">
-  {{ loading ? "Обработка..." : "💬 Получить рекомендации" }}
-</button>
-          <button class="modal-close" @click="showModal = false">✖</button>
-        </div>
+  <button @click="submitConflict" :disabled="loading">
+    💬 {{ loading ? "Генерация..." : "Получить рекомендации" }}
+  </button>
+  <button @click="saveConflict" :disabled="saving">
+    💾 {{ saving ? "Сохранение..." : "Сохранить и закрыть" }}
+  </button>
+  <button class="modal-close" @click="showModal = false">✖</button>
+</div>
 
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
       </div>
@@ -76,6 +83,8 @@ export default {
       conflicts: [],
       employees: [],
       showModal: false,
+      saving: false,
+
       filterStatus: "Все",
       statuses: ["Все", "Активен", "Закрыт", "Обострение"],
       form: {
@@ -125,7 +134,10 @@ export default {
 
   this.employees = await res.json();
 },
-
+shortenAnalysis(html) {
+    const stripped = html.replace(/<[^>]+>/g, '');
+    return stripped.slice(0, 150) + "...";
+  },
     getParticipantNames(ids) {
       try {
         const parsed = Array.isArray(ids) ? ids : JSON.parse(ids);
@@ -139,26 +151,27 @@ export default {
     },
 
     openModal(conflict) {
-      if (conflict) {
-        this.form = { ...conflict };
-        try {
-          this.form.participants = JSON.parse(conflict.participants || "[]");
-        } catch (e) {
-          this.form.participants = [];
-        }
-      } else {
-        this.form = {
-          id: null,
-          context: "",
-          participants: [],
-          actions_taken: "",
-          goal: "",
-          status: "Активен",
-          ai_response: ""
-        };
-      }
-      this.showModal = true;
-    },
+  if (conflict) {
+    this.form = { ...conflict };
+    try {
+      this.form.participants = JSON.parse(conflict.participants || "[]");
+    } catch (e) {
+      this.form.participants = [];
+    }
+    this.form.ai_response = conflict.ai_analysis || "";
+  } else {
+    this.form = {
+      id: null,
+      context: "",
+      participants: [],
+      actions_taken: "",
+      goal: "",
+      status: "Активен",
+      ai_response: ""
+    };
+  }
+  this.showModal = true;
+},
 
     async deleteConflict(id) {
       const token = localStorage.getItem("token");
@@ -172,6 +185,7 @@ export default {
     },
 
     async submitConflict() {
+  this.loading = true;
   const token = localStorage.getItem("token");
   const payload = { ...this.form };
 
@@ -179,20 +193,8 @@ export default {
   payload.attempts = payload.actions_taken;
   delete payload.actions_taken;
 
-  let res;
-  if (this.form.id) {
-    // 🔁 Редактирование существующего конфликта
-    res = await fetch(`/api/conflict/${this.form.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-  } else {
-    // 🆕 Создание нового конфликта
-    res = await fetch("/api/conflicts", {
+  try {
+    const res = await fetch("/api/conflicts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -200,18 +202,55 @@ export default {
       },
       body: JSON.stringify(payload)
     });
-  }
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (res.ok) {
-    this.form.ai_response = data.analysis;
-    await this.fetchConflicts();
-  } else {
-    alert(data.error || "Ошибка при сохранении конфликта");
+    if (res.ok) {
+      this.form.ai_response = data.analysis;
+      this.showModal = false;
+      await this.fetchConflicts();
+    } else {
+      alert(data.error || "Ошибка при сохранении конфликта");
+    }
+  } catch (err) {
+    alert("Ошибка при подключении.");
+  } finally {
+    this.loading = false;
   }
 },
 
+async saveConflict() {
+  this.saving = true;
+  const token = localStorage.getItem("token");
+  const payload = { ...this.form };
+
+  payload.participants = JSON.stringify(payload.participants);
+  payload.attempts = payload.actions_taken;
+  delete payload.actions_taken;
+
+  try {
+    const res = await fetch("/api/conflicts/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      this.showModal = false;
+      await this.fetchConflicts();
+    } else {
+      alert(data.error || "Ошибка при сохранении");
+    }
+  } catch (err) {
+    alert("Сервер недоступен");
+  } finally {
+    this.saving = false;
+  }
+},
     async waitForTokenAndInit() {
   let retries = 10;
   while (!localStorage.getItem("token") && retries > 0) {

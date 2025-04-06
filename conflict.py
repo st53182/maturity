@@ -224,3 +224,33 @@ def update_conflict(conflict_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@bp_conflict.route("/conflicts/save", methods=["POST"])
+@jwt_required()
+def save_conflict():
+    data = request.json
+    user_id = get_jwt_identity()
+
+    try:
+        if data.get("id"):
+            conflict = Conflict.query.get(data["id"])
+            if not conflict:
+                return jsonify({"error": "Конфликт не найден"}), 404
+        else:
+            conflict = Conflict()
+
+        conflict.context = data["context"]
+        conflict.participants = data["participants"]
+        conflict.attempts = data["attempts"]
+        conflict.goal = data["goal"]
+        conflict.status = data.get("status", "Активен")
+        conflict.employee_1_id = data.get("employee_1_id")
+        conflict.employee_2_id = data.get("employee_2_id")
+
+        db.session.add(conflict)
+        db.session.commit()
+
+        return jsonify({"message": "Сохранено", "id": conflict.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

@@ -158,7 +158,11 @@ shortenAnalysis(html) {
     } catch (e) {
       this.form.participants = [];
     }
+
     this.form.ai_response = conflict.ai_analysis || "";
+
+    // ✅ вот это добавь
+    this.form.actions_taken = conflict.attempts || "";
   } else {
     this.form = {
       id: null,
@@ -262,7 +266,7 @@ async saveConflict() {
   }
 
   await this.fetchConflicts();
-  await this.fetchEmployees(); // 👈 будет вызван только когда токен готов
+  await this.fetchEmployees();
 }
   },
 

@@ -175,10 +175,25 @@ await this.fetchConflicts();
   }
 }
 },
+  async waitForTokenAndInit() {
+    let retries = 10;
+    while (!localStorage.getItem("token") && retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 100)); // ждём 100мс
+      retries--;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      this.$router.push("/login");
+      return;
+    }
+
+    await this.fetchConflicts();
+    await this.fetchEmployees();
+  },
 
   mounted() {
-    this.fetchConflicts();
-    this.fetchEmployees();
+    this.waitForTokenAndInit();
   }
 };
 </script>

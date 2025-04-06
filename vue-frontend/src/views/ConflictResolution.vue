@@ -57,7 +57,9 @@
         </select>
 
         <div class="modal-actions">
-          <button @click="submitConflict">💬 Получить рекомендации</button>
+          <button @click="submitConflict" :disabled="loading">
+  {{ loading ? "Обработка..." : "💬 Получить рекомендации" }}
+</button>
           <button class="modal-close" @click="showModal = false">✖</button>
         </div>
 
@@ -83,7 +85,8 @@ export default {
         actions_taken: "",
         goal: "",
         status: "Активен",
-        ai_response: ""
+        ai_response: "",
+        loading: false
       }
     };
   },
@@ -169,31 +172,45 @@ export default {
     },
 
     async submitConflict() {
-      const token = localStorage.getItem("token");
-      const payload = { ...this.form };
+  const token = localStorage.getItem("token");
+  const payload = { ...this.form };
 
-      payload.participants = JSON.stringify(payload.participants);
-      payload.attempts = payload.actions_taken;
-      delete payload.actions_taken;
+  payload.participants = JSON.stringify(payload.participants);
+  payload.attempts = payload.actions_taken;
+  delete payload.actions_taken;
 
-      const res = await fetch("/api/conflicts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+  let res;
+  if (this.form.id) {
+    // 🔁 Редактирование существующего конфликта
+    res = await fetch(`/api/conflict/${this.form.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+  } else {
+    // 🆕 Создание нового конфликта
+    res = await fetch("/api/conflicts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+  }
 
-      const data = await res.json();
+  const data = await res.json();
 
-      if (res.ok) {
-        this.form.ai_response = data.analysis;
-        await this.fetchConflicts();
-      } else {
-        alert(data.error || "Ошибка при сохранении конфликта");
-      }
-    },
+  if (res.ok) {
+    this.form.ai_response = data.analysis;
+    await this.fetchConflicts();
+  } else {
+    alert(data.error || "Ошибка при сохранении конфликта");
+  }
+},
 
     async waitForTokenAndInit() {
   let retries = 10;

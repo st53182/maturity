@@ -93,21 +93,35 @@ def create_conflict():
         db.session.commit()
 
         # Генерация анализа через OpenAI
-        prompt = f"""Ты фасилитатор конфликтов. На основе описания ситуации и поведения сторон, предложи способы разрешения конфликта и как улучшить взаимодействие.
-Контекст: {conflict.context}
-Участники: {conflict.participants}
-Предпринятые действия: {conflict.attempts}
-Цель: {conflict.goal}
-"""
+        prompt = f"""
+        Ты Agile-коуч, фасилитатор конфликтов. На основе следующих данных определи DISC-профили участников, и предложи стратегию разрешения конфликта по модели PINE , но не оборачивай в markdown ```html:
+
+        Контекст конфликта:
+        {conflict.context}
+
+        Участники конфликта (эмоции, поведение, реакции):
+        {conflict.participants}
+
+        Что уже предпринималось:
+        {conflict.attempts}
+
+        Цель: {conflict.goal}
+
+        Структурируй ответ в HTML:
+        - Определи DISC профили
+        - Дай советы мне по взаимодействию со второй стороной конфликта
+        - Важно чтобы мне как тому кто обратился к тебе как коучу за помощью стало понятно что мне делать, чтобы решить этот конфликт, отстояв свою точку зрения и цели
+        - Предложи как с помощью конструктивного конфликта донести до второй стороны некоректность действия, предложи вариант даилога с этим человеком
+        """
 
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Ты фасилитатор конфликтов и Agile-коуч."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=1500
+            max_tokens=4500
         )
 
         conflict.ai_analysis = response.choices[0].message.content
@@ -151,3 +165,62 @@ def delete_conflict(conflict_id):
     db.session.delete(conflict)
     db.session.commit()
     return jsonify({"message": "Удалено"})
+
+@bp_conflict.route("/conflict/<int:conflict_id>", methods=["PUT"])
+@jwt_required()
+def update_conflict(conflict_id):
+    data = request.json
+    conflict = Conflict.query.get(conflict_id)
+    if not conflict:
+        return jsonify({"error": "Конфликт не найден"}), 404
+
+    try:
+        conflict.context = data.get("context", conflict.context)
+        conflict.participants = data.get("participants", conflict.participants)
+        conflict.attempts = data.get("attempts", conflict.attempts)
+        conflict.goal = data.get("goal", conflict.goal)
+        conflict.status = data.get("status", conflict.status)
+
+        # Обновляем рекомендации от AI
+        prompt = f"""
+        Ты Agile-коуч, фасилитатор конфликтов. На основе следующих данных определи DISC-профили участников, и предложи стратегию разрешения конфликта по модели PINE , но не оборачивай в markdown ```html:
+
+        Контекст конфликта:
+        {conflict.context}
+
+        Участники конфликта (эмоции, поведение, реакции):
+        {conflict.participants}
+
+        Что уже предпринималось:
+        {conflict.attempts}
+
+        Цель: {conflict.goal}
+
+        Структурируй ответ в HTML:
+        - Определи DISC профили
+        - Дай советы мне по взаимодействию со второй стороной конфликта
+        - Важно чтобы мне как тому кто обратился к тебе как коучу за помощью стало понятно что мне делать, чтобы решить этот конфликт, отстояв свою точку зрения и цели
+        - Предложи как с помощью конструктивного конфликта донести до второй стороны некорректность действия, предложи вариант диалога с этим человеком
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Ты фасилитатор конфликтов и Agile-коуч."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=4500
+        )
+
+        conflict.ai_analysis = response.choices[0].message.content
+        db.session.commit()
+
+        return jsonify({
+            "id": conflict.id,
+            "analysis": conflict.ai_analysis
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

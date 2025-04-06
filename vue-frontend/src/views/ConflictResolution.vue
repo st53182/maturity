@@ -194,12 +194,19 @@ shortenAnalysis(html) {
   const payload = { ...this.form };
 
   payload.participants = JSON.stringify(payload.participants);
-  payload.attempts = payload.actions_taken;
+  payload.attempts = this.form.actions_taken;
   delete payload.actions_taken;
 
+  const isEditing = !!this.form.id;
+  const url = isEditing
+    ? `/api/conflict/${this.form.id}`
+    : `/api/conflicts`;
+
+  const method = isEditing ? "PUT" : "POST";
+
   try {
-    const res = await fetch("/api/conflicts", {
-      method: "POST",
+    const res = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
@@ -211,13 +218,13 @@ shortenAnalysis(html) {
 
     if (res.ok) {
       this.form.ai_response = data.analysis;
-
       await this.fetchConflicts();
     } else {
       alert(data.error || "Ошибка при сохранении конфликта");
     }
   } catch (err) {
     alert("Ошибка при подключении.");
+    console.error(err);
   } finally {
     this.loading = false;
   }

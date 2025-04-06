@@ -106,7 +106,7 @@ export default {
 
     async fetchEmployees() {
       const token = localStorage.getItem("token");
-      const res = await fetch("/employees", {
+      const res = await fetch("/api/employees", {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -150,7 +150,7 @@ export default {
 
     async deleteConflict(id) {
       const token = localStorage.getItem("token");
-      await fetch(`/conflict/${id}`, {
+      await fetch(`/api/conflict/${id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -167,7 +167,7 @@ export default {
       payload.attempts = payload.actions_taken;
       delete payload.actions_taken;
 
-      const res = await fetch("/conflicts", {
+      const res = await fetch("/api/conflicts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

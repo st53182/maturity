@@ -128,25 +128,33 @@ export default {
       this.showModal = true;
     },
     async submitConflict() {
-      const payload = { ...this.form };
-      payload.participants = JSON.stringify(payload.participants);
+  const token = localStorage.getItem("token");
+  const payload = { ...this.form };
 
-      const res = await fetch("/conflict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
+  payload.participants = JSON.stringify(payload.participants);
+  payload.attempts = payload.actions_taken;
+  delete payload.actions_taken;
 
-      this.form.ai_response = data.analysis;
-      await this.fetchConflicts(); // обновить список
+  const res = await fetch("/conflicts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
     },
-    async deleteConflict(id) {
-      if (!confirm("Удалить конфликт?")) return;
-      await fetch(`/conflict/${id}`, { method: "DELETE" });
-      this.fetchConflicts();
-    }
-  },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    this.form.ai_response = data.analysis;
+    await this.fetchConflicts();
+  } else {
+    alert(data.error || "Ошибка при сохранении конфликта");
+  }
+}
+},
+
   mounted() {
     this.fetchConflicts();
     this.fetchEmployees();

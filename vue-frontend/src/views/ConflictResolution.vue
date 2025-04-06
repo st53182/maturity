@@ -22,7 +22,7 @@
         :key="conflict.id"
         class="conflict-card"
       >
-        <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
+        <h3>🧠 {{ conflict.context.slice(0, 150) }}...</h3>
         <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
         <p>🎯 Цель: {{ conflict.goal }}</p>
         <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
@@ -84,6 +84,7 @@ export default {
       employees: [],
       showModal: false,
       saving: false,
+      loading: false,
 
       filterStatus: "Все",
       statuses: ["Все", "Активен", "Закрыт", "Обострение"],
@@ -95,7 +96,6 @@ export default {
         goal: "",
         status: "Активен",
         ai_response: "",
-        loading: false
       }
     };
   },
@@ -136,7 +136,7 @@ export default {
 },
 shortenAnalysis(html) {
     const stripped = html.replace(/<[^>]+>/g, '');
-    return stripped.slice(0, 150) + "...";
+    return stripped.slice(0, 350) + "...";
   },
     getParticipantNames(ids) {
       try {

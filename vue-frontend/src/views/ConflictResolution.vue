@@ -106,20 +106,18 @@ export default {
 
     async fetchEmployees() {
   const token = localStorage.getItem("token");
-  if (!token) {
-    console.warn("Токен не найден при попытке загрузки сотрудников");
-    return;
-  }
-
-  const res = await fetch("/api/employees", {
+  const res = await fetch("/employees", {
     headers: {
       "Authorization": `Bearer ${token}`
     }
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("Ошибка загрузки сотрудников:", text);
+  // 🧠 Проверим, что это точно JSON
+  const contentType = res.headers.get("content-type");
+  if (!res.ok || !contentType || !contentType.includes("application/json")) {
+    const text = await res.text(); // получим содержимое
+    console.error("Ошибка при загрузке сотрудников:", text);
+    return;
   }
 
   this.employees = await res.json();

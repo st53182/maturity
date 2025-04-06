@@ -225,7 +225,7 @@ def update_conflict(conflict_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@bp_conflict.route("/api/conflicts/save", methods=["POST"])
+@bp_conflict.route("/conflicts/save", methods=["POST"])
 @jwt_required()
 def save_conflict():
     data = request.json

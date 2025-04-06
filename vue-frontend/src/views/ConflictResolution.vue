@@ -95,13 +95,24 @@ export default {
   },
   methods: {
     async fetchConflicts() {
-      const res = await fetch("/conflicts");
-      this.conflicts = await res.json();
-    },
-    async fetchEmployees() {
-      const res = await fetch("/employees");
-      this.employees = await res.json();
-    },
+  const token = localStorage.getItem("token"); // 👈 добавлено
+  const res = await fetch("/conflicts", {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  this.conflicts = await res.json();
+},
+
+async fetchEmployees() {
+  const token = localStorage.getItem("token"); // 👈 добавлено
+  const res = await fetch("/employees", {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  this.employees = await res.json();
+},
     getParticipantNames(ids) {
       if (!ids) return "—";
       const parsed = Array.isArray(ids) ? ids : JSON.parse(ids);
@@ -127,6 +138,16 @@ export default {
       }
       this.showModal = true;
     },
+    async deleteConflict(id) {
+  const token = localStorage.getItem("token");
+  await fetch(`/conflict/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+await this.fetchConflicts();
+},
     async submitConflict() {
   const token = localStorage.getItem("token");
   const payload = { ...this.form };

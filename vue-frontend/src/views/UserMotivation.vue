@@ -127,144 +127,175 @@ export default {
       loading: false,
       showModal: false,
       avatar: "default.png"
-
     };
   },
 
   async mounted() {
     const token = localStorage.getItem("token");
 
-    const teamRes = await fetch("/user_teams", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    this.teams = await teamRes.json();
+    try {
+      // Получение команд
+      const teamRes = await fetch("/user_teams", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      this.teams = await teamRes.json();
 
-    const empRes = await fetch("/employees");
-    const rawEmployees = await empRes.json();
+      // Получение сотрудников
+      const empRes = await fetch("/employees", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    this.employees = rawEmployees.map(e => ({
-      ...e,
-      motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
-      demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы"),
-      managerTips: this.extractManagerTips(e.ai_analysis)
-    }));
+      const rawEmployees = await empRes.json();
+
+      if (!Array.isArray(rawEmployees)) {
+        console.error("Сотрудники не получены:", rawEmployees);
+        return;
+      }
+
+      this.employees = rawEmployees.map(e => ({
+        ...e,
+        motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
+        demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы"),
+        managerTips: this.extractManagerTips(e.ai_analysis)
+      }));
+    } catch (err) {
+      console.error("Ошибка при загрузке:", err);
+    }
   },
 
   methods: {
     async submitMotivation() {
-  this.loading = true;
-  try {
-    const res = await fetch("/motivation", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(this.form)
-    });
+      this.loading = true;
+      const token = localStorage.getItem("token");
+      const url = this.form.id ? "/employees" : "/motivation"; // если есть id — это обновление
+      const method = "POST";
 
-    const data = await res.json();
-    if (res.ok) {
-      this.result = data.analysis;
-      this.form.id = data.employee_id;
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(this.form)
+        });
 
-      const updated = {
-        ...this.form,
-        id: data.employee_id,
-        ai_analysis: data.analysis,
-        motivators: this.extractFactors(data.analysis, "Мотивирующие"),
-        demotivators: this.extractFactors(data.analysis, "Демотиваторы")
-      };
+        const data = await res.json();
 
-      const index = this.employees.findIndex(e => e.id === data.employee_id);
-      if (index !== -1) {
-        this.employees.splice(index, 1, updated);
-      } else {
-        this.employees.push(updated);
+        if (res.ok) {
+          this.result = data.analysis || data.message;
+          this.form.id = data.employee_id || data.id;
+
+          const updated = {
+            ...this.form,
+            id: this.form.id,
+            ai_analysis: data.analysis || "",
+            motivators: this.extractFactors(data.analysis, "Мотивирующие"),
+            demotivators: this.extractFactors(data.analysis, "Демотиваторы"),
+            managerTips: this.extractManagerTips(data.analysis)
+          };
+
+          const index = this.employees.findIndex(e => e.id === this.form.id);
+          if (index !== -1) {
+            this.employees.splice(index, 1, updated);
+          } else {
+            this.employees.push(updated);
+          }
+
+          this.showModal = false;
+        } else {
+          alert(data.error || "Ошибка сохранения");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка подключения");
+      } finally {
+        this.loading = false;
       }
-
-      // ✅ Закрываем pop-up после сохранения
-      this.showModal = false;
-    } else {
-      alert(data.error);
-    }
-  } catch (err) {
-    alert("Ошибка подключения");
-  } finally {
-    this.loading = false;
-  }
-},
+    },
 
     resetForm() {
-  this.form = {
-    id: null,
-    name: "",
-    role: "",
-    team_id: "",
-    stress: "",
-    communication: "",
-    behavior: "",
-    feedback: ""
-  };
-  this.result = "";
-  this.showModal = true;
+      this.form = {
+        id: null,
+        name: "",
+        role: "",
+        team_id: "",
+        stress: "",
+        communication: "",
+        behavior: "",
+        feedback: ""
+      };
+      this.result = "";
+      this.showModal = true;
     },
 
     async deleteEmployee(id) {
+      const token = localStorage.getItem("token");
       if (!confirm("Удалить сотрудника?")) return;
-      await fetch(`/employee/${id}`, { method: "DELETE" });
-      this.employees = this.employees.filter(e => e.id !== id);
+
+      try {
+        await fetch(`/employee/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.employees = this.employees.filter(e => e.id !== id);
+      } catch (e) {
+        console.error("Ошибка удаления", e);
+      }
     },
-handleEmployeeClick(employee) {
-  this.selectEmployee(employee);
-  this.showModal = true;
-},
- selectEmployee(employee) {
-  this.form = { ...employee };
-  this.result = employee.ai_analysis;
-},
 
-extractDISCFullType(aiText) {
-  if (!aiText) return "Неизвестно";
+    handleEmployeeClick(employee) {
+      this.selectEmployee(employee);
+      this.showModal = true;
+    },
 
-  const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+?\))/i)
-             || aiText.match(/Тип DISC[:-]?\s*([A-ZА-Я]\s*\([^)]+?\))/i);
+    selectEmployee(employee) {
+      this.form = { ...employee };
+      this.result = employee.ai_analysis;
+    },
 
-  return match ? match[1].trim() : "Неизвестно";
-},
+    extractDISCFullType(aiText) {
+      if (!aiText) return "Неизвестно";
+      const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+?\))/i)
+                 || aiText.match(/Тип DISC[:-]?\s*([A-ZА-Я]\s*\([^)]+?\))/i);
+      return match ? match[1].trim() : "Неизвестно";
+    },
 
     extractFactors(html, sectionTitle) {
-  if (!html) return [];
+      if (!html) return [];
 
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
 
-  // Заголовок с нужным текстом
-  const headers = Array.from(tempDiv.querySelectorAll('h3, h4, strong'));
-  const header = headers.find(h =>
-    h.textContent.toLowerCase().includes(sectionTitle.toLowerCase())
-  );
+      const headers = Array.from(tempDiv.querySelectorAll('h3, h4, strong'));
+      const header = headers.find(h =>
+        h.textContent.toLowerCase().includes(sectionTitle.toLowerCase())
+      );
 
-  if (!header) return [];
+      if (!header) return [];
 
-  const ul = header.nextElementSibling;
-  if (!ul || ul.tagName !== 'UL') return [];
+      const ul = header.nextElementSibling;
+      if (!ul || ul.tagName !== 'UL') return [];
 
-  return Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
-},
+      return Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
+    },
 
     extractDISCType(aiText) {
-  if (!aiText) return "Неизвестно";
+      if (!aiText) return "Неизвестно";
 
-  const match =
-    aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я][^)<\n:]*\([A-ZА-Я]\))/i) ||
-    aiText.match(/тип\s+[A-ZА-Я]\s*\([^)]+\)/i) ||
-    aiText.match(/тип\s+["«]?(.)["»]?/i);
+      const match =
+        aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я][^)<\n:]*\([A-ZА-Я]\))/i) ||
+        aiText.match(/тип\s+[A-ZА-Я]\s*\([^)]+\)/i) ||
+        aiText.match(/тип\s+["«]?(.)["»]?/i);
 
-  return match ? match[1].trim() : "Неизвестно";
-},
+      return match ? match[1].trim() : "Неизвестно";
+    },
+
     extractManagerTips(text) {
-   if (!text) return '';
-  const match = text.match(/<h3>Рекомендации для руководителя:.*?<\/ul>/is);
-  return match ? match[0] : '';
-  },
+      if (!text) return '';
+      const match = text.match(/<h3>Рекомендации для руководителя:.*?<\/ul>/is);
+      return match ? match[0] : '';
+    },
 
     getTeamName(teamId) {
       const team = this.teams.find(t => t.id === teamId);
@@ -283,6 +314,7 @@ extractDISCFullType(aiText) {
   }
 };
 </script>
+
 
 
 

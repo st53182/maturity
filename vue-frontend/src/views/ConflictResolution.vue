@@ -88,6 +88,7 @@ export default {
 
       filterStatus: "Все",
       statuses: ["Все", "Активен", "Закрыт", "Обострение"],
+
       form: {
         id: null,
         context: "",
@@ -95,49 +96,68 @@ export default {
         actions_taken: "",
         goal: "",
         status: "Активен",
-        ai_response: "",
+        ai_response: ""
       }
     };
   },
+
   computed: {
     filteredConflicts() {
       if (this.filterStatus === "Все") return this.conflicts;
       return this.conflicts.filter(c => c.status === this.filterStatus);
     }
   },
+
   methods: {
     async fetchConflicts() {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/conflicts", {
-        headers: {
-          "Authorization": `Bearer ${token}`
+
+      try {
+        const res = await fetch("/api/conflicts", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType?.includes("application/json")) {
+          console.error("Ошибка получения конфликтов:", await res.text());
+          return;
         }
-      });
-      this.conflicts = await res.json();
+
+        this.conflicts = await res.json();
+      } catch (err) {
+        console.error("Ошибка загрузки конфликтов:", err);
+      }
     },
 
     async fetchEmployees() {
-  const token = localStorage.getItem("token");
-  const res = await fetch("/employees", {
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
+      const token = localStorage.getItem("token");
 
-  // 🧠 Проверим, что это точно JSON
-  const contentType = res.headers.get("content-type");
-  if (!res.ok || !contentType || !contentType.includes("application/json")) {
-    const text = await res.text(); // получим содержимое
-    console.error("Ошибка при загрузке сотрудников:", text);
-    return;
-  }
+      try {
+        const res = await fetch("/employees", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-  this.employees = await res.json();
-},
-shortenAnalysis(html) {
-    const stripped = html.replace(/<[^>]+>/g, '');
-    return stripped.slice(0, 350) + "...";
-  },
+        const contentType = res.headers.get("content-type");
+        if (!res.ok || !contentType?.includes("application/json")) {
+          console.error("Ошибка при загрузке сотрудников:", await res.text());
+          return;
+        }
+
+        this.employees = await res.json();
+      } catch (err) {
+        console.error("Ошибка загрузки сотрудников:", err);
+      }
+    },
+
+    shortenAnalysis(html) {
+      const stripped = html.replace(/<[^>]+>/g, '');
+      return stripped.slice(0, 350) + "...";
+    },
+
     getParticipantNames(ids) {
       try {
         const parsed = Array.isArray(ids) ? ids : JSON.parse(ids);
@@ -151,130 +171,149 @@ shortenAnalysis(html) {
     },
 
     openModal(conflict) {
-  if (conflict) {
-    this.form = { ...conflict };
-    try {
-      this.form.participants = JSON.parse(conflict.participants || "[]");
-    } catch (e) {
-      this.form.participants = [];
-    }
+      if (conflict) {
+        this.form = { ...conflict };
 
-    this.form.ai_response = conflict.ai_analysis || "";
+        try {
+          this.form.participants = JSON.parse(conflict.participants || "[]");
+        } catch {
+          this.form.participants = [];
+        }
 
-    // ✅ вот это добавь
-    this.form.actions_taken = conflict.attempts || "";
-  } else {
-    this.form = {
-      id: null,
-      context: "",
-      participants: [],
-      actions_taken: "",
-      goal: "",
-      status: "Активен",
-      ai_response: ""
-    };
-  }
-  this.showModal = true;
-},
+        this.form.ai_response = conflict.ai_analysis || "";
+        this.form.actions_taken = conflict.attempts || "";
+      } else {
+        this.form = {
+          id: null,
+          context: "",
+          participants: [],
+          actions_taken: "",
+          goal: "",
+          status: "Активен",
+          ai_response: ""
+        };
+      }
+
+      this.showModal = true;
+    },
 
     async deleteConflict(id) {
       const token = localStorage.getItem("token");
-      await fetch(`/api/conflict/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      await this.fetchConflicts();
+
+      try {
+        await fetch(`/api/conflict/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        await this.fetchConflicts();
+      } catch (err) {
+        alert("Ошибка удаления");
+        console.error(err);
+      }
     },
 
     async submitConflict() {
-  this.loading = true;
-  const token = localStorage.getItem("token");
-  const payload = { ...this.form };
+      this.loading = true;
+      const token = localStorage.getItem("token");
 
-  payload.participants = JSON.stringify(payload.participants);
-  payload.attempts = this.form.actions_taken;
-  delete payload.actions_taken;
+      const payload = {
+        ...this.form,
+        participants: JSON.stringify(this.form.participants),
+        attempts: this.form.actions_taken
+      };
 
-  const isEditing = !!this.form.id;
-  const url = isEditing
-    ? `/api/conflict/${this.form.id}`
-    : `/api/conflicts`;
+      delete payload.actions_taken;
 
-  const method = isEditing ? "PUT" : "POST";
+      const isEditing = !!this.form.id;
+      const url = isEditing
+        ? `/api/conflict/${this.form.id}`
+        : `/api/conflicts`;
 
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
+      const method = isEditing ? "PUT" : "POST";
 
-    const data = await res.json();
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
 
-    if (res.ok) {
-      this.form.ai_response = data.analysis;
-      await this.fetchConflicts();
-    } else {
-      alert(data.error || "Ошибка при сохранении конфликта");
-    }
-  } catch (err) {
-    alert("Ошибка при подключении.");
-    console.error(err);
-  } finally {
-    this.loading = false;
-  }
-},
+        const data = await res.json();
 
-async saveConflict() {
-  this.saving = true;
-  const token = localStorage.getItem("token");
-  const payload = { ...this.form };
-
-  payload.participants = JSON.stringify(payload.participants);
-  payload.attempts = payload.actions_taken;
-  delete payload.actions_taken;
-
-  const res = await fetch("/api/conflicts/save", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
+        if (res.ok) {
+          this.form.ai_response = data.analysis;
+          await this.fetchConflicts();
+        } else {
+          alert(data.error || "Ошибка при сохранении конфликта");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка при подключении.");
+      } finally {
+        this.loading = false;
+      }
     },
-    body: JSON.stringify(payload)
-  });
 
-  const data = await res.json();
+    async saveConflict() {
+      this.saving = true;
+      const token = localStorage.getItem("token");
 
-  this.saving = false;
-  if (res.ok) {
-    this.showModal = false;
-    await this.fetchConflicts();
-  } else {
-    alert(data.error || "Ошибка при сохранении");
-  }
-}
-,
+      const payload = {
+        ...this.form,
+        participants: JSON.stringify(this.form.participants),
+        attempts: this.form.actions_taken
+      };
+
+      delete payload.actions_taken;
+
+      try {
+        const res = await fetch("/api/conflicts/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          this.showModal = false;
+          await this.fetchConflicts();
+        } else {
+          alert(data.error || "Ошибка при сохранении");
+        }
+      } catch (err) {
+        alert("Ошибка соединения");
+        console.error(err);
+      } finally {
+        this.saving = false;
+      }
+    },
+
     async waitForTokenAndInit() {
-  let retries = 10;
-  while (!localStorage.getItem("token") && retries > 0) {
-    await new Promise(resolve => setTimeout(resolve, 300)); // ждём 300мс
-    retries--;
-  }
+      let retries = 10;
+      while (!localStorage.getItem("token") && retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        retries--;
+      }
 
-  const token = localStorage.getItem("token");
-  if (!token) {
-    this.$router.push("/login");
-    return;
-  }
+      const token = localStorage.getItem("token");
+      if (!token) {
+        this.$router.push("/login");
+        return;
+      }
 
-  await this.fetchConflicts();
-  await this.fetchEmployees();
-}
+      await this.fetchConflicts();
+      await this.fetchEmployees();
+    }
   },
 
   mounted() {
@@ -282,6 +321,7 @@ async saveConflict() {
   }
 };
 </script>
+
 
 <style scoped>
 /* Контейнер всей страницы */

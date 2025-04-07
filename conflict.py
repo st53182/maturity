@@ -248,6 +248,7 @@ def create_conflict():
 
     try:
         conflict = Conflict(
+            user_id=user_id,
             context=data["context"],
             participants=data["participants"],
             attempts=data["attempts"],
@@ -471,7 +472,9 @@ algoritm-konstruktivnoj-konfrontacii-005
 @bp_conflict.route("/conflicts", methods=["GET"])
 @jwt_required()
 def get_conflicts():
-    conflicts = Conflict.query.order_by(Conflict.created_at.desc()).all()
+    user_id = get_jwt_identity()
+
+    conflicts = Conflict.query.filter_by(user_id=user_id).order_by(Conflict.created_at.desc()).all()
 
     result = []
     for c in conflicts:
@@ -492,7 +495,9 @@ def get_conflicts():
 @bp_conflict.route("/conflict/<int:conflict_id>", methods=["DELETE"])
 @jwt_required()
 def delete_conflict(conflict_id):
-    conflict = Conflict.query.get(conflict_id)
+    user_id = get_jwt_identity()
+
+    conflict = Conflict.query.filter_by(id=conflict_id, user_id=user_id).first()
     if not conflict:
         return jsonify({"error": "Конфликт не найден"}), 404
     db.session.delete(conflict)
@@ -502,8 +507,9 @@ def delete_conflict(conflict_id):
 @bp_conflict.route("/conflict/<int:conflict_id>", methods=["PUT"])
 @jwt_required()
 def update_conflict(conflict_id):
+    user_id = get_jwt_identity()
     data = request.json
-    conflict = Conflict.query.get(conflict_id)
+    conflict = Conflict.query.filter_by(id=conflict_id, user_id=user_id).first()
     if not conflict:
         return jsonify({"error": "Конфликт не найден"}), 404
 
@@ -728,7 +734,10 @@ algoritm-konstruktivnoj-konfrontacii-005
 @jwt_required()
 def save_conflict():
     data = request.json
+    user_id = get_jwt_identity()
+
     conflict_id = data.get("id")
+    conflict = Conflict.query.filter_by(id=conflict_id, user_id=user_id).first()
 
     if not conflict_id:
         return jsonify({"error": "ID конфликта не указан"}), 400

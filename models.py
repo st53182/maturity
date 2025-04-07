@@ -69,6 +69,8 @@ class Conflict(db.Model):
     employee_1 = db.relationship('Employee', foreign_keys=[employee_1_id])
     employee_2 = db.relationship('Employee', foreign_keys=[employee_2_id])
 
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
 
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -83,3 +85,6 @@ class Employee(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     team = db.relationship('Team', backref=db.backref('employees', lazy=True))
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+

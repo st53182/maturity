@@ -13,18 +13,20 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 🔹 Создание сотрудника и анализ AI
 @bp_motivation.route("/motivation", methods=["POST"])
+@jwt_required()
 def get_motivation():
+    user_id = get_jwt_identity()
     data = request.json
     emp_id = data.get("id")
 
     try:
-        # 1. Получаем или создаем сотрудника
+        # 1. Получаем или создаем сотрудника, принадлежащего текущему пользователю
         if emp_id:
-            employee = Employee.query.get(emp_id)
+            employee = Employee.query.filter_by(id=emp_id, user_id=user_id).first()
             if not employee:
                 return jsonify({"error": "Сотрудник не найден"}), 404
         else:
-            employee = Employee()
+            employee = Employee(user_id=user_id)
 
         # 2. Обновляем или задаем поля
         employee.name = data["name"]
@@ -47,7 +49,6 @@ def get_motivation():
 Взаимодействие с другими: {employee.communication}
 Рабочее поведение: {employee.behavior}
 Реакции на критику и изменения: {employee.feedback}
-
 
 **Тип DISC:** (например, Аналитик, обязательно указывай одну из букв D,I,S,C) Формат ответа: строго HTML, используй <h3>, <ul>, <li>, <strong> и т.д Выдели это отдельной строчкой
 **Мотивирующие факторы:**
@@ -86,10 +87,13 @@ def get_motivation():
 
 
 
+
 # 🔹 Получить всех сотрудников
 @bp_motivation.route("/employees", methods=["GET"])
+@jwt_required()
 def get_employees():
-    employees = Employee.query.all()
+    user_id = get_jwt_identity()
+    employees = Employee.query.filter_by(user_id=user_id).all()
     return jsonify([{
         "id": e.id,
         "name": e.name,
@@ -105,16 +109,21 @@ def get_employees():
     } for e in employees])
 
 
+
 # 🔹 Создание/обновление сотрудника
 @bp_motivation.route("/employees", methods=["POST"])
+@jwt_required()
 def save_employee():
+    user_id = get_jwt_identity()
     data = request.json
     emp_id = data.get("id")
 
-    employee = Employee.query.get(emp_id) if emp_id else Employee()
-
-    if not employee and emp_id:
-        return jsonify({"error": "Сотрудник не найден"}), 404
+    if emp_id:
+        employee = Employee.query.filter_by(id=emp_id, user_id=user_id).first()
+        if not employee:
+            return jsonify({"error": "Сотрудник не найден"}), 404
+    else:
+        employee = Employee(user_id=user_id)
 
     # Обновляем поля
     employee.name = data.get("name")
@@ -130,10 +139,13 @@ def save_employee():
     return jsonify({"message": "Сотрудник сохранён", "id": employee.id})
 
 
+
 # 🔹 Получение одного сотрудника по ID
 @bp_motivation.route("/employee/<int:employee_id>", methods=["GET"])
+@jwt_required()
 def get_employee(employee_id):
-    employee = Employee.query.get(employee_id)
+    user_id = get_jwt_identity()
+    employee = Employee.query.filter_by(id=employee_id, user_id=user_id).first()
 
     if not employee:
         return jsonify({"error": "Сотрудник не найден"}), 404
@@ -150,9 +162,13 @@ def get_employee(employee_id):
         "ai_analysis": employee.ai_analysis,
         "created_at": employee.created_at.isoformat() if employee.created_at else None
     })
+
 @bp_motivation.route("/employee/<int:employee_id>", methods=["DELETE"])
+@jwt_required()
 def delete_employee(employee_id):
-    employee = Employee.query.get(employee_id)
+    user_id = get_jwt_identity()
+    employee = Employee.query.filter_by(id=employee_id, user_id=user_id).first()
+
     if not employee:
         return jsonify({"error": "Сотрудник не найден"}), 404
 

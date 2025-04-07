@@ -98,9 +98,21 @@
       <label>4. Реакции на критику и изменения</label>
       <textarea v-model="form.feedback" required></textarea>
 
-      <button type="submit" :disabled="loading">
-        {{ loading ? "Сохраняем..." : "Сохранить и получить рекомендации" }}
-      </button>
+      <button
+  @click="submitMotivation(false)"
+  :disabled="loading"
+>
+  💾 Сохранить
+</button>
+
+<!-- Сохранить и сгенерировать -->
+<button
+  @click="submitMotivation(true)"
+  :disabled="loading"
+>
+  <span v-if="loading">⏳ Генерация...</span>
+  <span v-else>💬 Получить рекомендации</span>
+</button>
 
     </form>
   </div>
@@ -164,55 +176,60 @@ export default {
   },
 
   methods: {
-    async submitMotivation() {
-      this.loading = true;
-      const token = localStorage.getItem("token");
-      const url = this.form.id ? "/employees" : "/motivation"; // если есть id — это обновление
-      const method = "POST";
+    async submitMotivation(generate = false) {
+  this.loading = true;
+  const token = localStorage.getItem("token");
 
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(this.form)
-        });
+  const url = generate ? "/motivation" : "/employees";
+  const method = "POST";
 
-        const data = await res.json();
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        ...this.form,
+        id: this.form.id, // всегда передаём id
+        team_id: this.form.team_id || null // избегаем ошибки "" в integer
+      })
+    });
 
-        if (res.ok) {
-          this.result = data.analysis || data.message;
-          this.form.id = data.employee_id || data.id;
+    const data = await res.json();
 
-          const updated = {
-            ...this.form,
-            id: this.form.id,
-            ai_analysis: data.analysis || "",
-            motivators: this.extractFactors(data.analysis, "Мотивирующие"),
-            demotivators: this.extractFactors(data.analysis, "Демотиваторы"),
-            managerTips: this.extractManagerTips(data.analysis)
-          };
+    if (res.ok) {
+      this.result = data.analysis || data.message;
+      this.form.id = data.employee_id || data.id;
 
-          const index = this.employees.findIndex(e => e.id === this.form.id);
-          if (index !== -1) {
-            this.employees.splice(index, 1, updated);
-          } else {
-            this.employees.push(updated);
-          }
+      const updated = {
+        ...this.form,
+        id: this.form.id,
+        ai_analysis: data.analysis || "",
+        motivators: this.extractFactors(data.analysis, "Мотивирующие"),
+        demotivators: this.extractFactors(data.analysis, "Демотиваторы"),
+        managerTips: this.extractManagerTips(data.analysis)
+      };
 
-          this.showModal = false;
-        } else {
-          alert(data.error || "Ошибка сохранения");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Ошибка подключения");
-      } finally {
-        this.loading = false;
+      const index = this.employees.findIndex(e => e.id === this.form.id);
+      if (index !== -1) {
+        this.employees.splice(index, 1, updated);
+      } else {
+        this.employees.push(updated);
       }
-    },
+
+      this.showModal = false;
+    } else {
+      alert(data.error || "Ошибка сохранения");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Ошибка подключения");
+  } finally {
+    this.loading = false;
+  }
+},
 
     resetForm() {
       this.form = {

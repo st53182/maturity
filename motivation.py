@@ -31,7 +31,7 @@ def get_motivation():
         # 2. Обновляем или задаем поля
         employee.name = data["name"]
         employee.role = data["role"]
-        employee.team_id = data["team_id"]
+        employee.team_id = data["team_id"] or None
         employee.stress = data["stress"]
         employee.communication = data["communication"]
         employee.behavior = data["behavior"]

@@ -1,7 +1,7 @@
 <template>
   <div class="home-container">
     <header>
-      <div class="logo"></div>
+      <div class="logo">GrowBoard</div>
       <nav>
         <router-link to="/login" class="nav-btn">Войти</router-link>
         <router-link to="/register" class="nav-btn">Регистрация</router-link>
@@ -13,7 +13,7 @@
       <p>Пройдите опрос и получите персонализированные рекомендации по улучшению вашей команды.</p>
 
       <div class="business-category">
-        <label>Выберите сферу деятельности:</label>
+        <label>Сфера деятельности:</label>
         <select v-model="selectedCategory">
           <option v-for="category in categories" :key="category.id" :value="category.name">
             {{ category.name }}
@@ -21,7 +21,28 @@
         </select>
       </div>
 
-      <router-link :to="'/survey?category=' + selectedCategory" class="start-btn">Пройти оценку</router-link>
+      <router-link :to="'/survey?category=' + selectedCategory" class="start-btn">
+        🚀 Пройти оценку
+      </router-link>
+
+      <!-- 🔹 Новая секция "Что умеет платформа" -->
+      <section class="features">
+        <div class="feature-card">
+          <img src="/icons/brain.png" alt="Анализ зрелости" />
+          <h3>Оценка Agile-зрелости</h3>
+          <p>Получите рекомендации по улучшению взаимодействия, ролей и процессов в команде.</p>
+        </div>
+        <div class="feature-card">
+          <img src="/icons/motivation.png" alt="Мотивация" />
+          <h3>Мотивация по DISC</h3>
+          <p>Узнайте, что действительно мотивирует ваших сотрудников и как строить сильную команду.</p>
+        </div>
+        <div class="feature-card">
+          <img src="/icons/conflict.png" alt="Конфликты" />
+          <h3>Разрешение конфликтов</h3>
+          <p>Обнаруживайте конфликты и получайте советы от AI по их конструктивному разрешению.</p>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -41,46 +62,33 @@ export default {
         { id: 3, name: "Производство (скоро)" }
       ]
     };
-  },
-  methods: {
-    goToSurvey() {
-      const token = localStorage.getItem("token");
-      if (token) {
-        this.$router.push("/survey");
-      } else {
-        this.$router.push("/login"); // 🔄 Если не авторизован, отправляем на логин
-      }
-    }
   }
 };
 </script>
 
-
 <style scoped>
-/* Общий контейнер */
 .home-container {
-  font-family: 'Arial', sans-serif;
-  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #f8f9fa;
-  color: #333;
+  background: #f9f9fb;
+  color: #2c3e50;
+  text-align: center;
 }
 
-/* Шапка */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 30px;
+  padding: 20px 40px;
   background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .logo {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 600;
   color: #007bff;
 }
 
@@ -88,10 +96,10 @@ nav .nav-btn {
   margin-left: 20px;
   text-decoration: none;
   color: #007bff;
-  font-weight: bold;
-  padding: 8px 16px;
-  border-radius: 4px;
+  font-weight: 500;
+  padding: 10px 18px;
   border: 2px solid #007bff;
+  border-radius: 8px;
   transition: 0.3s;
 }
 
@@ -100,15 +108,14 @@ nav .nav-btn:hover {
   color: white;
 }
 
-/* Основной контент */
 main {
+  padding: 60px 20px;
   flex: 1;
-  padding: 50px;
 }
 
 h1 {
   font-size: 32px;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 p {
@@ -117,39 +124,85 @@ p {
   margin-bottom: 30px;
 }
 
-/* Категория бизнеса */
 .business-category {
-  margin-bottom: 20px;
+  margin: 30px 0 20px;
+}
+
+.business-category label {
+  font-weight: 500;
+  margin-right: 10px;
 }
 
 select {
   padding: 10px;
   font-size: 16px;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  border-radius: 5px;
 }
 
-/* Кнопка "Пройти оценку" */
 .start-btn {
   display: inline-block;
-  padding: 12px 24px;
-  background: #007bff;
-  color: white;
+  padding: 14px 28px;
+  margin-top: 10px;
   font-size: 18px;
+  font-weight: 500;
+  color: white;
+  background-color: #28a745;
+  border-radius: 10px;
   text-decoration: none;
-  border-radius: 5px;
-  transition: 0.3s;
+  transition: background 0.3s ease;
 }
 
 .start-btn:hover {
-  background: #0056b3;
+  background-color: #218838;
+}
+
+/* Новая секция "Возможности" */
+.features {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-top: 60px;
+}
+
+.feature-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  max-width: 300px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.feature-card img {
+  width: 48px;
+  margin-bottom: 14px;
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: #555;
 }
 
 /* Подвал */
 footer {
+  text-align: center;
+  padding: 16px;
   background: white;
-  padding: 10px;
   font-size: 14px;
-  color: #666;
+  color: #888;
 }
 </style>

@@ -217,6 +217,8 @@ export default {
         this.employees.splice(index, 1, updated);
       } else {
         this.employees.push(updated);
+        await this.fetchEmployees();
+
       }
 
       this.showModal = false;

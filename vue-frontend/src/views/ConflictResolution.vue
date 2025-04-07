@@ -334,7 +334,7 @@ export default {
   max-width: 1200px;
   margin: 40px auto;
   padding: 20px;
-  background: #fff;
+  background: #f2f4f7;
   border-radius: 14px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   font-family: "Segoe UI", sans-serif;

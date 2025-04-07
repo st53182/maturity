@@ -39,7 +39,7 @@ def openai_recommendations():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч, создающий детальные персонализированные рекомендации."},
                 {"role": "user", "content": prompt}
@@ -91,7 +91,7 @@ def generate_improvement_plan():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",

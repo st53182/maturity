@@ -64,9 +64,14 @@
   <button class="generate-btn" @click="submitConflict" :disabled="loading">
     💬 {{ loading ? "Генерация..." : "Получить рекомендации" }}
   </button>
-  <button class="save-btn" @click="saveConflict" :disabled="saving">
-    💾 {{ saving ? "Сохранение..." : "Сохранить и закрыть" }}
-  </button>
+  <button
+  v-if="form.id"
+  class="save-btn"
+  @click="saveConflict"
+  :disabled="saving"
+>
+  💾 {{ saving ? "Сохранение..." : "Сохранить и закрыть" }}
+</button>
   <button class="modal-close" @click="showModal = false">✖</button>
 </div>
 

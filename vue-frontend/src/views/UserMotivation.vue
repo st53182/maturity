@@ -70,7 +70,7 @@
      <button class="modal-close" @click="showModal = false">✖</button>
 
     <form @submit.prevent="submitMotivation" class="form-group">
-      <h2 style="text-align: center;">📝 Анкета сотрудника</h2>
+      <h2 style="text-align: center;">📝 Информация о сотруднике</h2>
 
       <label>Имя сотрудника:</label>
       <input v-model="form.name" required />
@@ -578,15 +578,15 @@ button:hover {
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
   padding: 30px;
-  max-width: 700px;
+  border-radius: 14px;
   width: 90%;
+  max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .modal-close {
@@ -604,5 +604,69 @@ button:hover {
 .modal-close:hover {
   color: #000;
 }
+
+.modal-content h2 {
+  font-size: 22px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 16px;
+  font-weight: bold;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.modal-actions {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-actions button {
+  padding: 12px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.3s ease;
+}
+
+.modal-actions button:first-child {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.modal-actions button:first-child:hover {
+  background-color: #337acc;
+}
+
+.modal-actions button:last-child {
+  background-color: #1d71b8;
+  color: white;
+}
+
+.modal-actions button:last-child:hover {
+  background-color: #155a94;
+}
+
 </style>
 

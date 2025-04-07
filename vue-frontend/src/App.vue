@@ -16,7 +16,7 @@
 </button>
   <button class="sidebar-btn" @click="$router.push('/motivation')">
     <span>🧠</span>
-    <small>Мотивация</small>
+    <small>Сотрудники & Мотивация</small>
   </button>
   <button class="sidebar-btn" @click="showTeamModal = true">
     <span>➕</span>

@@ -1,6 +1,6 @@
 <template>
   <div class="survey-container">
-    <h1>📊 Оценка зрелости команды</h1>
+    <h1>📊 Выбери команду для оценки ее зрелости </h1>
 
     <!-- 🔹 Выбор команды -->
     <div v-if="!selectedTeam" class="team-selection">
@@ -47,10 +47,7 @@
 </p>
 
       <!-- 🔹 Прогресс-бар -->
-      <div class="progress-bar">
-        <div class="progress" :style="{ width: progress + '%' }"></div>
-        <span class="progress-text">{{ Math.round(progress) }}% | ~{{ remainingTime }} мин</span>
-      </div>
+
       <div class="question-tracker">
   <span
     v-for="(q, index) in questions"
@@ -544,4 +541,34 @@ h1 {
   border: 2px solid #3498db;
   background: white;
 }
+
+.modern-button {
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 220px;
+}
+
+/* 🟣 Фиолетовый стиль */
+.modern-button.purple {
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+}
+
+.modern-button.purple:hover {
+  background: linear-gradient(135deg, #732d91, #8e44ad);
+  transform: scale(1.04);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
 </style>

@@ -2,6 +2,10 @@
   <div id="app">
    <!-- Sidebar -->
 <aside class="modern-sidebar" v-if="isAuthenticated">
+  <button class="sidebar-btn" @click="$router.push('/user-profile')">
+    <span>👤</span>
+    <small>Мой профиль</small>
+  </button>
   <button class="sidebar-btn" @click="$router.push('/dashboard')">
     <span>🏠</span>
     <small>Мои команды</small>
@@ -137,7 +141,7 @@ export default {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 70px;
+  width: 85px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   flex-direction: column;

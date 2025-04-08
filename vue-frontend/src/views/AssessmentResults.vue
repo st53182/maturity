@@ -11,12 +11,14 @@
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
 <div class="info-block level">
-  <h3>
+  <h3 class="level-header">
     🏅 Уровень
     <span class="level-tooltip-container">
       <span class="level-tooltip-icon">❔</span>
     </span>
   </h3>
+
+  <!-- Tooltip размещаем ниже -->
   <div class="level-tooltip-text">
     <ul>
       <li><strong>Начинающий:</strong> до 2 баллов</li>
@@ -25,6 +27,7 @@
       <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
     </ul>
   </div>
+
   <p>{{ teamLevel }}</p>
 </div>
   <div class="info-block market">
@@ -1249,32 +1252,35 @@ h1 {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.info-block.level {
+  position: relative;
+}
 
 .level-tooltip-container {
-  position: relative;
-  display: inline-block;
   cursor: help;
   margin-left: 6px;
+  position: relative;
 }
 
 .level-tooltip-text {
   display: none;
   position: absolute;
-  top: 24px;
+  top: 100%;
   left: 0;
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background: white;
   padding: 12px;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   z-index: 999;
-  width: max-content;
-  max-width: 300px;
+  width: 240px;
   font-size: 13px;
 }
 
+/* 👇 показываем tooltip при наведении */
 .level-tooltip-container:hover + .level-tooltip-text {
   display: block;
 }
+
 </style>
 

@@ -11,25 +11,29 @@
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
 <div class="info-block level">
-  <h3 class="level-header">
-    🏅 Уровень
-    <span class="level-tooltip-container">
-      <span class="level-tooltip-icon">❔</span>
-    </span>
-  </h3>
+  <div class="level-header">
+    <div class="level-title">
+      <h3>🏅 Уровень</h3>
 
-  <!-- Tooltip размещаем ниже -->
-  <div class="level-tooltip-text">
-    <ul>
-      <li><strong>Начинающий:</strong> до 2 баллов</li>
-      <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
-      <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
-      <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
-    </ul>
+      <span class="level-tooltip-container">
+        <span class="level-tooltip-icon">❔</span>
+        <!-- Tooltip отдельно и не внутри h3 или p -->
+      </span>
+    </div>
+
+    <div class="level-tooltip-text">
+      <ul>
+        <li><strong>Начинающий:</strong> до 2 баллов</li>
+        <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
+        <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
+        <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
+      </ul>
+    </div>
   </div>
 
   <p>{{ teamLevel }}</p>
 </div>
+
   <div class="info-block market">
     <h3>📈 Относительно среднего по индустрии</h3>
     <p>
@@ -1231,53 +1235,51 @@ h1 {
   cursor: help;
 }
 
-.tooltip1 {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 260px;
-  background: #fff;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  z-index: 20;
-  font-size: 13px;
-  line-height: 1.5;
-  animation: fadeIn 0.25s ease-in-out;
+.level-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.info-block.level {
-  position: relative;
+.level-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .level-tooltip-container {
-  cursor: help;
-  margin-left: 6px;
   position: relative;
+  cursor: help;
+}
+
+.level-tooltip-icon {
+  font-size: 14px;
+  color: #fff;
+  background-color: #888;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .level-tooltip-text {
   display: none;
   position: absolute;
-  top: 100%;
-  left: 0;
-  background: white;
-  padding: 12px;
-  border: 1px solid #ddd;
+  top: 28px;
+  right: 0;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 999;
-  width: 240px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 260px;
   font-size: 13px;
+  z-index: 99;
 }
 
-/* 👇 показываем tooltip при наведении */
 .level-tooltip-container:hover + .level-tooltip-text {
   display: block;
 }

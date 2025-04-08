@@ -77,6 +77,10 @@
     ⏳ До следующей оценки осталось:
     <strong>{{ timelineInfo.daysLeft }} {{ pluralDays(timelineInfo.daysLeft) }}</strong>
   </div>
+  <div v-if="previousAssessmentDates.length" class="timeline-previous-dates">
+  📅 Предыдущие оценки:
+  <strong>{{ previousAssessmentDates.join(', ') }}</strong>
+</div>
 
 </div>
 
@@ -719,6 +723,10 @@ pluralDays(n) {
     if (score < 4) return "🚀 Прогрессирующий";
     return "🏆 Высокоэффективный";
   },
+    previousAssessmentDates() {
+  const dates = Object.keys(this.resultsHistory).sort().reverse();
+  return dates.slice(1); // убираем самую последнюю (она уже отображается в точке)
+},
   compareToMarket() {
     const marketAvg = 3.75;
     return ((this.averageScore - marketAvg) / marketAvg) * 100;
@@ -1285,6 +1293,12 @@ h1 {
   margin-left: 6px;
   cursor: pointer;
   font-size: 14px;
+}
+.timeline-previous-dates {
+  text-align: center;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #555;
 }
 </style>
 

@@ -383,7 +383,7 @@ select {
 }
 
 button {
-  background: #2d8cff;
+  background: #677be5;
   color: white;
   padding: 12px 22px;
   border: none;
@@ -551,7 +551,7 @@ button:hover {
 
 .update-btn {
   padding: 10px 20px;
-  background-color: #3498db;
+  background-color: #677be5;
   color: #fff;
   font-weight: bold;
   border: none;

@@ -424,13 +424,14 @@ h1 {
   background: #687ce7;
   color: white;
   padding: 10px 15px;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: 0.3s;
 }
 
 .evaluate-btn:hover {
-  background: #687ce7;
+  background: #2980B9FF;
 }
 
 .view-results-btn {
@@ -438,7 +439,7 @@ h1 {
 }
 
 .view-results-btn:hover {
-  background: #7ce768;
+  background: #27AE60FF;
 }
 
 /* 🔹 Ошибки и загрузка */
@@ -491,6 +492,7 @@ h1 {
   color: white;
   padding: 10px 15px;
   border-radius: 8px;
+  border: none;
   cursor: pointer;
   font-weight: bold;
   transition: 0.3s;

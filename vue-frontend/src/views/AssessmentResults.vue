@@ -10,10 +10,20 @@
     <h3>📊 Оценка</h3>
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
-  <div class="info-block level">
-    <h3>🏅 Уровень</h3>
-    <p>{{ teamLevel }}</p>
+ <div class="info-block level" @mouseenter="showLevelTooltip = true" @mouseleave="showLevelTooltip = false">
+  <h3>🏅 Уровень</h3>
+  <p>{{ teamLevel }}</p>
+
+  <div v-if="showLevelTooltip" class="tooltip1">
+    <p><strong>📊 Уровни зрелости команды:</strong></p>
+    <ul>
+      <li><strong>Начинающий:</strong> до 2 баллов </li>
+      <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
+      <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
+      <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов </li>
+    </ul>
   </div>
+</div>
   <div class="info-block market">
     <h3>📈 Относительно среднего по индустрии</h3>
     <p>
@@ -1210,6 +1220,31 @@ h1 {
 .modern-button.green {
   background: linear-gradient(135deg, #10b981, #34d399);
 }
+.info-block.level {
+  position: relative;
+  cursor: help;
+}
 
+.tooltip1 {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 260px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>
 

@@ -89,6 +89,7 @@ export default {
   }
 };
 </script>
+<style>
 .profile-page {
   max-width: 800px;
   margin: auto;
@@ -148,3 +149,4 @@ button.modern-button.purple {
   padding: 12px 24px;
   font-size: 16px;
 }
+</style>

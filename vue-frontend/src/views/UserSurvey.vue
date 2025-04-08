@@ -15,11 +15,7 @@
           {{ team.name }}
         </button>
       </div>
-      <div class="create-btn-container">
-  <button class="modern-button purple" @click="showTeamModal = true">
-    ➕ Создать команду
-  </button>
-</div>
+
     </div>
 
     <!-- 🔹 Pop-up для создания команды -->

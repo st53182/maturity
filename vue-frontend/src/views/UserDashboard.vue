@@ -491,7 +491,6 @@ h1 {
   color: white;
   padding: 10px 15px;
   border-radius: 8px;
-  border: none;
   cursor: pointer;
   font-weight: bold;
   transition: 0.3s;

@@ -379,6 +379,12 @@ h1 {
   font-size: 22px;
   font-weight: bold;
   color: #2c3e50;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+
+
+
 }
 
 /* 🔹 Карточка средней оценки */
@@ -428,6 +434,7 @@ h1 {
   border-radius: 8px;
   cursor: pointer;
   transition: 0.3s;
+  font-weight: bold;
 }
 
 .evaluate-btn:hover {

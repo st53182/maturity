@@ -1,4 +1,4 @@
-# user_profile.py
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User
@@ -15,11 +15,11 @@ def get_profile():
         return jsonify({"error": "Пользователь не найден"}), 404
 
     return jsonify({
-        "email": user.email,
-        "name": user.name,
-        "position": user.position,
-        "company": user.company,
-        "personality_type": user.personality_type,
+        "username": user.username,
+        "full_name": user.full_name or "",
+        "position": user.position or "",
+        "company": user.company or "",
+        "personality_type": user.personality_type or ""
     })
 
 

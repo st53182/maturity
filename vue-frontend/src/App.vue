@@ -2,7 +2,7 @@
   <div id="app">
    <!-- Sidebar -->
 <aside class="modern-sidebar" v-if="isAuthenticated">
-  <button class="sidebar-btn" @click="$router.push('/user-profile')">
+  <button class="sidebar-btn" @click="$router.push('/profile')">
     <span>👤</span>
     <small>Мой профиль</small>
   </button>

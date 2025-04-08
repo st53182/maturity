@@ -23,7 +23,7 @@
         class="conflict-card"
       >
         <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
-        <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
+        <p>👥 Участники ( для выбора нескольких используйте ctrl ): {{ getParticipantNames(conflict.participants) }}</p>
         <p>🎯 Цель: {{ conflict.goal }}</p>
         <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
         <div v-if="conflict.ai_analysis" class="summary-block">

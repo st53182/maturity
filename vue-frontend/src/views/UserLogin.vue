@@ -138,16 +138,18 @@ button:hover {
 .link-button {
   background: none;
   border: none;
-  color: #d63031;
-  font-weight: bold;
+  color: #999;
+  font-weight: normal;
+  font-size: 14px;
   cursor: pointer;
-  margin-top: 20px;
-  font-size: 15px;
+  margin-top: 15px;
+  padding: 0;
+  transition: color 0.3s ease;
 }
 
 .link-button:hover {
+  color: #555;
   text-decoration: underline;
-  color: #b71540;
 }
 
 .forgot-password-block {

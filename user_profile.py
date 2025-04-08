@@ -39,7 +39,7 @@ def update_profile():
     user.position = data.get("position", user.position)
     user.company = data.get("company", user.company)
     user.personality_type = data.get("personality_type", user.personality_type)
-    user.email = data.get("email", user.email)
+    user.username = data.get("email", user.username)
 
     # Обновление пароля (если передан)
     old_password = data.get("old_password")

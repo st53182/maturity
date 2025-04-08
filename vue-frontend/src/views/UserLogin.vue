@@ -8,9 +8,17 @@
         <button type="submit">Войти</button>
       </form>
       <p class="register-link">Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
-      <div class="forgot-password-block">
-  ❓ <strong>Забыли пароль?</strong>
-  <p>Напишите нам на <a href="mailto:artjoms.grinakins@gmail.com">artjoms.grinakins@gmail.com</a>, и мы вам поможем.</p>
+      <div class="forgot-password-toggle">
+  <button @click="showHelp = !showHelp" class="link-button">
+    ❓ Забыли пароль?
+  </button>
+
+  <div v-if="showHelp" class="forgot-password-block">
+    <p>
+      Напишите нам на
+      <a href="mailto:artjoms.grinakins@gmail.com">artjoms.grinakins@gmail.com</a>, и мы вам поможем.
+    </p>
+  </div>
 </div>
     </div>
 
@@ -22,7 +30,8 @@ export default {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      showHelp: false,
     };
   },
   methods: {
@@ -125,5 +134,28 @@ button:hover {
 }
 .forgot-password-block a:hover {
   color: #0056b3;
+}
+.link-button {
+  background: none;
+  border: none;
+  color: #d63031;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+  color: #b71540;
+}
+
+.forgot-password-block {
+  background: #f8f9fa;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
 }
 </style>

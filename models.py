@@ -10,6 +10,11 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
+    name = db.Column(db.String(100))
+    position = db.Column(db.String(100))
+    company = db.Column(db.String(100))
+    personality_type = db.Column(db.String(50))
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password).decode('utf-8')
 

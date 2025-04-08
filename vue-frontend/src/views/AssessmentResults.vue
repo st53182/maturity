@@ -22,16 +22,21 @@
 <LevelInfoModal v-if="showLevelInfo" @close="showLevelInfo = false" />
 
   <div class="info-block market">
-    <h3>📈 Относительно среднего по индустрии</h3>
-    <p>
-      <span :class="compareToMarket >= 0 ? 'better' : 'worse'">
-        {{ compareToMarket >= 0 ? '+' : '' }}{{ compareToMarket.toFixed(1) }}%
-      </span>
-    </p>
-    <small v-if="previousAverage !== null" class="previous-diff">
-      {{ performanceChangeText }}
-    </small>
-  </div>
+  <h3>
+    📈 Относительно среднего по индустрии
+    <span class="info-icon" @click="showMarketModal = true">ℹ️</span>
+  </h3>
+  <p>
+    <span :class="compareToMarket >= 0 ? 'better' : 'worse'">
+      {{ compareToMarket >= 0 ? '+' : '' }}{{ compareToMarket.toFixed(2) }}%
+    </span>
+  </p>
+  <small v-if="previousAverage !== null" class="previous-diff">
+    {{ performanceChangeText }}
+  </small>
+</div>
+
+<MarketInfoModal v-if="showMarketModal" @close="showMarketModal = false" />
 </div>
 
 
@@ -182,15 +187,18 @@
 import axios from "axios";
 import RadarChart from "@/components/RadarChart.vue";
 import LevelInfoModal from "@/components/LevelInfoModal.vue";
+import MarketInfoModal from "@/components/MarketInfoModal.vue";
+
 
 
 export default {
-  components: { RadarChart, LevelInfoModal },
+  components: { RadarChart, LevelInfoModal,MarketInfoModal},
   props: ["team_id", "assessment_id"],
 
   data() {
     return {
       showLevelInfo: false,
+      showMarketModal: false,
       results: {},
       radarData: {},
       loading: true,
@@ -1273,6 +1281,10 @@ h1 {
 .level-tooltip-container:hover + .level-tooltip-text {
   display: block;
 }
-
+.info-icon {
+  margin-left: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
 </style>
 

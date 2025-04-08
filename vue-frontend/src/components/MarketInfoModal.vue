@@ -31,7 +31,7 @@ export default {
   z-index: 999;
 }
 .modal-content {
-  background: white;
+  background: #6f5fbe;
   padding: 20px 30px;
   border-radius: 10px;
   max-width: 500px;

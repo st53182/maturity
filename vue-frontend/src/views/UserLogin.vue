@@ -8,11 +8,12 @@
         <button type="submit">Войти</button>
       </form>
       <p class="register-link">Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
-    </div>
-    <div class="forgot-password-block">
+      <div class="forgot-password-block">
   ❓ <strong>Забыли пароль?</strong>
   <p>Напишите нам на <a href="mailto:artjoms.grinakins@gmail.com">artjoms.grinakins@gmail.com</a>, и мы вам поможем.</p>
 </div>
+    </div>
+
   </div>
 </template>
 

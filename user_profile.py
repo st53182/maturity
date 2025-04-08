@@ -16,7 +16,7 @@ def get_profile():
 
     return jsonify({
         "username": user.username,
-        "full_name": user.name or "",
+        "name": user.name or "",
         "position": user.position or "",
         "company": user.company or "",
         "personality_type": user.personality_type or ""

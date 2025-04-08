@@ -43,5 +43,11 @@ export default {
 }
 .modal-content button {
   margin-top: 20px;
+  background: #3f51b5;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 </style>

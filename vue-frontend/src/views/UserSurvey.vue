@@ -15,9 +15,11 @@
           {{ team.name }}
         </button>
       </div>
-      <div class="create-btn" @click="showTeamModal = true">
-        ➕ <small>Создать команду</small>
-      </div>
+      <div class="create-btn-container">
+  <button class="modern-button purple" @click="showTeamModal = true">
+    ➕ Создать команду
+  </button>
+</div>
     </div>
 
     <!-- 🔹 Pop-up для создания команды -->
@@ -49,6 +51,18 @@
         <div class="progress" :style="{ width: progress + '%' }"></div>
         <span class="progress-text">{{ Math.round(progress) }}% | ~{{ remainingTime }} мин</span>
       </div>
+      <div class="question-tracker">
+  <span
+    v-for="(q, index) in questions"
+    :key="q.id"
+    class="tracker-dot"
+    :class="{
+      answered: answers[q.id],
+      active: currentQuestionIndex === index
+    }"
+    @click="currentQuestionIndex = index"
+  ></span>
+</div>
 
       <!-- 🔹 Вопрос -->
       <div v-if="currentQuestion" class="question-card">
@@ -69,9 +83,13 @@
 
       <!-- 🔹 Кнопка отправки -->
       <div style="text-align: center; margin-top: 30px;">
-        <button v-if="allAnswered" class="team-btn" style="background: #8e44ad;" @click="submitAssessment">
-          📩 Отправить результаты
-        </button>
+        <button
+  v-if="allAnswered && currentQuestionIndex === questions.length - 1"
+  class="modern-button purple"
+  @click="submitAssessment"
+>
+  📩 Отправить результаты
+</button>
       </div>
     </div>
   </div>
@@ -504,5 +522,26 @@ h1 {
 .answer-options button:nth-child(4) { background-color: rgba(104, 188, 231, 0.6); }
 .answer-options button:nth-child(5) { background-color: rgba(124, 231, 104, 0.6); }
 
+.question-tracker {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
 
+.tracker-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.tracker-dot.answered {
+  background: #2ecc71;
+}
+.tracker-dot.active {
+  border: 2px solid #3498db;
+  background: white;
+}
 </style>

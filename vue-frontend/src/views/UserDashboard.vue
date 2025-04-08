@@ -421,7 +421,7 @@ h1 {
 
 .evaluate-btn,
 .view-results-btn {
-  background: #3498db;
+  background: #687ce7;
   color: white;
   padding: 10px 15px;
   border-radius: 8px;
@@ -430,15 +430,15 @@ h1 {
 }
 
 .evaluate-btn:hover {
-  background: #2980b9;
+  background: #687ce7;
 }
 
 .view-results-btn {
-  background: #2ecc71;
+  background: #7ce768;
 }
 
 .view-results-btn:hover {
-  background: #27ae60;
+  background: #7ce768;
 }
 
 /* 🔹 Ошибки и загрузка */
@@ -487,7 +487,7 @@ h1 {
   max-width: 90%; /* Адаптация к мобильным экранам */
 }
 .delete-btn {
-  background: #e74c3c;
+  background: #e7687c;
   color: white;
   padding: 10px 15px;
   border-radius: 8px;

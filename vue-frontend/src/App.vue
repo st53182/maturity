@@ -24,7 +24,7 @@
   </button>
   <button class="sidebar-btn" @click="showTeamModal = true">
      <span style="color: white;">➕</span>
-    <small>Команда</small>
+    <small>Создать команду</small>
   </button>
   <button class="sidebar-btn" @click="logout">
     <span>🚪</span>
@@ -41,7 +41,7 @@
 
 <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
   <div class="modal">
-    <h2>Создать новую команду</h2>
+    <h2 style="text-align: center;">Создать новую команду</h2>
     <p class="modal-subtitle"></p>
     <input
       v-model="newTeamName"

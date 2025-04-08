@@ -9,6 +9,10 @@
       </form>
       <p class="register-link">Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
     </div>
+    <div class="forgot-password-block">
+  ❓ <strong>Забыли пароль?</strong>
+  <p>Напишите нам на <a href="mailto:artjoms.grinakins@gmail.com">artjoms.grinakins@gmail.com</a>, и мы вам поможем.</p>
+</div>
   </div>
 </template>
 
@@ -103,5 +107,22 @@ button:hover {
 .register-link {
   margin-top: 15px;
   font-size: 14px;
+}
+
+.forgot-password-block {
+  margin-top: 20px;
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.forgot-password-block a {
+  color: #007bff;
+  text-decoration: underline;
+}
+.forgot-password-block a:hover {
+  color: #0056b3;
 }
 </style>

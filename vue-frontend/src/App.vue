@@ -23,7 +23,7 @@
     <small>Сотрудники & Мотивация</small>
   </button>
   <button class="sidebar-btn" @click="showTeamModal = true">
-    <span>➕</span>
+     <span style="color: white;">➕</span>
     <small>Команда</small>
   </button>
   <button class="sidebar-btn" @click="logout">

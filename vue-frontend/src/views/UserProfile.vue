@@ -89,64 +89,93 @@ export default {
   }
 };
 </script>
-<style>
+<style scoped>
 .profile-page {
   max-width: 800px;
-  margin: auto;
+  margin: 40px auto;
   padding: 30px;
-  background: #ffffff;
+  background: white;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  font-family: "Arial", sans-serif;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
+  font-family: "Segoe UI", sans-serif;
 }
 
 .profile-page h1 {
-  font-size: 28px;
-  margin-bottom: 24px;
   text-align: center;
+  font-size: 28px;
+  margin-bottom: 30px;
   color: #2c3e50;
+  font-weight: 800;
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .form-section {
+  padding: 10px 20px;
+  border-left: 4px solid #8e44ad;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.form-section h2 {
+  font-size: 20px;
+  color: #2c3e50;
   margin-bottom: 20px;
 }
 
 label {
-  font-weight: bold;
+  font-weight: 600;
+  margin-top: 12px;
   display: block;
-  margin: 10px 0 4px;
+  color: #34495e;
 }
 
 input {
-  padding: 12px;
   width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  margin-bottom: 14px;
   border: 1px solid #ccc;
   border-radius: 8px;
-  font-size: 16px;
-  transition: 0.2s ease;
+  font-size: 15px;
+  transition: border-color 0.3s;
 }
 
 input:focus {
-  border-color: #8e44ad;
   outline: none;
+  border-color: #8e44ad;
+  box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.2);
 }
 
 hr {
   border: none;
-  height: 1px;
-  background: #ddd;
-  margin: 20px 0;
+  border-top: 1px solid #ddd;
+  margin: 30px 0;
 }
 
-button.modern-button.purple {
-  align-self: center;
+.modern-button {
+  display: inline-block;
   padding: 12px 24px;
   font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.modern-button.purple {
+  background: linear-gradient(90deg, #8e44ad, #9b59b6);
+  color: white;
+  box-shadow: 0 4px 14px rgba(142, 68, 173, 0.2);
+}
+
+.modern-button.purple:hover {
+  background: linear-gradient(90deg, #732d91, #884ea0);
+  transform: scale(1.03);
 }
 </style>

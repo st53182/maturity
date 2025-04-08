@@ -10,19 +10,22 @@
     <h3>📊 Оценка</h3>
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
- <div class="info-block level" @mouseenter="showLevelTooltip = true" @mouseleave="showLevelTooltip = false">
-  <h3>🏅 Уровень</h3>
-  <p>{{ teamLevel }}</p>
-
-  <div v-if="showLevelTooltip" class="tooltip1">
-    <p><strong>📊 Уровни зрелости команды:</strong></p>
+<div class="info-block level">
+  <h3>
+    🏅 Уровень
+    <span class="level-tooltip-container">
+      <span class="level-tooltip-icon">❔</span>
+    </span>
+  </h3>
+  <div class="level-tooltip-text">
     <ul>
-      <li><strong>Начинающий:</strong> до 2 баллов </li>
+      <li><strong>Начинающий:</strong> до 2 баллов</li>
       <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
       <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
-      <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов </li>
+      <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
     </ul>
   </div>
+  <p>{{ teamLevel }}</p>
 </div>
   <div class="info-block market">
     <h3>📈 Относительно среднего по индустрии</h3>
@@ -1245,6 +1248,33 @@ h1 {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.level-tooltip-container {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  margin-left: 6px;
+}
+
+.level-tooltip-text {
+  display: none;
+  position: absolute;
+  top: 24px;
+  left: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  width: max-content;
+  max-width: 300px;
+  font-size: 13px;
+}
+
+.level-tooltip-container:hover + .level-tooltip-text {
+  display: block;
 }
 </style>
 

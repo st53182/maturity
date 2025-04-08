@@ -10,7 +10,7 @@
       <p class="register-link">Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
       <div class="forgot-password-toggle">
   <button @click="showHelp = !showHelp" class="link-button">
-    ❓ Забыли пароль?
+    Забыли пароль?
   </button>
 
   <div v-if="showHelp" class="forgot-password-block">
@@ -132,9 +132,7 @@ button:hover {
   color: #007bff;
   text-decoration: underline;
 }
-.forgot-password-block a:hover {
-  color: #0056b3;
-}
+
 .link-button {
   background: none;
   border: none;

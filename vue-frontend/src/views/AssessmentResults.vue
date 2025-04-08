@@ -11,28 +11,15 @@
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
 <div class="info-block level">
-  <div class="level-header">
-    <div class="level-title">
-      <h3>🏅 Уровень</h3>
-
-      <span class="level-tooltip-container">
-        <span class="level-tooltip-icon">❔</span>
-        <!-- Tooltip отдельно и не внутри h3 или p -->
-      </span>
-    </div>
-
-    <div class="level-tooltip-text">
-      <ul>
-        <li><strong>Начинающий:</strong> до 2 баллов</li>
-        <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
-        <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
-        <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
-      </ul>
-    </div>
-  </div>
-
+  <h3>
+    🏅 Уровень
+    <span class="info-icon" @click="showLevelInfo = true" style="cursor: pointer;">ℹ️</span>
+  </h3>
   <p>{{ teamLevel }}</p>
 </div>
+
+<!-- Показываем модалку -->
+<LevelInfoModal v-if="showLevelInfo" @close="showLevelInfo = false" />
 
   <div class="info-block market">
     <h3>📈 Относительно среднего по индустрии</h3>
@@ -194,13 +181,16 @@
 <script>
 import axios from "axios";
 import RadarChart from "@/components/RadarChart.vue";
+import LevelInfoModal from "@/components/LevelInfoModal.vue";
+
 
 export default {
-  components: { RadarChart },
+  components: { RadarChart, LevelInfoModal },
   props: ["team_id", "assessment_id"],
 
   data() {
     return {
+      showLevelInfo: false,
       results: {},
       radarData: {},
       loading: true,

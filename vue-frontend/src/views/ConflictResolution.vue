@@ -1,6 +1,6 @@
 <template>
   <div class="conflict-container">
-    <h1>🔥 Конфликты в командах</h1>
+    <h1>🔥 Конфликты в командах и Неконструктивное поведение</h1>
 
     <!-- 🔹 Фильтр -->
     <div class="filter-bar">
@@ -39,8 +39,8 @@
     <div class="modal-overlay" v-if="showModal">
       <div class="modal-content">
         <h2>{{ form.id ? 'Редактировать' : 'Новый конфликт' }}</h2>
-        <label>Контекст конфликта</label>
-        <textarea v-model="form.context" rows="3" />
+        <label>Контекст</label>
+        <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."/>
 
         <label>Участники</label>
         <select v-model="form.participants" multiple>
@@ -48,10 +48,10 @@
         </select>
 
         <label>Что предпринималось?</label>
-        <textarea v-model="form.actions_taken" rows="2" />
+        <textarea v-model="form.actions_taken" rows="3" placeholder="Какие шаги уже были предприняты для разрешения?"/>
 
         <label>Цель разрешения</label>
-        <textarea v-model="form.goal" rows="2" />
+        <textarea v-model="form.goal" rows="3" placeholder="Какого результата вы хотите достичь?"/>
 
         <label>Статус</label>
         <select v-model="form.status">

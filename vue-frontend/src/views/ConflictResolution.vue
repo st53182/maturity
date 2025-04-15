@@ -1,6 +1,6 @@
 <template>
   <div class="conflict-container">
-    <h1>🔥 Конфликты в командах и Неконструктивное поведение</h1>
+    <h1>🔥 Конфликты и Проблемы</h1>
 
     <!-- 🔹 Фильтр -->
     <div class="filter-bar">
@@ -23,7 +23,7 @@
         class="conflict-card"
       >
         <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
-        <p>👥 Участники ( для выбора нескольких используйте ctrl ): {{ getParticipantNames(conflict.participants) }}</p>
+        <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
         <p>🎯 Цель: {{ conflict.goal }}</p>
         <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
         <div v-if="conflict.ai_analysis" class="summary-block">
@@ -42,7 +42,7 @@
         <label>Контекст</label>
         <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."/>
 
-        <label>Участники</label>
+        <label>Участники (для выбора нескольких используйте ctrl) / Опционально </label>
         <select v-model="form.participants" multiple>
           <option v-for="e in employees" :value="e.id" :key="e.id">{{ e.name }}</option>
         </select>

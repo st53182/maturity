@@ -16,7 +16,7 @@
   </button>
   <button class="sidebar-btn" @click="$router.push('/conflicts')">
   <span>🤝</span>
-  <small>Конфликты & Неконструктивное поведение</small>
+  <small>Конфликты & Проблемы</small>
 </button>
   <button class="sidebar-btn" @click="$router.push('/motivation')">
     <span>🧠</span>

@@ -23,10 +23,10 @@ class User(db.Model):
 
 # 🔹 Модель команды
 class Team(db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # ✅ Авто-генерируемый ID
-    name = db.Column(db.String(255), nullable=False, unique=True)  # 🔹 Название команды
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # 🔹 Владелец команды
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 🔹 Дата
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     assessments = db.relationship("Assessment", backref="team", cascade="all, delete-orphan")
     user = db.relationship('User', backref=db.backref('teams', lazy=True))
 
@@ -63,7 +63,7 @@ class Conflict(db.Model):
     participants = db.Column(db.Text)
     attempts = db.Column(db.Text)
     goal = db.Column(db.Text)
-    status = db.Column(db.String(50), default="активен")  # 👈 добавим статус
+    status = db.Column(db.String(50), default="активен")
     ai_analysis = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

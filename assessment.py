@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from openai import OpenAI
-from models import Assessment  # Убедись, что импорт есть
-from database import db        # Импорт SQLAlchemy session
+from models import Assessment
+from database import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 

@@ -489,7 +489,7 @@ h1 {
   background: #fff;
   padding: 30px;
   border-radius: 16px;
-  width: 90%;
+  width: 97%;
   max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;

@@ -70,7 +70,7 @@
      <button class="modal-close" @click="showModal = false">✖</button>
 
     <form @submit.prevent="submitMotivation" class="form-group">
-      <h2 style="text-align: center;">📝 Информация о сотруднике</h2>
+      <h2 style="text-align: center;">Информация о сотруднике</h2>
 
       <label>Имя сотрудника:</label>
       <input v-model="form.name" required />
@@ -568,102 +568,97 @@ button:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  z-index: 99;
 }
 
 .modal-content {
   background: #fff;
   padding: 30px;
-  border-radius: 14px;
+  border-radius: 16px;
   width: 90%;
-  max-width: 700px;
+  max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.modal-close {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: #999;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.modal-close:hover {
-  color: #000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .modal-content h2 {
   font-size: 22px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  margin-bottom: 20px;
+  color: #2c3e50;
 }
 
 .modal-content label {
   display: block;
   margin-top: 16px;
   font-weight: bold;
-  color: #2c3e50;
+  color: #34495e;
   font-size: 14px;
 }
 
-.modal-content input,
-.modal-content select,
-.modal-content textarea {
+.modal-content textarea,
+.modal-content select {
   width: 100%;
   margin-top: 6px;
-  padding: 10px 12px;
+  padding: 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
-  font-size: 14px;
   resize: vertical;
+  font-size: 14px;
 }
 
+/* Кнопки в модальном окне */
 .modal-actions {
-  margin-top: 30px;
+  margin-top: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .modal-actions button {
-  padding: 12px 20px;
-  font-weight: bold;
+  flex: 1 1 auto;
+  padding: 10px 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 15px;
-  transition: 0.3s ease;
+  transition: 0.25s ease-in-out;
 }
 
 .modal-actions button:first-child {
-  background-color: #4a90e2;
+  background: #2980b9;
   color: white;
 }
 
 .modal-actions button:first-child:hover {
-  background-color: #337acc;
+  background: #2471a3;
 }
 
-.modal-actions button:last-child {
-  background-color: #1d71b8;
+.modal-actions button:nth-child(2) {
+  background: #8e44ad;
   color: white;
 }
 
-.modal-actions button:last-child:hover {
-  background-color: #155a94;
+.modal-actions button:nth-child(2):hover {
+  background: #732d91;
+}
+
+.modal-actions .modal-close {
+  background: #eee;
+  color: #333;
+  font-size: 18px;
+  padding: 8px 14px;
+}
+
+.modal-actions .modal-close:hover {
+  background: #ddd;
+  color: #000;
 }
 
 </style>

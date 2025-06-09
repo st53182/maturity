@@ -37,6 +37,7 @@
 
     <!-- 🔹 Модальное окно -->
     <div class="modal-overlay" v-if="showModal">
+      <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
       <div class="modal-content">
         <h2>{{ form.id ? 'Редактировать' : 'Новый конфликт' }}</h2>
         <label>Контекст</label>

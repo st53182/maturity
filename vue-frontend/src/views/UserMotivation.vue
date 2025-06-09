@@ -67,7 +67,7 @@
   </div>
   <div v-if="showModal" class="modal-overlay">
   <div class="modal-content">
-     <button class="modal-close" @click="showModal = false">✖</button>
+
 
     <form @submit.prevent="submitMotivation" class="form-group">
 
@@ -112,6 +112,7 @@
   <span v-if="loading">⏳ Генерация...</span>
   <span v-else>💬 Получить рекомендации</span>
 </button>
+  <button class="modal-close" @click="showModal = false">✖</button>
 </div>
     </form>
   </div>
@@ -653,6 +654,7 @@ button:hover {
   color: #333;
   font-size: 18px;
   padding: 8px 14px;
+  ;
 }
 
 .modal-actions .modal-close:hover {

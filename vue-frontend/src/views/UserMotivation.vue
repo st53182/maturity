@@ -70,7 +70,6 @@
      <button class="modal-close" @click="showModal = false">✖</button>
 
     <form @submit.prevent="submitMotivation" class="form-group">
-      <h2 style="text-align: center;">Информация о сотруднике</h2>
 
       <label>Имя сотрудника:</label>
       <input v-model="form.name" required />
@@ -97,7 +96,7 @@
 
       <label>4. Реакции на критику и изменения</label>
       <textarea v-model="form.feedback" required></textarea>
-
+<div class="modal-actions">
       <button
   @click="submitMotivation(false)"
   :disabled="loading"
@@ -113,7 +112,7 @@
   <span v-if="loading">⏳ Генерация...</span>
   <span v-else>💬 Получить рекомендации</span>
 </button>
-
+</div>
     </form>
   </div>
 </div>

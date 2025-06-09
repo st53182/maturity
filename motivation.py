@@ -60,7 +60,7 @@ def get_motivation():
 """
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": "Ты коуч, психолог и DISC-аналитик."},
                 {"role": "user", "content": prompt}

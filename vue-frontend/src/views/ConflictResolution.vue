@@ -77,7 +77,6 @@
   <button class="modal-close" @click="showModal = false">✖</button>
 </div>
 
-        <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
       </div>
     </div>
   </div>
@@ -514,7 +513,7 @@ h1 {
 
 .modal-content textarea,
 .modal-content select {
-  width: 100%;
+  width: 97%;
   margin-top: 6px;
   padding: 12px;
   border: 1px solid #ccc;

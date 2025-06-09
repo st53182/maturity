@@ -30,7 +30,7 @@
     <strong>📝 Рекомендации:</strong>
     <p v-html="shortenAnalysis(conflict.ai_analysis)"></p>
   </div>
-        <button @click="openModal(conflict)">✏️ Редактировать</button>
+        <button @click="openModal(conflict)">✏️ Открыть или редактировать </button>
         <button class="delete-btn" @click="deleteConflict(conflict.id)">🗑</button>
       </div>
     </div>

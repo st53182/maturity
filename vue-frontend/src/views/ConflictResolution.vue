@@ -42,7 +42,7 @@
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
         <h2>{{ form.id ? 'Редактировать' : 'Новый конфликт' }}</h2>
         <label>Контекст</label>
-        <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."/>
+        <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."></textarea>
 
         <label>Участники (для выбора нескольких используйте ctrl) / Опционально </label>
         <select v-model="form.participants" multiple>
@@ -50,10 +50,10 @@
         </select>
 
         <label>Что предпринималось?</label>
-        <textarea v-model="form.actions_taken" rows="3" placeholder="Какие шаги уже были предприняты для разрешения?"/>
+        <textarea v-model="form.actions_taken" rows="3" placeholder="Какие шаги уже были предприняты для разрешения?"></textarea>
 
         <label>Цель разрешения</label>
-        <textarea v-model="form.goal" rows="3" placeholder="Какого результата вы хотите достичь?"/>
+        <textarea v-model="form.goal" rows="3" placeholder="Какого результата вы хотите достичь?"></textarea>
 
         <label>Статус</label>
         <select v-model="form.status">
@@ -520,6 +520,8 @@ h1 {
   border-radius: 8px;
   resize: vertical;
   font-size: 14px;
+  box-sizing: border-box;
+
 }
 
 /* Кнопки в модальном окне */

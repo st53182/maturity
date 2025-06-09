@@ -603,7 +603,7 @@ button:hover {
 
 .modal-content textarea,
 .modal-content select {
-  width: 100%;
+  width: 90%;
   margin-top: 6px;
   padding: 12px;
   border: 1px solid #ccc;

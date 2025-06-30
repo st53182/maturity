@@ -15,6 +15,7 @@ from planning_poker import planning_bp
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": "https://www.growboard.ru"}}, supports_credentials=True)
 
 
 

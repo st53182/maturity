@@ -58,6 +58,7 @@ app.register_blueprint(profile_bp)
 
 
 # 🎯 Отдача Vue SPA
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):

@@ -2,7 +2,6 @@
   <div class="poker-wrapper">
     <h1 class="poker-title">🃏 Planning Poker — Комната {{ roomId }}</h1>
 
-    <!-- 🔹 Вход -->
     <div v-if="!joined" class="card poker-card">
       <input v-model="name" placeholder="Ваше имя" class="form-control" />
       <select v-model="role" class="form-control">
@@ -16,20 +15,8 @@
       <button class="btn btn-purple" @click="joinRoom">🚪 Присоединиться</button>
     </div>
 
-    <!-- 🔹 Голосование -->
     <div v-else class="card poker-card">
-  <div class="joined-info">👤 <strong>{{ name }}</strong> ({{ role }})</div>
-
-  <!-- 🔹 Описание задачи -->
-  <div class="story-box">
-    <label for="story">📝 Описание задачи:</label>
-    <textarea
-      id="story"
-      v-model="storyDescription"
-      class="form-control"
-      placeholder="Кратко опиши задачу..."
-    ></textarea>
-  </div>
+      <div class="joined-info">👤 <strong>{{ name }}</strong> ({{ role }})</div>
 
       <h2>📌 Выберите Story Point</h2>
       <div class="sp-buttons">
@@ -47,31 +34,27 @@
         <p>✅ Вы выбрали: <strong>{{ selectedSP }} SP</strong></p>
         <button class="btn btn-blue" @click="submitVote">📨 Отправить голос</button>
       </div>
-<div class="participants-box">
-  <h3>👥 Участники</h3>
-  <ul>
-    <li v-for="p in participants" :key="p.id">
-      <strong>{{ p.name }}</strong> ({{ p.role }}) —
-      <span v-if="votesVisible">
-        {{ p.voted ? p.points + ' SP' : '— ❌ Не голосовал' }}
-      </span>
-      <span v-else>
-        {{ p.voted ? '🔒 Оценка скрыта' : '❌ Не голосовал' }}
-      </span>
-    </li>
-  </ul>
 
-  <button
-  class="btn btn-purple"
-  @click="votesVisible = true"
-  v-if="!votesVisible"
->
-  👁 Показать оценки
-</button>
+      <div class="participants-box">
+        <h3>👥 Участники</h3>
+        <ul>
+          <li v-for="p in participants" :key="p.id">
+            <strong>{{ p.name }}</strong> ({{ p.role }}) —
+            <span v-if="votesVisible">
+              {{ p.voted ? p.points + ' SP' : '— ❌ Не голосовал' }}
+            </span>
+            <span v-else>
+              {{ p.voted ? '🔒 Оценка скрыта' : '❌ Не голосовал' }}
+            </span>
+          </li>
+        </ul>
 
-</div>
-      <!-- 🔹 Подсказки -->
-      <div v-if="hints.length" class="hints-box">
+        <button class="btn btn-purple" @click="votesVisible = true" v-if="!votesVisible">
+          👁 Показать оценки
+        </button>
+      </div>
+
+      <div class="hints-box" v-if="hints.length">
         <h3>💡 Подсказки:</h3>
         <ul>
           <li v-for="(hint, i) in hints" :key="i">— {{ hint.story }}</li>
@@ -95,27 +78,13 @@ export default {
       hints: [],
       participants: [],
       votesVisible: false,
-      storyDescription: "",
-      pollingInterval: null,
-
     };
   },
   methods: {
-    startPolling() {
-  this.pollingInterval = setInterval(() => {
-    this.fetchParticipants();
-  }, 5000); // 🔁 каждые 5 секунд
-},
-stopPolling() {
-  if (this.pollingInterval) {
-    clearInterval(this.pollingInterval);
-    this.pollingInterval = null;
-  }
-},
     async joinRoom() {
       if (!this.name || !this.role) return alert("Заполните имя и роль");
 
-      const res = await fetch(`/planning-room/${this.roomId}/join`, {
+      const res = await fetch(`/api/planning-room/${this.roomId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: this.name, role: this.role })
@@ -124,45 +93,34 @@ stopPolling() {
       this.participantId = data.participant_id;
       this.joined = true;
       await this.fetchParticipants();
-      this.startPolling();
-
-
     },
     selectSP(sp) {
       this.selectedSP = sp;
       this.fetchHints(sp);
-
     },
     async fetchParticipants() {
-  const res = await fetch(`/planning-room/${this.roomId}/participants`);
-  const data = await res.json();
-  this.participants = data.participants;
-},
+      const res = await fetch(`/api/planning-room/${this.roomId}/participants`);
+      const data = await res.json();
+      this.participants = data.participants;
+    },
     async fetchHints(sp) {
-      const res = await fetch(
-        `/planning-room/${this.roomId}/hints?sp=${sp}&role=${this.role}`
-      );
+      const res = await fetch(`/api/planning-room/${this.roomId}/hints?sp=${sp}&role=${this.role}`);
       const data = await res.json();
       this.hints = data.hints || [];
     },
     async submitVote() {
-      await fetch(`/planning-room/${this.roomId}/vote`, {
+      await fetch(`/api/planning-room/${this.roomId}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          story: this.storyDescription || "История без названия",
+          story: "История без названия",
           points: this.selectedSP,
-          participant_id: this.participantId,
-
+          participant_id: this.participantId
         })
-
       });
-      await this.fetchParticipants();
       alert("Голос учтён!");
-    },
-      unmounted() {
-    this.stopPolling();
-  }
+      await this.fetchParticipants();
+    }
   }
 };
 </script>

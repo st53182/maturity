@@ -11,7 +11,7 @@ from flask_cors import CORS
 from conflict import bp_conflict
 from motivation import bp_motivation
 from user_profile import profile_bp
-
+from planning_poker import planning_bp
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
@@ -53,6 +53,7 @@ app.register_blueprint(bp_conflict, url_prefix="/api")
 app.register_blueprint(bp_motivation)
 
 app.register_blueprint(profile_bp)
+app.register_blueprint(planning_bp)
 
 
 # 🎯 Отдача Vue SPA

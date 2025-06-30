@@ -93,3 +93,27 @@ class Employee(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
+class PlanningRoom(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# 🔹 Участник сессии
+class Participant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('planning_room.id'), nullable=False)
+    room = db.relationship('PlanningRoom', backref=db.backref('participants', lazy=True))
+
+# 🔹 Голос / оценка участника
+class Vote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    story = db.Column(db.String(255), nullable=False)
+    points = db.Column(db.Integer, nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('planning_room.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    participant = db.relationship('Participant', backref=db.backref('votes', lazy=True))
+    room = db.relationship('PlanningRoom', backref=db.backref('votes', lazy=True))

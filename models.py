@@ -2,6 +2,8 @@ from database import db
 from flask_bcrypt import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 
 # 🔹 Модель пользователя
@@ -93,3 +95,37 @@ class Employee(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
+class PokerSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    stories = db.relationship("Story", backref="session", cascade="all, delete-orphan")
+    participants = db.relationship("Participant", backref="session", cascade="all, delete-orphan")
+
+
+class Story(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('poker_session.session_id'), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(50))  # epic, feature, story
+    estimates = db.relationship("Estimate", backref="story", cascade="all, delete-orphan")
+
+
+class Participant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('poker_session.session_id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    socket_id = db.Column(db.String(100), nullable=True)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Estimate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    story_id = db.Column(db.Integer, db.ForeignKey('story.id'), nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+    value = db.Column(db.Float, nullable=False)
+    estimate_type = db.Column(db.String(10), default="points")  # points or hours
+    revealed = db.Column(db.Boolean, default=False)
+
+    participant = db.relationship("Participant", backref="estimates")

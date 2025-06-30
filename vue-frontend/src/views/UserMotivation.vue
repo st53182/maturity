@@ -610,7 +610,6 @@ button:hover {
   border-radius: 8px;
   resize: vertical;
   font-size: 14px;
-  box-sizing: border-box;
 }
 
 /* Кнопки в модальном окне */

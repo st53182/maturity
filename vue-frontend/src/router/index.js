@@ -6,10 +6,6 @@ import UserSurvey from '../views/UserSurvey.vue';
 import UserDashboard from '../views/UserDashboard.vue';
 import AssessmentResults from '../views/AssessmentResults.vue';
 
-
-import PokerHome from '../views/PokerHome.vue'
-import PokerSession from '../views/PokerSession.vue'
-
 const routes = [
   { path: '/', component: UserHome },
   { path: '/login', component: UserLogin },
@@ -19,9 +15,7 @@ const routes = [
   { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true },
   {path: '/conflicts', name: 'Conflicts', component: () => import('@/views/ConflictResolution.vue') },
   {path: '/motivation', name: 'Motivation', component: () => import('@/views/UserMotivation.vue')},
-  {path: "/profile", name: "UserProfile", component: () => import("@/views/UserProfile.vue")},
-  { path: '/poker', component: PokerHome },
-  { path: '/poker/:session_id', component: PokerSession }
+  {path: "/profile", name: "UserProfile", component: () => import("@/views/UserProfile.vue")}
 
 ];
 

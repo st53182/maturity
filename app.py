@@ -12,13 +12,11 @@ from conflict import bp_conflict
 from motivation import bp_motivation
 from user_profile import profile_bp
 
-from socketio_instance import socketio  # ✅ Сначала импорт socketio
-
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
-socketio.init_app(app)
-from poker_sockets import *
+
+
 
 # 📦 Подключение к базе данных
 database_url = os.getenv("DATABASE_URL", "postgresql://localhost/fallback_db")
@@ -58,7 +56,6 @@ app.register_blueprint(profile_bp)
 
 
 # 🎯 Отдача Vue SPA
-
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):
@@ -71,5 +68,5 @@ def api_root():
     return {"message": "Scrum Maturity API is working!"}
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run()
 

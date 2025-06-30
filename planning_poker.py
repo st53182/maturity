@@ -22,3 +22,24 @@ def join_room(room_id):
     return jsonify({"participant_id": participant.id})
 
 # и так далее: голосование, подсказки, история
+
+
+@planning_bp.route('/api/planning-room/<int:room_id>/participants', methods=['GET'])
+def get_participants(room_id):
+    from models import Participant, Vote
+
+    participants = Participant.query.filter_by(room_id=room_id).all()
+    votes = Vote.query.filter_by(room_id=room_id).all()
+    vote_map = {vote.participant_id: vote.points for vote in votes}
+
+    result = []
+    for p in participants:
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "role": p.role,
+            "voted": p.id in vote_map,
+            "points": vote_map.get(p.id)
+        })
+
+    return jsonify({"participants": result})

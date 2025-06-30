@@ -1,10 +1,11 @@
 <template>
-  <div class="poker-container">
+  <div class="poker-wrapper">
     <h1 class="poker-title">🃏 Planning Poker — Комната {{ roomId }}</h1>
 
-    <div v-if="!joined" class="join-form">
-      <input v-model="name" placeholder="Ваше имя" class="form-input" />
-      <select v-model="role" class="form-input">
+    <!-- 🔹 Вход -->
+    <div v-if="!joined" class="card poker-card">
+      <input v-model="name" placeholder="Ваше имя" class="form-control" />
+      <select v-model="role" class="form-control">
         <option disabled value="">Выберите роль</option>
         <option>FE</option>
         <option>BE</option>
@@ -12,15 +13,25 @@
         <option>QA</option>
         <option>Analyst</option>
       </select>
-      <button class="btn primary" @click="joinRoom">🚪 Присоединиться</button>
+      <button class="btn btn-purple" @click="joinRoom">🚪 Присоединиться</button>
     </div>
 
-    <div v-else>
-      <div class="joined-info">
-        👤 Вы вошли как <strong>{{ name }}</strong> ({{ role }})
-      </div>
+    <!-- 🔹 Голосование -->
+    <div v-else class="card poker-card">
+  <div class="joined-info">👤 <strong>{{ name }}</strong> ({{ role }})</div>
 
-      <h2>📌 Оцените задачу</h2>
+  <!-- 🔹 Описание задачи -->
+  <div class="story-box">
+    <label for="story">📝 Описание задачи:</label>
+    <textarea
+      id="story"
+      v-model="storyDescription"
+      class="form-control"
+      placeholder="Кратко опиши задачу..."
+    ></textarea>
+  </div>
+
+      <h2>📌 Выберите Story Point</h2>
       <div class="sp-buttons">
         <button
           v-for="sp in storyPoints"
@@ -32,16 +43,39 @@
         </button>
       </div>
 
-      <div v-if="selectedSP" class="vote-section">
+      <div v-if="selectedSP" class="vote-result">
         <p>✅ Вы выбрали: <strong>{{ selectedSP }} SP</strong></p>
-        <button class="btn secondary" @click="submitVote">📨 Отправить голос</button>
+        <button class="btn btn-blue" @click="submitVote">📨 Отправить голос</button>
+      </div>
+<div class="participants-box">
+  <h3>👥 Участники</h3>
+  <ul>
+    <li v-for="p in participants" :key="p.id">
+      <strong>{{ p.name }}</strong> ({{ p.role }}) —
+      <span v-if="votesVisible">
+        {{ p.voted ? p.points + ' SP' : '— ❌ Не голосовал' }}
+      </span>
+      <span v-else>
+        {{ p.voted ? '🔒 Оценка скрыта' : '❌ Не голосовал' }}
+      </span>
+    </li>
+  </ul>
 
-        <div v-if="hints.length" class="hints-box">
-          <h3>💡 Подсказки по похожим историям:</h3>
-          <ul>
-            <li v-for="(hint, i) in hints" :key="i">— {{ hint.story }}</li>
-          </ul>
-        </div>
+  <button
+  class="btn btn-purple"
+  @click="votesVisible = true"
+  v-if="!votesVisible"
+>
+  👁 Показать оценки
+</button>
+
+</div>
+      <!-- 🔹 Подсказки -->
+      <div v-if="hints.length" class="hints-box">
+        <h3>💡 Подсказки:</h3>
+        <ul>
+          <li v-for="(hint, i) in hints" :key="i">— {{ hint.story }}</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -58,15 +92,28 @@ export default {
       participantId: null,
       storyPoints: [1, 2, 3, 5, 8, 13, 21],
       selectedSP: null,
-      hints: []
+      hints: [],
+      participants: [],
+      votesVisible: false,
+      storyDescription: "",
+      pollingInterval: null,
+
     };
   },
   methods: {
+    startPolling() {
+  this.pollingInterval = setInterval(() => {
+    this.fetchParticipants();
+  }, 5000); // 🔁 каждые 5 секунд
+},
+stopPolling() {
+  if (this.pollingInterval) {
+    clearInterval(this.pollingInterval);
+    this.pollingInterval = null;
+  }
+},
     async joinRoom() {
-      if (!this.name || !this.role) {
-        alert("Введите имя и роль");
-        return;
-      }
+      if (!this.name || !this.role) return alert("Заполните имя и роль");
 
       const res = await fetch(`/api/planning-room/${this.roomId}/join`, {
         method: "POST",
@@ -76,11 +123,21 @@ export default {
       const data = await res.json();
       this.participantId = data.participant_id;
       this.joined = true;
+      await this.fetchParticipants();
+      this.startPolling();
+
+
     },
     selectSP(sp) {
       this.selectedSP = sp;
       this.fetchHints(sp);
+
     },
+    async fetchParticipants() {
+  const res = await fetch(`/api/planning-room/${this.roomId}/participants`);
+  const data = await res.json();
+  this.participants = data.participants;
+},
     async fetchHints(sp) {
       const res = await fetch(
         `/api/planning-room/${this.roomId}/hints?sp=${sp}&role=${this.role}`
@@ -93,47 +150,73 @@ export default {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          story: "История без названия",
+          story: this.storyDescription || "История без названия",
           points: this.selectedSP,
-          participant_id: this.participantId
+          participant_id: this.participantId,
+
         })
+
       });
+      await this.fetchParticipants();
       alert("Голос учтён!");
-    }
+    },
+      unmounted() {
+    this.stopPolling();
+  }
   }
 };
 </script>
 
 <style scoped>
-.poker-container {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
+
+.participants-box {
+  margin-top: 30px;
+  background: #fefefe;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.poker-wrapper {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px;
 }
 .poker-title {
   text-align: center;
-  margin-bottom: 20px;
+  color: #4b4f7c;
+  margin-bottom: 16px;
 }
-.join-form {
-  display: flex;
-  flex-direction: column;
+.card.poker-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 20px;
 }
-.form-input {
-  padding: 10px;
-  margin: 8px 0;
+.form-control {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
   font-size: 16px;
 }
 .btn {
-  padding: 10px;
   margin-top: 10px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
 }
-.primary {
-  background-color: #2e7d32;
+.btn-purple {
+  background-color: #6C63FF;
   color: white;
 }
-.secondary {
-  background-color: #1976d2;
+.btn-blue {
+  background-color: #478eff;
   color: white;
 }
 .sp-buttons {
@@ -143,21 +226,23 @@ export default {
   margin: 16px 0;
 }
 .sp-btn {
-  padding: 10px 16px;
-  font-size: 16px;
+  border: 1px solid #6C63FF;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: white;
   cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
 }
-.selected {
-  background-color: #ffb300;
-  color: #000;
-}
-.vote-section {
-  margin-top: 20px;
+.sp-btn.selected {
+  background: #6C63FF;
+  color: white;
 }
 .hints-box {
-  margin-top: 15px;
-  background: #f1f8e9;
-  padding: 10px;
-  border-left: 4px solid #8bc34a;
+  margin-top: 20px;
+  background: #f0f4ff;
+  border-left: 4px solid #6C63FF;
+  padding: 12px;
+  border-radius: 8px;
 }
 </style>

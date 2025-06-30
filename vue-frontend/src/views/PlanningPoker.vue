@@ -115,7 +115,7 @@ stopPolling() {
     async joinRoom() {
       if (!this.name || !this.role) return alert("Заполните имя и роль");
 
-      const res = await fetch(`/api/planning-room/${this.roomId}/join`, {
+      const res = await fetch(`/planning-room/${this.roomId}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: this.name, role: this.role })
@@ -134,19 +134,19 @@ stopPolling() {
 
     },
     async fetchParticipants() {
-  const res = await fetch(`/api/planning-room/${this.roomId}/participants`);
+  const res = await fetch(`/planning-room/${this.roomId}/participants`);
   const data = await res.json();
   this.participants = data.participants;
 },
     async fetchHints(sp) {
       const res = await fetch(
-        `/api/planning-room/${this.roomId}/hints?sp=${sp}&role=${this.role}`
+        `/planning-room/${this.roomId}/hints?sp=${sp}&role=${this.role}`
       );
       const data = await res.json();
       this.hints = data.hints || [];
     },
     async submitVote() {
-      await fetch(`/api/planning-room/${this.roomId}/vote`, {
+      await fetch(`/planning-room/${this.roomId}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

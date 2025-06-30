@@ -53,7 +53,7 @@ app.register_blueprint(bp_conflict, url_prefix="/api")
 app.register_blueprint(bp_motivation)
 
 app.register_blueprint(profile_bp)
-app.register_blueprint(planning_bp)
+app.register_blueprint(planning_bp, url_prefix="/api")
 
 
 # 🎯 Отдача Vue SPA

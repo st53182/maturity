@@ -5,7 +5,7 @@ from models import PlanningRoom, Participant, Vote
 
 planning_bp = Blueprint('planning_poker', __name__)
 
-@planning_bp.route('/api/planning-room', methods=['POST'])
+@planning_bp.route('/planning-room', methods=['POST'])
 def create_room():
     data = request.json
     room = PlanningRoom(name=data['name'])
@@ -13,7 +13,7 @@ def create_room():
     db.commit()
     return jsonify({"room_id": room.id})
 
-@planning_bp.route('/api/planning-room/<int:room_id>/join', methods=['POST'])
+@planning_bp.route('/planning-room/<int:room_id>/join', methods=['POST'])
 def join_room(room_id):
     data = request.json
     participant = Participant(name=data['name'], role=data['role'], room_id=room_id)
@@ -24,7 +24,7 @@ def join_room(room_id):
 # и так далее: голосование, подсказки, история
 
 
-@planning_bp.route('/api/planning-room/<int:room_id>/participants', methods=['GET'])
+@planning_bp.route('/planning-room/<int:room_id>/participants', methods=['GET'])
 def get_participants(room_id):
     from models import Participant, Vote
 

@@ -11,14 +11,14 @@ from flask_cors import CORS
 from conflict import bp_conflict
 from motivation import bp_motivation
 from user_profile import profile_bp
-from flask_socketio import SocketIO
-from poker_sockets import *
+
+from socketio_instance import socketio  # ✅ Сначала импорт socketio
 
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
-
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio.init_app(app)
+from poker_sockets import *
 
 # 📦 Подключение к базе данных
 database_url = os.getenv("DATABASE_URL", "postgresql://localhost/fallback_db")
@@ -70,5 +70,5 @@ def api_root():
     return {"message": "Scrum Maturity API is working!"}
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
 

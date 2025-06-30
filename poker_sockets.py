@@ -1,7 +1,7 @@
 from flask_socketio import emit, join_room, leave_room
 from flask import request
 from models import db, Participant, PokerSession, Estimate, Story
-from app import socketio
+from socketio_instance import socketio
 
 @socketio.on("join_session")
 def handle_join_session(data):

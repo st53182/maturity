@@ -15,7 +15,9 @@ const routes = [
   { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true },
   {path: '/conflicts', name: 'Conflicts', component: () => import('@/views/ConflictResolution.vue') },
   {path: '/motivation', name: 'Motivation', component: () => import('@/views/UserMotivation.vue')},
-  {path: "/profile", name: "UserProfile", component: () => import("@/views/UserProfile.vue")}
+  {path: "/profile", name: "UserProfile", component: () => import("@/views/UserProfile.vue")},
+  {path: '/planning-poker/:roomId', name: 'PlanningPoker', component: () => import('@/views/PlanningPoker.vue')
+}
 
 ];
 

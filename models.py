@@ -97,11 +97,10 @@ class PlanningRoom(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    show_votes = db.Column(db.Boolean, default=False)  # 🆕 Флаг для вскрытия оценок
+    show_votes = db.Column(db.Boolean, default=False)
 
-    participants = db.relationship('Participant', backref=db.backref('room', lazy=True))
-    votes = db.relationship('Vote', backref=db.backref('room', lazy=True))
-    stories = db.relationship('PokerStory', backref=db.backref('room', lazy=True))  # 🆕
+    participants = db.relationship('Participant', backref='planning_room')
+    votes = db.relationship('Vote', backref='planning_room')
 
 # 🔹 Участник сессии
 class Participant(db.Model):
@@ -117,16 +116,12 @@ class Participant(db.Model):
 # 🔹 Голос / оценка участника
 
 class Vote(db.Model):
-        id = db.Column(db.Integer, primary_key=True)
-        story_id = db.Column(db.Integer, db.ForeignKey('poker_story.id'))  # 🆕 Связь с задачей
-        story = db.Column(db.String(255), nullable=False)  # Для старых записей
-        points = db.Column(db.Integer, nullable=False)
-        participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
-        room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
-        created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-        participant = db.relationship('Participant', backref=db.backref('votes', lazy=True))
-        room = db.relationship('PlanningRoom', backref=db.backref('votes', lazy=True))
+    id = db.Column(db.Integer, primary_key=True)
+    story = db.Column(db.String(255), nullable=False)
+    points = db.Column(db.Integer, nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class PokerStory(db.Model):  # 🆕
     id = db.Column(db.Integer, primary_key=True)

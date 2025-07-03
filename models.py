@@ -112,7 +112,7 @@ class Vote(db.Model):
     story = db.Column(db.String(255), nullable=False)
     points = db.Column(db.Integer, nullable=False)
     participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
-    room_id = db.Column(db.Integer, db.ForeignKey('planning_room.id'), nullable=False)
+    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     participant = db.relationship('Participant', backref=db.backref('votes', lazy=True))

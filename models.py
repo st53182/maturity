@@ -101,9 +101,21 @@ class PlanningRoom(db.Model):
 
     participants = db.relationship('Participant', backref='planning_room', cascade="all, delete-orphan")
     votes = db.relationship('Vote', backref='planning_room', cascade="all, delete-orphan")
-    stories = db.relationship('PokerStory', backref='planning_room', cascade="all, delete-orphan")
+
+    # 👇 ЯВНО УКАЗАЛ foreign_keys, чтобы убрать конфликт
+    stories = db.relationship(
+        'PokerStory',
+        backref='planning_room',
+        cascade="all, delete-orphan",
+        foreign_keys='PokerStory.room_id'
+    )
+
     current_story_id = db.Column(db.Integer, db.ForeignKey('poker_story.id'), nullable=True)
-    current_story = db.relationship('PokerStory')
+    current_story = db.relationship(
+        'PokerStory',
+        foreign_keys=[current_story_id]
+    )
+
 
 
 

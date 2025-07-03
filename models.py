@@ -97,23 +97,42 @@ class PlanningRoom(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    show_votes = db.Column(db.Boolean, default=False)  # 🆕 Флаг для вскрытия оценок
+
+    participants = db.relationship('Participant', backref=db.backref('room', lazy=True))
+    votes = db.relationship('Vote', backref=db.backref('room', lazy=True))
+    stories = db.relationship('PokerStory', backref=db.backref('room', lazy=True))  # 🆕
 
 # 🔹 Участник сессии
 class Participant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
-    room = db.relationship('PlanningRoom', backref=db.backref('participants', lazy=True))
-
-# 🔹 Голос / оценка участника
-class Vote(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    story = db.Column(db.String(255), nullable=False)
-    points = db.Column(db.Integer, nullable=False)
-    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
-    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
+    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'), nullable=False)
+    session_id = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    participant = db.relationship('Participant', backref=db.backref('votes', lazy=True))
-    room = db.relationship('PlanningRoom', backref=db.backref('votes', lazy=True))
+    votes = db.relationship('Vote', backref=db.backref('participant', lazy=True))
+
+# 🔹 Голос / оценка участника
+
+class Vote(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        story_id = db.Column(db.Integer, db.ForeignKey('poker_story.id'))  # 🆕 Связь с задачей
+        story = db.Column(db.String(255), nullable=False)  # Для старых записей
+        points = db.Column(db.Integer, nullable=False)
+        participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+        room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
+        created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+        participant = db.relationship('Participant', backref=db.backref('votes', lazy=True))
+        room = db.relationship('PlanningRoom', backref=db.backref('votes', lazy=True))
+
+class PokerStory(db.Model):  # 🆕
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    votes = db.relationship('Vote', backref=db.backref('story_obj', lazy=True))  # 🆕

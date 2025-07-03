@@ -123,13 +123,19 @@ export default {
     };
   },
   mounted() {
-    const savedId = localStorage.getItem("planningPokerParticipantId");
-    if (savedId) {
-      this.participantId = savedId;
-      this.joined = true;
-      this.startPolling();
-    }
-  },
+  const savedId = localStorage.getItem("planningPokerParticipantId");
+  if (savedId) {
+    this.participantId = savedId;
+    this.joined = true;
+
+    // Подгружаем участников и текущую задачу
+    this.fetchParticipants();
+    this.fetchCurrentStory();
+
+    // Запускаем периодический polling
+    this.startPolling();
+  }
+},
   methods: {
     async joinRoom() {
       const res = await fetch(`/api/planning-room/${this.roomId}/join`, {
@@ -184,11 +190,17 @@ export default {
       this.newStoryTitle = "";
       this.newStoryDescription = "";
     },
-    selectStory(story) {
-      this.selectedStory = story;
-      this.selectedSP = null;
-      this.hints = [];
-    },
+    async selectStory(story) {
+  this.selectedStory = story;
+
+  // Отправляем текущую задачу на сервер
+  await fetch(`/api/planning-room/${this.roomId}/current-story`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ story_id: story.id })
+  });
+},
+
     async selectSP(sp) {
       this.selectedSP = sp;
       await fetch(`/api/planning-room/${this.roomId}/vote`, {
@@ -211,17 +223,25 @@ export default {
       const data = await res.json();
       this.hints = data.hints || [];
     },
+    async fetchCurrentStory() {
+  const res = await fetch(`/api/planning-room/${this.roomId}`);
+  if (res.ok) {
+    const data = await res.json();
+    this.selectedStory = data.current_story; // 👈 Обновляем локальное состояние
+  }
+},
     async showVotes() {
       await fetch(`/api/planning-room/${this.roomId}/show-votes`, {
         method: "POST"
       });
     },
     startPolling() {
-      this.pollingInterval = setInterval(() => {
-        this.fetchParticipants();
-        this.fetchStories();
-      }, 3000);
-    },
+  this.polling = setInterval(() => {
+    this.fetchParticipants();
+    this.fetchStories();
+    this.fetchCurrentStory(); // 👈 Подтягиваем текущую задачу
+  }, 3000);
+},
     stopPolling() {
       clearInterval(this.pollingInterval);
     }

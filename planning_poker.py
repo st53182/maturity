@@ -195,3 +195,16 @@ def leave_room(room_id, participant_id):
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+@planning_bp.route('/planning-room/<room_id>/current-story', methods=['POST'])
+def set_current_story(room_id):
+    data = request.json
+    story_id = data.get('story_id')
+
+    room = PlanningRoom.query.get(room_id)
+    if not room:
+        return jsonify({"error": "Комната не найдена"}), 404
+
+    room.current_story_id = story_id
+    db.session.commit()
+    return jsonify({"message": "Текущая задача обновлена"})

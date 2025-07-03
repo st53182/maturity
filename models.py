@@ -102,6 +102,8 @@ class PlanningRoom(db.Model):
     participants = db.relationship('Participant', backref='planning_room', cascade="all, delete-orphan")
     votes = db.relationship('Vote', backref='planning_room', cascade="all, delete-orphan")
     stories = db.relationship('PokerStory', backref='planning_room', cascade="all, delete-orphan")
+    current_story_id = db.Column(db.Integer, db.ForeignKey('poker_story.id'), nullable=True)
+    current_story = db.relationship('PokerStory')
 
 
 

@@ -30,11 +30,6 @@
         </button>
       </div>
 
-      <div v-if="selectedSP" class="vote-result">
-        <p>✅ Вы выбрали: <strong>{{ selectedSP }} SP</strong></p>
-        <button class="btn btn-blue" @click="submitVote">📨 Отправить голос</button>
-      </div>
-
       <div class="participants-box">
         <h3>👥 Участники</h3>
         <ul>
@@ -78,6 +73,7 @@ export default {
       hints: [],
       participants: [],
       votesVisible: false,
+      pollingInterval: null
     };
   },
   methods: {
@@ -92,10 +88,20 @@ export default {
       const data = await res.json();
       this.participantId = data.participant_id;
       this.joined = true;
-      await this.fetchParticipants();
+      this.startPolling();
     },
-    selectSP(sp) {
+    async selectSP(sp) {
       this.selectedSP = sp;
+      await fetch(`/api/planning-room/${this.roomId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          story: "История без названия",
+          points: sp,
+          participant_id: this.participantId
+        })
+      });
+      this.fetchParticipants();
       this.fetchHints(sp);
     },
     async fetchParticipants() {
@@ -108,24 +114,21 @@ export default {
       const data = await res.json();
       this.hints = data.hints || [];
     },
-    async submitVote() {
-      await fetch(`/api/planning-room/${this.roomId}/vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          story: "История без названия",
-          points: this.selectedSP,
-          participant_id: this.participantId
-        })
-      });
-      alert("Голос учтён!");
-      await this.fetchParticipants();
+    startPolling() {
+      this.pollingInterval = setInterval(this.fetchParticipants, 3000);
+    },
+    stopPolling() {
+      clearInterval(this.pollingInterval);
     }
-  }
+  },
+  beforeUnmount() {
+  this.stopPolling();
+}
 };
 </script>
 
-<style scoped>
+
+<style>
 
 .participants-box {
   margin-top: 30px;

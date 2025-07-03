@@ -18,8 +18,6 @@ def create_room():
 def join_room(room_id):
     try:
         data = request.json
-
-        # Автоматическое создание комнаты, если она не существует
         room = PlanningRoom.query.get(room_id)
         if not room:
             room = PlanningRoom(id=room_id, name="Новая комната", created_at=datetime.utcnow())
@@ -53,6 +51,37 @@ def get_participants(room_id):
             })
 
         return jsonify({"participants": result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@planning_bp.route('/planning-room/<string:room_id>/vote', methods=['POST'])
+def vote(room_id):
+    try:
+        data = request.json
+        # Проверяем есть ли уже голос этого участника по этой комнате и истории
+        existing_vote = Vote.query.filter_by(
+            participant_id=data['participant_id'],
+            room_id=room_id,
+            story=data['story']
+        ).first()
+
+        if existing_vote:
+            existing_vote.points = data['points']
+            existing_vote.created_at = datetime.utcnow()
+        else:
+            new_vote = Vote(
+                story=data['story'],
+                points=data['points'],
+                participant_id=data['participant_id'],
+                room_id=room_id,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(new_vote)
+
+        db.session.commit()
+        return jsonify({"status": "ok"})
     except Exception as e:
         import traceback
         traceback.print_exc()

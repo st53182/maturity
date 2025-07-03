@@ -22,14 +22,18 @@ def create_room():
 def join_room(room_id):
     try:
         data = request.json
+        print(f"[JOIN_ROOM] room_id={room_id}, payload={data}")
+
+        # Проверка существования комнаты
         room = PlanningRoom.query.get(room_id)
         if not room:
-            # Автоматически создаём комнату, если её нет
+            print(f"[JOIN_ROOM] Комната {room_id} не найдена, создаём новую...")
             room = PlanningRoom(id=room_id, name="Новая комната", created_at=datetime.utcnow())
             db.session.add(room)
             db.session.commit()
+            print(f"[JOIN_ROOM] Комната {room_id} создана")
 
-        # Проверка: есть ли уже такой участник в этой комнате
+        # Проверка: есть ли уже такой участник
         existing_participant = Participant.query.filter_by(
             name=data['name'],
             role=data['role'],
@@ -37,12 +41,19 @@ def join_room(room_id):
         ).first()
 
         if existing_participant:
+            print(f"[JOIN_ROOM] Участник уже существует: {existing_participant.id} {existing_participant.name}")
             return jsonify({"participant_id": existing_participant.id})
 
         # Создание нового участника
-        participant = Participant(name=data['name'], role=data['role'], room_id=room_id)
+        participant = Participant(
+            name=data['name'],
+            role=data['role'],
+            room_id=room_id
+        )
         db.session.add(participant)
         db.session.commit()
+        print(f"[JOIN_ROOM] Создан участник: {participant.id} {participant.name} ({participant.role})")
+
         return jsonify({"participant_id": participant.id})
 
     except Exception as e:

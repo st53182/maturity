@@ -99,35 +99,36 @@ class PlanningRoom(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     show_votes = db.Column(db.Boolean, default=False)
 
-    participants = db.relationship('Participant', backref='planning_room')
-    votes = db.relationship('Vote', backref='planning_room')
+    participants = db.relationship('Participant', backref='planning_room', cascade="all, delete-orphan")
+    votes = db.relationship('Vote', backref='planning_room', cascade="all, delete-orphan")
+    stories = db.relationship('PokerStory', backref='planning_room', cascade="all, delete-orphan")
+
+
 
 # 🔹 Участник сессии
 class Participant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(50), nullable=False)
     room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'), nullable=False)
-    session_id = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    votes = db.relationship('Vote', backref=db.backref('participant', lazy=True))
+    votes = db.relationship('Vote', backref='participant', cascade="all, delete-orphan")
+
 
 # 🔹 Голос / оценка участника
 
 class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    story = db.Column(db.String(255), nullable=False)
+    story_id = db.Column(db.Integer, db.ForeignKey('poker_story.id'), nullable=False)
     points = db.Column(db.Integer, nullable=False)
     participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
-    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'))
+    room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class PokerStory(db.Model):  # 🆕
+class PokerStory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     room_id = db.Column(db.String(36), db.ForeignKey('planning_room.id'), nullable=False)
     title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    description = db.Column(db.Text, nullable=True)
 
-    votes = db.relationship('Vote', backref=db.backref('story_obj', lazy=True))  # 🆕
+    votes = db.relationship('Vote', backref='story', cascade="all, delete-orphan")

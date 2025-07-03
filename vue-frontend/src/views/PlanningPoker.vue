@@ -55,6 +55,8 @@
           <li v-for="(hint, i) in hints" :key="i">— {{ hint.story }}</li>
         </ul>
       </div>
+
+      <button class="btn btn-red" @click="leaveRoom">🚪 Выйти из комнаты</button>
     </div>
   </div>
 </template>
@@ -76,6 +78,14 @@ export default {
       pollingInterval: null
     };
   },
+  mounted() {
+    const savedId = localStorage.getItem("planningPokerParticipantId");
+    if (savedId) {
+      this.participantId = savedId;
+      this.joined = true;
+      this.startPolling();
+    }
+  },
   methods: {
     async joinRoom() {
       if (!this.name || !this.role) return alert("Заполните имя и роль");
@@ -87,6 +97,7 @@ export default {
       });
       const data = await res.json();
       this.participantId = data.participant_id;
+      localStorage.setItem("planningPokerParticipantId", this.participantId);
       this.joined = true;
       this.startPolling();
     },
@@ -97,7 +108,7 @@ export default {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           story: "История без названия",
-          points: sp,
+          points: this.selectedSP,
           participant_id: this.participantId
         })
       });
@@ -119,11 +130,17 @@ export default {
     },
     stopPolling() {
       clearInterval(this.pollingInterval);
+    },
+    leaveRoom() {
+      localStorage.removeItem("planningPokerParticipantId");
+      this.stopPolling();
+      this.joined = false;
+      this.participantId = null;
     }
   },
   beforeUnmount() {
-  this.stopPolling();
-}
+    this.stopPolling();
+  }
 };
 </script>
 

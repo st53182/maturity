@@ -5,6 +5,8 @@ from datetime import datetime
 
 planning_bp = Blueprint('planning_poker', __name__)
 
+
+# 🔹 Создание комнаты
 @planning_bp.route('/planning-room', methods=['POST'])
 def create_room():
     data = request.json
@@ -14,25 +16,42 @@ def create_room():
     db.session.commit()
     return jsonify({"room_id": room.id})
 
+
+# 🔹 Присоединение к комнате
 @planning_bp.route('/planning-room/<string:room_id>/join', methods=['POST'])
 def join_room(room_id):
     try:
         data = request.json
         room = PlanningRoom.query.get(room_id)
         if not room:
+            # Автоматически создаём комнату, если её нет
             room = PlanningRoom(id=room_id, name="Новая комната", created_at=datetime.utcnow())
             db.session.add(room)
             db.session.commit()
 
+        # Проверка: есть ли уже такой участник в этой комнате
+        existing_participant = Participant.query.filter_by(
+            name=data['name'],
+            role=data['role'],
+            room_id=room_id
+        ).first()
+
+        if existing_participant:
+            return jsonify({"participant_id": existing_participant.id})
+
+        # Создание нового участника
         participant = Participant(name=data['name'], role=data['role'], room_id=room_id)
         db.session.add(participant)
         db.session.commit()
         return jsonify({"participant_id": participant.id})
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+
+# 🔹 Получение списка участников
 @planning_bp.route('/planning-room/<string:room_id>/participants', methods=['GET'])
 def get_participants(room_id):
     try:
@@ -51,16 +70,19 @@ def get_participants(room_id):
             })
 
         return jsonify({"participants": result})
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+
+# 🔹 Отправка/обновление голоса
 @planning_bp.route('/planning-room/<string:room_id>/vote', methods=['POST'])
 def vote(room_id):
     try:
         data = request.json
-        # Проверяем есть ли уже голос этого участника по этой комнате и истории
+        # Проверка: есть ли уже голос от этого участника
         existing_vote = Vote.query.filter_by(
             participant_id=data['participant_id'],
             room_id=room_id,
@@ -68,9 +90,11 @@ def vote(room_id):
         ).first()
 
         if existing_vote:
+            # Обновляем голос
             existing_vote.points = data['points']
             existing_vote.created_at = datetime.utcnow()
         else:
+            # Создаём новый голос
             new_vote = Vote(
                 story=data['story'],
                 points=data['points'],
@@ -82,6 +106,7 @@ def vote(room_id):
 
         db.session.commit()
         return jsonify({"status": "ok"})
+
     except Exception as e:
         import traceback
         traceback.print_exc()

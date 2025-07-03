@@ -179,3 +179,19 @@ def get_hints(room_id):
     } for vote in votes]
 
     return jsonify({"hints": hints})
+@planning_bp.route('/planning-room/<string:room_id>/leave/<int:participant_id>', methods=['POST'])
+def leave_room(room_id, participant_id):
+    try:
+        participant = Participant.query.filter_by(id=participant_id, room_id=room_id).first()
+        if not participant:
+            return jsonify({"error": "Участник не найден"}), 404
+
+        db.session.delete(participant)
+        db.session.commit()
+        print(f"[LEAVE_ROOM] Участник {participant_id} покинул комнату {room_id}")
+        return jsonify({"status": "left"})
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500

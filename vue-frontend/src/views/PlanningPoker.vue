@@ -87,6 +87,7 @@
           👁 Показать оценки
         </button>
       </div>
+<button class="btn btn-red" @click="leaveRoom">🚪 Выйти из комнаты</button>
 
       <!-- 💡 Подсказки -->
       <div class="hints-box" v-if="hints.length">
@@ -153,6 +154,21 @@ export default {
       const data = await res.json();
       this.stories = data.stories;
     },
+    async leaveRoom() {
+  if (!confirm("Вы уверены, что хотите покинуть комнату?")) return;
+
+  await fetch(`/api/planning-room/${this.roomId}/leave/${this.participantId}`, {
+    method: "POST"
+  });
+
+  localStorage.removeItem("planningPokerParticipantId");
+  this.joined = false;
+  this.participantId = null;
+  this.selectedStory = null;
+  this.participants = [];
+  this.stories = [];
+  this.stopPolling();
+},
     async addStory() {
       if (!this.newStoryTitle) return alert("Введите заголовок задачи");
       const res = await fetch(`/api/planning-room/${this.roomId}/add-story`, {

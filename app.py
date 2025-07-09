@@ -12,6 +12,7 @@ from conflict import bp_conflict
 from motivation import bp_motivation
 from user_profile import profile_bp
 from planning_poker import planning_bp
+from disc_assessment import disc_bp
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
@@ -20,17 +21,22 @@ CORS(app, resources={r"/api/*": {"origins": "https://www.growboard.ru"}}, suppor
 
 
 # 📦 Подключение к базе данных
-database_url = os.getenv("DATABASE_URL", "postgresql://localhost/fallback_db")
+database_url = os.getenv("DATABASE_URL", "sqlite:///maturity_local.db")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "pool_pre_ping": True,
-    "connect_args": {
-        "options": "-c timezone=utc"
+if database_url.startswith("sqlite"):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "pool_pre_ping": True
     }
-}
+else:
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "pool_pre_ping": True,
+        "connect_args": {
+            "options": "-c timezone=utc"
+        }
+    }
 
 # JWT
 app.config['JWT_SECRET_KEY'] = 'supersecretkey'
@@ -53,8 +59,9 @@ app.register_blueprint(bp_conflict, url_prefix="/api")
 
 app.register_blueprint(bp_motivation)
 
-app.register_blueprint(profile_bp)
+app.register_blueprint(profile_bp, url_prefix="/api")
 app.register_blueprint(planning_bp, url_prefix="/api")
+app.register_blueprint(disc_bp, url_prefix="/api/disc")
 
 
 # 🎯 Отдача Vue SPA

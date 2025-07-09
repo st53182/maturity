@@ -151,25 +151,43 @@ def get_team_progress(team_id):
 @jwt_required()
 def get_user_teams():
     user_id = get_jwt_identity()
-    teams = Team.query.filter_by(user_id=user_id).all()
-
-    team_data = []
-
-    for team in teams:
-        # Получаем последний assessment по дате
-        latest_assessment = (
-            Assessment.query
-            .filter_by(team_id=team.id, user_id=user_id)
-            .order_by(Assessment.created_at.desc())
-            .first()
+    
+    latest_assessment_subquery = (
+        db.session.query(
+            Assessment.team_id,
+            db.func.max(Assessment.created_at).label('max_created_at')
         )
-
+        .filter_by(user_id=user_id)
+        .group_by(Assessment.team_id)
+        .subquery()
+    )
+    
+    teams_with_assessments = (
+        db.session.query(Team, Assessment.id.label('latest_assessment_id'))
+        .filter_by(user_id=user_id)
+        .outerjoin(
+            latest_assessment_subquery,
+            Team.id == latest_assessment_subquery.c.team_id
+        )
+        .outerjoin(
+            Assessment,
+            db.and_(
+                Assessment.team_id == Team.id,
+                Assessment.user_id == user_id,
+                Assessment.created_at == latest_assessment_subquery.c.max_created_at
+            )
+        )
+        .all()
+    )
+    
+    team_data = []
+    for team, latest_assessment_id in teams_with_assessments:
         team_data.append({
             "id": team.id,
             "name": team.name,
-            "latest_assessment_id": latest_assessment.id if latest_assessment else None
+            "latest_assessment_id": latest_assessment_id
         })
-
+    
     return jsonify(team_data)
 @bp_survey.route("/assessment/<int:assessment_id>/recommendations", methods=["GET"])
 @jwt_required()

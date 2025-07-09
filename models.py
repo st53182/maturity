@@ -146,3 +146,33 @@ class PokerStory(db.Model):
     description = db.Column(db.Text, nullable=True)
 
     votes = db.relationship('Vote', backref='story', cascade="all, delete-orphan")
+
+class DISCAssessment(db.Model):
+    __tablename__ = 'disc_assessments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    dominance_score = db.Column(db.Integer, nullable=False)
+    influence_score = db.Column(db.Integer, nullable=False)
+    steadiness_score = db.Column(db.Integer, nullable=False)
+    conscientiousness_score = db.Column(db.Integer, nullable=False)
+    personality_type = db.Column(db.String(50), nullable=False)
+    recommendations = db.Column(db.Text, nullable=True)
+    answers = db.Column(JSON, nullable=False)
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('disc_assessments', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'dominance_score': self.dominance_score,
+            'influence_score': self.influence_score,
+            'steadiness_score': self.steadiness_score,
+            'conscientiousness_score': self.conscientiousness_score,
+            'personality_type': self.personality_type,
+            'recommendations': self.recommendations,
+            'answers': self.answers,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }

@@ -1199,40 +1199,14 @@ h1 {
     margin-bottom: 5px !important;
   }
   
-  .timeline-modern {
-    margin: 20px 10px !important;
-    padding: 15px 10px !important;
-    height: auto !important;
-  }
-  
-  .timeline-track {
-    height: 8px !important;
-    margin: 0 10px !important;
-  }
-  
-  .timeline-dot {
-    width: 12px !important;
-    height: 12px !important;
-  }
-  
-  .tooltip {
-    font-size: 12px !important;
-    padding: 4px 8px !important;
-    max-width: 200px !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-  }
-  
-  .timeline-previous-dates {
-    font-size: 16px !important;
-    margin-top: 8px !important;
-    line-height: 1.4 !important;
-    padding: 0 10px !important;
-  }
-  
-  .timeline-days-left {
-    font-size: 16px !important;
-    margin-top: 15px !important;
+  .timeline-modern,
+  .timeline-track,
+  .timeline-dot,
+  .tooltip,
+  .timeline-previous-dates,
+  .timeline-days-left,
+  .timeline-fill {
+    display: none !important;
   }
   
   .recommendations-block {

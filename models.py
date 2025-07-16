@@ -94,6 +94,13 @@ class Employee(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
+    @property
+    def safe_avatar(self):
+        try:
+            return self.avatar or "default.png"
+        except AttributeError:
+            return "default.png"
+
 class PlanningRoom(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(255), nullable=False)

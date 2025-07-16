@@ -123,8 +123,8 @@
           <button @click="retakeAssessment" class="btn btn-secondary">
             Пройти заново
           </button>
-          <router-link to="/disc-history" class="btn btn-primary">
-            История прохождений
+          <router-link to="/profile" class="btn btn-primary">
+            Перейти в профиль
           </router-link>
         </div>
       </div>

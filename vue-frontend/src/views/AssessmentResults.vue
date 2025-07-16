@@ -1169,6 +1169,20 @@ h1 {
 }
 
 @media (max-width: 768px) {
+  .charts-container {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+    padding: 15px 10px !important;
+  }
+  
+  .radar-chart {
+    width: 100% !important;
+    max-width: 320px !important;
+    height: 300px !important;
+    margin: 0 auto 15px auto !important;
+    padding: 12px !important;
+  }
+  
   .team-info-card {
     grid-template-columns: 1fr !important;
     gap: 15px !important;
@@ -1183,6 +1197,30 @@ h1 {
   .info-block h3 {
     font-size: 16px !important;
     margin-bottom: 5px !important;
+  }
+  
+  .timeline-modern {
+    margin: 20px 10px !important;
+    padding: 15px 10px !important;
+    height: auto !important;
+  }
+  
+  .timeline-track {
+    height: 8px !important;
+    margin: 0 10px !important;
+  }
+  
+  .timeline-dot {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  
+  .tooltip {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+    max-width: 200px !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
   }
   
   .timeline-previous-dates {

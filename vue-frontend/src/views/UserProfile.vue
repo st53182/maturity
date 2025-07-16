@@ -49,9 +49,17 @@
         <div v-if="assessmentHistory.length > 0" class="history-summary">
           <h4>📊 История прохождений ({{ assessmentHistory.length }})</h4>
           <div class="history-list">
-            <div v-for="assessment in assessmentHistory.slice(0, 3)" :key="assessment.id" class="history-item">
-              <span class="history-type">{{ assessment.personality_type }}</span>
-              <span class="history-date">{{ formatDate(assessment.completed_at) }}</span>
+            <div v-for="assessment in assessmentHistory.slice(0, 5)" :key="assessment.id" class="history-item">
+              <div class="history-header">
+                <span class="history-type">{{ assessment.personality_type }}</span>
+                <span class="history-date">{{ formatDate(assessment.completed_at) }}</span>
+                <button @click="toggleRecommendations(assessment.id)" class="toggle-btn">
+                  {{ expandedAssessments.includes(assessment.id) ? '▼' : '▶' }} Рекомендации
+                </button>
+              </div>
+              <div v-if="expandedAssessments.includes(assessment.id)" class="recommendations-preview">
+                <div class="recommendations-content" v-html="formatRecommendations(assessment.recommendations)"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -90,12 +98,13 @@ export default {
       oldPassword: "",
       newPassword: "",
       assessmentHistory: [],
-      latestAssessment: null
+      latestAssessment: null,
+      expandedAssessments: []
     };
   },
   async mounted() {
     try {
-      const res = await axios.get("/user_profile", {
+      const res = await axios.get("/api/user_profile", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       this.profile = res.data;
@@ -108,7 +117,7 @@ export default {
   methods: {
     async saveProfile() {
       try {
-        await axios.post("/update_profile", {
+        await axios.post("/api/update_profile", {
           ...this.profile,
           old_password: this.oldPassword,
           new_password: this.newPassword
@@ -148,6 +157,20 @@ export default {
         month: 'short',
         day: 'numeric'
       });
+    },
+
+    toggleRecommendations(assessmentId) {
+      const index = this.expandedAssessments.indexOf(assessmentId);
+      if (index > -1) {
+        this.expandedAssessments.splice(index, 1);
+      } else {
+        this.expandedAssessments.push(assessmentId);
+      }
+    },
+
+    formatRecommendations(recommendations) {
+      if (!recommendations) return 'Рекомендации недоступны';
+      return recommendations.replace(/\n/g, '<br>');
     }
   }
 };
@@ -364,12 +387,20 @@ hr {
 
 .history-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 12px;
   background: white;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .history-type {
@@ -380,5 +411,35 @@ hr {
 .history-date {
   font-size: 12px;
   color: #666;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.toggle-btn:hover {
+  background-color: #f0f4ff;
+}
+
+.recommendations-preview {
+  margin-top: 12px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.recommendations-content {
+  color: #333;
+  line-height: 1.6;
+  font-size: 14px;
 }
 </style>

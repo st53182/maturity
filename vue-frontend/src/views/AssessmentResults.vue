@@ -1155,20 +1155,79 @@ h1 {
 
 
 @media (max-width: 1200px) {
-  .plan-editable li {
-    flex: 0 0 calc(33.333% - 16px); /* 3 в ряд */
+  .plan-editable li,
+  .improvement-plan-block li {
+    flex: 0 0 calc(33.333% - 16px) !important; /* 3 в ряд */
   }
 }
 
 @media (max-width: 800px) {
-  .plan-editable li {
-    flex: 0 0 calc(50% - 16px); /* 2 в ряд */
+  .plan-editable li,
+  .improvement-plan-block li {
+    flex: 0 0 calc(50% - 16px) !important; /* 2 в ряд */
+  }
+}
+
+@media (max-width: 768px) {
+  .improvement-plan-block {
+    margin: 20px 10px !important;
+    padding: 15px !important;
+    width: calc(100% - 20px) !important;
+    box-sizing: border-box !important;
+  }
+  
+  .plan-editable ul,
+  .improvement-plan-block ul {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .plan-editable li,
+  .improvement-plan-block li {
+    flex: 1 1 100% !important; /* 1 в ряд на мобильных */
+    max-width: 100% !important;
+    min-width: auto !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .plan-editable textarea {
+    width: 100% !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+    min-height: 120px !important;
+  }
+  
+  .plan-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  
+  .modern-button {
+    width: 100% !important;
+    min-width: auto !important;
+    font-size: 16px !important;
+    padding: 15px 20px !important;
+  }
+  
+  .plan-cards {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+  
+  .plan-card {
+    width: 100% !important;
+    margin-bottom: 10px !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
   }
 }
 
 @media (max-width: 500px) {
-  .plan-editable li {
-    flex: 1 1 100%; /* 1 в ряд */
+  .plan-editable li,
+  .improvement-plan-block li {
+    flex: 1 1 100% !important; /* 1 в ряд */
   }
 }
 

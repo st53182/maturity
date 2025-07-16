@@ -587,4 +587,53 @@ h1 {
   list-style: disc;
   padding-left: 20px;
 }
+
+@media (max-width: 768px) {
+  .conflict-container {
+    margin: 20px 10px;
+    padding: 15px;
+  }
+  
+  .filter-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .filter-bar button {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .conflict-list {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .conflict-card {
+    padding: 15px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    padding: 20px 15px;
+    margin: 10px;
+  }
+  
+  .modal-content textarea,
+  .modal-content select {
+    width: 100%;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+  }
+}
 </style>

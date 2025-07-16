@@ -561,4 +561,59 @@ h1 {
 .delete-btn:hover {
   background: #c0392b;
 }
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    margin-left: 0;
+    width: 100%;
+    padding: 15px;
+  }
+  
+  .teams-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .team-card {
+    padding: 15px;
+  }
+  
+  .radar-chart {
+    max-width: 280px;
+    height: 280px;
+  }
+  
+  .modal {
+    width: 95%;
+    max-width: 95%;
+    padding: 15px;
+  }
+  
+  .team-input {
+    width: 100%;
+    font-size: 16px;
+  }
+  
+  .modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .confirm-btn,
+  .cancel-btn {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .teams-container {
+    gap: 10px;
+  }
+  
+  .radar-chart {
+    max-width: 250px;
+    height: 250px;
+  }
+}
 </style>

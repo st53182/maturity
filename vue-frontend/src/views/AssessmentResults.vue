@@ -1178,7 +1178,7 @@ h1 {
   .radar-chart {
     width: 100% !important;
     max-width: 320px !important;
-    height: 300px !important;
+    height: 400px !important;
     margin: 0 auto 15px auto !important;
     padding: 12px !important;
   }
@@ -1200,9 +1200,7 @@ h1 {
   }
   
   .timeline-modern {
-    margin: 20px 10px !important;
-    padding: 15px 10px !important;
-    height: auto !important;
+    display: none !important;
   }
   
   .timeline-track {

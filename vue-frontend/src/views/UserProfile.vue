@@ -354,6 +354,29 @@ hr {
 }
 
 @media (max-width: 768px) {
+  .profile-page {
+    margin: 20px 10px;
+    padding: 20px 15px;
+  }
+  
+  .form-section {
+    padding: 15px;
+  }
+  
+  input {
+    font-size: 16px;
+  }
+  
+  .history-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .toggle-btn {
+    align-self: flex-end;
+  }
+  
   .disc-actions {
     flex-direction: column;
   }

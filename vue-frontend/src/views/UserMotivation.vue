@@ -779,5 +779,71 @@ button:hover {
   transform: scale(1.05);
 }
 
+@media (max-width: 768px) {
+  .motivation-container {
+    margin: 20px 10px;
+    padding: 15px;
+  }
+  
+  .employee-list {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .employee-card {
+    padding: 15px;
+  }
+  
+  .factors {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    padding: 20px 15px;
+    margin: 10px;
+  }
+  
+  .modal-content textarea,
+  .modal-content select,
+  .modal-content input {
+    width: 100%;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+    margin: 0;
+  }
+  
+  .avatar-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .avatar-option {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .employee-list {
+    gap: 10px;
+  }
+  
+  .avatar-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 </style>
 

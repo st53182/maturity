@@ -1169,6 +1169,54 @@ h1 {
 }
 
 @media (max-width: 768px) {
+  .team-info-card {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+    padding: 20px 15px !important;
+  }
+  
+  .info-block {
+    padding: 10px !important;
+    font-size: 14px !important;
+  }
+  
+  .info-block h3 {
+    font-size: 16px !important;
+    margin-bottom: 5px !important;
+  }
+  
+  .timeline-previous-dates {
+    font-size: 16px !important;
+    margin-top: 8px !important;
+    line-height: 1.4 !important;
+    padding: 0 10px !important;
+  }
+  
+  .timeline-days-left {
+    font-size: 16px !important;
+    margin-top: 15px !important;
+  }
+  
+  .recommendations-block {
+    margin: 20px 10px !important;
+    padding: 15px !important;
+    width: calc(100% - 20px) !important;
+    box-sizing: border-box !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  .recommendations-block ul {
+    padding-left: 15px !important;
+    margin: 0 !important;
+  }
+  
+  .recommendations-block li {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 12px !important;
+    word-wrap: break-word !important;
+  }
+  
   .improvement-plan-block {
     margin: 20px 10px !important;
     padding: 15px !important;

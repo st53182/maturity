@@ -1199,29 +1199,31 @@ h1 {
     margin-bottom: 5px !important;
   }
   
-  /* Hide timeline elements with simple selectors */
-  .timeline-modern {
+  /* Aggressively hide all timeline elements and containers */
+  .timeline-modern,
+  .timeline-modern *,
+  div[class*="timeline"],
+  div[class*="timeline"] *,
+  .timeline-track,
+  .timeline-dot,
+  .timeline-days-left,
+  .timeline-previous-dates,
+  .timeline-fill,
+  .tooltip {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
   }
   
-  .timeline-track {
+  /* Target Vue conditional rendering container */
+  div[v-if*="timelineInfo"] {
     display: none !important;
-  }
-  
-  .timeline-dot {
-    display: none !important;
-  }
-  
-  .timeline-days-left {
-    display: none !important;
-  }
-  
-  .timeline-previous-dates {
-    display: none !important;
-  }
-  
-  .timeline-fill {
-    display: none !important;
+    visibility: hidden !important;
   }
   
   .recommendations-block {

@@ -564,9 +564,9 @@ h1 {
 
 @media (max-width: 768px) {
   .dashboard-container {
-    margin-left: 0;
-    width: 100%;
-    padding: 15px;
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 15px !important;
   }
   
   .teams-container {
@@ -584,25 +584,26 @@ h1 {
   }
   
   .modal {
-    width: 95%;
-    max-width: 95%;
-    padding: 15px;
+    width: 95% !important;
+    max-width: 95% !important;
+    padding: 15px !important;
   }
   
   .team-input {
-    width: 100%;
-    font-size: 16px;
+    width: 100% !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
   }
   
   .modal-buttons {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
   
   .confirm-btn,
   .cancel-btn {
-    max-width: 100%;
-    width: 100%;
+    max-width: 100% !important;
+    width: 100% !important;
   }
 }
 

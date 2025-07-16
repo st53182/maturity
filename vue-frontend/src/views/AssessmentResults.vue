@@ -1199,35 +1199,35 @@ h1 {
     margin-bottom: 5px !important;
   }
   
-  /* Hide specific timeline elements found in DOM */
-  .timeline-modern {
+  /* Hide timeline elements with Vue scoped selectors for higher specificity */
+  .timeline-modern[data-v-b3b9bb14] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
     overflow: hidden !important;
   }
   
-  .timeline-track {
+  .timeline-track[data-v-b3b9bb14] {
     display: none !important;
     visibility: hidden !important;
   }
   
-  .timeline-dot {
+  .timeline-dot[data-v-b3b9bb14] {
     display: none !important;
     visibility: hidden !important;
   }
   
-  .timeline-days-left {
+  .timeline-days-left[data-v-b3b9bb14] {
     display: none !important;
     visibility: hidden !important;
   }
   
-  .timeline-previous-dates {
+  .timeline-previous-dates[data-v-b3b9bb14] {
     display: none !important;
     visibility: hidden !important;
   }
   
-  .tooltip.always-visible {
+  .tooltip.always-visible[data-v-b3b9bb14] {
     display: none !important;
     visibility: hidden !important;
   }

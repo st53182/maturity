@@ -1177,8 +1177,8 @@ h1 {
   
   .radar-chart {
     width: 100% !important;
-    max-width: 320px !important;
-    height: 300px !important;
+    max-width: 340px !important;
+    height: 320px !important;
     margin: 0 auto 15px auto !important;
     padding: 12px !important;
   }

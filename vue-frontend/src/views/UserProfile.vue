@@ -355,26 +355,42 @@ hr {
 
 @media (max-width: 768px) {
   .profile-page {
-    margin: 20px 10px;
-    padding: 20px 15px;
+    margin: 20px 10px !important;
+    padding: 20px 15px !important;
   }
   
   .form-section {
-    padding: 15px;
+    padding: 15px !important;
   }
   
   input {
-    font-size: 16px;
+    font-size: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   
   .history-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
   }
   
   .toggle-btn {
-    align-self: flex-end;
+    align-self: flex-end !important;
+  }
+  
+  .form-group {
+    margin-bottom: 15px !important;
+  }
+  
+  .form-group label {
+    display: block !important;
+    margin-bottom: 5px !important;
+  }
+  
+  .save-btn {
+    width: 100% !important;
+    margin-top: 10px !important;
   }
   
   .disc-actions {

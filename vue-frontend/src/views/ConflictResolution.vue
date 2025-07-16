@@ -590,8 +590,8 @@ h1 {
 
 @media (max-width: 768px) {
   .conflict-container {
-    margin: 20px 10px;
-    padding: 15px;
+    margin: 20px 10px !important;
+    padding: 15px !important;
   }
   
   .filter-bar {
@@ -614,26 +614,26 @@ h1 {
   }
   
   .modal-content {
-    width: 95%;
-    max-width: 95%;
-    padding: 20px 15px;
-    margin: 10px;
+    width: 95% !important;
+    max-width: 95% !important;
+    padding: 20px 15px !important;
+    margin: 10px !important;
   }
   
   .modal-content textarea,
   .modal-content select {
-    width: 100%;
-    font-size: 16px;
-    box-sizing: border-box;
+    width: 100% !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
   }
   
   .modal-actions {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
   
   .modal-actions button {
-    width: 100%;
+    width: 100% !important;
   }
 }
 </style>

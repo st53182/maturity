@@ -86,6 +86,7 @@ class Employee(db.Model):
     communication = db.Column(db.Text)
     behavior = db.Column(db.Text)
     feedback = db.Column(db.Text)
+    avatar = db.Column(db.String(50), default="default.png")
     ai_analysis = db.Column(db.Text)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -12,8 +12,9 @@
       >
         <img
           class="avatar"
-          :src="getAvatarUrl(employee.ai_analysis)"
+          :src="getAvatarUrl(employee)"
           alt="avatar"
+          @click="openAvatarModal(employee)"
           @error="setDefaultAvatar"
         />
         <div class="card-header">
@@ -117,6 +118,41 @@
     </form>
   </div>
 </div>
+
+<!-- Avatar Selection Modal -->
+<div v-if="showAvatarModal" class="modal-overlay">
+  <div class="modal-content avatar-modal">
+    <h2>🎭 Выбор аватара</h2>
+    
+    <div class="avatar-section">
+      <h3>👨 Мужские</h3>
+      <div class="avatar-grid">
+        <img 
+          v-for="avatar in avatars.male" 
+          :key="avatar"
+          :src="`/avatars/${avatar}`"
+          class="avatar-option"
+          @click="selectAvatar(avatar)"
+        />
+      </div>
+    </div>
+    
+    <div class="avatar-section">
+      <h3>👩 Женские</h3>
+      <div class="avatar-grid">
+        <img 
+          v-for="avatar in avatars.female" 
+          :key="avatar"
+          :src="`/avatars/${avatar}`"
+          class="avatar-option"
+          @click="selectAvatar(avatar)"
+        />
+      </div>
+    </div>
+    
+    <button class="modal-close" @click="showAvatarModal = false">✖</button>
+  </div>
+</div>
 </template>
 
 <script>
@@ -138,6 +174,12 @@ export default {
       result: "",
       loading: false,
       showModal: false,
+      showAvatarModal: false,
+      selectedEmployee: null,
+      avatars: {
+        male: ['male1.png', 'male2.png', 'male3.png', 'male4.png', 'male5.png', 'male6.png'],
+        female: ['female1.png', 'female2.png', 'female3.png', 'female4.png', 'female5.png', 'female6.png']
+      },
       avatar: "default.png"
     };
   },
@@ -322,10 +364,42 @@ export default {
       return team ? team.name : "—";
     },
 
-    getAvatarUrl(aiText) {
-      const type = this.extractDISCType(aiText);
-      const key = type?.toLowerCase().split(" ")[0].replace(/[^\w]/g, "");
-      return `/avatars/${key || "default"}.png`;
+    getAvatarUrl(employee) {
+      return `/avatars/${employee.avatar || "default.png"}`;
+    },
+
+    openAvatarModal(employee) {
+      this.selectedEmployee = employee;
+      this.showAvatarModal = true;
+    },
+
+    async selectAvatar(avatarFile) {
+      if (!this.selectedEmployee) return;
+      
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch("/employees", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            ...this.selectedEmployee,
+            avatar: avatarFile
+          })
+        });
+        
+        if (response.ok) {
+          const employeeIndex = this.employees.findIndex(e => e.id === this.selectedEmployee.id);
+          if (employeeIndex !== -1) {
+            this.employees[employeeIndex].avatar = avatarFile;
+          }
+          this.showAvatarModal = false;
+        }
+      } catch (error) {
+        console.error("Error updating avatar:", error);
+      }
     },
 
     setDefaultAvatar(event) {
@@ -660,6 +734,49 @@ button:hover {
 .modal-actions .modal-close:hover {
   background: #ddd;
   color: #000;
+}
+
+.avatar-modal {
+  max-width: 600px;
+}
+
+.avatar-section {
+  margin-bottom: 30px;
+}
+
+.avatar-section h3 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 15px;
+}
+
+.avatar-option {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.avatar-option:hover {
+  border-color: #677be5;
+  transform: scale(1.1);
+}
+
+.employee-card .avatar {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.employee-card .avatar:hover {
+  transform: scale(1.05);
 }
 
 </style>

@@ -36,6 +36,7 @@ def get_motivation():
         employee.communication = data["communication"]
         employee.behavior = data["behavior"]
         employee.feedback = data["feedback"]
+        employee.avatar = data.get("avatar", "default.png")
 
         db.session.add(employee)
         db.session.commit()
@@ -105,6 +106,7 @@ def get_employees():
         "feedback": e.feedback,
         "created_at": e.created_at.isoformat() if e.created_at else None,
         "team_name": e.team.name if e.team else None,
+        "avatar": e.avatar or "default.png",
         "ai_analysis": e.ai_analysis
     } for e in employees])
 
@@ -133,6 +135,7 @@ def save_employee():
     employee.communication = data.get("communication")
     employee.behavior = data.get("behavior")
     employee.feedback = data.get("feedback")
+    employee.avatar = data.get("avatar", "default.png")
 
     db.session.add(employee)
     db.session.commit()
@@ -159,6 +162,7 @@ def get_employee(employee_id):
         "communication": employee.communication,
         "behavior": employee.behavior,
         "feedback": employee.feedback,
+        "avatar": employee.avatar or "default.png",
         "ai_analysis": employee.ai_analysis,
         "created_at": employee.created_at.isoformat() if employee.created_at else None
     })

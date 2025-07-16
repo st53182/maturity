@@ -1177,10 +1177,10 @@ h1 {
   
   .radar-chart {
     width: 100% !important;
-    max-width: 300px !important;
-    height: 250px !important;
+    max-width: 320px !important;
+    height: 280px !important;
     margin: 0 auto 15px auto !important;
-    padding: 10px !important;
+    padding: 12px !important;
   }
   
   .team-info-card {
@@ -1199,20 +1199,34 @@ h1 {
     margin-bottom: 5px !important;
   }
   
+  /* Completely hide timeline container and all its contents */
+  div[v-if="timelineInfo"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .timeline-modern {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
   .timeline-modern,
   .timeline-track,
   .timeline-dot,
   .tooltip,
   .timeline-previous-dates,
   .timeline-days-left,
-  .timeline-fill {
-    display: none !important;
-  }
-  
-  /* Additional selectors to ensure timeline is completely hidden */
-  div[v-if*="timelineInfo"],
+  .timeline-fill,
   .timeline-modern * {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
   
   .recommendations-block {

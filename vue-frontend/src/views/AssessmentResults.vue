@@ -1199,29 +1199,35 @@ h1 {
     margin-bottom: 5px !important;
   }
   
-  /* Aggressively hide all timeline elements and containers */
-  .timeline-modern,
-  .timeline-modern *,
-  div[class*="timeline"],
-  div[class*="timeline"] *,
-  .timeline-track,
-  .timeline-dot,
-  .timeline-days-left,
-  .timeline-previous-dates,
-  .timeline-fill,
-  .tooltip {
+  /* Hide specific timeline elements found in DOM */
+  .timeline-modern {
     display: none !important;
     visibility: hidden !important;
-    opacity: 0 !important;
     height: 0 !important;
-    width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
     overflow: hidden !important;
   }
   
-  /* Target Vue conditional rendering container */
-  div[v-if*="timelineInfo"] {
+  .timeline-track {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  .timeline-dot {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  .timeline-days-left {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  .timeline-previous-dates {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  .tooltip.always-visible {
     display: none !important;
     visibility: hidden !important;
   }

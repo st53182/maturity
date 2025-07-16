@@ -1199,34 +1199,29 @@ h1 {
     margin-bottom: 5px !important;
   }
   
-  /* Completely hide timeline container and all its contents */
-  div[v-if="timelineInfo"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-  }
-  
+  /* Hide timeline elements with simple selectors */
   .timeline-modern {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
   }
   
-  .timeline-modern,
-  .timeline-track,
-  .timeline-dot,
-  .tooltip,
-  .timeline-previous-dates,
-  .timeline-days-left,
-  .timeline-fill,
-  .timeline-modern * {
+  .timeline-track {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+  }
+  
+  .timeline-dot {
+    display: none !important;
+  }
+  
+  .timeline-days-left {
+    display: none !important;
+  }
+  
+  .timeline-previous-dates {
+    display: none !important;
+  }
+  
+  .timeline-fill {
+    display: none !important;
   }
   
   .recommendations-block {

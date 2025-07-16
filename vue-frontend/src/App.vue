@@ -1,36 +1,83 @@
 <template>
   <div id="app">
-   <!-- Sidebar -->
-<aside class="modern-sidebar" v-if="isAuthenticated">
-  <button class="sidebar-btn" @click="$router.push('/profile')">
-    <span>👤</span>
-    <small>Мой профиль</small>
-  </button>
-  <button class="sidebar-btn" @click="$router.push('/dashboard')">
-    <span>🏠</span>
-    <small>Мои команды</small>
-  </button>
-  <button class="sidebar-btn" @click="$router.push('/survey')">
-    <span>📝</span>
-    <small>Зрелость</small>
-  </button>
-  <button class="sidebar-btn" @click="$router.push('/conflicts')">
-  <span>🤝</span>
-  <small>Конфликты & Проблемы</small>
-</button>
-  <button class="sidebar-btn" @click="$router.push('/motivation')">
-    <span>🧠</span>
-    <small>Сотрудники & Мотивация</small>
-  </button>
-  <button class="sidebar-btn" @click="showTeamModal = true">
-     <span style="color: white;">➕</span>
-    <small>Создать команду</small>
-  </button>
-  <button class="sidebar-btn" @click="logout">
-    <span>🚪</span>
-    <small>Выйти</small>
-  </button>
-</aside>
+    <!-- Mobile Hamburger Button -->
+    <button v-if="isAuthenticated" class="mobile-hamburger" @click="showMobileMenu = !showMobileMenu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+
+    <!-- Desktop Sidebar -->
+    <aside class="modern-sidebar" v-if="isAuthenticated">
+      <button class="sidebar-btn" @click="$router.push('/profile')">
+        <span>👤</span>
+        <small>Мой профиль</small>
+      </button>
+      <button class="sidebar-btn" @click="$router.push('/dashboard')">
+        <span>🏠</span>
+        <small>Мои команды</small>
+      </button>
+      <button class="sidebar-btn" @click="$router.push('/survey')">
+        <span>📝</span>
+        <small>Зрелость</small>
+      </button>
+      <button class="sidebar-btn" @click="$router.push('/conflicts')">
+        <span>🤝</span>
+        <small>Конфликты & Проблемы</small>
+      </button>
+      <button class="sidebar-btn" @click="$router.push('/motivation')">
+        <span>🧠</span>
+        <small>Сотрудники & Мотивация</small>
+      </button>
+      <button class="sidebar-btn" @click="showTeamModal = true">
+        <span style="color: white;">➕</span>
+        <small>Создать команду</small>
+      </button>
+      <button class="sidebar-btn" @click="logout">
+        <span>🚪</span>
+        <small>Выйти</small>
+      </button>
+    </aside>
+
+    <!-- Mobile Navigation Menu -->
+    <div v-if="isAuthenticated && showMobileMenu" class="mobile-menu-overlay" @click.self="showMobileMenu = false">
+      <nav class="mobile-menu">
+        <div class="mobile-menu-header">
+          <h3>Навигация</h3>
+          <button class="mobile-menu-close" @click="showMobileMenu = false">✕</button>
+        </div>
+        <div class="mobile-menu-items">
+          <button class="mobile-menu-btn" @click="navigateAndClose('/profile')">
+            <span>👤</span>
+            <span>Мой профиль</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/dashboard')">
+            <span>🏠</span>
+            <span>Мои команды</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/survey')">
+            <span>📝</span>
+            <span>Зрелость</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/conflicts')">
+            <span>🤝</span>
+            <span>Конфликты & Проблемы</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/motivation')">
+            <span>🧠</span>
+            <span>Сотрудники & Мотивация</span>
+          </button>
+          <button class="mobile-menu-btn" @click="openTeamModalAndClose()">
+            <span>➕</span>
+            <span>Создать команду</span>
+          </button>
+          <button class="mobile-menu-btn logout-btn" @click="logout">
+            <span>🚪</span>
+            <span>Выйти</span>
+          </button>
+        </div>
+      </nav>
+    </div>
 
     <!-- Основной контент -->
     <main class="main-content">
@@ -77,6 +124,7 @@ export default {
     // ✅ Добавляем реактивные переменные
     const showTeamModal = ref(false);
     const newTeamName = ref("");
+    const showMobileMenu = ref(false);
 
     // ✅ Функция выхода
     const logout = () => {
@@ -125,7 +173,27 @@ export default {
       }
     };
 
-    return { isAuthenticated, showTeamModal, newTeamName, logout, createTeam };
+    // ✅ Функции для мобильного меню
+    const navigateAndClose = (route) => {
+      showMobileMenu.value = false;
+      window.location.href = route;
+    };
+
+    const openTeamModalAndClose = () => {
+      showMobileMenu.value = false;
+      showTeamModal.value = true;
+    };
+
+    return { 
+      isAuthenticated, 
+      showTeamModal, 
+      newTeamName, 
+      showMobileMenu,
+      logout, 
+      createTeam,
+      navigateAndClose,
+      openTeamModalAndClose
+    };
   },
 };
 
@@ -253,7 +321,158 @@ export default {
   gap: 15px;
 }
 
+/* Mobile Hamburger Button */
+.mobile-hamburger {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.mobile-hamburger:hover {
+  transform: scale(1.05);
+}
+
+.hamburger-line {
+  width: 20px;
+  height: 2px;
+  background: white;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+/* Mobile Menu Overlay */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  animation: fadeIn 0.3s ease;
+}
+
+.mobile-menu {
+  background: white;
+  width: 280px;
+  height: 100%;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  animation: slideInLeft 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu-header {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobile-menu-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.mobile-menu-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.mobile-menu-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mobile-menu-items {
+  flex: 1;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mobile-menu-btn {
+  background: none;
+  border: none;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 16px;
+  color: #333;
+  text-align: left;
+  width: 100%;
+}
+
+.mobile-menu-btn:hover {
+  background: #f8f9fa;
+}
+
+.mobile-menu-btn span:first-child {
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
+}
+
+.mobile-menu-btn.logout-btn {
+  margin-top: auto;
+  color: #e74c3c;
+  border-top: 1px solid #eee;
+}
+
+.mobile-menu-btn.logout-btn:hover {
+  background: #ffeaea;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
 @media (max-width: 768px) {
+  .mobile-hamburger {
+    display: flex !important;
+  }
+  
   .modern-sidebar {
     display: none !important;
   }
@@ -261,6 +480,7 @@ export default {
   .main-content, .results-container {
     margin-left: 0 !important;
     padding: 15px !important;
+    padding-top: 80px !important;
   }
   
   .modal {

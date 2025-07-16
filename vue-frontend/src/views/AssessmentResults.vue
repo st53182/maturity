@@ -1177,10 +1177,10 @@ h1 {
   
   .radar-chart {
     width: 100% !important;
-    max-width: 320px !important;
-    height: 300px !important;
+    max-width: 300px !important;
+    height: 250px !important;
     margin: 0 auto 15px auto !important;
-    padding: 12px !important;
+    padding: 10px !important;
   }
   
   .team-info-card {
@@ -1206,6 +1206,12 @@ h1 {
   .timeline-previous-dates,
   .timeline-days-left,
   .timeline-fill {
+    display: none !important;
+  }
+  
+  /* Additional selectors to ensure timeline is completely hidden */
+  div[v-if*="timelineInfo"],
+  .timeline-modern * {
     display: none !important;
   }
   

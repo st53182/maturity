@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <!-- Mobile Hamburger Button -->
-    <button v-if="isAuthenticated" class="mobile-hamburger" @click="showMobileMenu = !showMobileMenu">
+    <button v-if="isAuthenticated" class="mobile-hamburger" :class="{ 'menu-open': showMobileMenu }" @click="showMobileMenu = !showMobileMenu">
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
@@ -327,7 +327,7 @@ export default {
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 1001;
+  z-index: 999;
   background: linear-gradient(135deg, #667eea, #764ba2);
   border: none;
   border-radius: 8px;
@@ -339,7 +339,12 @@ export default {
   gap: 4px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
+}
+
+.mobile-hamburger.menu-open {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .mobile-hamburger:hover {
@@ -362,7 +367,7 @@ export default {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 1002;
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;

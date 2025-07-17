@@ -29,7 +29,7 @@
         <span>🧠</span>
         <small>Сотрудники & Мотивация</small>
       </button>
-      <button class="sidebar-btn" @click="window.location.href = 'https://poker.growboard.ru'">
+      <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
         <span>♠️</span>
         <small>Покер планирование</small>
       </button>
@@ -71,7 +71,7 @@
             <span>🧠</span>
             <span>Сотрудники & Мотивация</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('https://poker.growboard.ru')">
+          <button class="mobile-menu-btn" @click="openExternalLinkAndClose('https://poker.growboard.ru')">
             <span>♠️</span>
             <span>Покер планирование</span>
           </button>
@@ -192,6 +192,25 @@ export default {
       showTeamModal.value = true;
     };
 
+    const openExternalLink = (url) => {
+      try {
+        window.open(url, '_blank');
+      } catch (error) {
+        console.error('Error opening external link:', error);
+        window.location.href = url;
+      }
+    };
+
+    const openExternalLinkAndClose = (url) => {
+      showMobileMenu.value = false;
+      try {
+        window.open(url, '_blank');
+      } catch (error) {
+        console.error('Error opening external link:', error);
+        window.location.href = url;
+      }
+    };
+
     return { 
       isAuthenticated, 
       showTeamModal, 
@@ -200,7 +219,9 @@ export default {
       logout, 
       createTeam,
       navigateAndClose,
-      openTeamModalAndClose
+      openTeamModalAndClose,
+      openExternalLink,
+      openExternalLinkAndClose
     };
   },
 };

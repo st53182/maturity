@@ -29,6 +29,10 @@
         <span>🧠</span>
         <small>Сотрудники & Мотивация</small>
       </button>
+      <button class="sidebar-btn" @click="window.location.href = 'https://poker.growboard.ru'">
+        <span>♠️</span>
+        <small>Покер планирование</small>
+      </button>
       <button class="sidebar-btn" @click="showTeamModal = true">
         <span style="color: white;">➕</span>
         <small>Создать команду</small>
@@ -66,6 +70,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/motivation')">
             <span>🧠</span>
             <span>Сотрудники & Мотивация</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('https://poker.growboard.ru')">
+            <span>♠️</span>
+            <span>Покер планирование</span>
           </button>
           <button class="mobile-menu-btn" @click="openTeamModalAndClose()">
             <span>➕</span>

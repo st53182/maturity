@@ -1,6 +1,6 @@
 <template>
   <div class="motivation-container">
-    <h1>🎯 Мотивация сотрудника</h1>
+    <h1>{{ $t('motivation.title') }}</h1>
 
     <!-- 🔹 Список сотрудников -->
     <div class="employee-list">
@@ -56,7 +56,7 @@
 
       <div class="employee-card add-card" @click="resetForm">
         <span>➕</span>
-        <p>Создать</p>
+        <p>{{ $t('motivation.addEmployee') }}</p>
       </div>
     </div>
 
@@ -72,13 +72,13 @@
 
     <form @submit.prevent="submitMotivation" class="form-group">
 
-      <label>Имя сотрудника:</label>
+      <label>{{ $t('motivation.employeeName') }}:</label>
       <input v-model="form.name" required />
 
-      <label>Должность:</label>
+      <label>{{ $t('motivation.role') }}:</label>
       <input v-model="form.role" required />
 
-      <label>Команда (необязательно):</label>
+      <label>{{ $t('motivation.team') }} ({{ $t('common.select') }}):</label>
 <select v-model="form.team_id">
   <option value="">— Без команды —</option>
   <option v-for="team in teams" :key="team.id" :value="team.id">
@@ -102,7 +102,7 @@
   @click="submitMotivation(false)"
   :disabled="loading"
 >
-  💾 Сохранить
+  💾 {{ $t('common.save') }}
 </button>
 
 <!-- Сохранить и сгенерировать -->
@@ -111,7 +111,7 @@
   :disabled="loading"
 >
   <span v-if="loading">⏳ Генерация...</span>
-  <span v-else>💬 Получить рекомендации</span>
+  <span v-else>💬 {{ $t('motivation.analyze') }}</span>
 </button>
   <button class="modal-close" @click="showModal = false">✖</button>
 </div>
@@ -293,7 +293,7 @@ export default {
 
     async deleteEmployee(id) {
       const token = localStorage.getItem("token");
-      if (!confirm("Удалить сотрудника?")) return;
+      if (!confirm(this.$t('motivation.confirmDelete'))) return;
 
       try {
         await fetch(`/employee/${id}`, {

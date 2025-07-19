@@ -64,7 +64,7 @@ export default {
             position: 'top'
           },
           title: {
-            display: false // Мы используем <h3>{{ title }}</h3> вместо встроенного title
+            display: false // We use <h3>{{ title }}</h3> instead of built-in title
           }
         }
       };

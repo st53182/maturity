@@ -57,9 +57,9 @@
 
         <label>{{ $t('conflicts.status') }}</label>
         <select v-model="form.status">
-          <option value="Активен">{{ $t('conflicts.active') }}</option>
-          <option value="Закрыт">{{ $t('conflicts.closed') }}</option>
-          <option value="Обострение">{{ $t('conflicts.escalated') }}</option>
+          <option value="active">{{ $t('conflicts.active') }}</option>
+          <option value="closed">{{ $t('conflicts.closed') }}</option>
+          <option value="escalated">{{ $t('conflicts.escalated') }}</option>
         </select>
 
         <div class="modal-actions">
@@ -92,8 +92,8 @@ export default {
       saving: false,
       loading: false,
 
-      filterStatus: "Все",
-      statuses: ["Все", "Активен", "Закрыт", "Обострение"],
+      filterStatus: "all",
+      statuses: ["all", "active", "closed", "escalated"],
 
       form: {
         id: null,
@@ -101,7 +101,7 @@ export default {
         participants: [],
         actions_taken: "",
         goal: "",
-        status: "Активен",
+        status: "active",
         ai_response: ""
       }
     };
@@ -109,7 +109,7 @@ export default {
 
   computed: {
     filteredConflicts() {
-      if (this.filterStatus === "Все") return this.conflicts;
+      if (this.filterStatus === "all") return this.conflicts;
       return this.conflicts.filter(c => c.status === this.filterStatus);
     }
   },
@@ -195,7 +195,7 @@ export default {
           participants: [],
           actions_taken: "",
           goal: "",
-          status: "Активен",
+          status: "active",
           ai_response: ""
         };
       }
@@ -306,10 +306,10 @@ export default {
 
     getStatusLabel(status) {
       const statusMap = {
-        'Все': this.$t('common.all'),
-        'Активен': this.$t('conflicts.active'),
-        'Закрыт': this.$t('conflicts.closed'),
-        'Обострение': this.$t('conflicts.escalated')
+        'all': this.$t('common.all'),
+        'active': this.$t('conflicts.active'),
+        'closed': this.$t('conflicts.closed'),
+        'escalated': this.$t('conflicts.escalated')
       };
       return statusMap[status] || status;
     },

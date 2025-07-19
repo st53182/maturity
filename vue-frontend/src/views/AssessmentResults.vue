@@ -181,7 +181,7 @@
     @click="saveRecommendations"
     class="modern-button"
   >
-    💾 Сохранить рекомендации
+    💾 {{ $t('common.save') }}
   </button>
 </div>
   </div>
@@ -230,7 +230,7 @@ export default {
   methods: {
   async fetchOpenAIRecommendations() {
   if (!this.savedPlan || this.savedPlan.length === 0) {
-    alert("⚠️ Сначала нужно сгенерировать и сохранить план перед получением рекомендаций.");
+    alert("⚠️ " + this.$t('results.generatePlanFirst'));
     return;
   }
 
@@ -277,7 +277,7 @@ export default {
     alert("✅ Рекомендации успешно сохранены!");
   } catch (error) {
     console.error("❌ Ошибка сохранения:", error.response?.data || error);
-    alert("❌ Не удалось сохранить рекомендации.");
+    alert("❌ " + this.$t('results.saveRecommendationsError'));
   }
 },
 
@@ -326,7 +326,7 @@ export default {
     })
     .catch((err) => {
       console.error("Ошибка сохранения плана", err);
-      alert("❌ Не удалось сохранить план");
+      alert("❌ " + this.$t('results.savePlanError'));
     });
 }
 ,

@@ -2,51 +2,66 @@
   <div class="home-container">
     <header>
       <div class="logo">GrowBoard</div>
+      <div class="language-switcher">
+        <button 
+          @click="switchLanguage('ru')" 
+          :class="{ active: $i18n.locale === 'ru' }"
+          class="lang-btn"
+        >
+          RU
+        </button>
+        <button 
+          @click="switchLanguage('en')" 
+          :class="{ active: $i18n.locale === 'en' }"
+          class="lang-btn"
+        >
+          EN
+        </button>
+      </div>
       <nav>
-        <router-link to="/login" class="nav-btn">Войти</router-link>
-        <router-link to="/register" class="nav-btn">Регистрация</router-link>
+        <router-link to="/login" class="nav-btn">{{ $t('auth.login') }}</router-link>
+        <router-link to="/register" class="nav-btn">{{ $t('register.title') }}</router-link>
       </nav>
     </header>
 
     <main>
-      <h1>Оцените зрелость вашей Agile-команды</h1>
-      <p>Пройдите опрос и получите персонализированные рекомендации по улучшению вашей команды.</p>
+      <h1>{{ $t('home.title') }}</h1>
+      <p>{{ $t('home.description') }}</p>
 
       <div class="business-category">
-        <label>Сфера деятельности:</label>
+        <label>{{ $t('home.businessCategory') }}</label>
         <select v-model="selectedCategory">
           <option v-for="category in categories" :key="category.id" :value="category.name">
-            {{ category.name }}
+            {{ $t(category.translationKey) }}
           </option>
         </select>
       </div>
 
       <router-link :to="'/survey?category=' + selectedCategory" class="start-btn">
-        🚀 Пройти оценку
+        🚀 {{ $t('home.startAssessment') }}
       </router-link>
 
-      <!-- 🔹 Новая секция "Что умеет платформа" -->
       <section class="features">
         <div class="feature-card">
           <img src="/icons/brain.png" alt="Анализ зрелости" />
-          <h3>Анализ уровня зрелости команды</h3>
-          <p>Получите рекомендации по улучшению командной динамики, ролей и процессов с помощью ИИ-анализа. Отслеживайте прогресс во времени и формируйте осознанные цели для роста команды используя нашу платформу.</p>
+          <h3>{{ $t('home.features.maturityAnalysis') }}</h3>
+          <p>{{ $t('home.features.maturityDescription') }}</p>
         </div>
         <div class="feature-card">
           <img src="/icons/motivation.png" alt="Мотивация" />
-          <h3>Мотивация по DISC</h3>
-          <p>GrowBoard помогает вам понять, что действительно мотивирует ваших сотрудников. Получайте персонализированные рекомендации и краткие профили по каждому члену команды — всё внутри одной платформы.</p>
+          <h3>{{ $t('home.features.discMotivation') }}</h3>
+          <p>{{ $t('home.features.discDescription') }}</p>
         </div>
         <div class="feature-card">
           <img src="/icons/conflict.png" alt="Конфликты" />
-          <h3>Разрешение конфликтов</h3>
-          <p>Выявляйте конфликты в команде и получайте рекомендации от AI по их разрешению прямо в приложении — на основе проверенных стратегий и анализа поведения сотрудников.</p>
+          <h3>{{ $t('home.features.conflictResolution') }}</h3>
+          <p>{{ $t('home.features.conflictDescription') }}</p>
         </div>
       </section>
     </main>
 
     <footer>
-      <p>&copy; 2025 GrowBoard. Все права защищены.</p>
+      <p>{{ $t('home.footer') }}</p>
     </footer>
   </div>
 </template>
@@ -57,11 +72,17 @@ export default {
     return {
       selectedCategory: "Разработка ПО",
       categories: [
-        { id: 1, name: "Разработка ПО" },
-        { id: 2, name: "Фармацевтика (скоро)" },
-        { id: 3, name: "Производство (скоро)" }
+        { id: 1, name: "Разработка ПО", translationKey: "home.categories.softwareDev" },
+        { id: 2, name: "Фармацевтика (скоро)", translationKey: "home.categories.pharma" },
+        { id: 3, name: "Производство (скоро)", translationKey: "home.categories.manufacturing" }
       ]
     };
+  },
+  methods: {
+    switchLanguage(lang) {
+      this.$i18n.locale = lang;
+      localStorage.setItem('language', lang);
+    }
   }
 };
 </script>
@@ -84,6 +105,31 @@ header {
   padding: 20px 40px;
   background: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.language-switcher {
+  display: flex;
+  gap: 5px;
+}
+
+.lang-btn {
+  padding: 5px 10px;
+  border: 1px solid #007bff;
+  background: transparent;
+  color: #007bff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.lang-btn.active {
+  background: #007bff;
+  color: white;
 }
 
 .logo {

@@ -202,5 +202,25 @@
     "latestResult": "Latest Result",
     "noRecommendations": "Recommendations not available",
     "loadError": "Failed to load profile"
+  },
+  "home": {
+    "title": "Assess Your Agile Team's Maturity",
+    "description": "Take the survey and get personalized recommendations to improve your team.",
+    "businessCategory": "Business Category:",
+    "startAssessment": "Take Assessment",
+    "footer": "© 2025 GrowBoard. All rights reserved.",
+    "categories": {
+      "softwareDev": "Software Development",
+      "pharma": "Pharmaceuticals (coming soon)",
+      "manufacturing": "Manufacturing (coming soon)"
+    },
+    "features": {
+      "maturityAnalysis": "Team Maturity Level Analysis",
+      "maturityDescription": "Get AI-powered recommendations for improving team dynamics, roles, and processes. Track progress over time and set conscious goals for team growth using our platform.",
+      "discMotivation": "DISC Motivation",
+      "discDescription": "GrowBoard helps you understand what truly motivates your employees. Get personalized recommendations and brief profiles for each team member — all within one platform.",
+      "conflictResolution": "Conflict Resolution",
+      "conflictDescription": "Identify team conflicts and get AI recommendations for resolution directly in the app — based on proven strategies and employee behavior analysis."
+    }
   }
 }

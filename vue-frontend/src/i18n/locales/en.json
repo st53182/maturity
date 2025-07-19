@@ -75,6 +75,7 @@
     "title": "Assessment Results",
     "teamResults": "Team Results",
     "overallScore": "Overall Score",
+    "averageScore": "Average Score",
     "category": "Category",
     "score": "Score",
     "recommendations": "Recommendations",
@@ -473,6 +474,10 @@
     "submissionError": "Submission error:",
     "noAuthToken": "Error: No authorization token!",
     "closingPopup": "Closing pop-up",
-    "updatingPage": "Updating page after logout"
+    "updatingPage": "Updating page after logout",
+    "userNotAuthorized": "User not authorized. Redirecting to login page...",
+    "deletingTeam": "Deleting team with",
+    "teamDeleted": "Team successfully deleted!",
+    "teamDeleteError": "Error deleting team:"
   }
 }

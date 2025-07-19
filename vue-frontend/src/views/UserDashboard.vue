@@ -269,16 +269,27 @@ export default {
       if (!results) return { labels: [], datasets: [] };
 
       const categories = Object.keys(results);
+      const translatedLabels = categories.map(category => {
+        const categoryMap = {
+          'Инновации': this.$t('dashboard.radarChart.innovation'),
+          'Процесс': this.$t('dashboard.radarChart.process'),
+          'Инструмент': this.$t('dashboard.radarChart.tools'),
+          'Люди': this.$t('dashboard.radarChart.people'),
+          'Критерии': this.$t('dashboard.radarChart.criteria')
+        };
+        return categoryMap[category] || category;
+      });
+      
       const scores = categories.map(category => {
         const values = Object.values(results[category]).map(val => parseFloat(val) || 0);
         return values.length ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
       });
 
       return {
-        labels: categories,
+        labels: translatedLabels,
         datasets: [
           {
-            label: "Средняя оценка",
+            label: this.$t('results.averageScore'),
             data: scores,
             backgroundColor: "rgba(75, 192, 192, 0.2)",
             borderColor: "rgba(75, 192, 192, 1)",
@@ -321,9 +332,9 @@ export default {
   async mounted() {
     const token = localStorage.getItem("token");
     if (!token) {
-      console.warn("🚫 Пользователь не авторизован. Перенаправляем на страницу входа...");
-      this.$router.push("/login"); // 🔄 Перенаправляем на страницу логина
-      return; // ⛔ Прерываем дальнейшее выполнение кода
+      console.warn("🚫 " + this.$t('console.userNotAuthorized'));
+      this.$router.push("/login");
+      return;
     }
 
     await this.fetchTeams();

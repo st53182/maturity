@@ -353,7 +353,7 @@ export default {
 
     extractManagerTips(text) {
       if (!text) return '';
-      const match = text.match(/<h3>(?:Рекомендации для руководителя|Management Recommendations):.*?<\/ul>/is);
+      const match = text.match(/<h3>(?:Рекомендации для руководителя|Management Recommendations|Recommendations for Manager):.*?<\/ul>/is);
       return match ? match[0] : '';
     },
 

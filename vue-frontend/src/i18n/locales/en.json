@@ -7,6 +7,7 @@
     "conflicts": "Conflicts",
     "disc": "DISC",
     "poker": "Planning Poker",
+    "createTeam": "Create Team",
     "logout": "Logout"
   },
   "auth": {
@@ -28,6 +29,8 @@
     "description": "Here you can manage teams, conduct assessments, and analyze results.",
     "quickActions": "Quick Actions",
     "createTeam": "Create Team",
+    "createNewTeam": "Create New Team",
+    "teamName": "Team Name",
     "takeAssessment": "Take Assessment",
     "viewResults": "View Results",
     "analyzeMotivation": "Analyze Motivation",
@@ -149,6 +152,7 @@
     "delete": "Delete",
     "save": "Save",
     "cancel": "Cancel",
+    "create": "Create",
     "yes": "Yes",
     "no": "No",
     "search": "Search",
@@ -157,6 +161,66 @@
     "none": "None",
     "select": "Select",
     "upload": "Upload",
-    "download": "Download"
+    "download": "Download",
+    "date": "Date",
+    "company": "Company"
+  },
+  "register": {
+    "title": "Registration",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "registerButton": "Register",
+    "hasAccount": "Already have an account?",
+    "login": "Login",
+    "passwordMismatch": "Passwords do not match",
+    "success": "Registration successful! You can now log in.",
+    "error": "Registration error",
+    "unknownError": "Unknown error"
+  },
+  "profile": {
+    "title": "My Profile",
+    "generalInfo": "General Information",
+    "username": "Username",
+    "email": "Email",
+    "changeCredentials": "Change Email and Password",
+    "newEmail": "New Email",
+    "newPassword": "New Password",
+    "saveChanges": "Save Changes",
+    "discSection": "DISC Assessment",
+    "discDescription": "Determine your personality type using the DISC methodology",
+    "retakeAssessment": "Retake Assessment",
+    "takeAssessment": "Take Assessment",
+    "completionHistory": "Completion History",
+    "recommendations": "Recommendations",
+    "profileUpdated": "Profile updated successfully!",
+    "updateError": "Error updating profile",
+    "noHistory": "No completion history available",
+    "oldPassword": "Old Password",
+    "autoDetected": "Automatically determined after DISC assessment",
+    "latestResult": "Latest Result",
+    "noRecommendations": "Recommendations not available",
+    "loadError": "Failed to load profile"
+  },
+  "home": {
+    "title": "Assess Your Agile Team's Maturity",
+    "description": "Take the survey and get personalized recommendations to improve your team.",
+    "businessCategory": "Business Category:",
+    "startAssessment": "Take Assessment",
+    "footer": "© 2025 GrowBoard. All rights reserved.",
+    "categories": {
+      "softwareDev": "Software Development",
+      "pharma": "Pharmaceuticals (coming soon)",
+      "manufacturing": "Manufacturing (coming soon)"
+    },
+    "features": {
+      "maturityAnalysis": "Team Maturity Level Analysis",
+      "maturityDescription": "Get AI-powered recommendations for improving team dynamics, roles, and processes. Track progress over time and set conscious goals for team growth using our platform.",
+      "discMotivation": "DISC Motivation",
+      "discDescription": "GrowBoard helps you understand what truly motivates your employees. Get personalized recommendations and brief profiles for each team member — all within one platform.",
+      "conflictResolution": "Conflict Resolution",
+      "conflictDescription": "Identify team conflicts and get AI recommendations for resolution directly in the app — based on proven strategies and employee behavior analysis."
+    }
   }
 }

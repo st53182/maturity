@@ -1,60 +1,60 @@
 <template>
   <div class="profile-page">
-    <h1>👤 Мой профиль</h1>
+    <h1>{{ $t('profile.title') }}</h1>
 
     <form @submit.prevent="saveProfile" class="profile-form">
       <div class="form-section">
-        <h2>📌 Общая информация</h2>
+        <h2>{{ $t('profile.generalInfo') }}</h2>
 
-        <label>Имя</label>
-        <input v-model="profile.name" placeholder="Ваше имя" />
+        <label>{{ $t('profile.username') }}</label>
+        <input v-model="profile.name" :placeholder="$t('profile.username')" />
 
-        <label>Должность</label>
-        <input v-model="profile.position" placeholder="Например, Тимлид" />
+        <label>{{ $t('motivation.role') }}</label>
+        <input v-model="profile.position" :placeholder="$t('motivation.role')" />
 
-        <label>Компания</label>
-        <input v-model="profile.company" placeholder="Название компании" />
+        <label>{{ $t('common.company') }}</label>
+        <input v-model="profile.company" :placeholder="$t('common.company')" />
 
-        <label>Тип личности</label>
-        <input v-model="profile.personality_type" placeholder="MBTI / DISC / другое" readonly />
-        <small style="color: #666; font-size: 12px;">Автоматически определяется после прохождения DISC оценки</small>
+        <label>{{ $t('disc.personalityType') }}</label>
+        <input v-model="profile.personality_type" :placeholder="$t('disc.personalityType')" readonly />
+        <small style="color: #666; font-size: 12px;">{{ $t('profile.autoDetected') }}</small>
       </div>
 
       <hr />
 
       <div class="form-section">
-        <h2>🔐 Смена email и пароля</h2>
+        <h2>{{ $t('profile.changeCredentials') }}</h2>
 
-        <label>Email</label>
+        <label>{{ $t('profile.email') }}</label>
         <input v-model="profile.email" type="email" />
 
-        <label>Старый пароль</label>
+        <label>{{ $t('profile.oldPassword') }}</label>
         <input v-model="oldPassword" type="password" />
 
-        <label>Новый пароль</label>
+        <label>{{ $t('profile.newPassword') }}</label>
         <input v-model="newPassword" type="password" />
       </div>
 
-      <button type="submit" class="modern-button purple">💾 Сохранить изменения</button>
+      <button type="submit" class="modern-button purple">{{ $t('profile.saveChanges') }}</button>
     </form>
 
     <div class="disc-section">
-      <h2>🧠 DISC Оценка личности</h2>
-      <p>Пройдите персональную DISC оценку для определения вашего стиля управления и получения рекомендаций по развитию.</p>
+      <h2>{{ $t('profile.discSection') }}</h2>
+      <p>{{ $t('profile.discDescription') }}</p>
       
       <div class="disc-actions">
         <router-link to="/disc-assessment" class="modern-button purple">
-          {{ profile.personality_type ? '🔄 Пройти заново' : '🚀 Пройти оценку' }}
+          {{ profile.personality_type ? $t('profile.retakeAssessment') : $t('profile.takeAssessment') }}
         </router-link>
         <div v-if="assessmentHistory.length > 0" class="history-summary">
-          <h4>📊 История прохождений ({{ assessmentHistory.length }})</h4>
+          <h4>{{ $t('profile.completionHistory') }} ({{ assessmentHistory.length }})</h4>
           <div class="history-list">
             <div v-for="assessment in assessmentHistory.slice(0, 5)" :key="assessment.id" class="history-item">
               <div class="history-header">
                 <span class="history-type">{{ assessment.personality_type }}</span>
                 <span class="history-date">{{ formatDate(assessment.completed_at) }}</span>
                 <button @click="toggleRecommendations(assessment.id)" class="toggle-btn">
-                  {{ expandedAssessments.includes(assessment.id) ? '▼' : '▶' }} Рекомендации
+                  {{ expandedAssessments.includes(assessment.id) ? '▼' : '▶' }} {{ $t('profile.recommendations') }}
                 </button>
               </div>
               <div v-if="expandedAssessments.includes(assessment.id)" class="recommendations-preview">
@@ -66,7 +66,7 @@
       </div>
 
       <div v-if="latestAssessment" class="latest-result">
-        <h3>Последний результат</h3>
+        <h3>{{ $t('profile.latestResult') }}</h3>
         <div class="result-summary">
           <div class="personality-badge">{{ latestAssessment.personality_type }}</div>
           <div class="scores">
@@ -111,7 +111,7 @@ export default {
       await this.fetchAssessmentHistory();
     } catch (e) {
       console.error("Ошибка загрузки профиля:", e);
-      alert("❌ Не удалось загрузить профиль.");
+      alert(this.$t('profile.loadError'));
     }
   },
   methods: {
@@ -125,12 +125,12 @@ export default {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
 
-        alert("✅ Профиль обновлен!");
+        alert(this.$t('profile.profileUpdated'));
         this.oldPassword = "";
         this.newPassword = "";
       } catch (e) {
         console.error("Ошибка сохранения:", e);
-        alert("❌ Не удалось сохранить профиль.");
+        alert(this.$t('profile.updateError'));
       }
     },
 
@@ -169,7 +169,7 @@ export default {
     },
 
     formatRecommendations(recommendations) {
-      if (!recommendations) return 'Рекомендации недоступны';
+      if (!recommendations) return this.$t('profile.noRecommendations');
       return recommendations.replace(/\n/g, '<br>');
     }
   }

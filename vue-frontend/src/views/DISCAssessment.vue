@@ -3,8 +3,8 @@
     <div class="container">
       <div v-if="!showResults" class="assessment-container">
         <div class="header">
-          <h1>DISC Оценка Личности для Менеджеров</h1>
-          <p class="subtitle">Определите свой стиль управления и получите персональные рекомендации</p>
+          <h1>{{ $t('disc.title') }}</h1>
+          <p class="subtitle">{{ $t('disc.description') }}</p>
         </div>
 
         <div v-if="!assessmentStarted" class="intro">
@@ -21,7 +21,7 @@
             <p><strong>Количество вопросов:</strong> 12</p>
           </div>
           <button @click="startAssessment" class="btn btn-primary btn-large">
-            Начать тестирование
+            {{ $t('disc.startAssessment') }}
           </button>
         </div>
 
@@ -30,7 +30,7 @@
             <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
           </div>
           <div class="progress-text">
-            Вопрос {{ currentQuestionIndex + 1 }} из {{ questions.length }}
+            {{ $t('disc.question') }} {{ currentQuestionIndex + 1 }} {{ $t('disc.of') }} {{ questions.length }}
           </div>
 
           <div class="question-card">
@@ -59,14 +59,14 @@
               :disabled="currentQuestionIndex === 0"
               class="btn btn-secondary"
             >
-              Назад
+              {{ $t('common.cancel') }}
             </button>
             <button 
               @click="nextQuestion" 
               :disabled="!selectedAnswer"
               class="btn btn-primary"
             >
-              {{ currentQuestionIndex === questions.length - 1 ? 'Завершить' : 'Далее' }}
+              {{ currentQuestionIndex === questions.length - 1 ? $t('disc.finish') : $t('disc.next') }}
             </button>
           </div>
         </div>
@@ -74,38 +74,38 @@
 
       <div v-else class="results-container">
         <div class="results-header">
-          <h1>Результаты DISC Оценки</h1>
+          <h1>{{ $t('disc.results') }}</h1>
           <div class="personality-type">
-            <h2>Ваш тип личности: <span class="type-badge">{{ results.personality_type }}</span></h2>
+            <h2>{{ $t('disc.personalityType') }}: <span class="type-badge">{{ results.personality_type }}</span></h2>
           </div>
         </div>
 
         <div class="scores-section">
-          <h3>Ваши баллы по DISC</h3>
+          <h3>{{ $t('disc.results') }}</h3>
           <div class="scores-grid">
             <div class="score-item">
-              <div class="score-label">Доминирование (D)</div>
+              <div class="score-label">{{ $t('disc.dominance') }} (D)</div>
               <div class="score-bar">
                 <div class="score-fill" :style="{ width: (results.dominance_score / 36 * 100) + '%' }"></div>
               </div>
               <div class="score-value">{{ results.dominance_score }}/36</div>
             </div>
             <div class="score-item">
-              <div class="score-label">Влияние (I)</div>
+              <div class="score-label">{{ $t('disc.influence') }} (I)</div>
               <div class="score-bar">
                 <div class="score-fill" :style="{ width: (results.influence_score / 36 * 100) + '%' }"></div>
               </div>
               <div class="score-value">{{ results.influence_score }}/36</div>
             </div>
             <div class="score-item">
-              <div class="score-label">Стабильность (S)</div>
+              <div class="score-label">{{ $t('disc.steadiness') }} (S)</div>
               <div class="score-bar">
                 <div class="score-fill" :style="{ width: (results.steadiness_score / 36 * 100) + '%' }"></div>
               </div>
               <div class="score-value">{{ results.steadiness_score }}/36</div>
             </div>
             <div class="score-item">
-              <div class="score-label">Добросовестность (C)</div>
+              <div class="score-label">{{ $t('disc.conscientiousness') }} (C)</div>
               <div class="score-bar">
                 <div class="score-fill" :style="{ width: (results.conscientiousness_score / 36 * 100) + '%' }"></div>
               </div>
@@ -115,23 +115,23 @@
         </div>
 
         <div class="recommendations-section">
-          <h3>Рекомендации по развитию</h3>
+          <h3>{{ $t('disc.recommendations') }}</h3>
           <div class="recommendations-content" v-html="formattedRecommendations"></div>
         </div>
 
         <div class="actions">
           <button @click="retakeAssessment" class="btn btn-secondary">
-            Пройти заново
+            {{ $t('disc.startAssessment') }}
           </button>
           <router-link to="/profile" class="btn btn-primary">
-            Перейти в профиль
+            {{ $t('nav.dashboard') }}
           </router-link>
         </div>
       </div>
 
       <div v-if="loading" class="loading-overlay">
         <div class="loading-spinner"></div>
-        <p>Обрабатываем ваши результаты...</p>
+        <p>{{ $t('common.loading') }}</p>
       </div>
     </div>
   </div>

@@ -1,13 +1,17 @@
 <template>
   <div class="register-container">
+    <div class="language-switcher">
+      <button @click="changeLanguage('ru')" :class="{ active: $i18n.locale === 'ru' }">RU</button>
+      <button @click="changeLanguage('en')" :class="{ active: $i18n.locale === 'en' }">EN</button>
+    </div>
     <div class="register-box">
-      <h2>Регистрация</h2>
+      <h2>{{ $t('register.title') }}</h2>
       <form @submit.prevent="register">
-        <input type="email" v-model="email" placeholder="Email" required />
-        <input type="password" v-model="password" placeholder="Пароль" required />
-        <button type="submit">Зарегистрироваться</button>
+        <input type="email" v-model="email" :placeholder="$t('register.email')" required />
+        <input type="password" v-model="password" :placeholder="$t('register.password')" required />
+        <button type="submit">{{ $t('register.registerButton') }}</button>
       </form>
-      <p class="login-link">Уже есть аккаунт? <router-link to="/login">Войти</router-link></p>
+      <p class="login-link">{{ $t('register.hasAccount') }} <router-link to="/login">{{ $t('register.login') }}</router-link></p>
     </div>
   </div>
 </template>
@@ -22,6 +26,10 @@ export default {
     };
   },
   methods: {
+    changeLanguage(lang) {
+      this.$i18n.locale = lang;
+      localStorage.setItem('language', lang);
+    },
     async register() {
       try {
         const response = await fetch('/register', {
@@ -31,13 +39,13 @@ export default {
         });
         const data = await response.json();
         if (response.ok) {
-          alert('Регистрация успешна! Теперь войдите.');
+          alert(this.$t('register.success'));
           this.$router.push('/login');
         } else {
           alert(data.message);
         }
       } catch (error) {
-        console.error('Ошибка регистрации:', error);
+        console.error(this.$t('register.error'), error);
       }
     }
   }
@@ -52,6 +60,35 @@ export default {
   align-items: center;
   height: 100vh;
   background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+  position: relative;
+}
+
+.language-switcher {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 5px;
+}
+
+.language-switcher button {
+  padding: 5px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  background: transparent;
+  color: #333;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.language-switcher button:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.language-switcher button.active {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Карточка */

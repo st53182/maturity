@@ -9,8 +9,8 @@
 
         <div v-if="!assessmentStarted" class="intro">
           <div class="intro-content">
-            <h2>{{ $t('disc.about') }}</h2>
-            <p>{{ $t('disc.description') }}:</p>
+            <h2>{{ $t('disc.aboutTitle') }}</h2>
+            <p>{{ $t('disc.thisAssessmentHelps') }}</p>
             <ul>
               <li v-for="benefit in $t('disc.benefits')" :key="benefit">{{ benefit }}</li>
             </ul>
@@ -27,7 +27,7 @@
             <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
           </div>
           <div class="progress-text">
-            {{ $t('disc.question') }} {{ currentQuestionIndex + 1 }} {{ $t('disc.of') }} {{ questions.length }}
+            {{ $t('disc.questionOf', { current: currentQuestionIndex + 1, total: questions.length }) }}
           </div>
 
           <div class="question-card">
@@ -56,7 +56,7 @@
               :disabled="currentQuestionIndex === 0"
               class="btn btn-secondary"
             >
-              {{ $t('common.cancel') }}
+              {{ $t('disc.back') }}
             </button>
             <button 
               @click="nextQuestion" 

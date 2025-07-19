@@ -423,7 +423,22 @@
     "score": "Score"
   },
   "disc": {
+    "title": "DISC Assessment",
+    "description": "Take the DISC assessment to determine your personality type",
+    "aboutTitle": "About the Assessment", 
+    "thisAssessmentHelps": "This assessment helps you:",
+    "benefits": [
+      "Determine your personality type using the DISC system",
+      "Understand your strengths as a manager", 
+      "Get recommendations for developing leadership qualities",
+      "Improve communication with your team"
+    ],
+    "duration": "Duration: 5-7 minutes",
+    "questionCount": "Number of questions: 12",
+    "startAssessment": "Start Assessment",
     "questionOf": "Question {current} of {total}",
+    "back": "Back",
+    "next": "Next", 
     "finish": "Finish"
   },
   "motivation": {

@@ -344,11 +344,12 @@
     "title": "📊 Select team to assess its maturity",
     "selectTeamForAssessment": "📊 Select team to assess its maturity",
     "createNewTeam": "Create New Team",
-    "team": "🛠 Team:",
+    "team": "🛠 Team",
     "teamNamePlaceholder": "Enter team name",
     "create": "Create",
     "cancel": "Cancel",
-    "important": "Important: Answer options are arranged from less mature (1) to more mature (5). Choose a higher level, it is suggested that the previous practices are already realized."
+    "important": "Important",
+    "answerOptionsDescription": "Answer options are arranged from less mature (1) to more mature (5). Choose a higher level, it is suggested that the previous practices are already realized."
   },
   "poker": {
     "title": "Planning Poker",

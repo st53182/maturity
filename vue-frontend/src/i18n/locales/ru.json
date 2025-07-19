@@ -269,13 +269,13 @@
     "analyzeMotivation": "Анализ мотивации",
     "resolveConflicts": "Разрешение конфликтов",
     "discAssessment": "DISC оценка",
-    "averageScore": "Средняя оценка",
+    "averageScore": "Average Score",
     "radarChart": {
-      "innovation": "Инновации",
-      "process": "Процесс",
-      "tools": "Инструмент",
-      "people": "Люди",
-      "criteria": "Критерии"
+      "innovation": "Innovation",
+      "process": "Process",
+      "tools": "Tools",
+      "people": "People",
+      "criteria": "Criteria"
     }
   },
   "survey": {

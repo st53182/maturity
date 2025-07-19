@@ -41,8 +41,29 @@ def get_motivation():
         db.session.add(employee)
         db.session.commit()
 
-        # 3. Prompt к OpenAI
-        prompt = f"""Ты Agile-коуч и DISC-специалист. Проанализируй описание сотрудника, определи тип по DISC и дай рекомендации по мотивации и взаимодействию , Формат ответа: строго HTML, используй <h3>, <ul>, <li>, <strong> и т.д.. , но не оборачивай в markdown ```html
+        lang = data.get('lang', 'ru')
+        
+        # 3. Prompt к OpenAI в зависимости от языка
+        if lang == 'en':
+            prompt = f"""You are an Agile coach and DISC specialist. Analyze the employee description, determine DISC type and provide motivation and interaction recommendations. Response format: strictly HTML, use <h3>, <ul>, <li>, <strong> etc., but don't wrap in markdown ```html
+
+Name: {employee.name}
+Role: {employee.role}
+Behavior in stressful situations: {employee.stress}
+Interaction with others: {employee.communication}
+Work behavior: {employee.behavior}
+Reactions to criticism and changes: {employee.feedback}
+
+**DISC Type:** (e.g., Analyst, must specify one of the letters D,I,S,C) Response format: strictly HTML, use <h3>, <ul>, <li>, <strong> etc. Highlight this on a separate line
+**Motivating factors:**
+... To increase employee motivation you need.....
+**Demotivators:**
+...
+**Recommendations for manager:**
+...
+"""
+        else:
+            prompt = f"""Ты Agile-коуч и DISC-специалист. Проанализируй описание сотрудника, определи тип по DISC и дай рекомендации по мотивации и взаимодействию , Формат ответа: строго HTML, используй <h3>, <ul>, <li>, <strong> и т.д.. , но не оборачивай в markdown ```html
 
 Имя: {employee.name}
 Роль: {employee.role}

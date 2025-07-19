@@ -1,11 +1,27 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h2>Вход</h2>
+      <div class="language-switcher-login">
+        <button 
+          @click="switchLanguage('ru')" 
+          :class="{ active: $i18n.locale === 'ru' }"
+          class="lang-btn"
+        >
+          RU
+        </button>
+        <button 
+          @click="switchLanguage('en')" 
+          :class="{ active: $i18n.locale === 'en' }"
+          class="lang-btn"
+        >
+          EN
+        </button>
+      </div>
+      <h2>{{ $t('auth.login') }}</h2>
       <form @submit.prevent="login">
-        <input type="text" v-model="username" placeholder="Логин" required />
-        <input type="password" v-model="password" placeholder="Пароль" required />
-        <button type="submit">Войти</button>
+        <input type="text" v-model="username" :placeholder="$t('auth.username')" required />
+        <input type="password" v-model="password" :placeholder="$t('auth.password')" required />
+        <button type="submit">{{ $t('auth.loginButton') }}</button>
       </form>
       <p class="register-link">Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
       <div class="forgot-password-toggle">
@@ -52,6 +68,10 @@ export default {
       } catch (error) {
         console.error('Ошибка входа:', error);
       }
+    },
+    switchLanguage(lang) {
+      this.$i18n.locale = lang;
+      localStorage.setItem('language', lang);
     }
   }
 };
@@ -76,6 +96,36 @@ export default {
   text-align: center;
   max-width: 360px;
   width: 100%;
+  position: relative;
+}
+
+.language-switcher-login {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 5px;
+}
+
+.lang-btn {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  background: transparent;
+  color: #333;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.lang-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
 }
 
 /* Заголовок */

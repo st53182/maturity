@@ -2,8 +2,8 @@
   <div class="dashboard-container">
 
 
-    <div v-if="loading" class="loading">⏳ Загружаем данные...</div>
-    <div v-else-if="error" class="error">❌ Ошибка: {{ error }}</div>
+    <div v-if="loading" class="loading">⏳ {{ $t('common.loading') }}</div>
+    <div v-else-if="error" class="error">❌ {{ $t('common.error') }}: {{ error }}</div>
 
     <!-- 🔹 Список команд -->
     <div v-else class="teams-container">
@@ -12,7 +12,7 @@
 
         <!-- 🔹 Средняя оценка команды -->
         <div class="team-score-card">
-          <h3>Средняя оценка</h3>
+          <h3>{{ $t('results.overallScore') }}</h3>
           <p class="score">{{ team.averageScore.toFixed(2) }}</p>
         </div>
 
@@ -21,16 +21,16 @@
 
         <!-- 🔹 Кнопки действий -->
         <div class="buttons">
-          <button class="evaluate-btn" @click="goToSurvey(team.id)">📝 Оценить команду</button>
-          <button class="view-results-btn" @click="goToResults(team.id, team.latest_assessment_id)">📊 Смотреть результаты</button>
-          <button class="delete-btn" @click="deleteTeam(team.id)">🗑 Удалить</button>
+          <button class="evaluate-btn" @click="goToSurvey(team.id)">📝 {{ $t('dashboard.takeAssessment') }}</button>
+          <button class="view-results-btn" @click="goToResults(team.id, team.latest_assessment_id)">📊 {{ $t('dashboard.viewResults') }}</button>
+          <button class="delete-btn" @click="deleteTeam(team.id)">🗑 {{ $t('common.delete') }}</button>
         </div>
 
 
       </div>
       <div class="team-card create-team-card" @click="showTeamModal = true">
         <div class="plus-icon">+</div>
-        <p>Создать команду</p>
+        <p>{{ $t('dashboard.createTeam') }}</p>
       </div>
 
     </div>
@@ -42,19 +42,19 @@
 <!-- 🔹 Pop-up для создания команды -->
     <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
       <div class="modal">
-        <h2>Создать новую команду</h2>
+        <h2>{{ $t('survey.createNewTeam') }}</h2>
         <p class="modal-subtitle"></p>
 
         <input
           v-model="newTeamName"
-          placeholder="Название команды"
+          :placeholder="$t('survey.teamName')"
           class="team-input"
           @keyup.enter="createTeam"
         />
 
         <div class="modal-buttons">
-          <button class="confirm-btn" @click="createTeam">✅ Создать</button>
-          <button class="cancel-btn" @click="showTeamModal = false">❌ Отмена</button>
+          <button class="confirm-btn" @click="createTeam">✅ {{ $t('survey.create') }}</button>
+          <button class="cancel-btn" @click="showTeamModal = false">❌ {{ $t('survey.cancel') }}</button>
         </div>
 
       </div>

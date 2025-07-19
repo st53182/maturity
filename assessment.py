@@ -13,16 +13,34 @@ def openai_recommendations():
 
     data = request.json
     plan = data.get("plan", [])
+    lang = data.get("lang", "ru")
 
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     if not plan:
-        return jsonify({"error": "План не передан"}), 400
+        error_msg = "Plan not provided" if lang == 'en' else "План не передан"
+        return jsonify({"error": error_msg}), 400
 
     # Формируем текст из плана
     plan_text = "\n".join([f"{idx+1}. {step['text']}" for idx, step in enumerate(plan)])
 
-    prompt = f"""
+    if lang == 'en':
+        prompt = f"""
+You are an experienced Agile coach. Based on the following team maturity improvement plan, provide detailed personalized recommendations for each plan element.
+
+Plan:
+{plan_text}
+Use structured HTML where each recommendation is a new paragraph
+Recommendations should not simply repeat the plan element, but should make it more detailed and specific, so it becomes immediately clear how to implement it
+Response format:
+1. Recommendation — [short title]
+Recommendations: [detailed, tools, roles, links]
+
+2. Recommendation — ...
+...
+"""
+    else:
+        prompt = f"""
 Ты опытный Agile-коуч. На основе следующего плана по улучшению командной зрелости дай развёрнутые персонализированные рекомендации для каждого элемента плана.
 
 План:
@@ -86,20 +104,34 @@ def generate_improvement_plan():
     data = request.json
     answer_text = data.get("answer_text")
     assessment_id = data.get("assessment_id")
+    lang = data.get("lang", "ru")
 
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Ты опытный Agile-коуч — ИИ Артём. Помоги составить подробный план улучшения командной эффективности."
-                },
-                {
-                    "role": "user",
-                    "content": f"""
+        if lang == 'en':
+            system_content = "You are an experienced Agile coach — AI Artem. Help create a detailed team effectiveness improvement plan."
+            user_content = f"""
+Here are the responses from Agile maturity assessment participants:
+
+{answer_text}
+
+Based on these responses, create a detailed 5-step plan to improve team performance. Each step should be:
+- Without HTML. Just plain text without formatting
+- With numbering: 1. 2. 3. ...
+- Specific
+- Briefly formulated (1-2 sentences)
+- Following SMART criteria
+- Achievable within 3 months
+- In instruction format
+- If it's about training — suggest onagile.ru, but not intrusively
+- Use SMART principles
+- Preferably in format: what, who and when
+- Don't use the word "should" and its variations
+"""
+        else:
+            system_content = "Ты опытный Agile-коуч — ИИ Артём. Помоги составить подробный план улучшения командной эффективности."
+            user_content = f"""
 Вот ответы участников оценки Agile-зрелости:
 
 {answer_text}
@@ -117,6 +149,17 @@ def generate_improvement_plan():
 - желательно в формате что, кто и когда
 - не использовать слово должен и его вариации
 """
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_content
+                },
+                {
+                    "role": "user",
+                    "content": user_content
                 }
             ],
             temperature=0.6,

@@ -36,12 +36,22 @@ class Question(db.Model):
     category = db.Column(db.String(255), nullable=False)
     subcategory = db.Column(db.String(255), nullable=False)
     question = db.Column(db.Text, nullable=False)
+    
+    category_en = db.Column(db.String(255), nullable=True)
+    subcategory_en = db.Column(db.String(255), nullable=True)
+    question_en = db.Column(db.Text, nullable=True)
 
     level_basic = db.Column(db.Text, nullable=True)
     level_transitional = db.Column(db.Text, nullable=True)
     level_growing = db.Column(db.Text, nullable=True)
     level_normalization = db.Column(db.Text, nullable=True)
     level_optimal = db.Column(db.Text, nullable=True)
+    
+    level_basic_en = db.Column(db.Text, nullable=True)
+    level_transitional_en = db.Column(db.Text, nullable=True)
+    level_growing_en = db.Column(db.Text, nullable=True)
+    level_normalization_en = db.Column(db.Text, nullable=True)
+    level_optimal_en = db.Column(db.Text, nullable=True)
 
 # 🔹 Модель ответов пользователей
 class Assessment(db.Model):

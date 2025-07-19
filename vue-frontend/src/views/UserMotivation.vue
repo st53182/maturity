@@ -2,7 +2,7 @@
   <div class="motivation-container">
     <h1>{{ $t('motivation.title') }}</h1>
 
-    <!-- 🔹 Список сотрудников -->
+    <!-- Employee List -->
     <div class="employee-list">
       <div
         v-for="employee in employees"
@@ -60,10 +60,10 @@
       </div>
     </div>
 
-    <!-- 🔹 Форма -->
+    <!-- Form -->
 
 
-    <!-- 🔹 Результат -->
+    <!-- Result -->
 
   </div>
   <div v-if="showModal" class="modal-overlay">
@@ -105,7 +105,7 @@
   💾 {{ $t('common.save') }}
 </button>
 
-<!-- Сохранить и сгенерировать -->
+<!-- Save and Generate -->
 <button
   @click="submitMotivation(true)"
   :disabled="loading"
@@ -247,8 +247,8 @@ export default {
         ...this.form,
         id: this.form.id,
         ai_analysis: data.analysis || "",
-        motivators: this.extractFactors(data.analysis, "Мотивирующие"),
-        demotivators: this.extractFactors(data.analysis, "Демотиваторы"),
+        motivators: this.extractFactors(data.analysis, this.$t('motivation.motivators')),
+        demotivators: this.extractFactors(data.analysis, this.$t('motivation.demotivators')),
         managerTips: this.extractManagerTips(data.analysis)
       };
 
@@ -264,11 +264,11 @@ export default {
     location.reload();
   }, 300);
     } else {
-      alert(data.error || "Ошибка сохранения");
+      alert(data.error || this.$t('motivation.errorSaving'));
     }
   } catch (err) {
     console.error(err);
-    alert("Ошибка подключения");
+    alert(this.$t('conflicts.connectionError'));
   } finally {
     this.loading = false;
   }
@@ -300,7 +300,7 @@ export default {
         });
         this.employees = this.employees.filter(e => e.id !== id);
       } catch (e) {
-        console.error("Ошибка удаления", e);
+        console.error(this.$t('motivation.errorSaving'), e);
       }
     },
 
@@ -315,10 +315,10 @@ export default {
     },
 
     extractDISCFullType(aiText) {
-      if (!aiText) return "Неизвестно";
+      if (!aiText) return this.$t('common.unknown') || "Unknown";
       const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+?\))/i)
                  || aiText.match(/Тип DISC[:-]?\s*([A-ZА-Я]\s*\([^)]+?\))/i);
-      return match ? match[1].trim() : "Неизвестно";
+      return match ? match[1].trim() : this.$t('common.unknown') || "Unknown";
     },
 
     extractFactors(html, sectionTitle) {
@@ -341,19 +341,19 @@ export default {
     },
 
     extractDISCType(aiText) {
-      if (!aiText) return "Неизвестно";
+      if (!aiText) return this.$t('common.unknown') || "Unknown";
 
       const match =
         aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я][^)<\n:]*\([A-ZА-Я]\))/i) ||
         aiText.match(/тип\s+[A-ZА-Я]\s*\([^)]+\)/i) ||
         aiText.match(/тип\s+["«]?(.)["»]?/i);
 
-      return match ? match[1].trim() : "Неизвестно";
+      return match ? match[1].trim() : this.$t('common.unknown') || "Unknown";
     },
 
     extractManagerTips(text) {
       if (!text) return '';
-      const match = text.match(/<h3>Рекомендации для руководителя:.*?<\/ul>/is);
+      const match = text.match(/<h3>(?:Рекомендации для руководителя|Management Recommendations):.*?<\/ul>/is);
       return match ? match[0] : '';
     },
 
@@ -484,7 +484,7 @@ button:hover {
 }
 
 .employee-card {
-  /* Убери width */
+  /* Remove width */
   min-height: 100px;
   padding: 1rem;
   border-radius: 14px;
@@ -684,7 +684,7 @@ button:hover {
   font-size: 14px;
 }
 
-/* Кнопки в модальном окне */
+/* Modal buttons */
 .modal-actions {
   margin-top: 24px;
   display: flex;

@@ -196,17 +196,17 @@ export default {
 
 
     async deleteTeam(teamId) {
-  if (!confirm("Вы уверены, что хотите удалить эту команду? Это действие необратимо!")) {
+  if (!confirm(this.$t('errors.confirmDeleteTeam'))) {
     return;
   }
 
   try {
-    console.log(`🗑 Удаляем команду ID: ${teamId}`);
+    console.log(`🗑 ${this.$t('console.deletingTeam')} ID: ${teamId}`);
     const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("❌ Нет токена авторизации!");
-      alert("🚫 Вы не авторизованы!");
+      console.error("❌ " + this.$t('console.noAuthToken'));
+      alert("🚫 " + this.$t('errors.notAuthorized'));
       return;
     }
 
@@ -214,32 +214,31 @@ export default {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log("✅ Команда успешно удалена!");
-    alert("✅ Команда удалена!");
+    console.log("✅ " + this.$t('console.teamDeleted'));
+    alert("✅ " + this.$t('errors.teamDeleted'));
 
-    // 🔄 Обновляем список команд после удаления
     await this.fetchTeams();
     window.location.reload();
 
   } catch (error) {
-    console.error("❌ Ошибка удаления команды:", error.response?.data || error);
-    alert("❌ Ошибка удаления команды.");
+    console.error("❌ " + this.$t('console.teamDeleteError'), error.response?.data || error);
+    alert("❌ " + this.$t('errors.teamDeleteError'));
   }
 },
 
     async createTeam() {
   if (!this.newTeamName.trim()) {
-    alert("Введите название команды!");
+    alert(this.$t('errors.enterTeamName'));
     return;
   }
 
   try {
-    console.log("📤 Создание команды...");
+    console.log("📤 " + this.$t('console.creatingTeam'));
     const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("❌ Нет токена авторизации!");
-      alert("🚫 Вы не авторизованы!");
+      console.error("❌ " + this.$t('console.noAuthToken'));
+      alert("🚫 " + this.$t('errors.notAuthorized'));
       return;
     }
 
@@ -249,22 +248,19 @@ export default {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    console.log("✅ Команда успешно создана:", res.data);
-    alert("🎉 Команда создана!");
+    console.log("✅ " + this.$t('console.teamCreated'), res.data);
+    alert("🎉 " + this.$t('errors.teamCreated'));
 
-    // 🔄 Обновляем список команд
     await this.fetchTeams();
 
-    // ✅ Очищаем поле и закрываем pop-up
     this.newTeamName = "";
     this.showTeamModal = false;
 
-    // 🔄 Перезагружаем страницу
     window.location.reload();
 
   } catch (error) {
-    console.error("❌ Ошибка создания команды:", error.response?.data || error);
-    alert("❌ Ошибка создания команды. Убедись не занято ли имя команды.");
+    console.error("❌ " + this.$t('console.teamCreationError'), error.response?.data || error);
+    alert("❌ " + this.$t('errors.teamCreationError'));
   }
 },
 

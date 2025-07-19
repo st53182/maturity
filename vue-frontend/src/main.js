@@ -6,7 +6,7 @@ import i18n from './i18n';
 
 const app = createApp(App);
 app.use(router);
-app.use(createPinia()); // Подключаем Pinia
+app.use(createPinia()); // Connect Pinia
 app.use(i18n);
 
 app.mount('#app');

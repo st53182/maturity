@@ -247,7 +247,7 @@ export default {
     this.recommendationsHtml = `<p>${htmlFormatted}</p>`;
   } catch (error) {
     console.error("❌ Ошибка при получении рекомендаций:", error.response?.data || error);
-    alert("🚫 Ошибка при запросе рекомендаций.");
+    alert("🚫 " + this.$t('results.generateRecommendationsError'));
   } finally {
     this.loadingDetailedRecs = false;
   }
@@ -258,7 +258,7 @@ export default {
 
     if (!token) {
       console.warn("🚫 Нет токена авторизации.");
-      alert("Вы не авторизованы!");
+      alert(this.$t('errors.notAuthorized'));
       return;
     }
 
@@ -274,7 +274,7 @@ export default {
       }
     );
 
-    alert("✅ Рекомендации успешно сохранены!");
+    alert("✅ " + this.$t('common.success'));
   } catch (error) {
     console.error("❌ Ошибка сохранения:", error.response?.data || error);
     alert("❌ " + this.$t('results.saveRecommendationsError'));
@@ -298,7 +298,7 @@ export default {
 
     this.editing = true;
   } catch (err) {
-    alert("Ошибка генерации плана");
+    alert(this.$t('results.generatePlanError'));
     console.error(err);
   } finally {
     this.loadingPlan = false;
@@ -404,12 +404,12 @@ if (sortedDates.length >= 2) {
 } else if (sortedDates.length === 1) {
   this.prepareRadarData();
 } else {
-  this.error = "Пожалуйста, пройдите опрос для вашей команды.";
+  this.error = this.$t('results.noAssessmentData');
 }
 
   } catch (error) {
     console.error("❌ Ошибка при получении истории:", error.response?.data || error);
-    this.error = "Ошибка при получении истории команды.";
+    this.error = this.$t('results.historyLoadError');
   }
 },
 
@@ -440,7 +440,7 @@ if (sortedDates.length >= 2) {
         this.prepareRadarData();
       } catch (error) {
         console.error("❌ Ошибка загрузки данных:", error.response?.data || error);
-        this.error = "Ошибка загрузки данных.";
+        this.error = this.$t('results.errorLoading');
       } finally {
         this.loading = false;
       }

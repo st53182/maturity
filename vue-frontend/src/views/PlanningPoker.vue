@@ -91,7 +91,7 @@
 
       <!-- 💡 Подсказки -->
       <div class="hints-box" v-if="hints.length">
-        <h3>💡 Подсказки (оценка {{ selectedSP }} SP):</h3>
+        <h3>💡 {{ $t('poker.hints') }} ({{ $t('poker.rating') }} {{ selectedSP }} SP):</h3>
         <ul>
           <li v-for="(hint, i) in hints" :key="i">— {{ hint.story }}</li>
         </ul>
@@ -114,7 +114,7 @@ export default {
       participants: [],
       votesVisible: false,
       pollingInterval: null,
-      // 🆕 Задачи
+      // Tasks
       stories: [],
       selectedStory: null,
       newStoryTitle: "",
@@ -128,11 +128,11 @@ export default {
     this.participantId = savedId;
     this.joined = true;
 
-    // Подгружаем участников и текущую задачу
+    // Load participants and current task
     this.fetchParticipants();
     this.fetchCurrentStory();
 
-    // Запускаем периодический polling
+    // Start periodic polling
     this.startPolling();
   }
 },
@@ -161,7 +161,7 @@ export default {
       this.stories = data.stories;
     },
     async leaveRoom() {
-  if (!confirm("Вы уверены, что хотите покинуть комнату?")) return;
+  if (!confirm(this.$t('poker.confirmLeave'))) return;
 
   await fetch(`/api/planning-room/${this.roomId}/leave/${this.participantId}`, {
     method: "POST"
@@ -176,7 +176,7 @@ export default {
   this.stopPolling();
 },
     async addStory() {
-      if (!this.newStoryTitle) return alert("Введите заголовок задачи");
+      if (!this.newStoryTitle) return alert(this.$t('poker.enterTaskTitle'));
       const res = await fetch(`/api/planning-room/${this.roomId}/add-story`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -193,7 +193,7 @@ export default {
     async selectStory(story) {
   this.selectedStory = story;
 
-  // Отправляем текущую задачу на сервер
+  // Send current task to server
   await fetch(`/api/planning-room/${this.roomId}/current-story`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -227,7 +227,7 @@ export default {
   const res = await fetch(`/api/planning-room/${this.roomId}`);
   if (res.ok) {
     const data = await res.json();
-    this.selectedStory = data.current_story; // 👈 Обновляем локальное состояние
+    this.selectedStory = data.current_story; // Update local state
   }
 },
     async showVotes() {
@@ -239,7 +239,7 @@ export default {
   this.polling = setInterval(() => {
     this.fetchParticipants();
     this.fetchStories();
-    this.fetchCurrentStory(); // 👈 Подтягиваем текущую задачу
+    this.fetchCurrentStory(); // Fetch current task
   }, 3000);
 },
     stopPolling() {

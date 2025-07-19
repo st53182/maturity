@@ -110,7 +110,7 @@ export default {
       this.profile = res.data;
       await this.fetchAssessmentHistory();
     } catch (e) {
-      console.error("Ошибка загрузки профиля:", e);
+      console.error(this.$t('console.loadingError'), e);
       alert(this.$t('profile.loadError'));
     }
   },
@@ -129,7 +129,7 @@ export default {
         this.oldPassword = "";
         this.newPassword = "";
       } catch (e) {
-        console.error("Ошибка сохранения:", e);
+        console.error(this.$t('console.saveError'), e);
         alert(this.$t('profile.updateError'));
       }
     },

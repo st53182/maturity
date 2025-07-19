@@ -101,12 +101,12 @@ export default {
   methods: {
     async fetchTeams() {
       try {
-        console.log("📡 Загружаем список команд...");
+        console.log("📡 " + this.$t('console.loadingTeamsError'));
         const token = localStorage.getItem("token");
 
         if (!token) {
-          console.error("❌ Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          console.error("❌ " + this.$t('console.noAuthToken'));
+          alert("🚫 " + this.$t('errors.notAuthorized'));
           return;
         }
 
@@ -117,7 +117,7 @@ export default {
         this.teams = await Promise.all(
           res.data.map(async team => {
             const rawResults = await this.fetchResults(team.id);
-            console.log("👉 rawResults для", team.name, rawResults);
+            console.log("👉 rawResults " + this.$t('survey.team'), team.name, rawResults);
             const chartData = rawResults ? this.generateRadarData(rawResults) : null;
             const averageScore = rawResults ? this.calculateAverageFromResults(rawResults) : 0;
             return {
@@ -128,10 +128,10 @@ export default {
           })
         );
 
-        console.log("✅ Команды загружены:", this.teams);
+        console.log("✅ " + this.$t('console.teamsLoaded'), this.teams);
       } catch (error) {
-        console.error("❌ Ошибка загрузки команд:", error.response?.data || error);
-        this.error = "Ошибка загрузки команд.";
+        console.error("❌ " + this.$t('console.loadingTeamsError'), error.response?.data || error);
+        this.error = this.$t('errors.loadingTeamsError');
       } finally {
         this.loading = false;
       }
@@ -141,11 +141,11 @@ export default {
 
     async fetchResults(teamId) {
   try {
-    console.log(`📡 Загружаем результаты для команды ID ${teamId}`);
+    console.log(`📡 ${this.$t('console.loadingTeamsError')} ID ${teamId}`);
     const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("❌ Нет токена авторизации!");
+      console.error("❌ " + this.$t('console.noAuthToken'));
       return null;
     }
 
@@ -153,9 +153,9 @@ export default {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    return res.data.results; // 👈 просто отдаём сырые данные
+    return res.data.results;
   } catch (error) {
-    console.error("❌ Ошибка загрузки результатов:", error.response?.data || error);
+    console.error("❌ " + this.$t('console.loadingTeamsError'), error.response?.data || error);
     return null;
   }
 },
@@ -172,7 +172,7 @@ export default {
     );
 
     const history = res.data;
-    console.log("📜 История оценок:", history);
+    console.log("📜 " + this.$t('profile.completionHistory'), history);
 
     const sortedDates = Object.keys(history).sort().reverse();
 
@@ -184,13 +184,12 @@ export default {
       // ✅ Только одно измерение — используем обычную отрисовку
       this.prepareRadarData();
     } else {
-      // ❌ Нет данных вообще
-      this.error = "Пожалуйста, пройдите опрос для вашей команды.";
+      this.error = this.$t('results.noData');
     }
 
   } catch (error) {
-    console.error("❌ Ошибка при получении истории:", error.response?.data || error);
-    this.error = "Ошибка при получении истории команды.";
+    console.error("❌ " + this.$t('console.loadingTeamsError'), error.response?.data || error);
+    this.error = this.$t('errors.loadingTeamsError');
   }
 },
 

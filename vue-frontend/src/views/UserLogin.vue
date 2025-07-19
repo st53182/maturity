@@ -66,7 +66,7 @@ export default {
           alert(data.message);
         }
       } catch (error) {
-        console.error('Ошибка входа:', error);
+        console.error(this.$t('console.loadingTeamsError'), error);
       }
     },
     switchLanguage(lang) {

@@ -102,7 +102,7 @@ export default {
       answers: {},
       showTeamModal: false,
       currentQuestionIndex: 0,
-      avgTimePerQuestion: 1.5, // Среднее время на один вопрос в минутах
+      avgTimePerQuestion: 1.5,
     };
   },
 
@@ -124,12 +124,12 @@ export default {
   methods: {
     async fetchTeams() {
       try {
-        console.log("📡 Загружаем список команд...");
+        console.log("📡 " + this.$t('console.creatingTeam'));
         const token = localStorage.getItem("token");
 
         if (!token) {
-          console.error("❌ Ошибка: Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          console.error("❌ " + this.$t('console.noAuthToken'));
+          alert("🚫 " + this.$t('errors.notAuthorized'));
           return;
         }
 
@@ -138,10 +138,10 @@ export default {
         });
 
         this.teams = res.data;
-        console.log("✅ Команды загружены:", this.teams);
+        console.log("✅ " + this.$t('console.teamsLoaded'), this.teams);
       } catch (error) {
-        console.error("❌ Ошибка загрузки команд:", error.response?.data || error);
-        alert("❌ Ошибка загрузки команд.");
+        console.error("❌ " + this.$t('console.loadingTeamsError'), error.response?.data || error);
+        alert("❌ " + this.$t('errors.loadingTeamsError'));
       }
     },
 
@@ -151,7 +151,7 @@ export default {
         const res = await axios.get(`/questions?lang=${lang}`);
         this.questions = res.data;
       } catch (error) {
-        console.error("❌ Ошибка загрузки вопросов:", error);
+        console.error("❌ " + this.$t('console.loadingQuestionsError'), error);
         this.$toast.error(this.$t('survey.errorLoadingQuestions'));
       }
     },
@@ -164,17 +164,17 @@ export default {
 
     async createTeam() {
       if (!this.newTeamName.trim()) {
-        alert("Введите название команды!");
+        alert(this.$t('errors.enterTeamName'));
         return;
       }
 
       try {
-        console.log("📤 Создание команды...");
+        console.log("📤 " + this.$t('console.creatingTeam'));
         const token = localStorage.getItem("token");
 
         if (!token) {
-          console.error("❌ Ошибка: Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          console.error("❌ " + this.$t('console.noAuthToken'));
+          alert("🚫 " + this.$t('errors.notAuthorized'));
           return;
         }
 
@@ -184,14 +184,14 @@ export default {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("✅ Команда успешно создана:", res.data);
+        console.log("✅ " + this.$t('console.teamCreated'), res.data);
 
         await this.fetchTeams();
         this.selectTeam(res.data.id, res.data.name);
-        this.showTeamModal = false; // Закрываем Pop-up
+        this.showTeamModal = false;
       } catch (error) {
-        console.error("❌ Ошибка создания команды:", error.response?.data || error);
-        alert("❌ Ошибка создания команды.");
+        console.error("❌ " + this.$t('console.loadingTeamsError'), error.response?.data || error);
+        alert("❌ " + this.$t('errors.teamCreationError'));
       }
     },
 
@@ -210,12 +210,12 @@ export default {
 
     async submitAssessment() {
   try {
-    console.log("📤 Отправка результатов...");
+    console.log("📤 " + this.$t('console.submittingResults'));
     const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("❌ Ошибка: Нет токена авторизации!");
-      alert("🚫 Вы не авторизованы!");
+      console.error("❌ " + this.$t('console.noAuthToken'));
+      alert("🚫 " + this.$t('errors.notAuthorized'));
       return;
     }
 
@@ -228,11 +228,10 @@ export default {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    const assessmentId = res.data.assessment_id; // ✅ берём ID созданной оценки
+    const assessmentId = res.data.assessment_id;
 
-    alert("🎉 Результаты сохранены!");
+    alert("🎉 " + this.$t('errors.resultsSaved'));
 
-    // 🔁 Переход с передачей assessment_id в параметры
     this.$router.push({
       name: "AssessmentResults",
       params: {
@@ -241,8 +240,8 @@ export default {
       },
     });
   } catch (error) {
-    console.error("❌ Ошибка отправки:", error.response?.data || error);
-    alert("❌ Ошибка отправки результатов.");
+    console.error("❌ " + this.$t('console.submissionError'), error.response?.data || error);
+    alert("❌ " + this.$t('errors.submissionError'));
   }
 }
   },

@@ -42,7 +42,7 @@
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
         <h2>{{ form.id ? $t('conflicts.editConflict') : $t('conflicts.addConflict') }}</h2>
         <label>{{ $t('conflicts.context') }}</label>
-        <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."></textarea>
+        <textarea v-model="form.context" rows="3" :placeholder="$t('conflicts.contextPlaceholder')"></textarea>
 
         <label>{{ $t('conflicts.participants') }}</label>
         <select v-model="form.participants" multiple>
@@ -50,10 +50,10 @@
         </select>
 
         <label>{{ $t('conflicts.actionsTaken') }}</label>
-        <textarea v-model="form.actions_taken" rows="3" placeholder="Какие шаги уже были предприняты для разрешения?"></textarea>
+        <textarea v-model="form.actions_taken" rows="3" :placeholder="$t('conflicts.actionsTakenPlaceholder')"></textarea>
 
         <label>{{ $t('conflicts.goal') }}</label>
-        <textarea v-model="form.goal" rows="3" placeholder="Какого результата вы хотите достичь?"></textarea>
+        <textarea v-model="form.goal" rows="3" :placeholder="$t('conflicts.goalPlaceholder')"></textarea>
 
         <label>{{ $t('conflicts.status') }}</label>
         <select v-model="form.status">
@@ -127,13 +127,13 @@ export default {
 
         const contentType = res.headers.get("content-type");
         if (!res.ok || !contentType?.includes("application/json")) {
-          console.error("Ошибка получения конфликтов:", await res.text());
+          console.error(this.$t('console.loadingConflictsError'), await res.text());
           return;
         }
 
         this.conflicts = await res.json();
       } catch (err) {
-        console.error("Ошибка загрузки конфликтов:", err);
+        console.error(this.$t('console.loadingConflictsError'), err);
       }
     },
 
@@ -149,13 +149,13 @@ export default {
 
         const contentType = res.headers.get("content-type");
         if (!res.ok || !contentType?.includes("application/json")) {
-          console.error("Ошибка при загрузке сотрудников:", await res.text());
+          console.error(this.$t('console.loadingEmployeesError'), await res.text());
           return;
         }
 
         this.employees = await res.json();
       } catch (err) {
-        console.error("Ошибка загрузки сотрудников:", err);
+        console.error(this.$t('console.loadingEmployeesError'), err);
       }
     },
 

@@ -43,17 +43,17 @@
 
       <section class="features">
         <div class="feature-card">
-          <img src="/icons/brain.png" alt="Анализ зрелости" />
+          <img src="/icons/brain.png" :alt="$t('home.features.maturityAnalysis')" />
           <h3>{{ $t('home.features.maturityAnalysis') }}</h3>
           <p>{{ $t('home.features.maturityDescription') }}</p>
         </div>
         <div class="feature-card">
-          <img src="/icons/motivation.png" alt="Мотивация" />
+          <img src="/icons/motivation.png" :alt="$t('home.features.discMotivation')" />
           <h3>{{ $t('home.features.discMotivation') }}</h3>
           <p>{{ $t('home.features.discDescription') }}</p>
         </div>
         <div class="feature-card">
-          <img src="/icons/conflict.png" alt="Конфликты" />
+          <img src="/icons/conflict.png" :alt="$t('home.features.conflictResolution')" />
           <h3>{{ $t('home.features.conflictResolution') }}</h3>
           <p>{{ $t('home.features.conflictDescription') }}</p>
         </div>
@@ -70,11 +70,11 @@
 export default {
   data() {
     return {
-      selectedCategory: "Разработка ПО",
+      selectedCategory: "softwareDev",
       categories: [
-        { id: 1, name: "Разработка ПО", translationKey: "home.categories.softwareDev" },
-        { id: 2, name: "Фармацевтика (скоро)", translationKey: "home.categories.pharma" },
-        { id: 3, name: "Производство (скоро)", translationKey: "home.categories.manufacturing" }
+        { id: 1, name: "softwareDev", translationKey: "home.categories.softwareDev" },
+        { id: 2, name: "pharma", translationKey: "home.categories.pharma" },
+        { id: 3, name: "manufacturing", translationKey: "home.categories.manufacturing" }
       ]
     };
   },
@@ -203,7 +203,7 @@ select {
   background-color: #218838;
 }
 
-/* Новая секция "Возможности" */
+/* Features section */
 .features {
   display: flex;
   justify-content: center;
@@ -243,7 +243,7 @@ select {
   color: #555;
 }
 
-/* Подвал */
+/* Footer */
 footer {
   text-align: center;
   padding: 16px;

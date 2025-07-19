@@ -22,8 +22,8 @@
           <button class="delete-btn" @click.stop="deleteEmployee(employee.id)">🗑</button>
 
         </div>
-        <p class="team-name">🏢 Команда: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
-        <p class="disc-type-full">🧠 Тип DISC: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
+        <p class="team-name">🏢 {{ $t('motivation.team') }}: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
+        <p class="disc-type-full">🧠 {{ $t('disc.title') }}: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
         <div class="employee-card-footer">
     <button class="update-btn" @click="handleEmployeeClick(employee)">
       🔄 {{ $t('motivation.updateRecommendations') }}
@@ -80,22 +80,22 @@
 
       <label>{{ $t('motivation.team') }} ({{ $t('common.select') }}):</label>
 <select v-model="form.team_id">
-  <option value="">— Без команды —</option>
+  <option value="">— {{ $t('motivation.noTeam') }} —</option>
   <option v-for="team in teams" :key="team.id" :value="team.id">
     {{ team.name }}
   </option>
 </select>
 
-      <label>1. Поведение в стрессовой ситуации</label>
+      <label>1. {{ $t('motivation.stressFactors') }}</label>
       <textarea v-model="form.stress" required></textarea>
 
-      <label>2. Взаимодействие с другими</label>
+      <label>2. {{ $t('motivation.communicationStyle') }}</label>
       <textarea v-model="form.communication" required></textarea>
 
-      <label>3. Особенности в работе</label>
+      <label>3. {{ $t('motivation.behaviorPatterns') }}</label>
       <textarea v-model="form.behavior" required></textarea>
 
-      <label>4. Реакции на критику и изменения</label>
+      <label>4. {{ $t('motivation.feedbackPreferences') }}</label>
       <textarea v-model="form.feedback" required></textarea>
 <div class="modal-actions">
       <button
@@ -110,7 +110,7 @@
   @click="submitMotivation(true)"
   :disabled="loading"
 >
-  <span v-if="loading">⏳ Генерация...</span>
+  <span v-if="loading">⏳ {{ $t('motivation.analyzing') }}</span>
   <span v-else>💬 {{ $t('motivation.analyze') }}</span>
 </button>
   <button class="modal-close" @click="showModal = false">✖</button>
@@ -188,13 +188,11 @@ export default {
     const token = localStorage.getItem("token");
 
     try {
-      // Получение команд
       const teamRes = await fetch("/user_teams", {
         headers: { Authorization: `Bearer ${token}` }
       });
       this.teams = await teamRes.json();
 
-      // Получение сотрудников
       const empRes = await fetch("/employees", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -202,18 +200,18 @@ export default {
       const rawEmployees = await empRes.json();
 
       if (!Array.isArray(rawEmployees)) {
-        console.error("Сотрудники не получены:", rawEmployees);
+        console.error(this.$t('motivation.errorLoading') + ":", rawEmployees);
         return;
       }
 
       this.employees = rawEmployees.map(e => ({
         ...e,
-        motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
-        demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы"),
+        motivators: this.extractFactors(e.ai_analysis, this.$t('motivation.motivators')),
+        demotivators: this.extractFactors(e.ai_analysis, this.$t('motivation.demotivators')),
         managerTips: this.extractManagerTips(e.ai_analysis)
       }));
     } catch (err) {
-      console.error("Ошибка при загрузке:", err);
+      console.error(this.$t('motivation.errorLoading') + ":", err);
     }
   },
 
@@ -234,8 +232,8 @@ export default {
       },
       body: JSON.stringify({
         ...this.form,
-        id: this.form.id, // всегда передаём id
-        team_id: this.form.team_id || null // избегаем ошибки "" в integer
+        id: this.form.id,
+        team_id: this.form.team_id || null
       })
     });
 

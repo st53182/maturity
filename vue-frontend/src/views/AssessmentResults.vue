@@ -3,16 +3,16 @@
   <!-- 🔹 Общая оценка -->
   <div class="team-info-card">
   <div class="info-block team">
-    <h3>🏷️ Команда</h3>
-    <p>{{ teamName || 'Ваша команда' }}</p>
+    <h3>🏷️ {{ $t('survey.team') }}</h3>
+    <p>{{ teamName || $t('dashboard.teamName') }}</p>
   </div>
   <div class="info-block score" :class="scoreColor">
-    <h3>📊 Оценка</h3>
+    <h3>📊 {{ $t('results.score') }}</h3>
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
 <div class="info-block level">
   <h3>
-    🏅 Уровень
+    🏅 {{ $t('modals.levels') }}
     <span class="info-icon" @click="showLevelInfo = true" style="cursor: pointer;">ℹ️</span>
   </h3>
   <p>{{ teamLevel }}</p>
@@ -23,7 +23,7 @@
 
   <div class="info-block market">
   <h3>
-    📈 Относительно среднего по индустрии
+    📈 {{ $t('modals.relativeToIndustryAverage') }}
     <span class="info-icon" @click="showMarketModal = true">ℹ️</span>
   </h3>
   <p>
@@ -54,7 +54,7 @@
       :style="{ left: getTimelinePosition(timelineInfo.lastDate) + '%' }"
     >
       <div class="tooltip always-visible">
-        📍 Команда была оценена: {{ timelineInfo.lastDate }}
+        📍 {{ $t('results.teamAssessed') }}: {{ timelineInfo.lastDate }}
       </div>
     </div>
 
@@ -67,18 +67,18 @@
       :style="{ left: getTimelinePosition(timelineInfo.nextDate) + '%' }"
     >
       <div class="tooltip always-visible">
-        ⏭ Рекомендуемая дата следующей оценки: {{ timelineInfo.nextDate }}
+        ⏭ {{ $t('results.nextAssessment') }}: {{ timelineInfo.nextDate }}
       </div>
     </div>
   </div>
 
   <!-- 🧾 Подпись под шкалой -->
   <div class="timeline-days-left">
-    ⏳ До следующей оценки осталось:
+    ⏳ {{ $t('results.timeRemaining') }}:
     <strong>{{ timelineInfo.daysLeft }} {{ pluralDays(timelineInfo.daysLeft) }}</strong>
   </div>
   <div v-if="previousAssessmentDates.length" class="timeline-previous-dates">
-  📅 Предыдущие оценки:
+  📅 {{ $t('results.previousAssessments') }}:
   <strong>{{ previousAssessmentDates.join(', ') }}</strong>
 </div>
 
@@ -169,11 +169,11 @@
 </div>
    <div class="recommendations-block">
   <button @click="fetchOpenAIRecommendations" class="modern-button">
-    🤖 Получить персональные рекомендации
+    🤖 {{ $t('results.generateRecommendations') }}
   </button>
 
 
-  <div v-if="loadingDetailedRecs">⏳ Анализируем ответы...</div>
+  <div v-if="loadingDetailedRecs">⏳ {{ $t('results.generating') }}...</div>
 
   <div v-if="recommendationsHtml" v-html="recommendationsHtml" class="recommendation-html"></div>
      <button

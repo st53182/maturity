@@ -170,23 +170,25 @@ export default {
     const logout = () => {
       authStore.logout();
       showTeamModal.value = false;
-      window.location.href = "/login"; // Обновляем страницу после выхода
+      window.location.href = "/login";
     };
 
     // ✅ Функция создания команды
     const createTeam = async () => {
+      const { $t } = getCurrentInstance().appContext.config.globalProperties;
+      
       if (!newTeamName.value.trim()) {
-        alert("Введите название команды!");
+        alert($t('errors.enterTeamName'));
         return;
       }
 
       try {
-        console.log("📤 Создание команды...");
+        console.log("📤 " + $t('console.creatingTeam'));
         const token = localStorage.getItem("token");
 
         if (!token) {
-          console.error("❌ Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          console.error("❌ " + $t('console.noAuthToken'));
+          alert("🚫 " + $t('errors.notAuthorized'));
           return;
         }
 
@@ -196,20 +198,16 @@ export default {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("✅ Команда успешно создана:", res.data);
+        console.log("✅ " + $t('console.teamCreated'), res.data);
 
+        showTeamModal.value = false;
+        alert("🎉 " + $t('errors.teamCreated'));
 
-        showTeamModal.value = false; // Закрываем pop-up
-        alert("🎉 Команда создана!");
-
-        // Можно обновить список команд через authStore (если там есть `fetchTeams`)
-
-
-          window.location.reload();
+        window.location.reload();
 
       } catch (error) {
-        console.error("❌ Ошибка создания команды:", error.response?.data || error);
-        alert("❌ Ошибка создания команды. Убедись не занято ли имя команды");
+        console.error("❌ " + $t('console.loadingTeamsError'), error.response?.data || error);
+        alert("❌ " + $t('errors.teamCreationError'));
       }
     };
 

@@ -295,5 +295,27 @@
       "highPerforming": "from 4 to 5 points"
     },
     "marketInfoDescription": "This indicator is calculated based on data collected from more than 100 organizations and is regularly updated quarterly with the results of teams taking assessments on the GrowBoard platform. The calculation includes teams using platform services and consulting partners in the CIS region. It reflects the average value of key team performance metrics in IT and allows you to objectively compare your team's current level with market trends."
+  },
+  "errors": {
+    "enterTeamName": "Enter team name!",
+    "notAuthorized": "You are not authorized!",
+    "teamCreationError": "Team creation error. Make sure the team name is not already taken",
+    "teamCreated": "Team created!",
+    "loadingTeamsError": "Error loading teams.",
+    "loadingQuestionsError": "Error loading questions",
+    "resultsSaved": "Results saved!",
+    "submissionError": "Error submitting results."
+  },
+  "console": {
+    "creatingTeam": "Creating team...",
+    "teamCreated": "Team successfully created:",
+    "teamsLoaded": "Teams loaded:",
+    "loadingTeamsError": "Error loading teams:",
+    "loadingQuestionsError": "Error loading questions:",
+    "submittingResults": "Submitting results...",
+    "submissionError": "Submission error:",
+    "noAuthToken": "Error: No authorization token!",
+    "closingPopup": "Closing pop-up",
+    "updatingPage": "Updating page after logout"
   }
 }

@@ -1,19 +1,19 @@
 <template>
   <div class="poker-wrapper">
-    <h1 class="poker-title">🃏 Planning Poker — Комната {{ roomId }}</h1>
+    <h1 class="poker-title">🃏 {{ $t('poker.title') }} — {{ $t('poker.room') }} {{ roomId }}</h1>
 
     <!-- 🔹 Вход -->
     <div v-if="!joined" class="card poker-card">
-      <input v-model="name" placeholder="Ваше имя" class="form-control" />
+      <input v-model="name" :placeholder="$t('poker.yourName')" class="form-control" />
       <select v-model="role" class="form-control">
-        <option disabled value="">Выберите роль</option>
+        <option disabled value="">{{ $t('poker.selectRole') }}</option>
         <option>FE</option>
         <option>BE</option>
         <option>FullStack</option>
         <option>QA</option>
         <option>Analyst</option>
       </select>
-      <button class="btn btn-purple" @click="joinRoom">🚪 Присоединиться</button>
+      <button class="btn btn-purple" @click="joinRoom">🚪 {{ $t('poker.join') }}</button>
     </div>
 
     <!-- 🔹 Комната -->
@@ -21,7 +21,7 @@
       <div class="joined-info">👤 <strong>{{ name }}</strong> ({{ role }})</div>
 
       <!-- 📄 Список задач -->
-      <h3>📋 Задачи</h3>
+      <h3>📋 {{ $t('poker.tasks') }}</h3>
       <ul class="story-list">
         <li
           v-for="story in stories"
@@ -37,22 +37,22 @@
       <div class="add-story">
         <input
           v-model="newStoryTitle"
-          placeholder="Новая задача (заголовок)"
+          :placeholder="$t('poker.newTaskTitle')"
           class="form-control"
         />
         <textarea
           v-model="newStoryDescription"
-          placeholder="Описание (необязательно)"
+          :placeholder="$t('poker.descriptionOptional')"
           class="form-control"
         ></textarea>
-        <button class="btn btn-blue" @click="addStory">➕ Добавить задачу</button>
+        <button class="btn btn-blue" @click="addStory">➕ {{ $t('poker.addTask') }}</button>
       </div>
 
       <hr />
 
       <!-- 🃏 Story Points -->
       <div v-if="selectedStory">
-        <h2>📌 Голосуем за: {{ selectedStory.title }}</h2>
+        <h2>📌 {{ $t('poker.votingFor') }}: {{ selectedStory.title }}</h2>
         <div class="sp-buttons">
           <button
             v-for="sp in storyPoints"
@@ -67,15 +67,15 @@
 
       <!-- 👥 Участники -->
       <div class="participants-box">
-        <h3>👥 Участники</h3>
+        <h3>👥 {{ $t('poker.participants') }}</h3>
         <ul>
           <li v-for="p in participants" :key="p.id">
             <strong>{{ p.name }}</strong> ({{ p.role }}) —
             <span v-if="votesVisible">
-              {{ p.voted ? p.points + ' SP' : '— ❌ Не голосовал' }}
+              {{ p.voted ? p.points + ' SP' : '— ❌ ' + $t('poker.didNotVote') }}
             </span>
             <span v-else>
-              {{ p.voted ? '🔒 Оценка скрыта' : '❌ Не голосовал' }}
+              {{ p.voted ? '🔒 ' + $t('poker.voteHidden') : '❌ ' + $t('poker.didNotVote') }}
             </span>
           </li>
         </ul>
@@ -84,10 +84,10 @@
           @click="showVotes"
           v-if="!votesVisible"
         >
-          👁 Показать оценки
+          👁 {{ $t('poker.showVotes') }}
         </button>
       </div>
-<button class="btn btn-red" @click="leaveRoom">🚪 Выйти из комнаты</button>
+<button class="btn btn-red" @click="leaveRoom">🚪 {{ $t('poker.leaveRoom') }}</button>
 
       <!-- 💡 Подсказки -->
       <div class="hints-box" v-if="hints.length">

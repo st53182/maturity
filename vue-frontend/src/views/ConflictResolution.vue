@@ -1,6 +1,6 @@
 <template>
   <div class="conflict-container">
-    <h1>🔥 Конфликты и Проблемы</h1>
+    <h1>{{ $t('conflicts.title') }}</h1>
 
     <!-- 🔹 Фильтр -->
     <div class="filter-bar">
@@ -12,7 +12,7 @@
       >
         {{ s }}
       </button>
-      <button @click="openModal(null)" class="add-btn">➕ Новый конфликт</button>
+      <button @click="openModal(null)" class="add-btn">➕ {{ $t('conflicts.addConflict') }}</button>
     </div>
 
     <!-- 🔹 Карточки -->
@@ -40,31 +40,31 @@
 
       <div class="modal-content">
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
-        <h2>{{ form.id ? 'Редактировать' : 'Новый конфликт' }}</h2>
-        <label>Контекст</label>
+        <h2>{{ form.id ? $t('conflicts.editConflict') : $t('conflicts.addConflict') }}</h2>
+        <label>{{ $t('conflicts.context') }}</label>
         <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."></textarea>
 
-        <label>Участники (для выбора нескольких используйте ctrl) / Опционально </label>
+        <label>{{ $t('conflicts.participants') }}</label>
         <select v-model="form.participants" multiple>
           <option v-for="e in employees" :value="e.id" :key="e.id">{{ e.name }}</option>
         </select>
 
-        <label>Что предпринималось?</label>
+        <label>{{ $t('conflicts.actionsTaken') }}</label>
         <textarea v-model="form.actions_taken" rows="3" placeholder="Какие шаги уже были предприняты для разрешения?"></textarea>
 
-        <label>Цель разрешения</label>
+        <label>{{ $t('conflicts.goal') }}</label>
         <textarea v-model="form.goal" rows="3" placeholder="Какого результата вы хотите достичь?"></textarea>
 
-        <label>Статус</label>
+        <label>{{ $t('conflicts.status') }}</label>
         <select v-model="form.status">
-          <option value="Активен">Активен</option>
-          <option value="Закрыт">Закрыт</option>
-          <option value="Обострение">Обострение</option>
+          <option value="Активен">{{ $t('conflicts.active') }}</option>
+          <option value="Закрыт">{{ $t('conflicts.resolved') }}</option>
+          <option value="Обострение">{{ $t('conflicts.active') }}</option>
         </select>
 
         <div class="modal-actions">
   <button class="generate-btn" @click="submitConflict" :disabled="loading">
-    💬 {{ loading ? "Генерация..." : "Получить рекомендации" }}
+    💬 {{ loading ? $t('conflicts.analyzing') : $t('conflicts.analyze') }}
   </button>
   <button
   v-if="form.id"
@@ -72,7 +72,7 @@
   @click="saveConflict"
   :disabled="saving"
 >
-  💾 {{ saving ? "Сохранение..." : "Сохранить и закрыть" }}
+  💾 {{ saving ? $t('common.loading') : $t('common.save') }}
 </button>
   <button class="modal-close" @click="showModal = false">✖</button>
 </div>

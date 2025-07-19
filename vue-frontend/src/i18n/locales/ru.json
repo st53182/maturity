@@ -431,6 +431,83 @@
     "resultsSaved": "Результаты сохранены!",
     "submissionError": "Ошибка отправки результатов."
   },
+  "modals": {
+    "teamLevels": "Уровни команды",
+    "close": "Закрыть",
+    "relativeToIndustryAverage": "Относительно среднего по индустрии",
+    "levels": "Уровень"
+  },
+  "results": {
+    "teamAssessed": "Команда была оценена",
+    "resultsNotSaved": "Ваши результаты не сохранены. Зарегистрируйтесь, чтобы сохранить их!",
+    "generatePlan": "Сгенерировать план улучшений",
+    "generating": "Генерируем",
+    "addPlanItem": "Добавить пункт в план",
+    "generateRecommendations": "Получить персональные рекомендации",
+    "generatePlanFirst": "Сначала нужно сгенерировать и сохранить план перед получением рекомендаций.",
+    "generateRecommendationsError": "Ошибка при запросе рекомендаций.",
+    "generatePlanError": "Ошибка генерации плана",
+    "savePlanError": "Не удалось сохранить план",
+    "saveRecommendationsError": "Не удалось сохранить рекомендации.",
+    "noAssessmentData": "Пожалуйста, пройдите опрос для вашей команды.",
+    "historyLoadError": "Ошибка при получении истории команды.",
+    "errorLoading": "Ошибка загрузки данных.",
+    "nextAssessment": "Рекомендуемая дата следующей оценки",
+    "timeRemaining": "До следующей оценки осталось",
+    "previousAssessments": "Предыдущие оценки",
+    "score": "Оценка"
+  },
+  "conflicts": {
+    "status": {
+      "active": "Активен",
+      "closed": "Закрыт",
+      "escalated": "Обострение"
+    },
+    "all": "Все",
+    "openOrEdit": "Открыть или редактировать",
+    "participants": "Участники",
+    "goal": "Цель",
+    "recommendations": "Рекомендации"
+  },
+  "disc": {
+    "questionOf": "Вопрос {current} из {total}",
+    "finish": "Завершить"
+  },
+  "motivation": {
+    "updateRecommendations": "Обновить рекомендации",
+    "motivators": "Мотиваторы",
+    "demotivators": "Демотиваторы",
+    "recommendationsForManager": "Рекомендации для руководителя",
+    "team": "Команда",
+    "discType": "Тип DISC",
+    "addEmployee": "Добавить сотрудника"
+  },
+  "survey": {
+    "selectTeamForAssessment": "Выбери команду для оценки ее зрелости",
+    "createNewTeam": "Создать новую команду",
+    "team": "Команда"
+  },
+  "poker": {
+    "title": "Planning Poker",
+    "room": "Комната",
+    "yourName": "Ваше имя",
+    "selectRole": "Выберите роль",
+    "join": "Присоединиться",
+    "tasks": "Задачи",
+    "newTaskTitle": "Новая задача (заголовок)",
+    "descriptionOptional": "Описание (необязательно)",
+    "addTask": "Добавить задачу",
+    "votingFor": "Голосуем за",
+    "participants": "Участники",
+    "didNotVote": "Не голосовал",
+    "voteHidden": "Оценка скрыта",
+    "showVotes": "Показать оценки",
+    "leaveRoom": "Выйти из комнаты",
+    "hints": "Подсказки",
+    "rating": "оценка",
+    "confirmLeave": "Вы уверены, что хотите покинуть комнату?",
+    "enterTaskTitle": "Введите заголовок задачи"
+  },
   "console": {
     "creatingTeam": "Создание команды...",
     "teamCreated": "Команда успешно создана:",

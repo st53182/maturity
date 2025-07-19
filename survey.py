@@ -51,30 +51,32 @@ def create_team():
 @bp_survey.route('/questions', methods=['GET'])
 def get_questions():
     try:
+        lang = request.args.get('lang', 'ru')
         questions = Question.query.all()
 
         response = [{
             "id": q.id,
-            "category": q.category,
-            "subcategory": q.subcategory,
-            "question": q.question,
+            "category": q.category_en if lang == 'en' and q.category_en else q.category,
+            "subcategory": q.subcategory_en if lang == 'en' and q.subcategory_en else q.subcategory,
+            "question": q.question_en if lang == 'en' and q.question_en else q.question,
             "levels": {
-                "basic": q.level_basic,
-                "transitional": q.level_transitional,
-                "growing": q.level_growing,
-                "normalization": q.level_normalization,
-                "optimal": q.level_optimal,
+                "basic": q.level_basic_en if lang == 'en' and q.level_basic_en else q.level_basic,
+                "transitional": q.level_transitional_en if lang == 'en' and q.level_transitional_en else q.level_transitional,
+                "growing": q.level_growing_en if lang == 'en' and q.level_growing_en else q.level_growing,
+                "normalization": q.level_normalization_en if lang == 'en' and q.level_normalization_en else q.level_normalization,
+                "optimal": q.level_optimal_en if lang == 'en' and q.level_optimal_en else q.level_optimal,
             }
         } for q in questions]
 
         return current_app.response_class(
-            response=json.dumps(response, ensure_ascii=False),  # ✅ Отключаем ASCII
+            response=json.dumps(response, ensure_ascii=False),
             status=200,
             mimetype='application/json'
         )
 
     except Exception as e:
-        return jsonify({"error": "Ошибка при получении вопросов", "details": str(e)}), 500
+        error_msg = "Error getting questions" if request.args.get('lang') == 'en' else "Ошибка при получении вопросов"
+        return jsonify({"error": error_msg, "details": str(e)}), 500
 
 SCORE_MAP = {
     "basic": 1,

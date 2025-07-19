@@ -9,37 +9,53 @@
 
     <!-- Desktop Sidebar -->
     <aside class="modern-sidebar" v-if="isAuthenticated">
+      <div class="language-switcher">
+        <button 
+          @click="switchLanguage('ru')" 
+          :class="{ active: $i18n.locale === 'ru' }"
+          class="lang-btn"
+        >
+          RU
+        </button>
+        <button 
+          @click="switchLanguage('en')" 
+          :class="{ active: $i18n.locale === 'en' }"
+          class="lang-btn"
+        >
+          EN
+        </button>
+      </div>
       <button class="sidebar-btn" @click="$router.push('/profile')">
         <span>👤</span>
-        <small>Мой профиль</small>
+        <small>{{ $t('nav.dashboard') }}</small>
       </button>
       <button class="sidebar-btn" @click="$router.push('/dashboard')">
         <span>🏠</span>
-        <small>Мои команды</small>
+        <small>{{ $t('nav.dashboard') }}</small>
       </button>
       <button class="sidebar-btn" @click="$router.push('/survey')">
         <span>📝</span>
-        <small>Зрелость</small>
+        <small>{{ $t('nav.survey') }}</small>
       </button>
       <button class="sidebar-btn" @click="$router.push('/conflicts')">
         <span>🤝</span>
-        <small>Конфликты & Проблемы</small>
+        <small>{{ $t('nav.conflicts') }}</small>
       </button>
       <button class="sidebar-btn" @click="$router.push('/motivation')">
         <span>🧠</span>
-        <small>Сотрудники & Мотивация</small>
+        <small>{{ $t('nav.motivation') }}</small>
       </button>
       <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
         <span>♠️</span>
-        <small>Покер планирование</small>
+        <small>{{ $t('nav.poker') }}</small>
       </button>
       <button class="sidebar-btn" @click="showTeamModal = true">
         <span style="color: white;">➕</span>
-        <small>Создать команду</small>
+        <small>{{ $t('dashboard.createTeam') }}</small>
       </button>
       <button class="sidebar-btn" @click="logout">
         <span>🚪</span>
-        <small>Выйти</small>
+        <small>{{ $t('nav.logout') }}</small>
       </button>
     </aside>
 
@@ -47,41 +63,57 @@
     <div v-if="isAuthenticated && showMobileMenu" class="mobile-menu-overlay" @click.self="showMobileMenu = false">
       <nav class="mobile-menu">
         <div class="mobile-menu-header">
-          <h3>Навигация</h3>
+          <h3>{{ $t('nav.dashboard') }}</h3>
+          <div class="mobile-language-switcher">
+            <button 
+              @click="switchLanguage('ru')" 
+              :class="{ active: $i18n.locale === 'ru' }"
+              class="lang-btn-mobile"
+            >
+              RU
+            </button>
+            <button 
+              @click="switchLanguage('en')" 
+              :class="{ active: $i18n.locale === 'en' }"
+              class="lang-btn-mobile"
+            >
+              EN
+            </button>
+          </div>
           <button class="mobile-menu-close" @click="showMobileMenu = false">✕</button>
         </div>
         <div class="mobile-menu-items">
           <button class="mobile-menu-btn" @click="navigateAndClose('/profile')">
             <span>👤</span>
-            <span>Мой профиль</span>
+            <span>{{ $t('nav.dashboard') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/dashboard')">
             <span>🏠</span>
-            <span>Мои команды</span>
+            <span>{{ $t('nav.dashboard') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/survey')">
             <span>📝</span>
-            <span>Зрелость</span>
+            <span>{{ $t('nav.survey') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/conflicts')">
             <span>🤝</span>
-            <span>Конфликты & Проблемы</span>
+            <span>{{ $t('nav.conflicts') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/motivation')">
             <span>🧠</span>
-            <span>Сотрудники & Мотивация</span>
+            <span>{{ $t('nav.motivation') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="openExternalLinkAndClose('https://poker.growboard.ru')">
             <span>♠️</span>
-            <span>Покер планирование</span>
+            <span>{{ $t('nav.poker') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="openTeamModalAndClose()">
             <span>➕</span>
-            <span>Создать команду</span>
+            <span>{{ $t('dashboard.createTeam') }}</span>
           </button>
           <button class="mobile-menu-btn logout-btn" @click="logout">
             <span>🚪</span>
-            <span>Выйти</span>
+            <span>{{ $t('nav.logout') }}</span>
           </button>
         </div>
       </nav>
@@ -96,17 +128,17 @@
 
 <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
   <div class="modal">
-    <h2 style="text-align: center;">Создать новую команду</h2>
+    <h2 style="text-align: center;">{{ $t('survey.createNewTeam') }}</h2>
     <p class="modal-subtitle"></p>
     <input
       v-model="newTeamName"
-      placeholder="Название команды"
+      :placeholder="$t('survey.teamName')"
       class="team-input"
       @keyup.enter="createTeam"
     />
     <div class="modal-buttons">
-          <button class="confirm-btn" @click="createTeam">✅ Создать</button>
-          <button class="cancel-btn" @click="showTeamModal = false">❌ Отмена</button>
+          <button class="confirm-btn" @click="createTeam">✅ {{ $t('survey.create') }}</button>
+          <button class="cancel-btn" @click="showTeamModal = false">❌ {{ $t('survey.cancel') }}</button>
 
     </div>
   </div>
@@ -119,7 +151,7 @@
 <script>
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
-import { computed, ref } from "vue";
+import { computed, ref, getCurrentInstance } from "vue";
 
 
 export default {
@@ -221,7 +253,15 @@ export default {
       navigateAndClose,
       openTeamModalAndClose,
       openExternalLink,
-      openExternalLinkAndClose
+      openExternalLinkAndClose,
+      switchLanguage: (lang) => {
+        // Access i18n through the global properties
+        const app = getCurrentInstance();
+        if (app) {
+          app.appContext.config.globalProperties.$i18n.locale = lang;
+          localStorage.setItem('language', lang);
+        }
+      }
     };
   },
 };
@@ -247,6 +287,58 @@ export default {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   z-index: 1000;
   gap: 15px;
+}
+
+.language-switcher {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.lang-btn {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.mobile-language-switcher {
+  display: flex;
+  gap: 5px;
+}
+
+.lang-btn-mobile {
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  transition: all 0.3s ease;
+}
+
+.lang-btn-mobile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-btn-mobile.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .sidebar-btn {

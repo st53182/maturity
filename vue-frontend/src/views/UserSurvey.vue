@@ -148,10 +148,12 @@ export default {
 
     async fetchQuestions() {
       try {
-        const res = await axios.get("/questions");
+        const lang = this.$i18n.locale;
+        const res = await axios.get(`/questions?lang=${lang}`);
         this.questions = res.data;
       } catch (error) {
         console.error("❌ Ошибка загрузки вопросов:", error);
+        this.$toast.error(this.$t('survey.errorLoadingQuestions'));
       }
     },
 

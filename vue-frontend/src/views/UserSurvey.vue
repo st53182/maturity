@@ -21,15 +21,15 @@
     <!-- 🔹 Pop-up для создания команды -->
     <div v-if="showTeamModal" class="modal-overlay">
       <div class="modal">
-        <h2>Создать новую команду</h2>
+        <h2>{{ $t('survey.createNewTeam') }}</h2>
         <input
           v-model="newTeamName"
-          placeholder="Введите название команды"
+          :placeholder="$t('survey.teamNamePlaceholder')"
           class="team-input"
         />
         <div class="modal-buttons">
-          <button class="confirm-btn" @click="createTeam">✅ Создать</button>
-          <button class="cancel-btn" @click="showTeamModal = false">❌ Отмена</button>
+          <button class="confirm-btn" @click="createTeam">✅ {{ $t('survey.create') }}</button>
+          <button class="cancel-btn" @click="showTeamModal = false">❌ {{ $t('survey.cancel') }}</button>
         </div>
       </div>
     </div>
@@ -38,8 +38,7 @@
     <div v-else>
       <h2 class="team-name">🛠 Команда: {{ selectedTeamName }}</h2>
       <p class="disclaimer">
-  🧠 <strong>Важно:</strong> Варианты ответов расположены от менее зрелых (1) к более зрелым (5).
-  Выбирая более высокий уровень, предполагается, что предыдущие практики уже реализованы.
+  🧠 <strong>{{ $t('survey.important') }}:</strong> {{ $t('survey.answerOptionsDescription') }}
 </p>
 
       <!-- 🔹 Прогресс-бар -->

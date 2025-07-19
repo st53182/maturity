@@ -89,14 +89,14 @@
 
     <!-- 🔹 Если пользователь не авторизован, показываем предложение зарегистрироваться -->
     <div v-if="!isAuthenticated" class="auth-notice">
-      <p>Ваши результаты не сохранены. Зарегистрируйтесь, чтобы сохранить их!</p>
-      <button @click="goToRegister">🔐 Зарегистрироваться</button>
+      <p>{{ $t('results.resultsNotSaved') }}</p>
+      <button @click="goToRegister">🔐 {{ $t('auth.register') }}</button>
     </div>
 
 
 
     <!-- 🔹 Загрузка / Ошибка -->
-    <div v-if="loading" class="loading">⏳ Загрузка данных...</div>
+    <div v-if="loading" class="loading">⏳ {{ $t('common.loading') }}...</div>
 <div v-else-if="error" class="error">❌ {{ error }}</div>
 
 <!-- 🔹 Графики по категориям -->
@@ -143,7 +143,7 @@
     ➕ {{ $t('results.addPlanItem') }}
   </button>
   <button class="modern-button green" @click="saveImprovementPlan">
-    ✔ Сохранить
+    ✔ {{ $t('common.save') }}
   </button>
 </div>
   </div>

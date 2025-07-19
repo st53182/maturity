@@ -51,6 +51,7 @@
     "selectTeamForAssessment": "Select a team to assess its maturity",
     "createNewTeam": "Create New Team",
     "teamName": "Team Name",
+    "teamNamePlaceholder": "Enter team name",
     "create": "Create",
     "cancel": "Cancel",
     "question": "Question",
@@ -65,7 +66,9 @@
     "teamExists": "Team with this name already exists",
     "assessmentSubmitted": "Assessment submitted!",
     "errorLoadingQuestions": "Error loading questions",
-    "errorSubmitting": "Error submitting assessment"
+    "errorSubmitting": "Error submitting assessment",
+    "important": "Important",
+    "answerOptionsDescription": "Answer options are arranged from less mature (1) to more mature (5). Choosing a higher level assumes that previous practices are already implemented."
   },
   "results": {
     "title": "Assessment Results",

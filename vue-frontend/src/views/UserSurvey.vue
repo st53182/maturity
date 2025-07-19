@@ -1,6 +1,6 @@
 <template>
   <div class="survey-container">
-    <h1>📊 Выбери команду для оценки ее зрелости </h1>
+    <h1>📊 {{ $t('survey.selectTeamForAssessment') }}</h1>
 
     <!-- 🔹 Выбор команды -->
     <div v-if="!selectedTeam" class="team-selection">

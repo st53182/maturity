@@ -26,19 +26,19 @@
         <p class="disc-type-full">🧠 Тип DISC: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
         <div class="employee-card-footer">
     <button class="update-btn" @click="handleEmployeeClick(employee)">
-      🔄 Обновить рекомендации
+      🔄 {{ $t('motivation.updateRecommendations') }}
     </button>
   </div>
 
         <div v-if="employee.ai_analysis" class="factors">
           <div class="column">
-            <h5>⬆️ Мотиваторы</h5>
+            <h5>⬆️ {{ $t('motivation.motivators') }}</h5>
             <ul>
               <li v-for="item in employee.motivators" :key="item">{{ item }}</li>
             </ul>
           </div>
           <div class="column">
-            <h5>⬇️ Демотиваторы</h5>
+            <h5>⬇️ {{ $t('motivation.demotivators') }}</h5>
             <ul>
               <li v-for="item in employee.demotivators" :key="item">{{ item }}</li>
             </ul>
@@ -122,10 +122,10 @@
 <!-- Avatar Selection Modal -->
 <div v-if="showAvatarModal" class="modal-overlay">
   <div class="modal-content avatar-modal">
-    <h2>🎭 Выбор аватара</h2>
+    <h2>🎭 {{ $t('motivation.avatarSelection') }}</h2>
     
     <div class="avatar-section">
-      <h3>👨 Мужские</h3>
+      <h3>👨 {{ $t('motivation.maleAvatars') }}</h3>
       <div class="avatar-grid">
         <img 
           v-for="avatar in avatars.male" 
@@ -138,7 +138,7 @@
     </div>
     
     <div class="avatar-section">
-      <h3>👩 Женские</h3>
+      <h3>👩 {{ $t('motivation.femaleAvatars') }}</h3>
       <div class="avatar-grid">
         <img 
           v-for="avatar in avatars.female" 

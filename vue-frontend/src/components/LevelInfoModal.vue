@@ -1,14 +1,14 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
-      <h3>🏅 Уровни команды</h3>
+      <h3>🏅 {{ $t('modals.teamLevels') }}</h3>
       <ul>
         <li><strong>Начинающий:</strong> до 2 баллов</li>
         <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
         <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
         <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
       </ul>
-      <button @click="$emit('close')">Закрыть</button>
+      <button @click="$emit('close')">{{ $t('common.close') }}</button>
     </div>
   </div>
 </template>

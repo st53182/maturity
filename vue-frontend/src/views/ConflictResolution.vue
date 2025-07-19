@@ -10,7 +10,7 @@
         :class="{ active: filterStatus === s }"
         @click="filterStatus = s"
       >
-        {{ s }}
+        {{ getStatusLabel(s) }}
       </button>
       <button @click="openModal(null)" class="add-btn">➕ {{ $t('conflicts.addConflict') }}</button>
     </div>
@@ -25,12 +25,12 @@
         <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
         <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
         <p>🎯 Цель: {{ conflict.goal }}</p>
-        <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
+        <p>📌 {{ $t('conflicts.status') }}: <strong>{{ getStatusLabel(conflict.status) }}</strong></p>
         <div v-if="conflict.ai_analysis" class="summary-block">
     <strong>📝 Рекомендации:</strong>
     <p v-html="shortenAnalysis(conflict.ai_analysis)"></p>
   </div>
-        <button @click="openModal(conflict)">✏️ Открыть или редактировать </button>
+        <button @click="openModal(conflict)">✏️ {{ $t('conflicts.openOrEdit') }}</button>
         <button class="delete-btn" @click="deleteConflict(conflict.id)">🗑</button>
       </div>
     </div>
@@ -58,8 +58,8 @@
         <label>{{ $t('conflicts.status') }}</label>
         <select v-model="form.status">
           <option value="Активен">{{ $t('conflicts.active') }}</option>
-          <option value="Закрыт">{{ $t('conflicts.resolved') }}</option>
-          <option value="Обострение">{{ $t('conflicts.active') }}</option>
+          <option value="Закрыт">{{ $t('conflicts.closed') }}</option>
+          <option value="Обострение">{{ $t('conflicts.escalated') }}</option>
         </select>
 
         <div class="modal-actions">
@@ -302,6 +302,16 @@ export default {
       } finally {
         this.saving = false;
       }
+    },
+
+    getStatusLabel(status) {
+      const statusMap = {
+        'Все': this.$t('common.all'),
+        'Активен': this.$t('conflicts.active'),
+        'Закрыт': this.$t('conflicts.closed'),
+        'Обострение': this.$t('conflicts.escalated')
+      };
+      return statusMap[status] || status;
     },
 
     async waitForTokenAndInit() {

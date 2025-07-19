@@ -118,10 +118,10 @@
   :disabled="loadingPlan"
   class="modern-button"
 >
-  🤖 Сгенерировать план улучшений
+  🤖 {{ $t('results.generatePlan') }}
 </button>
 
-  <div v-if="loadingPlan">⏳ Генерируем план...</div>
+  <div v-if="loadingPlan">⏳ {{ $t('results.generating') }}</div>
 
   <div v-if="editablePlan.length" class="plan-editable">
     <ul>
@@ -140,7 +140,7 @@
 
 <div class="plan-buttons">
   <button class="modern-button blue" @click="addStep">
-    ➕ Добавить пункт в план
+    ➕ {{ $t('results.addPlanItem') }}
   </button>
   <button class="modern-button green" @click="saveImprovementPlan">
     ✔ Сохранить

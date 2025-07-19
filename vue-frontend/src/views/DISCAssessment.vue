@@ -9,16 +9,13 @@
 
         <div v-if="!assessmentStarted" class="intro">
           <div class="intro-content">
-            <h2>О тестировании</h2>
-            <p>Этот опросник поможет вам:</p>
+            <h2>{{ $t('disc.about') }}</h2>
+            <p>{{ $t('disc.description') }}:</p>
             <ul>
-              <li>Определить ваш тип личности по системе DISC</li>
-              <li>Понять ваши сильные стороны как менеджера</li>
-              <li>Получить рекомендации по развитию лидерских качеств</li>
-              <li>Улучшить коммуникацию с командой</li>
+              <li v-for="benefit in $t('disc.benefits')" :key="benefit">{{ benefit }}</li>
             </ul>
-            <p><strong>Время прохождения:</strong> 5-7 минут</p>
-            <p><strong>Количество вопросов:</strong> 12</p>
+            <p><strong>{{ $t('disc.duration') }}</strong></p>
+            <p><strong>{{ $t('disc.questionCount') }}</strong></p>
           </div>
           <button @click="startAssessment" class="btn btn-primary btn-large">
             {{ $t('disc.startAssessment') }}

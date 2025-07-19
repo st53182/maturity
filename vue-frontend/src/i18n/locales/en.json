@@ -167,7 +167,16 @@
     "conscientiousness": "Conscientiousness",
     "recommendations": "Recommendations",
     "errorLoading": "Error loading questions",
-    "errorSubmitting": "Error submitting results"
+    "errorSubmitting": "Error submitting results",
+    "about": "About the Assessment",
+    "benefits": [
+      "Determine your personality type using the DISC system",
+      "Understand your strengths as a manager",
+      "Get recommendations for developing leadership qualities",
+      "Improve communication with your team"
+    ],
+    "duration": "Duration: 5-7 minutes",
+    "questionCount": "Number of questions: 12"
   },
   "common": {
     "loading": "Loading...",

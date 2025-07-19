@@ -15,7 +15,12 @@
     "password": "Password",
     "loginButton": "Sign In",
     "loginError": "Invalid credentials",
-    "welcome": "Welcome!"
+    "welcome": "Welcome!",
+    "noAccount": "No account?",
+    "register": "Register",
+    "forgotPassword": "Forgot password?",
+    "contactUs": "Contact us at",
+    "weWillHelp": "and we will help you."
   },
   "dashboard": {
     "title": "Dashboard",

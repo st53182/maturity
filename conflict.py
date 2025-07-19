@@ -5,7 +5,8 @@ from database import db
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client():
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 bp_conflict = Blueprint("conflict", __name__)
 
@@ -20,7 +21,7 @@ def resolve_conflict():
     if not all([context, participants, attempts, goal]):
         return jsonify({"error": "Missing input data"}), 400
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = get_openai_client()
 
     prompt = f"""
 Ты Agile-коуч, фасилитатор конфликтов. На основе следующих данных определи DISC-профили участников, и предложи стратегию разрешения конфликта по наиболее подходящей модели из списка:  Конструктивная конфронтация как основной или Метод "вин-вин" (выиграл-выиграл),Коучинговый подход, Медиация, Pine, Ненасильственное общение (ННО) по Маршаллу Розенбергу или лбые другие которые ты посчитаешь наиболее правильными но не оборачивай в markdown ```html:
@@ -449,6 +450,7 @@ algoritm-konstruktivnoj-konfrontacii-005
         - Предложи как с помощью конструктивного конфликта донести до второй стороны некоректность действия, предложи вариант даилога с этим человеком
         """
 
+        client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -710,6 +712,7 @@ algoritm-konstruktivnoj-konfrontacii-005
         - Предложи как с помощью конструктивного конфликта донести до второй стороны некорректность действия, предложи вариант диалога с этим человеком
         """
 
+        client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[

@@ -15,7 +15,12 @@
     "password": "Пароль",
     "loginButton": "Войти",
     "loginError": "Неверные учетные данные",
-    "welcome": "Добро пожаловать!"
+    "welcome": "Добро пожаловать!",
+    "noAccount": "Нет аккаунта?",
+    "register": "Зарегистрироваться",
+    "forgotPassword": "Забыли пароль?",
+    "contactUs": "Напишите нам на",
+    "weWillHelp": "и мы вам поможем."
   },
   "dashboard": {
     "title": "Дашборд",

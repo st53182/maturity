@@ -7,8 +7,8 @@ import os
 
 bp_motivation = Blueprint("motivation", __name__)
 
-# ✅ OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client():
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 # 🔹 Создание сотрудника и анализ AI
@@ -81,6 +81,7 @@ Reactions to criticism and changes: {employee.feedback}
 ...
 """
 
+        client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[

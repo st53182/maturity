@@ -23,16 +23,16 @@
         <input type="password" v-model="password" :placeholder="$t('auth.password')" required />
         <button type="submit">{{ $t('auth.loginButton') }}</button>
       </form>
-      <p class="register-link">Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
+      <p class="register-link">{{ $t('auth.noAccount') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
       <div class="forgot-password-toggle">
   <button @click="showHelp = !showHelp" class="link-button">
-    Забыли пароль?
+    {{ $t('auth.forgotPassword') }}
   </button>
 
   <div v-if="showHelp" class="forgot-password-block">
     <p>
-      Напишите нам на
-      <a href="mailto:artjoms.grinakins@gmail.com">artjoms.grinakins@gmail.com</a>, и мы вам поможем.
+      {{ $t('auth.contactUs') }}
+      <a href="mailto:artjoms.grinakins@gmail.com">artjoms.grinakins@gmail.com</a>, {{ $t('auth.weWillHelp') }}
     </p>
   </div>
 </div>

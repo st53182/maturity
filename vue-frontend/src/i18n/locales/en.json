@@ -39,15 +39,20 @@
     "averageScore": "Average Score",
     "radarChart": {
       "innovation": "Innovation",
-      "process": "Process",
+      "process": "Process", 
       "tools": "Tools",
       "people": "People",
       "criteria": "Criteria"
-    }
+    },
+    "averageScore": "Average Score"
   },
   "survey": {
-    "title": "Team Survey",
+    "title": "📊 Select team to assess its maturity",
     "selectTeam": "Select Team",
+    "selectTeamForAssessment": "📊 Select team to assess its maturity",
+    "team": "🛠 Team:",
+    "createNewTeam": "Create New Team",
+    "important": "Important: Answer options are arranged from less mature (1) to more mature (5). Choose a higher level, it is suggested that the previous practices are already realized.",
     "selectTeamForAssessment": "Select a team to assess its maturity",
     "createNewTeam": "Create New Team",
     "teamName": "Team Name",
@@ -323,21 +328,27 @@
     "loadingEmployeesError": "Error loading employees:"
   },
   "motivation": {
-    "updateRecommendations": "Update Recommendations",
-    "motivators": "Motivators",
-    "demotivators": "Demotivators",
-    "recommendationsForManager": "Recommendations for Manager",
-    "team": "Team",
+    "title": "Employee Motivation Analysis",
+    "updateRecommendations": "🔄 Update Recommendations",
+    "motivators": "⬆️ Motivators",
+    "demotivators": "⬇️ Demotivators",
+    "recommendationsForManager": "Recommendations for Manager:",
+    "team": "🏢 Team:",
     "discType": "DISC Type",
-    "addEmployee": "Add Employee"
+    "addEmployee": "➕ Add Employee",
+    "avatarSelection": "Avatar Selection",
+    "maleAvatars": "Male",
+    "femaleAvatars": "Female"
   },
   "survey": {
-    "selectTeamForAssessment": "Choose a team to assess its maturity",
+    "title": "📊 Select team to assess its maturity",
+    "selectTeamForAssessment": "📊 Select team to assess its maturity",
     "createNewTeam": "Create New Team",
-    "team": "Team",
+    "team": "🛠 Team:",
     "teamNamePlaceholder": "Enter team name",
     "create": "Create",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "important": "Important: Answer options are arranged from less mature (1) to more mature (5). Choose a higher level, it is suggested that the previous practices are already realized."
   },
   "poker": {
     "title": "Planning Poker",
@@ -375,5 +386,34 @@
     "deletingTeam": "Deleting team with",
     "teamDeleted": "Team successfully deleted!",
     "teamDeleteError": "Error deleting team:"
+  },
+  "modals": {
+    "teamLevels": "Team Levels",
+    "relativeToIndustryAverage": "Relative to Industry Average",
+    "close": "Close",
+    "levels": {
+      "beginner": "Beginner",
+      "growing": "Growing",
+      "progressing": "Progressing",
+      "highPerforming": "High Performing"
+    },
+    "levelRanges": {
+      "beginner": "up to 2 points",
+      "growing": "from 2 to 3 points",
+      "progressing": "from 3 to 4 points",
+      "highPerforming": "from 4 to 5 points"
+    },
+    "marketInfoDescription": "This indicator is calculated based on data collected from more than 100 organizations and is regularly updated taking into account the results of teams undergoing assessment on the GrowBoard platform quarterly. The calculation includes teams using the services of the platform and consulting partners in the CIS territory. It reflects the average value of key performance metrics of IT teams and allows you to objectively compare the current level of your team with the market trend."
+  },
+  "register": {
+    "title": "Registration",
+    "registerButton": "Register",
+    "hasAccount": "Already have an account?",
+    "login": "Login"
+  },
+  "results": {
+    "teamAssessed": "The team was assessed",
+    "resultsNotSaved": "Your results are not saved",
+    "generateImprovementPlan": "Generate Improvement Plan"
   }
 }

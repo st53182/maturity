@@ -36,7 +36,7 @@
 
     <!-- 🔹 Опросник -->
     <div v-else>
-      <h2 class="team-name">🛠 Команда: {{ selectedTeamName }}</h2>
+      <h2 class="team-name">🛠 {{ $t('survey.team') }}: {{ selectedTeamName }}</h2>
       <p class="disclaimer">
   🧠 <strong>{{ $t('survey.important') }}:</strong> {{ $t('survey.answerOptionsDescription') }}
 </p>
@@ -80,7 +80,7 @@
   class="modern-button purple"
   @click="submitAssessment"
 >
-  📩 Отправить результаты
+  📩 {{ $t('survey.submit') }}
 </button>
       </div>
     </div>

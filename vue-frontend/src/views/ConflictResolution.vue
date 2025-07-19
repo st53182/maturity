@@ -23,11 +23,11 @@
         class="conflict-card"
       >
         <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
-        <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
-        <p>🎯 Цель: {{ conflict.goal }}</p>
+        <p>👥 {{ $t('conflicts.participants') }}: {{ getParticipantNames(conflict.participants) }}</p>
+        <p>🎯 {{ $t('conflicts.goal') }}: {{ conflict.goal }}</p>
         <p>📌 {{ $t('conflicts.status') }}: <strong>{{ getStatusLabel(conflict.status) }}</strong></p>
         <div v-if="conflict.ai_analysis" class="summary-block">
-    <strong>📝 Рекомендации:</strong>
+    <strong>📝 {{ $t('conflicts.recommendations') }}:</strong>
     <p v-html="shortenAnalysis(conflict.ai_analysis)"></p>
   </div>
         <button @click="openModal(conflict)">✏️ {{ $t('conflicts.openOrEdit') }}</button>
@@ -216,7 +216,7 @@ export default {
 
         await this.fetchConflicts();
       } catch (err) {
-        alert("Ошибка удаления");
+        alert(this.$t('conflicts.deleteError'));
         console.error(err);
       }
     },
@@ -256,11 +256,11 @@ export default {
           this.form.ai_response = data.analysis;
           await this.fetchConflicts();
         } else {
-          alert(data.error || "Ошибка при сохранении конфликта");
+          alert(data.error || this.$t('conflicts.saveError'));
         }
       } catch (err) {
         console.error(err);
-        alert("Ошибка при подключении.");
+        alert(this.$t('conflicts.connectionError'));
       } finally {
         this.loading = false;
       }
@@ -294,10 +294,10 @@ export default {
           this.showModal = false;
           await this.fetchConflicts();
         } else {
-          alert(data.error || "Ошибка при сохранении");
+          alert(data.error || this.$t('conflicts.saveError'));
         }
       } catch (err) {
-        alert("Ошибка соединения");
+        alert(this.$t('conflicts.connectionError'));
         console.error(err);
       } finally {
         this.saving = false;

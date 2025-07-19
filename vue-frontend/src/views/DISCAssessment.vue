@@ -177,11 +177,11 @@ export default {
         if (response.data.success) {
           this.questions = response.data.questions
         } else {
-          this.$toast.error('Ошибка при загрузке вопросов')
+          this.$toast.error(this.$t('disc.errorLoading'))
         }
       } catch (error) {
         console.error('Error loading questions:', error)
-        this.$toast.error('Ошибка при загрузке вопросов')
+        this.$toast.error(this.$t('disc.errorLoading'))
       }
     },
     startAssessment() {
@@ -225,16 +225,16 @@ export default {
           this.results = response.data.assessment
           this.showResults = true
           if (this.$toast) {
-            this.$toast.success('Оценка успешно завершена!')
+            this.$toast.success(this.$t('common.success'))
           }
         } else {
           if (this.$toast) {
-            this.$toast.error('Ошибка при сохранении результатов')
+            this.$toast.error(this.$t('disc.errorSubmitting'))
           }
         }
       } catch (error) {
         console.error('Error submitting assessment:', error)
-        this.$toast.error('Ошибка при сохранении результатов')
+        this.$toast.error(this.$t('disc.errorSubmitting'))
       } finally {
         this.loading = false
       }

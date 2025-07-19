@@ -59,6 +59,7 @@
     "progress": "Progress",
     "timeRemaining": "Time Remaining",
     "minutes": "min",
+    "team": "Team",
     "submit": "Submit Assessment",
     "submitting": "Submitting...",
     "selectAnswer": "Select an answer",
@@ -132,10 +133,21 @@
     "actionsTaken": "Actions Taken",
     "goal": "Resolution Goal",
     "status": "Status",
+    "statusFilter": {
+      "all": "All",
+      "active": "Active",
+      "closed": "Closed",
+      "escalated": "Escalated"
+    },
     "active": "Active",
     "closed": "Closed",
     "escalated": "Escalated",
     "resolved": "Resolved",
+    "recommendations": "Recommendations",
+    "openOrEdit": "Open or Edit",
+    "deleteError": "Error deleting",
+    "saveError": "Error saving conflict",
+    "connectionError": "Connection error",
     "analyze": "Analyze",
     "analyzing": "Analyzing...",
     "aiAnalysis": "AI Analysis",
@@ -172,6 +184,8 @@
     "errorLoading": "Error loading questions",
     "errorSubmitting": "Error submitting results",
     "about": "About the Assessment",
+    "aboutTitle": "About the Assessment",
+    "thisAssessmentHelps": "This assessment helps you:",
     "benefits": [
       "Determine your personality type using the DISC system",
       "Understand your strengths as a manager",
@@ -266,6 +280,20 @@
   },
   "modals": {
     "teamLevels": "Team Levels",
-    "relativeToIndustryAverage": "Relative to Industry Average"
+    "relativeToIndustryAverage": "Relative to Industry Average",
+    "close": "Close",
+    "levels": {
+      "beginner": "Beginner",
+      "growing": "Growing",
+      "progressing": "Progressing",
+      "highPerforming": "High-Performing"
+    },
+    "levelRanges": {
+      "beginner": "up to 2 points",
+      "growing": "from 2 to 3 points", 
+      "progressing": "from 3 to 4 points",
+      "highPerforming": "from 4 to 5 points"
+    },
+    "marketInfoDescription": "This indicator is calculated based on data collected from more than 100 organizations and is regularly updated quarterly with the results of teams taking assessments on the GrowBoard platform. The calculation includes teams using platform services and consulting partners in the CIS region. It reflects the average value of key team performance metrics in IT and allows you to objectively compare your team's current level with market trends."
   }
 }

@@ -3,10 +3,10 @@
     <div class="modal-content">
       <h3>🏅 {{ $t('modals.teamLevels') }}</h3>
       <ul>
-        <li><strong>Начинающий:</strong> до 2 баллов</li>
-        <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
-        <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
-        <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
+        <li><strong>{{ $t('modals.levels.beginner') }}:</strong> {{ $t('modals.levelRanges.beginner') }}</li>
+        <li><strong>{{ $t('modals.levels.growing') }}:</strong> {{ $t('modals.levelRanges.growing') }}</li>
+        <li><strong>{{ $t('modals.levels.progressing') }}:</strong> {{ $t('modals.levelRanges.progressing') }}</li>
+        <li><strong>{{ $t('modals.levels.highPerforming') }}:</strong> {{ $t('modals.levelRanges.highPerforming') }}</li>
       </ul>
       <button @click="$emit('close')">{{ $t('common.close') }}</button>
     </div>

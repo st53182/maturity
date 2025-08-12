@@ -6,15 +6,6 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 import json
 from datetime import datetime, timedelta
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-import io
-from flask import send_file
 
 bp_meeting_design = Blueprint("meeting_design", __name__)
 
@@ -318,65 +309,6 @@ def delete_meeting_design(design_id):
         print(f"Error deleting meeting design: {str(e)}")
         return jsonify({"error": "Ошибка удаления дизайна встречи"}), 500
 
-@bp_meeting_design.route("/api/meeting-design/<int:design_id>/pdf", methods=["GET"])
-@jwt_required()
-def export_pdf(design_id):
-    try:
-        user_id = get_jwt_identity()
-        design = MeetingDesign.query.filter_by(id=design_id, user_id=user_id).first()
-        if not design:
-            return jsonify({"error": "Дизайн встречи не найден"}), 404
-        
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        styles = getSampleStyleSheet()
-        story = []
-        
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=18,
-            spaceAfter=30,
-            alignment=1
-        )
-        
-        header_style = ParagraphStyle(
-            'CustomHeader',
-            parent=styles['Heading2'],
-            fontSize=14,
-            spaceAfter=12
-        )
-        
-        story.append(Paragraph(design.title, title_style))
-        story.append(Spacer(1, 12))
-        
-        story.append(Paragraph(f"<b>Тип встречи:</b> {design.meeting_type}", styles['Normal']))
-        story.append(Paragraph(f"<b>Цель:</b> {design.goal}", styles['Normal']))
-        story.append(Paragraph(f"<b>Продолжительность:</b> {design.duration_minutes} минут", styles['Normal']))
-        if design.constraints:
-            story.append(Paragraph(f"<b>Ограничения:</b> {design.constraints}", styles['Normal']))
-        story.append(Spacer(1, 20))
-        
-        story.append(Paragraph("Программа встречи", header_style))
-        
-        for i, block in enumerate(design.blocks):
-            story.append(Paragraph(f"<b>{block.get('time', '')} - {block.get('title', '')}</b> ({block.get('duration', 0)} мин)", styles['Heading3']))
-            story.append(Paragraph(block.get('description', ''), styles['Normal']))
-            story.append(Spacer(1, 12))
-        
-        doc.build(story)
-        buffer.seek(0)
-        
-        return send_file(
-            buffer,
-            as_attachment=True,
-            download_name=f"{design.title}.pdf",
-            mimetype='application/pdf'
-        )
-        
-    except Exception as e:
-        print(f"Error exporting PDF: {str(e)}")
-        return jsonify({"error": "Ошибка экспорта PDF"}), 500
 
 @bp_meeting_design.route("/api/teams", methods=["GET"])
 @jwt_required()

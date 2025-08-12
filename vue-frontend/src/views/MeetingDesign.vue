@@ -25,7 +25,6 @@
           
           <div class="design-actions">
             <button class="view-btn" @click="viewDesign(design)">👁️ Просмотр</button>
-            <button class="pdf-btn" @click="exportPdf(design.id)">📄 PDF</button>
             <button class="delete-btn" @click="deleteDesign(design.id)">🗑️ {{ $t('common.delete') }}</button>
           </div>
         </div>
@@ -145,7 +144,6 @@
         </div>
 
         <div class="modal-buttons">
-          <button class="pdf-btn" @click="exportPdf(currentDesign.id)">📄 {{ $t('meetingDesign.exportPdf') }}</button>
           <button class="save-btn" @click="saveDesign" :disabled="saving">
             {{ saving ? $t('meetingDesign.saving') : $t('meetingDesign.save') }}
           </button>

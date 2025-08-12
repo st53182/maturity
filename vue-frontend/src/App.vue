@@ -45,6 +45,10 @@
         <span>🧠</span>
         <small>{{ $t('nav.motivation') }}</small>
       </button>
+      <button class="sidebar-btn" @click="$router.push('/meeting-design')">
+        <span>🎯</span>
+        <small>{{ $t('meetingDesign.title') }}</small>
+      </button>
       <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
         <span>♠️</span>
         <small>{{ $t('nav.poker') }}</small>
@@ -102,6 +106,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/motivation')">
             <span>🧠</span>
             <span>{{ $t('nav.motivation') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/meeting-design')">
+            <span>🎯</span>
+            <span>{{ $t('meetingDesign.title') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="openExternalLinkAndClose('https://poker.growboard.ru')">
             <span>♠️</span>

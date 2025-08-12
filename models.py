@@ -187,3 +187,34 @@ class DISCAssessment(db.Model):
             'answers': self.answers,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
+
+class MeetingDesign(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    title = db.Column(db.String(255), nullable=False)
+    meeting_type = db.Column(db.String(100), nullable=False)
+    goal = db.Column(db.Text, nullable=False)
+    duration_minutes = db.Column(db.Integer, nullable=False)
+    constraints = db.Column(db.Text, nullable=True)
+    blocks = db.Column(JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('meeting_designs', lazy=True))
+    team = db.relationship('Team', backref=db.backref('meeting_designs', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'team_id': self.team_id,
+            'title': self.title,
+            'meeting_type': self.meeting_type,
+            'goal': self.goal,
+            'duration_minutes': self.duration_minutes,
+            'constraints': self.constraints,
+            'blocks': self.blocks,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

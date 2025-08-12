@@ -225,7 +225,7 @@
     "selectTeam": "Выберите команду (опционально)",
     "meetingTitle": "Название встречи",
     "minutes": "минут",
-    "hours": "часа",
+    "hours": "ч.",
     "types": {
       "retrospective": "Ретроспектива",
       "planning": "Планирование",

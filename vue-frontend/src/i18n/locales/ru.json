@@ -1,5 +1,6 @@
 {
   "nav": {
+    "profile": "Профиль",
     "dashboard": "Дашборд",
     "survey": "Опрос",
     "results": "Результаты",

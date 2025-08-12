@@ -27,7 +27,7 @@
       </div>
       <button class="sidebar-btn" @click="$router.push('/profile')">
         <span>👤</span>
-        <small>{{ $t('nav.dashboard') }}</small>
+        <small>{{ $t('nav.profile') }}</small>
       </button>
       <button class="sidebar-btn" @click="$router.push('/dashboard')">
         <span>🏠</span>

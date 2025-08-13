@@ -14,6 +14,7 @@ from user_profile import profile_bp
 from planning_poker import planning_bp
 from disc_assessment import disc_bp
 from meeting_design import bp_meeting_design
+from surveys import surveys_bp
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
@@ -64,6 +65,7 @@ app.register_blueprint(profile_bp, url_prefix="/api")
 app.register_blueprint(planning_bp, url_prefix="/api")
 app.register_blueprint(disc_bp, url_prefix="/api/disc")
 app.register_blueprint(bp_meeting_design)
+app.register_blueprint(surveys_bp, url_prefix="/api")
 
 
 # 🎯 Отдача Vue SPA

@@ -44,15 +44,6 @@
           </option>
         </select>
         
-        <input v-model="deadline" 
-               type="datetime-local" 
-               :placeholder="$t('surveys.deadline')"
-               class="survey-input" />
-        
-        <textarea v-model="emailList" 
-                  :placeholder="$t('surveys.emailPlaceholder')"
-                  class="survey-textarea"
-                  rows="3"></textarea>
         
         <button @click="createSurvey" 
                 :disabled="!canCreateSurvey"
@@ -110,8 +101,6 @@ export default {
       surveyTitle: '',
       selectedTeamId: '',
       selectedEmployeeId: '',
-      deadline: '',
-      emailList: '',
       teams: [],
       employees: [],
       surveys: [],
@@ -123,8 +112,7 @@ export default {
     canCreateSurvey() {
       return this.surveyTitle && 
              ((this.selectedType === 'enps' && this.selectedTeamId) ||
-              (this.selectedType === '360' && this.selectedEmployeeId)) &&
-             this.emailList
+              (this.selectedType === '360' && this.selectedEmployeeId))
     }
   },
   
@@ -177,34 +165,28 @@ export default {
     async createSurvey() {
       try {
         const token = localStorage.getItem('token')
-        const emails = this.emailList.split(',').map(email => email.trim()).filter(email => email)
         
         const surveyData = {
           survey_type: this.selectedType,
           title: this.surveyTitle,
           team_id: this.selectedTeamId || null,
-          target_employee_id: this.selectedEmployeeId || null,
-          deadline: this.deadline || null
+          target_employee_id: this.selectedEmployeeId || null
         }
         
         const createResponse = await axios.post('/api/surveys', surveyData, {
           headers: { Authorization: `Bearer ${token}` }
         })
         
-        const surveyId = createResponse.data.id
+        const surveyToken = createResponse.data.access_token
         
-        await axios.post(`/api/surveys/${surveyId}/send`, { emails }, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const link = `${window.location.origin}/survey/${surveyToken}`
         
-        alert(this.$t('surveys.surveyCreated'))
+        alert(`${this.$t('surveys.surveyCreated')}\n\nСсылка на опрос: ${link}`)
         
         this.selectedType = ''
         this.surveyTitle = ''
         this.selectedTeamId = ''
         this.selectedEmployeeId = ''
-        this.deadline = ''
-        this.emailList = ''
         
         await this.fetchSurveys()
         

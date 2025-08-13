@@ -15,6 +15,39 @@ def get_openai_client():
         return None
     return OpenAI(api_key=api_key)
 
+MEETING_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "meeting_design",
+        "strict": True,  # запрещает лишние поля и вольный текст
+        "schema": {
+            "type": "object",
+            "properties": {
+                "blocks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["time", "duration", "title", "description", "type"],
+                        "properties": {
+                            "time": {"type": "string", "pattern": r"^\d{2}:\d{2}$"},
+                            "duration": {"type": "integer", "minimum": 1},
+                            "title": {"type": "string", "minLength": 1},
+                            # просим маркированные пункты — не валидируется схемой, но задаёт стиль
+                            "description": {"type": "string", "minLength": 1},
+                            "type": {"type": "string", "enum": [
+                                "opening","icebreaker","discussion","brainstorm","reflection","break","closing"
+                            ]}
+                        },
+                        "additionalProperties": False
+                    }
+                }
+            },
+            "required": ["blocks"],
+            "additionalProperties": False
+        }
+    }
+}
+
 def generate_meeting_prompt(meeting_type, goal, duration, constraints, lang='ru'):
     if lang == 'ru':
         return f"""
@@ -155,15 +188,11 @@ def generate_meeting_design():
                 {"role": "system", "content": "Ты эксперт по фасилитации встреч. Отвечай только в формате JSON без дополнительного текста."},
                 {"role": "user", "content": prompt}
             ],
+            response_format=MEETING_SCHEMA,
         )
-        
-        blocks_text = response.choices[0].message.content.strip()
-        
-        try:
-            blocks = json.loads(blocks_text)
-        except json.JSONDecodeError:
-            blocks_text = blocks_text.replace('```json', '').replace('```', '').strip()
-            blocks = json.loads(blocks_text)
+
+        blocks_obj = json.loads(response.choices[0].message.content)
+        blocks = blocks_obj["blocks"]
         
         meeting_design = MeetingDesign(
             user_id=user_id,

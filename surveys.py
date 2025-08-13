@@ -92,7 +92,7 @@ def create_survey():
         access_token=str(uuid.uuid4()),
         questions=questions,
         settings=data.get('settings', {}),
-        deadline=datetime.fromisoformat(data['deadline'].replace('T', ' ')) if data.get('deadline') else None
+        deadline=datetime.fromisoformat(data['deadline']) if data.get('deadline') else None
     )
     
     db.session.add(survey)

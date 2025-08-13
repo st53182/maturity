@@ -59,32 +59,31 @@ def generate_meeting_prompt(meeting_type, goal, duration, constraints, lang='ru'
 - Продолжительность: {duration} минут
 - Ограничения: {constraints}
 
-Используй лучшие практики из sessionlab.com и retromat.org для ретроспектив. Включи разнообразные активности: ледоколы, групповые обсуждения, мозговые штурмы, рефлексии.
+Используй лучшие практики из sessionlab.com и retromat.org. Включи разнообразные активности: ледоколы, групповые обсуждения, мозговые штурмы, рефлексии.
 
-Формат ответа - JSON массив блоков (БЕЗ дополнительного текста, только JSON):
-[
-  {{
-    "time": "14:00",
-    "duration": 10,
-    "title": "Введение",
-    "description": "Подробное описание активности, включая инструкции для фасилитатора",
-    "type": "opening"
-  }},
-  {{
-    "time": "14:10", 
-    "duration": 15,
-    "title": "Ледокол",
-    "description": "Активность для знакомства и разогрева группы",
-    "type": "icebreaker"
-  }}
-]
+Формат ответа — ТОЛЬКО JSON-объект (никакого текста вне JSON) со структурой:
+{{
+  "blocks": [
+    {{
+      "time": "14:00",
+      "duration": 10,
+      "title": "Введение",
+      "description": "- Приветствие (30с)\\n- Логистика (60с)\\n- Правила (90с)",
+      "type": "opening"
+    }}
+  ]
+}}
 
-Типы блоков: opening, icebreaker, discussion, brainstorm, reflection, break, closing
-Время должно быть последовательным, общая продолжительность должна соответствовать {duration} минутам.
+Требования:
+- "blocks" — массив объектов с полями: time (HH:MM), duration (мин., целое), title (строка), description (строка с пунктами), type (one of: opening, icebreaker, discussion, brainstorm, reflection, break, closing).
+- Время (time) должно идти по возрастанию без пересечений и соответствовать длительности каждого блока.
+- Сумма всех duration строго равна {duration}.
+- "description" оформляй как краткие пункты, каждый начинается с "- ", без код-блоков и markdown-разметки.
+- Не добавляй никаких лишних полей, комментариев или пояснений. Верни только валидный JSON-объект.
 """
     else:
         return f"""
-You are an experienced meeting facilitator. Create a detailed meeting design in facilitation guide format.
+You are an experienced meeting facilitator. Create a detailed meeting design in a facilitation guide format.
 
 Meeting parameters:
 - Type: {meeting_type}
@@ -92,22 +91,29 @@ Meeting parameters:
 - Duration: {duration} minutes
 - Constraints: {constraints}
 
-Use best practices from sessionlab.com and retromat.org for retrospectives. Include diverse activities: icebreakers, group discussions, brainstorming, reflections.
+Use best practices from sessionlab.com and retromat.org. Include diverse activities: icebreakers, group discussions, brainstorming, reflections.
 
-Response format - JSON array of blocks (NO additional text, only JSON):
-[
-  {{
-    "time": "14:00",
-    "duration": 10,
-    "title": "Introduction",
-    "description": "Detailed activity description including facilitator instructions",
-    "type": "opening"
-  }}
-]
+Response format — return ONLY a JSON object (no text outside JSON) with this structure:
+{{
+  "blocks": [
+    {{
+      "time": "14:00",
+      "duration": 10,
+      "title": "Introduction",
+      "description": "- Welcome (30s)\\n- Logistics (60s)\\n- Ground rules (90s)",
+      "type": "opening"
+    }}
+  ]
+}}
 
-Block types: opening, icebreaker, discussion, brainstorm, reflection, break, closing
-Time should be sequential, total duration should match {duration} minutes.
+Requirements:
+- "blocks" is an array of objects with fields: time (HH:MM), duration (minutes, integer), title (string), description (string with bullet points), type (one of: opening, icebreaker, discussion, brainstorm, reflection, break, closing).
+- Times must be sequential, non-overlapping, and consistent with each block duration.
+- The sum of all durations MUST equal {duration}.
+- Format "description" as concise bullet points starting with "- ", no code fences or markdown.
+- Do not include extra fields, comments, or explanations. Return a valid JSON object only.
 """
+
 
 def regenerate_block_prompt(block, meeting_context, lang='ru'):
     if lang == 'ru':

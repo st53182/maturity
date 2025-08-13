@@ -150,7 +150,7 @@ def generate_meeting_design():
             return jsonify({"error": "OpenAI API не настроен"}), 500
         
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gpt-5",
             messages=[
                 {"role": "system", "content": "Ты эксперт по фасилитации встреч. Отвечай только в формате JSON без дополнительного текста."},
                 {"role": "user", "content": prompt}

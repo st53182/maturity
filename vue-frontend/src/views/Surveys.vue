@@ -44,14 +44,6 @@
           </option>
         </select>
         
-        <div class="deadline-field">
-          <label for="deadline" class="deadline-label">{{ $t('surveys.deadlineLabel') }}</label>
-          <input v-model="deadline" 
-                 id="deadline"
-                 type="datetime-local" 
-                 class="survey-input" />
-          <small class="deadline-help">{{ $t('surveys.deadlineHelp') }}</small>
-        </div>
         
         <textarea v-model="emailList" 
                   :placeholder="$t('surveys.emailPlaceholder')"
@@ -323,12 +315,13 @@ export default {
         const token = localStorage.getItem('token')
         const emails = this.emailArray
         
+        
         const surveyData = {
           survey_type: this.selectedType,
           title: this.surveyTitle,
           team_id: this.selectedTeamId || null,
           target_employee_id: this.selectedEmployeeId || null,
-          deadline: this.deadline || null,
+          deadline: null,
           questions: this.currentQuestions
         }
         

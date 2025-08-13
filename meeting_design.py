@@ -78,7 +78,9 @@ def generate_meeting_prompt(meeting_type, goal, duration, constraints, lang='ru'
 - "blocks" — массив объектов с полями: time (HH:MM), duration (мин., целое), title (строка), description (строка с пунктами), type (one of: opening, icebreaker, discussion, brainstorm, reflection, break, closing).
 - Время (time) должно идти по возрастанию без пересечений и соответствовать длительности каждого блока.
 - Сумма всех duration строго равна {duration}.
-- "description" оформляй как краткие пункты, каждый начинается с "- ", без код-блоков и markdown-разметки.
+- "description" оформляй как пункты, КАЖДЫЙ пункт с новой строки.
+- Разделяй пункты символом \n, не пиши несколько пунктов в одной строке.
+- Пример: "description": "- Приветствие (30с)\n- Логистика (60с)\n- Правила (90с)"
 - Не добавляй никаких лишних полей, комментариев или пояснений. Верни только валидный JSON-объект.
 """
     else:

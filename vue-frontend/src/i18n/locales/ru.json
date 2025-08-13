@@ -10,7 +10,9 @@
     "meetingDesign": "Дизайн встречи",
     "poker": "Покер планирование",
     "createTeam": "Создать команду",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "surveys": "Опросник",
+    "surveys": "Опросник"
   },
   "auth": {
     "login": "Вход",
@@ -205,6 +207,38 @@
     "noRecommendations": "Рекомендации недоступны",
     "loadError": "Не удалось загрузить профиль"
   },
+  "surveys": {
+    "title": "Опросники",
+    "createSurvey": "Создать опросник",
+    "enpsTitle": "E-NPS опросник для сотрудников",
+    "feedback360Title": "Опросник 360° по сотруднику",
+    "surveyType": "Тип опросника",
+    "surveyTitle": "Название опросника",
+    "selectTeam": "Выберите команду",
+    "selectEmployee": "Выберите сотрудника",
+    "deadline": "Срок окончания",
+    "emailList": "Список email адресов",
+    "emailPlaceholder": "Введите email адреса через запятую",
+    "createAndSend": "Создать и отправить",
+    "surveyCreated": "Опросник создан!",
+    "surveyLink": "Ссылка на опросник",
+    "copyLink": "Скопировать ссылку",
+    "sendEmails": "Отправить по email",
+    "responses": "Ответы",
+    "analytics": "Аналитика",
+    "averageScore": "Средняя оценка",
+    "responseCount": "Количество ответов",
+    "npsScore": "NPS балл",
+    "competencyRatings": "Оценки компетенций",
+    "anonymousResponses": "Анонимные ответы",
+    "detailedView": "Подробный просмотр",
+    "exportResults": "Экспорт результатов",
+    "surveyStatus": {
+      "draft": "Черновик",
+      "active": "Активен", 
+      "closed": "Закрыт"
+    }
+  },
   "meetingDesign": {
     "title": "Дизайн встречи",
     "createNew": "Создать новую встречу",
@@ -282,6 +316,38 @@
       "discDescription": "GrowBoard помогает вам понять, что действительно мотивирует ваших сотрудников. Получайте персонализированные рекомендации и краткие профили по каждому члену команды — всё внутри одной платформы.",
       "conflictResolution": "Разрешение конфликтов",
       "conflictDescription": "Выявляйте конфликты в команде и получайте рекомендации от AI по их разрешению прямо в приложении — на основе проверенных стратегий и анализа поведения сотрудников."
+    }
+  },
+  "surveys": {
+    "title": "Опросники",
+    "createSurvey": "Создать опросник",
+    "enpsTitle": "E-NPS опросник для сотрудников",
+    "feedback360Title": "Опросник 360° по сотруднику",
+    "surveyType": "Тип опросника",
+    "surveyTitle": "Название опросника",
+    "selectTeam": "Выберите команду",
+    "selectEmployee": "Выберите сотрудника",
+    "deadline": "Срок окончания",
+    "emailList": "Список email адресов",
+    "emailPlaceholder": "Введите email адреса через запятую",
+    "createAndSend": "Создать и отправить",
+    "surveyCreated": "Опросник создан!",
+    "surveyLink": "Ссылка на опросник",
+    "copyLink": "Скопировать ссылку",
+    "sendEmails": "Отправить по email",
+    "responses": "Ответы",
+    "analytics": "Аналитика",
+    "averageScore": "Средняя оценка",
+    "responseCount": "Количество ответов",
+    "npsScore": "NPS балл",
+    "competencyRatings": "Оценки компетенций",
+    "anonymousResponses": "Анонимные ответы",
+    "detailedView": "Подробный просмотр",
+    "exportResults": "Экспорт результатов",
+    "surveyStatus": {
+      "draft": "Черновик",
+      "active": "Активен", 
+      "closed": "Закрыт"
     }
   }
 }

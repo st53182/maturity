@@ -188,6 +188,44 @@ class DISCAssessment(db.Model):
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
 
+class Survey(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    survey_type = db.Column(db.String(50), nullable=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    target_employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
+    access_token = db.Column(db.String(36), unique=True, nullable=False)
+    questions = db.Column(JSON, nullable=False)
+    settings = db.Column(JSON, nullable=True)
+    status = db.Column(db.String(20), default='draft')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    deadline = db.Column(db.DateTime, nullable=True)
+    
+    creator = db.relationship('User', backref=db.backref('created_surveys', lazy=True))
+    team = db.relationship('Team', backref=db.backref('surveys', lazy=True))
+    target_employee = db.relationship('Employee', backref=db.backref('feedback_surveys', lazy=True))
+    responses = db.relationship('SurveyResponse', backref='survey', cascade="all, delete-orphan")
+
+class SurveyResponse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'), nullable=False)
+    respondent_email = db.Column(db.String(255), nullable=True)
+    respondent_name = db.Column(db.String(255), nullable=True)
+    answers = db.Column(JSON, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ip_address = db.Column(db.String(45), nullable=True)
+
+class SurveyInvitation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    survey_id = db.Column(db.Integer, db.ForeignKey('survey.id'), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    access_token = db.Column(db.String(36), unique=True, nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    responded_at = db.Column(db.DateTime, nullable=True)
+    
+    survey = db.relationship('Survey', backref=db.backref('invitations', lazy=True))
+
 class MeetingDesign(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

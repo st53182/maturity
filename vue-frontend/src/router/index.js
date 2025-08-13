@@ -18,6 +18,9 @@ const routes = [
   {path: "/profile", name: "UserProfile", component: () => import("@/views/UserProfile.vue")},
   {path: '/disc-assessment', name: 'DISCAssessment', component: () => import('@/views/DISCAssessment.vue'), meta: { requiresAuth: true }},
   {path: '/meeting-design', name: 'MeetingDesign', component: () => import('@/views/MeetingDesign.vue'), meta: { requiresAuth: true }},
+  {path: '/surveys', name: 'Surveys', component: () => import('@/views/Surveys.vue'), meta: { requiresAuth: true }},
+  {path: '/survey/:token', name: 'TakeSurvey', component: () => import('@/views/TakeSurvey.vue')},
+  {path: '/survey/:surveyId/results', name: 'SurveyResults', component: () => import('@/views/SurveyResults.vue'), meta: { requiresAuth: true }},
   {path: '/planning-poker/:roomId', name: 'PlanningPoker', component: () => import('@/views/PlanningPoker.vue')
 }
 

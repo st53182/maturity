@@ -171,13 +171,24 @@ export default {
         }
         
         if (this.isEditing) {
-          await axios.put(`/api/survey-templates/${this.template.id}`, templateData, {
+          console.log('Making PUT request to:', `/api/survey-templates/${this.template.id}`)
+          const response = await axios.put(`/api/survey-templates/${this.template.id}`, templateData, {
             headers: { Authorization: `Bearer ${token}` }
           })
+          
+          if (response.data.template_id) {
+            console.log('New template created with ID:', response.data.template_id)
+            alert('Шаблон сохранен как новый пользовательский шаблон!')
+          } else {
+            console.log('Template updated successfully')
+            alert('Шаблон обновлен успешно!')
+          }
         } else {
+          console.log('Making POST request to:', '/api/survey-templates')
           await axios.post('/api/survey-templates', templateData, {
             headers: { Authorization: `Bearer ${token}` }
           })
+          alert('Шаблон создан успешно!')
         }
         
         this.$emit('saved')
@@ -211,7 +222,7 @@ export default {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  max-width: 800px;
+  max-width: 1600px;
   max-height: 80vh;
   overflow-y: auto;
   width: 90%;

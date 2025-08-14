@@ -170,11 +170,18 @@ export default {
           questions: this.questions
         }
         
+        console.log('Saving template with data:', templateData)
+        console.log('Is editing:', this.isEditing)
+        console.log('Template ID:', this.template?.id)
+        console.log('Survey type:', this.surveyType)
+        
         if (this.isEditing) {
+          console.log('Making PUT request to:', `/api/survey-templates/${this.template.id}`)
           await axios.put(`/api/survey-templates/${this.template.id}`, templateData, {
             headers: { Authorization: `Bearer ${token}` }
           })
         } else {
+          console.log('Making POST request to:', '/api/survey-templates')
           await axios.post('/api/survey-templates', templateData, {
             headers: { Authorization: `Bearer ${token}` }
           })
@@ -184,8 +191,20 @@ export default {
         this.$emit('close')
       } catch (error) {
         console.error('Error saving template:', error)
+        console.error('Response status:', error.response?.status)
         console.error('Response data:', error.response?.data)
-        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
+        console.error('Request URL:', error.config?.url)
+        console.error('Request method:', error.config?.method)
+        
+        let errorMessage = 'Неизвестная ошибка'
+        if (error.response?.status === 404) {
+          errorMessage = 'Шаблон не найден. Возможно, он был удален другим пользователем.'
+        } else if (error.response?.status === 422) {
+          errorMessage = 'Ошибка валидации данных: ' + (error.response?.data?.error || 'Проверьте правильность заполнения полей')
+        } else {
+          errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
+        }
+        
         alert(`Ошибка сохранения шаблона: ${errorMessage}`)
       }
     }
@@ -211,7 +230,7 @@ export default {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  max-width: 800px;
+  max-width: 1600px;
   max-height: 80vh;
   overflow-y: auto;
   width: 90%;

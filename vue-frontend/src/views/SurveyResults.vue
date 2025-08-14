@@ -43,6 +43,21 @@
             </div>
           </div>
         </div>
+        
+        <div v-if="analytics.text_responses" class="text-responses">
+          <h3>Текстовые ответы</h3>
+          <div v-for="(responses, questionKey) in analytics.text_responses" :key="questionKey" class="text-question">
+            <h4>{{ getTextQuestionTitle(questionKey) }}</h4>
+            <div v-if="responses.length === 0" class="no-responses">Нет ответов</div>
+            <div v-for="(response, index) in responses" :key="index" class="text-response">
+              <div class="response-meta">
+                <span class="respondent">{{ response.respondent_name || 'Анонимный' }}</span>
+                <span class="date">{{ formatDate(response.submitted_at) }}</span>
+              </div>
+              <div class="response-text">{{ response.answer }}</div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div v-if="survey.survey_type === '360'" class="feedback-360-results">
@@ -159,6 +174,14 @@ export default {
         '6': 'Оценки компетенций'
       }
       return questionMap[questionId] || `Вопрос ${questionId}`
+    },
+    
+    getTextQuestionTitle(questionKey) {
+      const questionMap = {
+        'question_8': 'Что вам больше всего нравится в работе в нашей компании?',
+        'question_9': 'Что бы вы хотели улучшить в нашей компании?'
+      }
+      return questionMap[questionKey] || questionKey
     },
     
     formatDate(dateString) {
@@ -381,5 +404,57 @@ export default {
 
 .error {
   color: #e74c3c;
+}
+
+.text-responses {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.text-question {
+  margin-bottom: 30px;
+}
+
+.text-question h4 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.no-responses {
+  color: #7f8c8d;
+  font-style: italic;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.text-response {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background: #f8f9fa;
+}
+
+.response-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.respondent {
+  font-weight: 500;
+}
+
+.response-text {
+  color: #2c3e50;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 </style>

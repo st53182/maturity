@@ -38,6 +38,14 @@
           <button @click="editTemplate" class="edit-template-btn">
             {{ selectedTemplateId ? 'Редактировать' : 'Создать свой' }}
           </button>
+            <button
+    v-if="canDeleteSelectedTemplate"
+    @click="deleteSelectedTemplate"
+    class="delete-template-btn"
+    title="Удалить выбранный шаблон"
+  >
+    Удалить шаблон
+  </button>
         </div>
         
         <!-- Optional Team Selection -->
@@ -175,7 +183,17 @@ export default {
       return this.surveyTitle && 
              (!this.useTeamSelection || this.selectedTeamId) &&
              (!this.useEmployeeSelection || this.selectedEmployeeId)
-    }
+    },
+    currentTemplate() {
+    if (!this.selectedTemplateId) return null
+    return this.availableTemplates.find(t => t.id == this.selectedTemplateId) || null
+  },
+
+  // удобно для кнопки удаления
+  canDeleteSelectedTemplate() {
+    return !!(this.currentTemplate && !this.currentTemplate.is_default)
+  },
+
   },
   
   async mounted() {
@@ -215,6 +233,35 @@ export default {
         console.error('Error fetching templates:', error)
       }
     },
+
+    async deleteSelectedTemplate() {
+  if (!this.canDeleteSelectedTemplate) return
+
+  const tpl = this.currentTemplate
+  const ok = window.confirm(`Удалить шаблон «${tpl.name}»? Это действие необратимо.`)
+  if (!ok) return
+
+  try {
+    const token = localStorage.getItem('token')
+    await axios.delete(`/api/survey-templates/${tpl.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    // сбрасываем выбор и обновляем список шаблонов
+    this.selectedTemplateId = ''
+    await this.fetchTemplates()
+    alert('Шаблон удалён')
+  } catch (e) {
+    const status = e?.response?.status
+    const msg = e?.response?.data?.error || 'Ошибка удаления'
+    if (status === 400 && /Default/i.test(msg)) {
+      alert('Дефолтные шаблоны удалять нельзя.')
+    } else if (status === 404) {
+      alert('Шаблон не найден или у вас нет прав.')
+    } else {
+      alert(msg)
+    }
+  }
+},
     
     editTemplate() {
       console.log('editTemplate called with selectedTemplateId:', this.selectedTemplateId)

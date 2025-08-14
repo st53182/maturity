@@ -352,11 +352,16 @@ def convert_rating_to_number(rating_text):
 @surveys_bp.route('/survey-templates', methods=['GET'])
 @jwt_required()
 def get_survey_templates():
-    user_id = get_jwt_identity()
+    raw_user_id = get_jwt_identity()
+    try:
+        user_id = int(raw_user_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid user identity'}), 401
+
     templates = SurveyTemplate.query.filter(
         (SurveyTemplate.creator_id == user_id) | (SurveyTemplate.is_default == True)
     ).all()
-    
+
     result = []
     for template in templates:
         result.append({
@@ -365,7 +370,8 @@ def get_survey_templates():
             'survey_type': template.survey_type,
             'is_default': template.is_default,
             'questions': template.questions,
-            'created_at': template.created_at.isoformat()
+            'created_at': template.created_at.isoformat() if template.created_at else None,
+            'updated_at': template.updated_at.isoformat() if template.updated_at else None
         })
     return jsonify(result)
 
@@ -379,11 +385,17 @@ def create_survey_template():
         return jsonify({'error': 'Invalid user identity'}), 401
 
     data = request.get_json() or {}
+
+    # (опционально) проверка уникальности имени внутри пользователя
+    if SurveyTemplate.query.filter_by(name=data.get('name'), creator_id=user_id).first():
+        return jsonify({'error': 'Template name already exists'}), 400
+
     template = SurveyTemplate(
         name=data['name'],
         survey_type=data['survey_type'],
-        creator_id=user_id,  # уже int
-        questions=data['questions']
+        creator_id=user_id,
+        questions=data['questions'],
+        is_default=False
     )
     db.session.add(template)
     db.session.commit()
@@ -460,12 +472,25 @@ def update_survey_template(template_id):
 @surveys_bp.route('/survey-templates/<int:template_id>', methods=['DELETE'])
 @jwt_required()
 def delete_survey_template(template_id):
-    user_id = get_jwt_identity()
-    template = SurveyTemplate.query.filter_by(id=template_id, creator_id=user_id).first()
-    
+    raw_user_id = get_jwt_identity()
+    try:
+        user_id = int(raw_user_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid user identity'}), 401
+
+    template = SurveyTemplate.query.get(template_id)
     if not template:
         return jsonify({'error': 'Template not found'}), 404
-    
+
+    # Запрет на удаление дефолтных
+    if template.is_default:
+        return jsonify({'error': 'Default templates cannot be deleted'}), 400
+
+    # Только владелец может удалять
+    if template.creator_id != user_id:
+        # маскируем как 404, чтобы не раскрывать наличие чужого ресурса
+        return jsonify({'error': 'Template not found'}), 404
+
     db.session.delete(template)
     db.session.commit()
     return jsonify({'message': 'Template deleted successfully'})

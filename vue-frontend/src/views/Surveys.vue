@@ -126,17 +126,28 @@
       @close="closeTemplateEditor"
       @saved="onTemplateSaved"
     />
+    
+    <QuestionPreview 
+      :show="showQuestionPreview"
+      :questions="previewQuestions"
+      :survey-title="surveyTitle"
+      :survey-type="selectedType"
+      @close="showQuestionPreview = false"
+      @edit-questions="openTemplateEditor"
+      @confirm-create="confirmCreateSurvey" />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import TemplateEditor from '@/components/TemplateEditor.vue'
+import QuestionPreview from '@/components/QuestionPreview.vue'
 
 export default {
   name: 'SurveyList',
   components: {
-    TemplateEditor
+    TemplateEditor,
+    QuestionPreview
   },
   data() {
     return {
@@ -153,7 +164,9 @@ export default {
       availableTemplates: [],
       loading: false,
       showTemplateEditor: false,
-      editingTemplate: null
+      editingTemplate: null,
+      showQuestionPreview: false,
+      previewQuestions: []
     }
   },
   
@@ -261,21 +274,28 @@ export default {
     },
     
     async createSurvey() {
+      let questions = null
+      if (this.selectedTemplateId) {
+        const template = this.availableTemplates.find(t => t.id === this.selectedTemplateId)
+        questions = template.questions
+      } else {
+        questions = this.selectedType === 'enps' ? this.getDefaultEnpsQuestions() : this.getDefault360Questions()
+      }
+      
+      this.previewQuestions = questions
+      this.showQuestionPreview = true
+    },
+
+    async confirmCreateSurvey() {
       try {
         const token = localStorage.getItem('token')
-        
-        let questions = null
-        if (this.selectedTemplateId) {
-          const template = this.availableTemplates.find(t => t.id === this.selectedTemplateId)
-          questions = template.questions
-        }
         
         const surveyData = {
           survey_type: this.selectedType,
           title: this.surveyTitle,
           team_id: this.useTeamSelection ? this.selectedTeamId : null,
           target_employee_id: this.useEmployeeSelection ? this.selectedEmployeeId : null,
-          questions: questions
+          questions: this.previewQuestions
         }
         
         const createResponse = await axios.post('/api/surveys', surveyData, {
@@ -294,6 +314,7 @@ export default {
         }
         
         this.resetForm()
+        this.showQuestionPreview = false
         await this.fetchSurveys()
         
       } catch (error) {
@@ -331,6 +352,155 @@ export default {
       this.selectedTemplateId = ''
       this.useTeamSelection = false
       this.useEmployeeSelection = false
+      this.previewQuestions = []
+    },
+
+    getDefaultEnpsQuestions() {
+      return [
+        {
+          "id": 1,
+          "type": "radio",
+          "question": "В каком формате вы работаете?",
+          "required": true,
+          "options": [
+            {"text": "Удаленно", "value": "remote"},
+            {"text": "В офисе", "value": "office"},
+            {"text": "Гибридно", "value": "hybrid"}
+          ]
+        },
+        {
+          "id": 2,
+          "type": "scale",
+          "question": "Насколько вы удовлетворены своей работой?",
+          "required": true,
+          "min": 1,
+          "max": 10
+        },
+        {
+          "id": 3,
+          "type": "scale",
+          "question": "Насколько вероятно, что вы порекомендуете нашу компанию как место работы друзьям или коллегам?",
+          "required": true,
+          "min": 0,
+          "max": 10
+        },
+        {
+          "id": 4,
+          "type": "scale",
+          "question": "Насколько вы удовлетворены балансом работы и личной жизни?",
+          "required": true,
+          "min": 1,
+          "max": 10
+        },
+        {
+          "id": 5,
+          "type": "scale",
+          "question": "Насколько вы удовлетворены возможностями профессионального развития?",
+          "required": true,
+          "min": 1,
+          "max": 10
+        },
+        {
+          "id": 6,
+          "type": "scale",
+          "question": "Насколько вы удовлетворены отношениями с коллегами?",
+          "required": true,
+          "min": 1,
+          "max": 10
+        },
+        {
+          "id": 7,
+          "type": "scale",
+          "question": "Насколько вы удовлетворены управлением и руководством?",
+          "required": true,
+          "min": 1,
+          "max": 10
+        },
+        {
+          "id": 8,
+          "type": "textarea",
+          "question": "Что вам больше всего нравится в работе в нашей компании?",
+          "required": false
+        },
+        {
+          "id": 9,
+          "type": "textarea",
+          "question": "Что бы вы хотели улучшить в нашей компании?",
+          "required": false
+        }
+      ]
+    },
+
+    getDefault360Questions() {
+      return [
+        {
+          "id": 1,
+          "type": "text",
+          "question": "Ваше имя (необязательно)",
+          "required": false
+        },
+        {
+          "id": 2,
+          "type": "text",
+          "question": "Ваша роль/должность",
+          "required": false
+        },
+        {
+          "id": 3,
+          "type": "radio",
+          "question": "Ваши отношения с оцениваемым сотрудником",
+          "required": true,
+          "options": [
+            {"text": "Руководитель", "value": "manager"},
+            {"text": "Коллега", "value": "peer"},
+            {"text": "Подчиненный", "value": "subordinate"},
+            {"text": "Клиент/Партнер", "value": "external"}
+          ]
+        },
+        {
+          "id": 4,
+          "type": "matrix",
+          "question": "Оцените компетенции сотрудника по шкале от 1 до 5",
+          "required": true,
+          "rows": [
+            {"text": "Профессиональные навыки", "value": "professional_skills"},
+            {"text": "Коммуникация", "value": "communication"},
+            {"text": "Лидерство", "value": "leadership"},
+            {"text": "Работа в команде", "value": "teamwork"},
+            {"text": "Решение проблем", "value": "problem_solving"},
+            {"text": "Адаптивность", "value": "adaptability"}
+          ],
+          "columns": [
+            {"text": "1 - Неудовлетворительно", "value": "1"},
+            {"text": "2 - Ниже ожиданий", "value": "2"},
+            {"text": "3 - Соответствует ожиданиям", "value": "3"},
+            {"text": "4 - Превышает ожидания", "value": "4"},
+            {"text": "5 - Выдающийся результат", "value": "5"}
+          ]
+        },
+        {
+          "id": 5,
+          "type": "textarea",
+          "question": "Что является главными сильными сторонами этого сотрудника?",
+          "required": false
+        },
+        {
+          "id": 6,
+          "type": "textarea",
+          "question": "В каких областях сотрудник мог бы улучшиться?",
+          "required": false
+        }
+      ]
+    },
+
+    openTemplateEditor() {
+      this.showQuestionPreview = false
+      this.editingTemplate = {
+        name: `Кастомный ${this.selectedType.toUpperCase()} шаблон`,
+        survey_type: this.selectedType,
+        questions: this.previewQuestions
+      }
+      this.showTemplateEditor = true
     },
     
     viewResults(surveyId) {

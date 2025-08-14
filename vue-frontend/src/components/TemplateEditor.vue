@@ -141,6 +141,29 @@ export default {
     async saveTemplate() {
       try {
         const token = localStorage.getItem('token')
+        
+        if (!this.templateName.trim()) {
+          alert('Название шаблона обязательно')
+          return
+        }
+        
+        if (!this.questions || this.questions.length === 0) {
+          alert('Добавьте хотя бы один вопрос')
+          return
+        }
+        
+        for (let i = 0; i < this.questions.length; i++) {
+          const question = this.questions[i]
+          if (!question.question || !question.question.trim()) {
+            alert(`Вопрос ${i + 1}: Текст вопроса обязателен`)
+            return
+          }
+          if (!question.type) {
+            alert(`Вопрос ${i + 1}: Тип вопроса обязателен`)
+            return
+          }
+        }
+        
         const templateData = {
           name: this.templateName,
           survey_type: this.surveyType,
@@ -161,7 +184,9 @@ export default {
         this.$emit('close')
       } catch (error) {
         console.error('Error saving template:', error)
-        alert('Ошибка сохранения шаблона')
+        console.error('Response data:', error.response?.data)
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
+        alert(`Ошибка сохранения шаблона: ${errorMessage}`)
       }
     }
   }

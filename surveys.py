@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db
-from models import Survey, SurveyResponse, SurveyInvitation, Team, Employee, User
+from models import Survey, SurveyResponse, SurveyInvitation, Team, Employee, User, SurveyTemplate
 import uuid
 from datetime import datetime
 import json
@@ -330,3 +330,84 @@ def convert_rating_to_number(rating_text):
         "Выдающийся результат": 5
     }
     return rating_map.get(rating_text, 3)
+
+@surveys_bp.route('/survey-templates', methods=['GET'])
+@jwt_required()
+def get_survey_templates():
+    user_id = get_jwt_identity()
+    templates = SurveyTemplate.query.filter(
+        (SurveyTemplate.creator_id == user_id) | (SurveyTemplate.is_default == True)
+    ).all()
+    
+    result = []
+    for template in templates:
+        result.append({
+            'id': template.id,
+            'name': template.name,
+            'survey_type': template.survey_type,
+            'is_default': template.is_default,
+            'questions': template.questions,
+            'created_at': template.created_at.isoformat()
+        })
+    return jsonify(result)
+
+@surveys_bp.route('/survey-templates', methods=['POST'])
+@jwt_required()
+def create_survey_template():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    template = SurveyTemplate(
+        name=data['name'],
+        survey_type=data['survey_type'],
+        creator_id=user_id,
+        questions=data['questions']
+    )
+    
+    db.session.add(template)
+    db.session.commit()
+    
+    return jsonify({'id': template.id, 'message': 'Template created successfully'}), 201
+
+@surveys_bp.route('/survey-templates/<int:template_id>', methods=['PUT'])
+@jwt_required()
+def update_survey_template(template_id):
+    user_id = get_jwt_identity()
+    template = SurveyTemplate.query.filter_by(id=template_id, creator_id=user_id).first()
+    
+    if not template:
+        return jsonify({'error': 'Template not found'}), 404
+    
+    data = request.get_json()
+    template.name = data.get('name', template.name)
+    template.questions = data.get('questions', template.questions)
+    template.updated_at = datetime.utcnow()
+    
+    db.session.commit()
+    return jsonify({'message': 'Template updated successfully'})
+
+@surveys_bp.route('/survey-templates/<int:template_id>', methods=['DELETE'])
+@jwt_required()
+def delete_survey_template(template_id):
+    user_id = get_jwt_identity()
+    template = SurveyTemplate.query.filter_by(id=template_id, creator_id=user_id).first()
+    
+    if not template:
+        return jsonify({'error': 'Template not found'}), 404
+    
+    db.session.delete(template)
+    db.session.commit()
+    return jsonify({'message': 'Template deleted successfully'})
+
+@surveys_bp.route('/surveys/<int:survey_id>', methods=['DELETE'])
+@jwt_required()
+def delete_survey(survey_id):
+    user_id = get_jwt_identity()
+    survey = Survey.query.filter_by(id=survey_id, creator_id=user_id).first()
+    
+    if not survey:
+        return jsonify({'error': 'Survey not found'}), 404
+    
+    db.session.delete(survey)
+    db.session.commit()
+    return jsonify({'message': 'Survey deleted successfully'})

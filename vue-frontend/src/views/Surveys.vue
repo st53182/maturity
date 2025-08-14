@@ -209,7 +209,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         })
         this.availableTemplates = response.data.filter(t => 
-          t.survey_type === this.selectedType || t.survey_type === 'custom'
+          t.survey_type === this.selectedType
         )
       } catch (error) {
         console.error('Error fetching templates:', error)
@@ -217,10 +217,15 @@ export default {
     },
     
     editTemplate() {
+      console.log('editTemplate called with selectedTemplateId:', this.selectedTemplateId)
+      console.log('availableTemplates:', this.availableTemplates)
+      
       if (this.selectedTemplateId) {
-        this.editingTemplate = this.availableTemplates.find(t => t.id === this.selectedTemplateId)
+        this.editingTemplate = this.availableTemplates.find(t => t.id == this.selectedTemplateId)
+        console.log('Found template for editing:', this.editingTemplate)
       } else {
         this.editingTemplate = null
+        console.log('No template selected, creating new template')
       }
       this.showTemplateEditor = true
     },

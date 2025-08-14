@@ -367,7 +367,7 @@ export default {
 
 .matrix-scale-labels {
   display: grid;
-  grid-template-columns: 200px repeat(5, 1fr);
+  grid-template-columns: minmax(150px, 200px) repeat(5, minmax(60px, 1fr));
   gap: 10px;
   font-size: 12px;
   font-weight: bold;
@@ -376,11 +376,20 @@ export default {
 
 .matrix-row {
   display: grid;
-  grid-template-columns: 200px repeat(5, 1fr);
+  grid-template-columns: minmax(150px, 200px) repeat(5, minmax(60px, 1fr));
   gap: 10px;
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 768px) {
+  .matrix-scale-labels,
+  .matrix-row {
+    grid-template-columns: minmax(120px, 150px) repeat(5, minmax(40px, 1fr));
+    gap: 5px;
+    font-size: 11px;
+  }
 }
 
 .row-label {

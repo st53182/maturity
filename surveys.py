@@ -248,26 +248,44 @@ def analyze_enps_results(responses):
     if not responses:
         return {}
     
-    scale_questions = [3, 5, 6, 8, 9]
+    scale_questions = [2, 3, 4, 5, 6, 7]
     averages = {}
+    text_responses = {}
     
     for q_id in scale_questions:
         scores = []
         for response in responses:
             if str(q_id) in response.answers:
-                scores.append(int(response.answers[str(q_id)]))
+                try:
+                    scores.append(int(response.answers[str(q_id)]))
+                except (ValueError, TypeError):
+                    continue
         
         if scores:
+            max_score = 10 if q_id == 3 else 10
             averages[f'question_{q_id}'] = {
                 'average': sum(scores) / len(scores),
                 'count': len(scores),
-                'distribution': {str(i): scores.count(i) for i in range(1, 6)}
+                'distribution': {str(i): scores.count(i) for i in range(1, max_score + 1)}
             }
+    
+    text_questions = [8, 9]
+    for q_id in text_questions:
+        text_answers = []
+        for response in responses:
+            if str(q_id) in response.answers and response.answers[str(q_id)]:
+                text_answers.append({
+                    'answer': response.answers[str(q_id)],
+                    'respondent_name': response.respondent_name,
+                    'submitted_at': response.submitted_at.isoformat()
+                })
+        text_responses[f'question_{q_id}'] = text_answers
     
     return {
         'response_count': len(responses),
         'averages': averages,
-        'nps_score': calculate_nps_score([r.answers.get('5') for r in responses if r.answers.get('5')])
+        'text_responses': text_responses,
+        'nps_score': calculate_nps_score([r.answers.get('3') for r in responses if r.answers.get('3')])
     }
 
 def analyze_360_results(responses, show_names=False):
@@ -402,12 +420,20 @@ def delete_survey_template(template_id):
 @surveys_bp.route('/surveys/<int:survey_id>', methods=['DELETE'])
 @jwt_required()
 def delete_survey(survey_id):
-    user_id = get_jwt_identity()
-    survey = Survey.query.filter_by(id=survey_id, creator_id=user_id).first()
-    
-    if not survey:
-        return jsonify({'error': 'Survey not found'}), 404
-    
-    db.session.delete(survey)
-    db.session.commit()
-    return jsonify({'message': 'Survey deleted successfully'})
+    try:
+        user_id = get_jwt_identity()
+        survey = Survey.query.filter_by(id=survey_id, creator_id=user_id).first()
+        
+        if not survey:
+            return jsonify({'error': 'Survey not found'}), 404
+        
+        SurveyResponse.query.filter_by(survey_id=survey.id).delete()
+        
+        SurveyInvitation.query.filter_by(survey_id=survey.id).delete()
+        
+        db.session.delete(survey)
+        db.session.commit()
+        return jsonify({'message': 'Survey deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete survey: {str(e)}'}), 500

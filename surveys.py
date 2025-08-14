@@ -372,43 +372,55 @@ def get_survey_templates():
 @surveys_bp.route('/survey-templates', methods=['POST'])
 @jwt_required()
 def create_survey_template():
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    
+    raw_user_id = get_jwt_identity()
+    try:
+        user_id = int(raw_user_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid user identity'}), 401
+
+    data = request.get_json() or {}
     template = SurveyTemplate(
         name=data['name'],
         survey_type=data['survey_type'],
-        creator_id=user_id,
+        creator_id=user_id,  # уже int
         questions=data['questions']
     )
-    
     db.session.add(template)
     db.session.commit()
-    
     return jsonify({'id': template.id, 'message': 'Template created successfully'}), 201
 
 @surveys_bp.route('/survey-templates/<int:template_id>', methods=['PUT'])
 @jwt_required()
 def update_survey_template(template_id):
-    user_id = get_jwt_identity()
+    # 🔧 Приводим user_id к int, чтобы сравнение с creator_id было корректным
+    raw_user_id = get_jwt_identity()
+    try:
+        user_id = int(raw_user_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid user identity'}), 401
+
     template = SurveyTemplate.query.get(template_id)
-    
     if not template:
         return jsonify({'error': 'Template not found'}), 404
-    
-    data = request.get_json()
-    
+
+    data = request.get_json() or {}
+
+    # ❗ Нельзя изменять дефолтный шаблон — делаем копию с уникальным именем
     if template.is_default:
+        new_name = data.get('name')
+        if not new_name:
+            return jsonify({'error': 'Name is required to save a copy of a default template'}), 400
+
+        # Проверяем, нет ли у пользователя шаблона с таким именем
         existing_name = SurveyTemplate.query.filter_by(
-            name=data.get('name'), 
+            name=new_name,
             creator_id=user_id
         ).first()
-        
         if existing_name:
             return jsonify({'error': 'Template name already exists'}), 400
-        
+
         new_template = SurveyTemplate(
-            name=data.get('name'),
+            name=new_name,
             survey_type=template.survey_type,
             creator_id=user_id,
             questions=data.get('questions', template.questions),
@@ -419,15 +431,29 @@ def update_survey_template(template_id):
         return jsonify({
             'message': 'New template created successfully',
             'template_id': new_template.id
-        })
-    
+        }), 201
+
+    # ✅ Обычный пользовательский шаблон — разрешаем редактировать только владельцу
     if template.creator_id != user_id:
+        # маскируем отсутствие прав под 404, как и раньше
         return jsonify({'error': 'Template not found'}), 404
-    
-    template.name = data.get('name', template.name)
-    template.questions = data.get('questions', template.questions)
+
+    # Обновляем поля
+    if 'name' in data and data['name']:
+        # (опционально) проверка на уникальность имени у пользователя
+        name_exists = SurveyTemplate.query.filter(
+            SurveyTemplate.creator_id == user_id,
+            SurveyTemplate.id != template.id,
+            SurveyTemplate.name == data['name']
+        ).first()
+        if name_exists:
+            return jsonify({'error': 'Template name already exists'}), 400
+        template.name = data['name']
+
+    if 'questions' in data:
+        template.questions = data['questions']
+
     template.updated_at = datetime.utcnow()
-    
     db.session.commit()
     return jsonify({'message': 'Template updated successfully'})
 

@@ -237,7 +237,18 @@
       "draft": "Черновик",
       "active": "Активен", 
       "closed": "Закрыт"
-    }
+    },
+    "templateSelection": "Выбор шаблона",
+    "editTemplate": "Редактировать шаблон",
+    "createCustomTemplate": "Создать свой шаблон",
+    "optionalTeamSelection": "Привязать к команде",
+    "optionalEmployeeSelection": "Привязать к сотруднику",
+    "deleteSurvey": "Удалить опросник",
+    "confirmDeleteSurvey": "Вы уверены, что хотите удалить этот опросник?",
+    "surveyDeleted": "Опросник удален!",
+    "linkCopiedToClipboard": "Ссылка скопирована в буфер обмена!",
+    "templateSaved": "Шаблон сохранен!",
+    "templateDeleted": "Шаблон удален!"
   },
   "meetingDesign": {
     "title": "Дизайн встречи",

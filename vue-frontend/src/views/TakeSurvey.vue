@@ -186,7 +186,7 @@ export default {
         
         this.survey.questions.forEach(question => {
           if (question.type === 'matrix') {
-            this.$set(this.matrixAnswers, question.id, {})
+            this.matrixAnswers[question.id] = {}
           }
         })
         

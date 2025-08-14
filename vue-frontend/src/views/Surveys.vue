@@ -8,14 +8,14 @@
       <div class="survey-type-selection">
         <div class="survey-type-card" 
              :class="{ active: selectedType === 'enps' }"
-             @click="selectedType = 'enps'">
+             @click="selectSurveyType('enps')">
           <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
           <p>Собрать обратную связь от сотрудников о текущем состоянии в команде</p>
         </div>
         
         <div class="survey-type-card"
              :class="{ active: selectedType === '360' }"
-             @click="selectedType = '360'">
+             @click="selectSurveyType('360')">
           <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
           <p>Собрать анонимную обратную связь о конкретном сотруднике от коллег</p>
         </div>
@@ -26,24 +26,51 @@
                :placeholder="$t('surveys.surveyTitle')" 
                class="survey-input" />
         
-        <select v-if="selectedType === 'enps'" 
-                v-model="selectedTeamId" 
-                class="survey-select">
-          <option value="">{{ $t('surveys.selectTeam') }}</option>
-          <option v-for="team in teams" :key="team.id" :value="team.id">
-            {{ team.name }}
-          </option>
-        </select>
+        <!-- Template Selection -->
+        <div class="template-selection">
+          <label>Выберите шаблон:</label>
+          <select v-model="selectedTemplateId" class="survey-select">
+            <option value="">Стандартный шаблон</option>
+            <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
+              {{ template.name }}
+            </option>
+          </select>
+          <button @click="editTemplate" class="edit-template-btn">
+            {{ selectedTemplateId ? 'Редактировать' : 'Создать свой' }}
+          </button>
+        </div>
         
-        <select v-if="selectedType === '360'" 
-                v-model="selectedEmployeeId" 
-                class="survey-select">
-          <option value="">{{ $t('surveys.selectEmployee') }}</option>
-          <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-            {{ employee.name }}
-          </option>
-        </select>
+        <!-- Optional Team Selection -->
+        <div class="optional-selection">
+          <label>
+            <input type="checkbox" v-model="useTeamSelection" />
+            Привязать к команде
+          </label>
+          <select v-if="useTeamSelection && selectedType === 'enps'" 
+                  v-model="selectedTeamId" 
+                  class="survey-select">
+            <option value="">{{ $t('surveys.selectTeam') }}</option>
+            <option v-for="team in teams" :key="team.id" :value="team.id">
+              {{ team.name }}
+            </option>
+          </select>
+        </div>
         
+        <!-- Optional Employee Selection -->
+        <div class="optional-selection">
+          <label>
+            <input type="checkbox" v-model="useEmployeeSelection" />
+            Привязать к сотруднику
+          </label>
+          <select v-if="useEmployeeSelection && selectedType === '360'" 
+                  v-model="selectedEmployeeId" 
+                  class="survey-select">
+            <option value="">{{ $t('surveys.selectEmployee') }}</option>
+            <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+              {{ employee.name }}
+            </option>
+          </select>
+        </div>
         
         <button @click="createSurvey" 
                 :disabled="!canCreateSurvey"
@@ -83,36 +110,58 @@
             <button @click="copySurveyLink(survey)" class="copy-link-btn">
               🔗 {{ $t('surveys.copyLink') }}
             </button>
+            <button @click="confirmDeleteSurvey(survey)" class="delete-survey-btn">
+              🗑️ Удалить
+            </button>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Template Editor Modal -->
+    <TemplateEditor 
+      :show="showTemplateEditor"
+      :template="editingTemplate"
+      :survey-type="selectedType"
+      @close="closeTemplateEditor"
+      @saved="onTemplateSaved"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import TemplateEditor from '@/components/TemplateEditor.vue'
 
 export default {
   name: 'SurveyList',
+  components: {
+    TemplateEditor
+  },
   data() {
     return {
       selectedType: '',
       surveyTitle: '',
       selectedTeamId: '',
       selectedEmployeeId: '',
+      selectedTemplateId: '',
+      useTeamSelection: false,
+      useEmployeeSelection: false,
       teams: [],
       employees: [],
       surveys: [],
-      loading: false
+      availableTemplates: [],
+      loading: false,
+      showTemplateEditor: false,
+      editingTemplate: null
     }
   },
   
   computed: {
     canCreateSurvey() {
       return this.surveyTitle && 
-             ((this.selectedType === 'enps' && this.selectedTeamId) ||
-              (this.selectedType === '360' && this.selectedEmployeeId))
+             (!this.useTeamSelection || this.selectedTeamId) &&
+             (!this.useEmployeeSelection || this.selectedEmployeeId)
     }
   },
   
@@ -123,6 +172,55 @@ export default {
   },
   
   methods: {
+    selectSurveyType(type) {
+      this.selectedType = type
+      this.selectedTeamId = ''
+      this.selectedEmployeeId = ''
+      this.selectedTemplateId = ''
+      this.useTeamSelection = false
+      this.useEmployeeSelection = false
+      
+      this.fetchTemplates()
+      
+      if (type === 'enps') {
+        this.fetchTeams()
+      } else if (type === '360') {
+        this.fetchEmployees()
+      }
+    },
+
+    async fetchTemplates() {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get('/api/survey-templates', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        this.availableTemplates = response.data.filter(t => 
+          t.survey_type === this.selectedType || t.survey_type === 'custom'
+        )
+      } catch (error) {
+        console.error('Error fetching templates:', error)
+      }
+    },
+    
+    editTemplate() {
+      if (this.selectedTemplateId) {
+        this.editingTemplate = this.availableTemplates.find(t => t.id === this.selectedTemplateId)
+      } else {
+        this.editingTemplate = null
+      }
+      this.showTemplateEditor = true
+    },
+    
+    closeTemplateEditor() {
+      this.showTemplateEditor = false
+      this.editingTemplate = null
+    },
+    
+    async onTemplateSaved() {
+      await this.fetchTemplates()
+    },
+
     async fetchTeams() {
       try {
         const token = localStorage.getItem('token')
@@ -166,11 +264,18 @@ export default {
       try {
         const token = localStorage.getItem('token')
         
+        let questions = null
+        if (this.selectedTemplateId) {
+          const template = this.availableTemplates.find(t => t.id === this.selectedTemplateId)
+          questions = template.questions
+        }
+        
         const surveyData = {
           survey_type: this.selectedType,
           title: this.surveyTitle,
-          team_id: this.selectedTeamId || null,
-          target_employee_id: this.selectedEmployeeId || null
+          team_id: this.useTeamSelection ? this.selectedTeamId : null,
+          target_employee_id: this.useEmployeeSelection ? this.selectedEmployeeId : null,
+          questions: questions
         }
         
         const createResponse = await axios.post('/api/surveys', surveyData, {
@@ -178,22 +283,54 @@ export default {
         })
         
         const surveyToken = createResponse.data.access_token
-        
         const link = `${window.location.origin}/survey/${surveyToken}`
         
-        alert(`${this.$t('surveys.surveyCreated')}\n\nСсылка на опрос: ${link}`)
+        try {
+          await navigator.clipboard.writeText(link)
+          alert(`${this.$t('surveys.surveyCreated')}\n\nСсылка скопирована в буфер обмена!`)
+        } catch (clipboardError) {
+          console.error('Clipboard error:', clipboardError)
+          alert(`${this.$t('surveys.surveyCreated')}\n\nСсылка: ${link}`)
+        }
         
-        this.selectedType = ''
-        this.surveyTitle = ''
-        this.selectedTeamId = ''
-        this.selectedEmployeeId = ''
-        
+        this.resetForm()
         await this.fetchSurveys()
         
       } catch (error) {
         console.error('Error creating survey:', error)
         alert('Ошибка создания опросника')
       }
+    },
+    
+    confirmDeleteSurvey(survey) {
+      if (confirm(`Вы уверены, что хотите удалить опросник "${survey.title}"?`)) {
+        this.deleteSurvey(survey.id)
+      }
+    },
+    
+    async deleteSurvey(surveyId) {
+      try {
+        const token = localStorage.getItem('token')
+        await axios.delete(`/api/surveys/${surveyId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        alert('Опросник удален!')
+        await this.fetchSurveys()
+      } catch (error) {
+        console.error('Error deleting survey:', error)
+        alert('Ошибка удаления опросника')
+      }
+    },
+    
+    resetForm() {
+      this.selectedType = ''
+      this.surveyTitle = ''
+      this.selectedTeamId = ''
+      this.selectedEmployeeId = ''
+      this.selectedTemplateId = ''
+      this.useTeamSelection = false
+      this.useEmployeeSelection = false
     },
     
     viewResults(surveyId) {
@@ -328,7 +465,7 @@ export default {
   gap: 10px;
 }
 
-.view-results-btn, .copy-link-btn {
+.view-results-btn, .copy-link-btn, .delete-survey-btn {
   flex: 1;
   padding: 8px 12px;
   border: none;
@@ -348,11 +485,59 @@ export default {
   color: white;
 }
 
+.delete-survey-btn {
+  background: #dc3545;
+  color: white;
+}
+
 .view-results-btn:hover {
   background: #2980b9;
 }
 
 .copy-link-btn:hover {
   background: #7f8c8d;
+}
+
+.delete-survey-btn:hover {
+  background: #c82333;
+}
+
+.template-selection {
+  margin-bottom: 1rem;
+}
+
+.template-selection label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.edit-template-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.edit-template-btn:hover {
+  background: #5a6268;
+}
+
+.optional-selection {
+  margin-bottom: 1rem;
+}
+
+.optional-selection label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.optional-selection input[type="checkbox"] {
+  margin: 0;
 }
 </style>

@@ -391,12 +391,39 @@ def create_survey_template():
 @jwt_required()
 def update_survey_template(template_id):
     user_id = get_jwt_identity()
-    template = SurveyTemplate.query.filter_by(id=template_id, creator_id=user_id).first()
+    template = SurveyTemplate.query.get(template_id)
     
     if not template:
         return jsonify({'error': 'Template not found'}), 404
     
     data = request.get_json()
+    
+    if template.is_default:
+        existing_name = SurveyTemplate.query.filter_by(
+            name=data.get('name'), 
+            creator_id=user_id
+        ).first()
+        
+        if existing_name:
+            return jsonify({'error': 'Template name already exists'}), 400
+        
+        new_template = SurveyTemplate(
+            name=data.get('name'),
+            survey_type=template.survey_type,
+            creator_id=user_id,
+            questions=data.get('questions', template.questions),
+            is_default=False
+        )
+        db.session.add(new_template)
+        db.session.commit()
+        return jsonify({
+            'message': 'New template created successfully',
+            'template_id': new_template.id
+        })
+    
+    if template.creator_id != user_id:
+        return jsonify({'error': 'Template not found'}), 404
+    
     template.name = data.get('name', template.name)
     template.questions = data.get('questions', template.questions)
     template.updated_at = datetime.utcnow()

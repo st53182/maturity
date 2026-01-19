@@ -332,7 +332,6 @@ export default {
     renderGraph() {
       if (!this.graph || !this.graphContainer || typeof window.mxGraph === 'undefined') return;
 
-      const { mxConstants } = window;
       const model = this.graph.getModel();
       model.beginUpdate();
       try {

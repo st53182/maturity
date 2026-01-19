@@ -268,3 +268,66 @@ class SurveyTemplate(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     creator = db.relationship('User', backref=db.backref('survey_templates', lazy=True))
+
+# 🔹 Модель дорожной карты зависимостей
+class Roadmap(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    access_token = db.Column(db.String(36), unique=True, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    creator = db.relationship('User', backref=db.backref('roadmaps', lazy=True))
+    items = db.relationship('RoadmapItem', backref='roadmap', cascade='all, delete-orphan', lazy=True)
+    
+    def set_password(self, password):
+        if password:
+            self.password_hash = generate_password_hash(password).decode('utf-8')
+    
+    def check_password(self, password):
+        if not self.password_hash or not password:
+            return False
+        return check_password_hash(self.password_hash, password)
+
+# 🔹 Модель элемента дорожной карты (эпик/история)
+class RoadmapItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    roadmap_id = db.Column(db.Integer, db.ForeignKey('roadmap.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'epic' или 'story'
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    position_x = db.Column(db.Float, default=0.0)
+    position_y = db.Column(db.Float, default=0.0)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    metadata = db.Column(JSON, nullable=True)  # Дополнительные данные
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    team = db.relationship('Team', backref=db.backref('roadmap_items', lazy=True))
+    dependencies_from = db.relationship('RoadmapDependency', foreign_keys='RoadmapDependency.from_item_id', backref='from_item', cascade='all, delete-orphan', lazy=True)
+    dependencies_to = db.relationship('RoadmapDependency', foreign_keys='RoadmapDependency.to_item_id', backref='to_item', cascade='all, delete-orphan', lazy=True)
+
+# 🔹 Модель зависимости между элементами
+class RoadmapDependency(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    from_item_id = db.Column(db.Integer, db.ForeignKey('roadmap_item.id'), nullable=False)
+    to_item_id = db.Column(db.Integer, db.ForeignKey('roadmap_item.id'), nullable=False)
+    dependency_type = db.Column(db.String(50), nullable=False)  # 'blocks', 'depends_on', 'related_to', 'requires', 'precedes', 'follows'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (db.UniqueConstraint('from_item_id', 'to_item_id', name='unique_dependency'),)
+
+# 🔹 Модель доступа пользователей к дорожной карте
+class RoadmapAccess(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    roadmap_id = db.Column(db.Integer, db.ForeignKey('roadmap.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    access_level = db.Column(db.String(50), default='viewer')  # 'viewer', 'editor', 'owner'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    roadmap = db.relationship('Roadmap', backref=db.backref('accesses', lazy=True))
+    user = db.relationship('User', backref=db.backref('roadmap_accesses', lazy=True))
+    
+    __table_args__ = (db.UniqueConstraint('roadmap_id', 'user_id', name='unique_roadmap_access'),)

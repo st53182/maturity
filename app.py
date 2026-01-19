@@ -16,6 +16,8 @@ from disc_assessment import disc_bp
 from meeting_design import bp_meeting_design
 from surveys import surveys_bp
 from backlog_prep import bp_backlog_prep
+from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
+from flask_socketio import SocketIO
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
@@ -50,6 +52,11 @@ app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=730)
 db.init_app(app)
 jwt = JWTManager(app)
 
+# Инициализация SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+init_socketio(socketio)
+register_socketio_handlers(socketio)
+
 with app.app_context():
     db.create_all()
 
@@ -68,6 +75,7 @@ app.register_blueprint(disc_bp, url_prefix="/api/disc")
 app.register_blueprint(bp_meeting_design)
 app.register_blueprint(surveys_bp, url_prefix="/api")
 app.register_blueprint(bp_backlog_prep)
+app.register_blueprint(bp_roadmap)
 
 
 # 🎯 Отдача Vue SPA
@@ -82,6 +90,7 @@ def serve_vue(path):
 def api_root():
     return {"message": "Scrum Maturity API is working!"}
 
+# Экспортируем socketio для использования в gunicorn
 if __name__ == '__main__':
-    app.run()
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
 

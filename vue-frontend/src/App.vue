@@ -53,6 +53,10 @@
         <span>🧭</span>
         <small>{{ $t('nav.backlogPrep') }}</small>
       </button>
+      <button class="sidebar-btn" @click="$router.push('/roadmap')">
+        <span>🗺️</span>
+        <small>{{ $t('nav.roadmap') }}</small>
+      </button>
       <button class="sidebar-btn" @click="$router.push('/surveys')">
         <span>📋</span>
         <small>{{ $t('nav.surveys') }}</small>
@@ -122,6 +126,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/backlog-prep')">
             <span>🧭</span>
             <span>{{ $t('nav.backlogPrep') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/roadmap')">
+            <span>🗺️</span>
+            <span>{{ $t('nav.roadmap') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/surveys')">
             <span>📋</span>

@@ -3,41 +3,59 @@
     <h1>{{ $t('backlogPrep.title') }}</h1>
     <p class="subtitle">{{ $t('backlogPrep.subtitle') }}</p>
 
-    <div class="form-grid">
-      <label>
-        {{ $t('backlogPrep.workType') }}
-        <select v-model="form.workType">
-          <option value="story">{{ $t('backlogPrep.story') }}</option>
-          <option value="epic">{{ $t('backlogPrep.epic') }}</option>
-        </select>
-      </label>
+    <div class="modern-form">
+      <div class="form-grid">
+        <div class="input-wrapper">
+          <span class="input-icon">📋</span>
+          <select 
+            v-model="form.workType" 
+            class="modern-input modern-select"
+            :class="{ 'has-value': form.workType }"
+          >
+            <option value=""></option>
+            <option value="story">{{ $t('backlogPrep.story') }}</option>
+            <option value="epic">{{ $t('backlogPrep.epic') }}</option>
+          </select>
+          <label class="floating-label">{{ $t('backlogPrep.workType') }}</label>
+        </div>
 
-      <label>
-        {{ $t('backlogPrep.language') }}
-        <select v-model="form.language">
-          <option value="ru">Русский</option>
-          <option value="en">English</option>
-        </select>
-      </label>
+        <div class="input-wrapper">
+          <span class="input-icon">🌐</span>
+          <select 
+            v-model="form.language" 
+            class="modern-input modern-select"
+            :class="{ 'has-value': form.language }"
+          >
+            <option value=""></option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+          <label class="floating-label">{{ $t('backlogPrep.language') }}</label>
+        </div>
+      </div>
+
+      <div class="input-wrapper textarea-wrapper">
+        <span class="input-icon">📝</span>
+        <textarea
+          v-model="form.text"
+          rows="7"
+          class="modern-input modern-textarea"
+          :class="{ 'has-value': form.text }"
+        ></textarea>
+        <label class="floating-label">{{ $t('backlogPrep.description') }}</label>
+      </div>
+
+      <div class="input-wrapper textarea-wrapper">
+        <span class="input-icon">🎯</span>
+        <textarea
+          v-model="form.context"
+          rows="4"
+          class="modern-input modern-textarea"
+          :class="{ 'has-value': form.context }"
+        ></textarea>
+        <label class="floating-label">{{ $t('backlogPrep.context') }}</label>
+      </div>
     </div>
-
-    <label class="block">
-      {{ $t('backlogPrep.description') }}
-      <textarea
-        v-model="form.text"
-        rows="7"
-        :placeholder="$t('backlogPrep.descriptionPlaceholder')"
-      ></textarea>
-    </label>
-
-    <label class="block">
-      {{ $t('backlogPrep.context') }}
-      <textarea
-        v-model="form.context"
-        rows="4"
-        :placeholder="$t('backlogPrep.contextPlaceholder')"
-      ></textarea>
-    </label>
 
     <div class="actions">
       <button class="primary" @click="analyze" :disabled="loading">
@@ -166,60 +184,138 @@ h1 {
   margin-bottom: 24px;
 }
 
-label {
+/* Modern Form Styles with Floating Labels */
+.modern-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 15px;
-  letter-spacing: -0.2px;
+  gap: 24px;
 }
 
-label select,
-textarea {
-  padding: 14px 18px;
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.input-wrapper {
+  position: relative;
+  margin-top: 0;
+}
+
+.input-wrapper.textarea-wrapper {
+  margin-top: 0;
+}
+
+.input-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.textarea-wrapper .input-icon {
+  top: 24px;
+  transform: none;
+}
+
+.modern-input {
+  width: 100%;
+  padding: 20px 18px 8px 52px;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 15px;
-  resize: vertical;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+  box-sizing: border-box;
   color: #111827;
   line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-textarea::placeholder {
-  color: #9ca3af;
-  font-weight: 400;
+.modern-textarea {
+  padding-top: 32px;
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
 }
 
-label select:hover,
-textarea:hover {
-  border-color: #cbd5e1;
-}
-
-label select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
-  background: #fafbff;
-}
-
-label select {
+.modern-select {
+  padding-right: 52px;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%236b7280' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  padding-right: 44px;
+  background-position: right 18px center;
 }
 
-textarea {
-  min-height: 120px;
-  line-height: 1.6;
+.floating-label {
+  position: absolute;
+  left: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #9ca3af;
+  font-weight: 500;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  z-index: 1;
+}
+
+.textarea-wrapper .floating-label {
+  top: 32px;
+  transform: none;
+}
+
+.modern-input:focus,
+.modern-input.has-value {
+  padding-top: 20px;
+  padding-bottom: 8px;
+  border-color: #3b82f6;
+  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.modern-input:focus + .floating-label,
+.modern-input.has-value + .floating-label {
+  top: 12px;
+  left: 52px;
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 600;
+  transform: none;
+}
+
+.textarea-wrapper .modern-input:focus + .floating-label,
+.textarea-wrapper .modern-input.has-value + .floating-label {
+  top: 12px;
+  left: 52px;
+}
+
+.modern-input:hover:not(:focus) {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.modern-input:focus {
+  outline: none;
+}
+
+.modern-input:focus ~ .input-icon {
+  transform: translateY(-50%) scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.textarea-wrapper .modern-input:focus ~ .input-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
 .block {

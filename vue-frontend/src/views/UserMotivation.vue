@@ -415,18 +415,21 @@ export default {
 
 <style scoped>
 .motivation-container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 40px auto;
-  background: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
-  font-family: "Segoe UI", sans-serif;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
 h1 {
-  font-size: 28px;
-  margin-bottom: 25px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
 }
 
 form {
@@ -434,206 +437,259 @@ form {
 }
 
 .form-group {
-  max-width: 650px;
+  max-width: 700px;
   margin: 1rem auto;
-  padding: 1.5rem 2rem;
+  padding: 32px;
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 input,
 textarea,
 select {
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 12px 16px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 button {
-  background: #677be5;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
-  padding: 12px 22px;
+  padding: 12px 24px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
   margin-top: 10px;
-  font-weight: bold;
-  transition: background 0.2s ease;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 button:hover {
-  background: #1c6edb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .result-block {
-  background: #f4f9ff;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   margin-top: 40px;
-  padding: 25px;
+  padding: 24px;
   border-radius: 12px;
-  border: 1px solid #e0eaff;
+  border: 1px solid #bae6fd;
 }
 
 .employee-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
 .employee-card {
-  /* Убери width */
   min-height: 100px;
-  padding: 1rem;
-  border-radius: 14px;
+  padding: 24px;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .employee-card:hover {
-  transform: translateY(-2px);
-  transition: 0.2s ease;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
 }
 
 .employee-card .avatar {
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   border-radius: 50%;
   margin: 0 auto;
+  border: 3px solid #f3f4f6;
+  transition: all 0.2s ease;
+}
+
+.employee-card .avatar:hover {
+  transform: scale(1.05);
+  border-color: #3b82f6;
 }
 
 .employee-card .employee-name {
   text-align: center;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
 }
 
 .employee-card .team-name,
 .employee-card .disc-type-full {
   text-align: center;
-  font-size: 14px;
-  color: #444;
+  font-size: 13px;
+  color: #6b7280;
   margin: 0;
 }
 
 .disc-type-full strong {
-  color: #2c3e50;
+  color: #374151;
+  font-weight: 600;
 }
 
 .employee-card .delete-btn {
   position: absolute;
-  top: 6px;
-  right: 10px;
-  background: none;
+  top: 16px;
+  right: 16px;
+  background: #ef4444;
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  color: #e74c3c;
+  font-size: 14px;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.employee-card .delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
 }
 
 .employee-card.add-card {
   min-height: 240px;
-  background: #f3f3f3;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   justify-content: center;
   align-items: center;
   text-align: center;
   font-size: 18px;
-  font-weight: 500;
-  color: #666;
+  font-weight: 600;
+  color: #6b7280;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  border-radius: 14px;
-  padding: 1rem;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 2px dashed #d1d5db;
+  transition: all 0.2s ease;
+}
+
+.employee-card.add-card:hover {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #3b82f6;
 }
 
 .factors {
   display: flex;
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .factors .column {
   flex: 1;
-  background: #f9f9f9;
-  padding: 12px;
-  border-radius: 8px;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 10px;
   overflow: visible;
   max-height: none;
+  border: 1px solid #e5e7eb;
 }
 
 .factors h5 {
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 4px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
 }
 
 .factors ul {
-  padding-left: 1rem;
+  padding-left: 20px;
   margin: 0;
   font-size: 13px;
-  color: #444;
+  color: #4b5563;
   list-style: disc;
 }
 
 .factors li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  line-height: 1.5;
 }
 
 .manager-tips-block {
-  margin-top: 10px;
-  background: #f9f9f9;
-  padding: 12px;
-  border-radius: 8px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 16px;
+  border-radius: 10px;
   font-size: 13px;
+  border: 1px solid #fcd34d;
+  color: #92400e;
 }
 
 .manager-tips-block ul {
-  padding-left: 1.2rem;
+  padding-left: 20px;
   list-style-type: disc;
+  margin-top: 8px;
 }
 
 .manager-tips-block li {
   margin-bottom: 6px;
+  line-height: 1.6;
 }
 
 .manager-tips-block h3 {
-  margin-bottom: 10px;
-  font-size: 15px;
-  color: #222;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #78350f;
+  font-weight: 600;
 }
 
 .employee-card-footer {
-  margin-top: 1rem;
+  margin-top: 12px;
   display: flex;
   justify-content: center;
 }
 
 .update-btn {
   padding: 10px 20px;
-  background-color: #677be5;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: #fff;
-  font-weight: bold;
+  font-weight: 600;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .update-btn:hover {
-  background-color: #2c80c0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
 }
 
 .modal-overlay {
@@ -642,98 +698,123 @@ button:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 99;
+  z-index: 1000;
+  padding: 20px;
 }
 
 .modal-content {
   background: #fff;
-  padding: 30px;
-  border-radius: 16px;
-  width: 90%;
+  padding: 40px;
+  border-radius: 20px;
+  width: 100%;
   max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .modal-content h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
-  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #111827;
+  letter-spacing: -0.5px;
 }
 
 .modal-content label {
   display: block;
-  margin-top: 16px;
-  font-weight: bold;
-  color: #34495e;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
   font-size: 14px;
 }
 
 .modal-content textarea,
-.modal-content select {
-  width: 97%;
-  margin-top: 6px;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.modal-content select,
+.modal-content input {
+  width: 100%;
+  margin-top: 0;
+  padding: 12px 16px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
   resize: vertical;
   font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.modal-content textarea:focus,
+.modal-content select:focus,
+.modal-content input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Кнопки в модальном окне */
 .modal-actions {
-  margin-top: 24px;
+  margin-top: 32px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .modal-actions button {
-  flex: 1 1 auto;
-  padding: 10px 18px;
+  padding: 12px 24px;
   border: none;
   border-radius: 10px;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.25s ease-in-out;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .modal-actions button:first-child {
-  background: #2980b9;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .modal-actions button:first-child:hover {
-  background: #2471a3;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .modal-actions button:nth-child(2) {
-  background: #8e44ad;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .modal-actions button:nth-child(2):hover {
-  background: #732d91;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .modal-actions .modal-close {
-  background: #eee;
-  color: #333;
-  font-size: 18px;
-  padding: 8px 14px;
-  ;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 20px;
+  padding: 10px 16px;
+  min-width: 44px;
 }
 
 .modal-actions .modal-close:hover {
-  background: #ddd;
-  color: #000;
+  background: #e5e7eb;
+  color: #111827;
 }
 
 .avatar-modal {
@@ -741,33 +822,36 @@ button:hover {
 }
 
 .avatar-section {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .avatar-section h3 {
-  margin-bottom: 15px;
-  color: #2c3e50;
+  margin-bottom: 16px;
+  color: #111827;
   font-size: 18px;
+  font-weight: 600;
 }
 
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 15px;
+  gap: 16px;
 }
 
 .avatar-option {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   cursor: pointer;
   border: 3px solid transparent;
   transition: all 0.2s ease;
+  object-fit: cover;
 }
 
 .avatar-option:hover {
-  border-color: #677be5;
+  border-color: #3b82f6;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .employee-card .avatar {
@@ -782,28 +866,39 @@ button:hover {
 @media (max-width: 768px) {
   .motivation-container {
     margin: 20px 10px !important;
-    padding: 15px !important;
+    padding: 20px !important;
+  }
+  
+  h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
   }
   
   .employee-list {
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 16px;
   }
   
   .employee-card {
-    padding: 15px;
+    padding: 20px;
   }
   
   .factors {
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
   
   .modal-content {
-    width: 95% !important;
-    max-width: 95% !important;
-    padding: 20px 15px !important;
-    margin: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px 20px !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .modal-content h2 {
+    font-size: 22px;
+    margin-bottom: 24px;
   }
   
   .modal-content textarea,
@@ -811,7 +906,6 @@ button:hover {
   .modal-content input {
     width: 100% !important;
     font-size: 16px !important;
-    box-sizing: border-box !important;
   }
   
   .modal-actions {
@@ -826,18 +920,18 @@ button:hover {
   
   .avatar-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 12px;
   }
   
   .avatar-option {
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
   }
 }
 
 @media (max-width: 480px) {
   .employee-list {
-    gap: 10px;
+    gap: 12px;
   }
   
   .avatar-grid {

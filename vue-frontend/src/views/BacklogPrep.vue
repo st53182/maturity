@@ -135,97 +135,178 @@ export default {
 
 <style scoped>
 .prep-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
-  color: #5f6b7a;
-  margin-bottom: 16px;
+  color: #6b7280;
+  margin-bottom: 32px;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   font-weight: 600;
-  color: #2d3748;
+  color: #374151;
+  font-size: 14px;
 }
 
 label select,
 textarea {
-  padding: 10px 12px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
   font-size: 14px;
   resize: vertical;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+label select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .block {
-  margin-bottom: 12px;
+  margin-bottom: 24px;
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 12px 0 20px;
+  gap: 16px;
+  margin: 24px 0 32px;
 }
 
 .primary {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #fff;
   border: none;
-  padding: 12px 18px;
-  border-radius: 8px;
+  padding: 14px 28px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .error {
-  color: #c0392b;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .results {
   display: grid;
-  gap: 16px;
+  gap: 24px;
+  margin-top: 32px;
 }
 
 section {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 h3 {
-  margin: 0 0 8px;
-  font-size: 16px;
-  color: #1f2933;
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.3px;
 }
 
 ul {
   margin: 0;
-  padding-left: 18px;
-  color: #334e68;
+  padding-left: 24px;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+ul li {
+  margin-bottom: 8px;
 }
 
 .example {
   white-space: pre-wrap;
-  color: #334e68;
-  line-height: 1.5;
+  color: #374151;
+  line-height: 1.7;
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .prep-container {
+    margin: 20px 10px !important;
+    padding: 24px 20px !important;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .primary {
+    width: 100%;
+  }
 }
 </style>

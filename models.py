@@ -276,6 +276,8 @@ class Roadmap(db.Model):
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     access_token = db.Column(db.String(36), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=True)
+    quarter_start = db.Column(db.String(10), nullable=True)  # Формат: "2024-Q1"
+    sprints_per_quarter = db.Column(db.Integer, default=6)  # Количество спринтов в квартале
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

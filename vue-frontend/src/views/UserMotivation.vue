@@ -70,33 +70,88 @@
   <div class="modal-content">
 
 
-    <form @submit.prevent="submitMotivation" class="form-group">
+    <form @submit.prevent="submitMotivation" class="form-group modern-form">
 
-      <label>{{ $t('motivation.employeeName') }}:</label>
-      <input v-model="form.name" required />
+      <div class="input-wrapper">
+        <span class="input-icon">👤</span>
+        <input 
+          v-model="form.name" 
+          required 
+          class="modern-input"
+          :class="{ 'has-value': form.name }"
+        />
+        <label class="floating-label">{{ $t('motivation.employeeName') }}</label>
+      </div>
 
-      <label>{{ $t('motivation.role') }}:</label>
-      <input v-model="form.role" required />
+      <div class="input-wrapper">
+        <span class="input-icon">💼</span>
+        <input 
+          v-model="form.role" 
+          required 
+          class="modern-input"
+          :class="{ 'has-value': form.role }"
+        />
+        <label class="floating-label">{{ $t('motivation.role') }}</label>
+      </div>
 
-      <label>{{ $t('motivation.team') }} ({{ $t('common.select') }}):</label>
-<select v-model="form.team_id">
-  <option value="">— Без команды —</option>
-  <option v-for="team in teams" :key="team.id" :value="team.id">
-    {{ team.name }}
-  </option>
-</select>
+      <div class="input-wrapper">
+        <span class="input-icon">🏢</span>
+        <select 
+          v-model="form.team_id" 
+          class="modern-input modern-select"
+          :class="{ 'has-value': form.team_id }"
+        >
+          <option value=""></option>
+          <option v-for="team in teams" :key="team.id" :value="team.id">
+            {{ team.name }}
+          </option>
+        </select>
+        <label class="floating-label">{{ $t('motivation.team') }} ({{ $t('common.select') }})</label>
+      </div>
 
-      <label>1. Поведение в стрессовой ситуации</label>
-      <textarea v-model="form.stress" required></textarea>
+      <div class="input-wrapper textarea-wrapper">
+        <span class="input-icon">😰</span>
+        <textarea 
+          v-model="form.stress" 
+          required 
+          class="modern-input modern-textarea"
+          :class="{ 'has-value': form.stress }"
+        ></textarea>
+        <label class="floating-label">1. Поведение в стрессовой ситуации</label>
+      </div>
 
-      <label>2. Взаимодействие с другими</label>
-      <textarea v-model="form.communication" required></textarea>
+      <div class="input-wrapper textarea-wrapper">
+        <span class="input-icon">🤝</span>
+        <textarea 
+          v-model="form.communication" 
+          required 
+          class="modern-input modern-textarea"
+          :class="{ 'has-value': form.communication }"
+        ></textarea>
+        <label class="floating-label">2. Взаимодействие с другими</label>
+      </div>
 
-      <label>3. Особенности в работе</label>
-      <textarea v-model="form.behavior" required></textarea>
+      <div class="input-wrapper textarea-wrapper">
+        <span class="input-icon">⚡</span>
+        <textarea 
+          v-model="form.behavior" 
+          required 
+          class="modern-input modern-textarea"
+          :class="{ 'has-value': form.behavior }"
+        ></textarea>
+        <label class="floating-label">3. Особенности в работе</label>
+      </div>
 
-      <label>4. Реакции на критику и изменения</label>
-      <textarea v-model="form.feedback" required></textarea>
+      <div class="input-wrapper textarea-wrapper">
+        <span class="input-icon">💬</span>
+        <textarea 
+          v-model="form.feedback" 
+          required 
+          class="modern-input modern-textarea"
+          :class="{ 'has-value': form.feedback }"
+        ></textarea>
+        <label class="floating-label">4. Реакции на критику и изменения</label>
+      </div>
 <div class="modal-actions">
       <button
   @click="submitMotivation(false)"
@@ -727,71 +782,132 @@ button:hover {
   letter-spacing: -0.5px;
 }
 
-.modal-content label {
-  display: block;
-  margin-top: 24px;
-  margin-bottom: 10px;
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 15px;
-  letter-spacing: -0.2px;
+/* Modern Form Styles with Floating Labels */
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.modal-content label:first-of-type {
+.input-wrapper {
+  position: relative;
   margin-top: 0;
 }
 
-.modal-content textarea,
-.modal-content select,
-.modal-content input {
+.input-wrapper.textarea-wrapper {
+  margin-top: 0;
+}
+
+.input-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.textarea-wrapper .input-icon {
+  top: 24px;
+  transform: none;
+}
+
+.modern-input {
   width: 100%;
-  margin-top: 0;
-  padding: 14px 18px;
+  padding: 20px 18px 8px 52px;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  resize: vertical;
+  border-radius: 14px;
   font-size: 15px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
   box-sizing: border-box;
   color: #111827;
   line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.modal-content textarea::placeholder,
-.modal-content input::placeholder {
-  color: #9ca3af;
-  font-weight: 400;
+.modern-textarea {
+  padding-top: 32px;
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
 }
 
-.modal-content textarea:hover,
-.modal-content select:hover,
-.modal-content input:hover {
-  border-color: #cbd5e1;
-}
-
-.modal-content textarea:focus,
-.modal-content select:focus,
-.modal-content input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
-  background: #fafbff;
-}
-
-.modal-content select {
+.modern-select {
+  padding-right: 52px;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%236b7280' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  padding-right: 44px;
+  background-position: right 18px center;
 }
 
-.modal-content textarea {
-  min-height: 100px;
-  line-height: 1.6;
+.floating-label {
+  position: absolute;
+  left: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #9ca3af;
+  font-weight: 500;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  z-index: 1;
+}
+
+.textarea-wrapper .floating-label {
+  top: 32px;
+  transform: none;
+}
+
+.modern-input:focus,
+.modern-input.has-value {
+  padding-top: 20px;
+  padding-bottom: 8px;
+  border-color: #3b82f6;
+  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.modern-input:focus + .floating-label,
+.modern-input.has-value + .floating-label {
+  top: 12px;
+  left: 52px;
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 600;
+  transform: none;
+}
+
+.textarea-wrapper .modern-input:focus + .floating-label,
+.textarea-wrapper .modern-input.has-value + .floating-label {
+  top: 12px;
+  left: 52px;
+}
+
+.modern-input:hover:not(:focus) {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.modern-input:focus {
+  outline: none;
+}
+
+.modern-input:focus ~ .input-icon {
+  transform: translateY(-50%) scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.textarea-wrapper .modern-input:focus ~ .input-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
 /* Кнопки в модальном окне */

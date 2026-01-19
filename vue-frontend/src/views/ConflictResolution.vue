@@ -41,26 +41,68 @@
       <div class="modal-content">
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
         <h2>{{ form.id ? $t('conflicts.editConflict') : $t('conflicts.addConflict') }}</h2>
-        <label>{{ $t('conflicts.context') }}</label>
-        <textarea v-model="form.context" rows="3" placeholder="Опишите суть ситуации, как она возникла, чем детальнее тем лучше..."></textarea>
+        
+        <div class="modern-form">
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">📝</span>
+            <textarea 
+              v-model="form.context" 
+              rows="3" 
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.context }"
+            ></textarea>
+            <label class="floating-label">{{ $t('conflicts.context') }}</label>
+          </div>
 
-        <label>{{ $t('conflicts.participants') }}</label>
-        <select v-model="form.participants" multiple>
-          <option v-for="e in employees" :value="e.id" :key="e.id">{{ e.name }}</option>
-        </select>
+          <div class="input-wrapper">
+            <span class="input-icon">👥</span>
+            <select 
+              v-model="form.participants" 
+              multiple
+              class="modern-input modern-select"
+              :class="{ 'has-value': form.participants && form.participants.length > 0 }"
+            >
+              <option v-for="e in employees" :value="e.id" :key="e.id">{{ e.name }}</option>
+            </select>
+            <label class="floating-label">{{ $t('conflicts.participants') }}</label>
+          </div>
 
-        <label>{{ $t('conflicts.actionsTaken') }}</label>
-        <textarea v-model="form.actions_taken" rows="3" placeholder="Какие шаги уже были предприняты для разрешения?"></textarea>
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">🔄</span>
+            <textarea 
+              v-model="form.actions_taken" 
+              rows="3" 
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.actions_taken }"
+            ></textarea>
+            <label class="floating-label">{{ $t('conflicts.actionsTaken') }}</label>
+          </div>
 
-        <label>{{ $t('conflicts.goal') }}</label>
-        <textarea v-model="form.goal" rows="3" placeholder="Какого результата вы хотите достичь?"></textarea>
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">🎯</span>
+            <textarea 
+              v-model="form.goal" 
+              rows="3" 
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.goal }"
+            ></textarea>
+            <label class="floating-label">{{ $t('conflicts.goal') }}</label>
+          </div>
 
-        <label>{{ $t('conflicts.status') }}</label>
-        <select v-model="form.status">
-          <option value="Активен">{{ $t('conflicts.active') }}</option>
-          <option value="Закрыт">{{ $t('conflicts.resolved') }}</option>
-          <option value="Обострение">{{ $t('conflicts.active') }}</option>
-        </select>
+          <div class="input-wrapper">
+            <span class="input-icon">📊</span>
+            <select 
+              v-model="form.status"
+              class="modern-input modern-select"
+              :class="{ 'has-value': form.status }"
+            >
+              <option value="Активен">{{ $t('conflicts.active') }}</option>
+              <option value="Закрыт">{{ $t('conflicts.resolved') }}</option>
+              <option value="Обострение">{{ $t('conflicts.active') }}</option>
+            </select>
+            <label class="floating-label">{{ $t('conflicts.status') }}</label>
+          </div>
+        </div>
 
         <div class="modal-actions">
   <button class="generate-btn" @click="submitConflict" :disabled="loading">
@@ -550,73 +592,139 @@ h1 {
   letter-spacing: -0.5px;
 }
 
-.modal-content label {
-  display: block;
-  margin-top: 24px;
-  margin-bottom: 10px;
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 15px;
-  letter-spacing: -0.2px;
+/* Modern Form Styles with Floating Labels */
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.modal-content label:first-of-type {
+.input-wrapper {
+  position: relative;
   margin-top: 0;
 }
 
-.modal-content textarea,
-.modal-content select {
+.input-wrapper.textarea-wrapper {
+  margin-top: 0;
+}
+
+.input-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  z-index: 2;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.textarea-wrapper .input-icon {
+  top: 24px;
+  transform: none;
+}
+
+.modern-input {
   width: 100%;
-  margin-top: 0;
-  padding: 14px 18px;
+  padding: 20px 18px 8px 52px;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  resize: vertical;
+  border-radius: 14px;
   font-size: 15px;
-  box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+  box-sizing: border-box;
   color: #111827;
   line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.modal-content textarea::placeholder {
-  color: #9ca3af;
-  font-weight: 400;
-}
-
-.modal-content textarea:hover,
-.modal-content select:hover {
-  border-color: #cbd5e1;
-}
-
-.modal-content textarea:focus,
-.modal-content select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
-  background: #fafbff;
-}
-
-.modal-content select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  padding-right: 44px;
-}
-
-.modal-content textarea {
-  min-height: 100px;
+.modern-textarea {
+  padding-top: 32px;
+  min-height: 120px;
+  resize: vertical;
   line-height: 1.6;
 }
 
-.modal-content select[multiple] {
+.modern-select {
+  padding-right: 52px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%236b7280' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+}
+
+.modern-select[multiple] {
   background-image: none;
   padding-right: 18px;
   min-height: 120px;
+  padding-top: 32px;
+}
+
+.floating-label {
+  position: absolute;
+  left: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #9ca3af;
+  font-weight: 500;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  z-index: 1;
+}
+
+.textarea-wrapper .floating-label {
+  top: 32px;
+  transform: none;
+}
+
+.modern-input:focus,
+.modern-input.has-value {
+  padding-top: 20px;
+  padding-bottom: 8px;
+  border-color: #3b82f6;
+  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.modern-input:focus + .floating-label,
+.modern-input.has-value + .floating-label {
+  top: 12px;
+  left: 52px;
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 600;
+  transform: none;
+}
+
+.textarea-wrapper .modern-input:focus + .floating-label,
+.textarea-wrapper .modern-input.has-value + .floating-label {
+  top: 12px;
+  left: 52px;
+}
+
+.modern-input:hover:not(:focus) {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.modern-input:focus {
+  outline: none;
+}
+
+.modern-input:focus ~ .input-icon {
+  transform: translateY(-50%) scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.textarea-wrapper .modern-input:focus ~ .input-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
 /* Кнопки в модальном окне */

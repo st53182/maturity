@@ -15,7 +15,9 @@
     "vue": "^3.2.13",
     "vue-chartjs": "^5.3.2",
     "vue-i18n": "^9.14.5",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "socket.io-client": "^4.7.2",
+    "mxgraph": "^4.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

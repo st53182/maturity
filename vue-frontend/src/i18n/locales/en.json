@@ -8,6 +8,7 @@
     "disc": "DISC",
     "meetingDesign": "Meeting Design",
     "poker": "Planning Poker",
+    "backlogPrep": "Backlog Prep",
     "createTeam": "Create Team",
     "logout": "Logout"
   },
@@ -282,5 +283,23 @@
       "conflictResolution": "Conflict Resolution",
       "conflictDescription": "Identify team conflicts and get AI recommendations for resolution directly in the app — based on proven strategies and employee behavior analysis."
     }
+  },
+  "backlogPrep": {
+    "title": "Backlog Prep",
+    "subtitle": "Paste a story or epic description to get AI feedback on gaps.",
+    "workType": "Work type",
+    "story": "User story",
+    "epic": "Epic",
+    "language": "Response language",
+    "description": "Description",
+    "descriptionPlaceholder": "As a user I want ... so that ...",
+    "context": "Context or goal",
+    "contextPlaceholder": "Team, business goal, constraints, risks, etc.",
+    "run": "Check description",
+    "missingFields": "Missing pieces",
+    "questions": "Clarifying questions",
+    "suggestions": "Suggestions",
+    "improvedExample": "Improved example",
+    "validation": "Add a description before sending"
   }
 }

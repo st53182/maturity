@@ -21,8 +21,8 @@ const routes = [
   {path: '/surveys', name: 'Surveys', component: () => import('@/views/Surveys.vue'), meta: { requiresAuth: true }},
   {path: '/survey/:token', name: 'TakeSurvey', component: () => import('@/views/TakeSurvey.vue')},
   {path: '/survey/:surveyId/results', name: 'SurveyResults', component: () => import('@/views/SurveyResults.vue'), meta: { requiresAuth: true }},
-  {path: '/planning-poker/:roomId', name: 'PlanningPoker', component: () => import('@/views/PlanningPoker.vue')
-}
+  {path: '/planning-poker/:roomId', name: 'PlanningPoker', component: () => import('@/views/PlanningPoker.vue')},
+  {path: '/backlog-prep', name: 'BacklogPrep', component: () => import('@/views/BacklogPrep.vue'), meta: { requiresAuth: true }},
 
 ];
 

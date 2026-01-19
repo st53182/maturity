@@ -15,6 +15,7 @@ from planning_poker import planning_bp
 from disc_assessment import disc_bp
 from meeting_design import bp_meeting_design
 from surveys import surveys_bp
+from backlog_prep import bp_backlog_prep
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
@@ -66,6 +67,7 @@ app.register_blueprint(planning_bp, url_prefix="/api")
 app.register_blueprint(disc_bp, url_prefix="/api/disc")
 app.register_blueprint(bp_meeting_design)
 app.register_blueprint(surveys_bp, url_prefix="/api")
+app.register_blueprint(bp_backlog_prep)
 
 
 # 🎯 Отдача Vue SPA

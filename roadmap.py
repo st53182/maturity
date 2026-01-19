@@ -141,7 +141,7 @@ def get_roadmap(roadmap_id):
                 "position_x": item.position_x,
                 "position_y": item.position_y,
                 "team_id": item.team_id,
-                "metadata": item.metadata or {},
+                "metadata": item.item_metadata or {},
                 "created_at": item.created_at.isoformat(),
                 "updated_at": item.updated_at.isoformat()
             })
@@ -313,7 +313,7 @@ def verify_password_and_get_roadmap(access_token):
                 "position_x": item.position_x,
                 "position_y": item.position_y,
                 "team_id": item.team_id,
-                "metadata": item.metadata or {},
+                "metadata": item.item_metadata or {},
                 "created_at": item.created_at.isoformat(),
                 "updated_at": item.updated_at.isoformat()
             })
@@ -382,7 +382,7 @@ def create_item(roadmap_id):
             position_x=position_x,
             position_y=position_y,
             team_id=team_id,
-            metadata=metadata
+            item_metadata=metadata
         )
         
         db.session.add(item)
@@ -397,7 +397,7 @@ def create_item(roadmap_id):
             "position_x": item.position_x,
             "position_y": item.position_y,
             "team_id": item.team_id,
-            "metadata": item.metadata or {},
+            "metadata": item.item_metadata or {},
             "created_at": item.created_at.isoformat()
         }
         
@@ -444,7 +444,7 @@ def update_item(roadmap_id, item_id):
         if "team_id" in data:
             item.team_id = data["team_id"]
         if "metadata" in data:
-            item.metadata = data["metadata"]
+            item.item_metadata = data["metadata"]
         
         item.updated_at = datetime.utcnow()
         roadmap.updated_at = datetime.utcnow()
@@ -458,7 +458,7 @@ def update_item(roadmap_id, item_id):
             "position_x": item.position_x,
             "position_y": item.position_y,
             "team_id": item.team_id,
-            "metadata": item.metadata or {},
+            "metadata": item.item_metadata or {},
             "updated_at": item.updated_at.isoformat()
         }
         
@@ -741,7 +741,7 @@ def upload_image(roadmap_id):
                 position_x=position_x,
                 position_y=position_y,
                 team_id=team_id,
-                metadata={"source": "ai_image_parsing"}
+                item_metadata={"source": "ai_image_parsing"}
             )
             
             db.session.add(item)

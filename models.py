@@ -301,7 +301,7 @@ class RoadmapItem(db.Model):
     position_x = db.Column(db.Float, default=0.0)
     position_y = db.Column(db.Float, default=0.0)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
-    metadata = db.Column(JSON, nullable=True)  # Дополнительные данные
+    item_metadata = db.Column(JSON, nullable=True)  # Дополнительные данные
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

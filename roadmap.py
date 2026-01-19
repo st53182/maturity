@@ -73,16 +73,28 @@ def create_roadmap():
         db.session.add(access)
         db.session.commit()
         
+        try:
+            quarter_start = getattr(roadmap, 'quarter_start', None)
+            sprints_per_quarter = getattr(roadmap, 'sprints_per_quarter', None) or 6
+        except AttributeError:
+            quarter_start = None
+            sprints_per_quarter = 6
+        
         return jsonify({
             "id": roadmap.id,
             "name": roadmap.name,
             "creator_id": roadmap.creator_id,
+            "quarter_start": quarter_start,
+            "sprints_per_quarter": sprints_per_quarter,
             "created_at": roadmap.created_at.isoformat(),
             "access_token": roadmap.access_token
         }), 201
         
     except Exception as e:
         db.session.rollback()
+        import traceback
+        print(f"Ошибка создания карты: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @bp_roadmap.route("", methods=["GET"])
@@ -102,10 +114,20 @@ def list_roadmaps():
         
         result = []
         for roadmap in all_roadmaps:
+            try:
+                quarter_start = getattr(roadmap, 'quarter_start', None)
+                sprints_per_quarter = getattr(roadmap, 'sprints_per_quarter', None) or 6
+            except AttributeError:
+                # Если поля не существуют в БД (старые записи)
+                quarter_start = None
+                sprints_per_quarter = 6
+            
             result.append({
                 "id": roadmap.id,
                 "name": roadmap.name,
                 "creator_id": roadmap.creator_id,
+                "quarter_start": quarter_start,
+                "sprints_per_quarter": sprints_per_quarter,
                 "created_at": roadmap.created_at.isoformat(),
                 "updated_at": roadmap.updated_at.isoformat(),
                 "item_count": len(roadmap.items)
@@ -114,6 +136,9 @@ def list_roadmaps():
         return jsonify(result), 200
         
     except Exception as e:
+        import traceback
+        print(f"Ошибка загрузки списка карт: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @bp_roadmap.route("/<int:roadmap_id>", methods=["GET"])
@@ -158,12 +183,19 @@ def get_roadmap(roadmap_id):
                     "created_at": dep.created_at.isoformat()
                 })
         
+        try:
+            quarter_start = getattr(roadmap, 'quarter_start', None)
+            sprints_per_quarter = getattr(roadmap, 'sprints_per_quarter', None) or 6
+        except AttributeError:
+            quarter_start = None
+            sprints_per_quarter = 6
+        
         return jsonify({
             "id": roadmap.id,
             "name": roadmap.name,
             "creator_id": roadmap.creator_id,
-            "quarter_start": roadmap.quarter_start,
-            "sprints_per_quarter": roadmap.sprints_per_quarter,
+            "quarter_start": quarter_start,
+            "sprints_per_quarter": sprints_per_quarter,
             "created_at": roadmap.created_at.isoformat(),
             "updated_at": roadmap.updated_at.isoformat(),
             "items": items,
@@ -171,6 +203,9 @@ def get_roadmap(roadmap_id):
         }), 200
         
     except Exception as e:
+        import traceback
+        print(f"Ошибка загрузки карты: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @bp_roadmap.route("/<int:roadmap_id>", methods=["PUT"])
@@ -338,12 +373,19 @@ def verify_password_and_get_roadmap(access_token):
                     "created_at": dep.created_at.isoformat()
                 })
         
+        try:
+            quarter_start = getattr(roadmap, 'quarter_start', None)
+            sprints_per_quarter = getattr(roadmap, 'sprints_per_quarter', None) or 6
+        except AttributeError:
+            quarter_start = None
+            sprints_per_quarter = 6
+        
         return jsonify({
             "id": roadmap.id,
             "name": roadmap.name,
             "creator_id": roadmap.creator_id,
-            "quarter_start": roadmap.quarter_start,
-            "sprints_per_quarter": roadmap.sprints_per_quarter,
+            "quarter_start": quarter_start,
+            "sprints_per_quarter": sprints_per_quarter,
             "created_at": roadmap.created_at.isoformat(),
             "updated_at": roadmap.updated_at.isoformat(),
             "items": items,
@@ -351,6 +393,9 @@ def verify_password_and_get_roadmap(access_token):
         }), 200
         
     except Exception as e:
+        import traceback
+        print(f"Ошибка загрузки карты по токену: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 # ========== Roadmap Items CRUD ==========

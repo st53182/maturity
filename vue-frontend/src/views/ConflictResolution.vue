@@ -332,143 +332,186 @@ export default {
 <style scoped>
 /* Контейнер всей страницы */
 .conflict-container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 40px auto;
-  padding: 20px;
-  background: #f2f4f7;
-  border-radius: 14px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-  font-family: "Segoe UI", sans-serif;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
 /* Заголовок */
 h1 {
-  font-size: 26px;
-  margin-bottom: 20px;
-  color: #2c3e50;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
 }
 
 /* Панель фильтров */
 .filter-bar {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 32px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .filter-bar button {
-  background: #ecf0f1;
+  background: #f3f4f6;
   border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 500;
-  color: #34495e;
-  transition: 0.3s;
+  font-size: 14px;
+  color: #4b5563;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-.filter-bar button.active,
 .filter-bar button:hover {
-  background: #3498db;
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.filter-bar button.active {
+  background: #3b82f6;
   color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .add-btn {
-  background-color: #2ecc71 !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   color: white !important;
-  font-weight: bold;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4) !important;
 }
 
 /* Карточки */
 .conflict-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
 }
 
 .conflict-card {
-  background: #fdfdfd;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  gap: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .conflict-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
 }
 
 .conflict-card h3 {
   font-size: 18px;
-  color: #333;
-  margin-bottom: 8px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .conflict-card p {
   font-size: 14px;
-  color: #444;
-  margin: 6px 0 10px;
+  color: #6b7280;
+  margin: 0;
   line-height: 1.6;
 }
 
-.conflict-card p + p {
-  margin-top: 12px;
+.conflict-card p strong {
+  color: #374151;
+  font-weight: 600;
 }
 
-.conflict-card p strong {
+/* Статус badge */
+.conflict-card .status-badge {
   display: inline-block;
-  margin-top: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Блок рекомендаций */
-.recommendation-title {
-  font-weight: bold;
-  margin-top: 14px;
-  color: #e74c3c;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.recommendation-text {
-  background: #fcfcfc;
-  border-left: 3px solid #e67e22;
-  padding: 10px 12px;
+.summary-block {
+  background: #f9fafb;
+  border-left: 3px solid #3b82f6;
+  padding: 16px;
   border-radius: 8px;
   margin-top: 8px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333;
 }
 
-/* Кнопки */
+.summary-block strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.summary-block p {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Кнопки в карточке */
 .conflict-card button {
-  background: #3498db;
+  background: #3b82f6;
   color: white;
   border: none;
-  padding: 9px 16px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  margin-top: 8px;
 }
 
 .conflict-card button:hover {
-  background: #2b7bbd;
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .conflict-card .delete-btn {
-  background: #e74c3c;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #ef4444;
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 12px;
 }
 
 .conflict-card .delete-btn:hover {
-  background: #c0392b;
+  background: #dc2626;
 }
 
 /* Модальное окно */
@@ -478,124 +521,170 @@ h1 {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 99;
+  z-index: 1000;
+  padding: 20px;
 }
 
 .modal-content {
-  background: #fff;
-  padding: 30px;
-  border-radius: 16px;
-  width: 97%;
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 20px;
+  width: 100%;
   max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .modal-content h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
-  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  color: #111827;
+  letter-spacing: -0.5px;
 }
 
 .modal-content label {
   display: block;
-  margin-top: 16px;
-  font-weight: bold;
-  color: #34495e;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
   font-size: 14px;
 }
 
 .modal-content textarea,
 .modal-content select {
-  width: 97%;
-  margin-top: 6px;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  width: 100%;
+  margin-top: 0;
+  padding: 12px 16px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
   resize: vertical;
   font-size: 14px;
   box-sizing: border-box;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
 
+.modal-content textarea:focus,
+.modal-content select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Кнопки в модальном окне */
 .modal-actions {
-  margin-top: 24px;
+  margin-top: 32px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .modal-actions button {
-  flex: 1 1 auto;
-  padding: 10px 18px;
+  padding: 12px 24px;
   border: none;
   border-radius: 10px;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.25s ease-in-out;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-.modal-actions button:first-child {
-  background: #2980b9;
+.generate-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.modal-actions button:first-child:hover {
-  background: #2471a3;
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
-.modal-actions button:nth-child(2) {
-  background: #8e44ad;
+.generate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.modal-actions button:nth-child(2):hover {
-  background: #732d91;
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .modal-actions .modal-close {
-  background: #eee;
-  color: #333;
-  font-size: 18px;
-  padding: 8px 14px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 20px;
+  padding: 10px 16px;
+  min-width: 44px;
 }
 
 .modal-actions .modal-close:hover {
-  background: #ddd;
-  color: #000;
+  background: #e5e7eb;
+  color: #111827;
 }
 
 /* AI Анализ */
 .ai-analysis {
-  margin-top: 20px;
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 10px;
+  margin-top: 24px;
+  margin-bottom: 32px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 20px;
+  border-radius: 12px;
   font-size: 14px;
-  color: #333;
+  color: #1e40af;
+  border: 1px solid #bae6fd;
+  line-height: 1.7;
 }
 
 .ai-analysis ul {
   list-style: disc;
-  padding-left: 20px;
+  padding-left: 24px;
+  margin-top: 12px;
+}
+
+.ai-analysis li {
+  margin-bottom: 8px;
 }
 
 @media (max-width: 768px) {
   .conflict-container {
     margin: 20px 10px !important;
-    padding: 15px !important;
+    padding: 20px !important;
+  }
+  
+  h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
   }
   
   .filter-bar {
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
   }
   
@@ -606,25 +695,30 @@ h1 {
   
   .conflict-list {
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 16px;
   }
   
   .conflict-card {
-    padding: 15px;
+    padding: 20px;
   }
   
   .modal-content {
-    width: 95% !important;
-    max-width: 95% !important;
-    padding: 20px 15px !important;
-    margin: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px 20px !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .modal-content h2 {
+    font-size: 22px;
+    margin-bottom: 24px;
   }
   
   .modal-content textarea,
   .modal-content select {
     width: 100% !important;
     font-size: 16px !important;
-    box-sizing: border-box !important;
   }
   
   .modal-actions {

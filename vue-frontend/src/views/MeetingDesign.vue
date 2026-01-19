@@ -418,37 +418,42 @@ export default {
 <style scoped>
 .meeting-design-container {
   margin-left: 70px;
-  padding: 30px;
+  padding: 32px;
   width: calc(100% - 70px);
   box-sizing: border-box;
-  background: #f4f6f9;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
 h1 {
-  font-size: 30px;
-  color: #2c3e50;
-  font-weight: bold;
-  margin-bottom: 30px;
+  font-size: 32px;
+  color: #1a1a1a;
+  font-weight: 700;
+  margin-bottom: 32px;
+  letter-spacing: -0.5px;
 }
 
 .action-buttons {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .create-btn {
-  background: #2ecc71;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  padding: 12px 24px;
+  padding: 14px 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  transition: 0.3s;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .create-btn:hover {
-  background: #27ae60;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .no-designs {
@@ -466,26 +471,32 @@ h1 {
 
 .design-card {
   background: white;
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .design-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
 }
 
 .design-card h3 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-  font-size: 18px;
+  color: #111827;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
 }
 
 .design-card p {
-  margin: 8px 0;
-  color: #555;
-  line-height: 1.4;
+  margin: 10px 0;
+  color: #6b7280;
+  line-height: 1.6;
+  font-size: 14px;
 }
 
 .design-actions {
@@ -495,39 +506,48 @@ h1 {
 }
 
 .view-btn, .pdf-btn, .delete-btn {
-  padding: 8px 12px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  transition: 0.3s;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .view-btn {
-  background: #3498db;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .view-btn:hover {
-  background: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .pdf-btn {
-  background: #e67e22;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 .pdf-btn:hover {
-  background: #d35400;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
 }
 
 .delete-btn {
-  background: #e74c3c;
+  background: #ef4444;
   color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 .delete-btn:hover {
-  background: #c0392b;
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .modal-overlay {
@@ -537,19 +557,22 @@ h1 {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal {
   background: white;
-  border-radius: 15px;
-  padding: 30px;
+  border-radius: 20px;
+  padding: 40px;
   max-width: 90%;
   max-height: 90%;
   overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .create-modal {
@@ -590,22 +613,27 @@ h1 {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: bold;
-  color: #2c3e50;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
 }
 
 .form-input, .form-select, .form-textarea {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
   font-size: 14px;
-  transition: border-color 0.3s;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background: #ffffff;
+  box-sizing: border-box;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .constraint-labels {
@@ -644,11 +672,18 @@ h1 {
 }
 
 .block-card {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-left: 4px solid #3498db;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border-left: 4px solid #3b82f6;
+  border: 1px solid #e5e7eb;
+  border-left-width: 4px;
+  transition: all 0.2s ease;
+}
+
+.block-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .block-header {
@@ -707,34 +742,40 @@ h1 {
 .confirm-btn, .cancel-btn, .save-btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  transition: 0.3s;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .confirm-btn, .save-btn {
-  background: #2ecc71;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.confirm-btn:hover, .save-btn:hover {
-  background: #27ae60;
+.confirm-btn:hover:not(:disabled), .save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .confirm-btn:disabled, .save-btn:disabled {
-  background: #95a5a6;
+  background: #9ca3af;
   cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
 }
 
 .cancel-btn {
-  background: #e74c3c;
-  color: white;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .cancel-btn:hover {
-  background: #c0392b;
+  background: #e5e7eb;
+  color: #111827;
 }
 
 .loading, .error {

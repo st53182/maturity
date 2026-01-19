@@ -374,6 +374,12 @@ def create_item(roadmap_id):
         if item_type not in ["epic", "story"]:
             return jsonify({"error": "Тип должен быть 'epic' или 'story'"}), 400
         
+        # Проверяем существование команды, если указана
+        if team_id:
+            team = Team.query.get(team_id)
+            if not team:
+                return jsonify({"error": f"Команда с ID {team_id} не найдена"}), 400
+        
         item = RoadmapItem(
             roadmap_id=roadmap_id,
             type=item_type,
@@ -381,7 +387,7 @@ def create_item(roadmap_id):
             description=description,
             position_x=position_x,
             position_y=position_y,
-            team_id=team_id,
+            team_id=team_id if team_id else None,
             item_metadata=metadata
         )
         
@@ -408,6 +414,9 @@ def create_item(roadmap_id):
         
     except Exception as e:
         db.session.rollback()
+        import traceback
+        print(f"Ошибка создания элемента: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @bp_roadmap.route("/<int:roadmap_id>/item/<int:item_id>", methods=["PUT"])

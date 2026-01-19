@@ -316,6 +316,8 @@ export default {
 
       this.graph.addListener(mxEvent.CELL_MOVED, (sender, evt) => {
         const cell = evt.getProperty('cell');
+        if (!cell) return;
+        
         const geometry = cell.getGeometry();
         if (geometry && cell.vertex && cell.id) {
           this.updateItemPosition(parseInt(cell.id), geometry.x, geometry.y);

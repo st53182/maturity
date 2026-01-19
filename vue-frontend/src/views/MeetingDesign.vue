@@ -612,28 +612,56 @@ h1 {
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-weight: 600;
-  color: #374151;
-  font-size: 14px;
+  color: #1f2937;
+  font-size: 15px;
+  letter-spacing: -0.2px;
 }
 
 .form-input, .form-select, .form-textarea {
   width: 100%;
-  padding: 12px 16px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  font-family: inherit;
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
   background: #ffffff;
   box-sizing: border-box;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.form-input:hover, .form-select:hover, .form-textarea:hover {
+  border-color: #cbd5e1;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 44px;
+}
+
+.form-textarea {
+  min-height: 100px;
+  line-height: 1.6;
 }
 
 .constraint-labels {

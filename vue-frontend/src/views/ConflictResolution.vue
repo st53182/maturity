@@ -552,33 +552,71 @@ h1 {
 
 .modal-content label {
   display: block;
-  margin-top: 20px;
-  margin-bottom: 8px;
+  margin-top: 24px;
+  margin-bottom: 10px;
   font-weight: 600;
-  color: #374151;
-  font-size: 14px;
+  color: #1f2937;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+}
+
+.modal-content label:first-of-type {
+  margin-top: 0;
 }
 
 .modal-content textarea,
 .modal-content select {
   width: 100%;
   margin-top: 0;
-  padding: 12px 16px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 10px;
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
   resize: vertical;
-  font-size: 14px;
+  font-size: 15px;
   box-sizing: border-box;
-  font-family: inherit;
-  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background: #ffffff;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.modal-content textarea::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.modal-content textarea:hover,
+.modal-content select:hover {
+  border-color: #cbd5e1;
 }
 
 .modal-content textarea:focus,
 .modal-content select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
+}
+
+.modal-content select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 44px;
+}
+
+.modal-content textarea {
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.modal-content select[multiple] {
+  background-image: none;
+  padding-right: 18px;
+  min-height: 120px;
 }
 
 /* Кнопки в модальном окне */

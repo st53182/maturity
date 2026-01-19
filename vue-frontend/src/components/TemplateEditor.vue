@@ -230,10 +230,35 @@ export default {
 
 .template-input, .question-text {
   width: 100%;
-  padding: 0.5rem;
+  padding: 14px 18px;
   margin-bottom: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.template-input::placeholder,
+.question-text::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.template-input:hover,
+.question-text:hover {
+  border-color: #cbd5e1;
+}
+
+.template-input:focus,
+.question-text:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
 }
 
 .questions-editor {
@@ -255,9 +280,30 @@ export default {
 }
 
 .question-type {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 14px 44px 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+.question-type:hover {
+  border-color: #cbd5e1;
+}
+
+.question-type:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
 }
 
 .remove-btn, .remove-option-btn {
@@ -295,9 +341,37 @@ export default {
 
 .option-item input, .matrix-row input, .matrix-col input {
   flex: 1;
-  padding: 0.25rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.option-item input::placeholder,
+.matrix-row input::placeholder,
+.matrix-col input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.option-item input:hover,
+.matrix-row input:hover,
+.matrix-col input:hover {
+  border-color: #cbd5e1;
+}
+
+.option-item input:focus,
+.matrix-row input:focus,
+.matrix-col input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
 }
 
 .scale-editor label {
@@ -307,9 +381,26 @@ export default {
 
 .scale-editor input {
   width: 80px;
-  padding: 0.25rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.scale-editor input:hover {
+  border-color: #cbd5e1;
+}
+
+.scale-editor input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
 }
 
 .modal-buttons {

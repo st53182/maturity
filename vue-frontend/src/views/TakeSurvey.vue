@@ -296,11 +296,41 @@ export default {
 
 .text-input, .textarea-input {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
   margin-top: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  color: #111827;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.text-input::placeholder,
+.textarea-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.text-input:hover,
+.textarea-input:hover {
+  border-color: #cbd5e1;
+}
+
+.text-input:focus,
+.textarea-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  background: #fafbff;
+}
+
+.textarea-input {
+  min-height: 100px;
+  line-height: 1.6;
 }
 
 .radio-options {

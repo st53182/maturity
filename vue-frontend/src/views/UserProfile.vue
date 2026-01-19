@@ -224,36 +224,54 @@ export default {
 
 label {
   font-weight: 600;
-  margin-top: 16px;
-  margin-bottom: 8px;
+  margin-top: 20px;
+  margin-bottom: 10px;
   display: block;
-  color: #374151;
-  font-size: 14px;
+  color: #1f2937;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+}
+
+label:first-of-type {
+  margin-top: 0;
 }
 
 input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 18px;
   margin-top: 0;
-  margin-bottom: 16px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  font-family: inherit;
+  margin-bottom: 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
   background: #ffffff;
   box-sizing: border-box;
+  color: #111827;
+  line-height: 1.5;
+}
+
+input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+input:hover {
+  border-color: #cbd5e1;
 }
 
 input:focus {
   outline: none;
   border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12), 0 2px 8px rgba(139, 92, 246, 0.08);
+  background: #faf5ff;
 }
 
 input[readonly] {
   background: #f9fafb;
   color: #6b7280;
+  cursor: not-allowed;
 }
 
 hr {

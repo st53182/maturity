@@ -162,6 +162,8 @@ def get_roadmap(roadmap_id):
             "id": roadmap.id,
             "name": roadmap.name,
             "creator_id": roadmap.creator_id,
+            "quarter_start": roadmap.quarter_start,
+            "sprints_per_quarter": roadmap.sprints_per_quarter,
             "created_at": roadmap.created_at.isoformat(),
             "updated_at": roadmap.updated_at.isoformat(),
             "items": items,
@@ -188,6 +190,10 @@ def update_roadmap(roadmap_id):
         data = request.get_json() or {}
         if "name" in data:
             roadmap.name = data["name"].strip()
+        if "quarter_start" in data:
+            roadmap.quarter_start = data["quarter_start"]
+        if "sprints_per_quarter" in data:
+            roadmap.sprints_per_quarter = data["sprints_per_quarter"]
         
         roadmap.updated_at = datetime.utcnow()
         db.session.commit()
@@ -195,6 +201,8 @@ def update_roadmap(roadmap_id):
         return jsonify({
             "id": roadmap.id,
             "name": roadmap.name,
+            "quarter_start": roadmap.quarter_start,
+            "sprints_per_quarter": roadmap.sprints_per_quarter,
             "updated_at": roadmap.updated_at.isoformat()
         }), 200
         
@@ -334,6 +342,8 @@ def verify_password_and_get_roadmap(access_token):
             "id": roadmap.id,
             "name": roadmap.name,
             "creator_id": roadmap.creator_id,
+            "quarter_start": roadmap.quarter_start,
+            "sprints_per_quarter": roadmap.sprints_per_quarter,
             "created_at": roadmap.created_at.isoformat(),
             "updated_at": roadmap.updated_at.isoformat(),
             "items": items,
@@ -451,7 +461,14 @@ def update_item(roadmap_id, item_id):
         if "position_y" in data:
             item.position_y = float(data["position_y"])
         if "team_id" in data:
-            item.team_id = data["team_id"]
+            team_id = data["team_id"]
+            if team_id:
+                team = Team.query.get(team_id)
+                if not team:
+                    return jsonify({"error": f"Команда с ID {team_id} не найдена"}), 400
+                item.team_id = team_id
+            else:
+                item.team_id = None
         if "metadata" in data:
             item.item_metadata = data["metadata"]
         
@@ -478,6 +495,9 @@ def update_item(roadmap_id, item_id):
         
     except Exception as e:
         db.session.rollback()
+        import traceback
+        print(f"Ошибка обновления элемента: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @bp_roadmap.route("/<int:roadmap_id>/item/<int:item_id>", methods=["DELETE"])

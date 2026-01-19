@@ -3,6 +3,7 @@
     <div class="roadmap-header">
       <h1>{{ roadmapName || 'Дорожная карта зависимостей' }}</h1>
       <div class="header-actions">
+        <button @click="showSettingsModal = true" class="settings-btn">⚙️ Настройки</button>
         <button @click="showShareModal = true" class="share-btn">🔗 Поделиться</button>
         <button @click="showItemModal = true" class="add-btn">➕ Добавить элемент</button>
         <button @click="showImageUpload = true" class="upload-btn">📷 Загрузить изображение</button>
@@ -105,6 +106,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Модальное окно настроек -->
+    <div v-if="showSettingsModal" class="modal-overlay" @click.self="showSettingsModal = false">
+      <div class="modal-content">
+        <h2>Настройки дорожной карты</h2>
+        <div class="form-group">
+          <label>Начало квартала:</label>
+          <input type="text" v-model="quarterStart" placeholder="2024-Q1" />
+        </div>
+        <div class="form-group">
+          <label>Количество спринтов в квартале:</label>
+          <input type="number" v-model.number="sprintsPerQuarter" min="1" max="12" />
+        </div>
+        <div class="modal-actions">
+          <button @click="saveSettings" class="save-btn">Сохранить</button>
+          <button @click="showSettingsModal = false" class="cancel-btn">Отмена</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -127,6 +147,7 @@ export default {
       showItemModal: false,
       showShareModal: false,
       showImageUpload: false,
+      showSettingsModal: false,
       editingItem: null,
       itemForm: {
         type: "",
@@ -138,7 +159,9 @@ export default {
       shareLink: "",
       socket: null,
       uploading: false,
-      savePositionTimeout: null
+      savePositionTimeout: null,
+      quarterStart: "",
+      sprintsPerQuarter: 6
     };
   },
     async mounted() {
@@ -188,6 +211,8 @@ export default {
         this.roadmapName = data.name;
         this.items = data.items || [];
         this.dependencies = data.dependencies || [];
+        this.quarterStart = data.quarter_start || "";
+        this.sprintsPerQuarter = data.sprints_per_quarter || 6;
         this.renderGraph();
       } catch (error) {
         console.error("Ошибка загрузки карты:", error);
@@ -213,12 +238,16 @@ export default {
           this.roadmapName = data.name;
           this.items = data.items || [];
           this.dependencies = data.dependencies || [];
+          this.quarterStart = data.quarter_start || "";
+          this.sprintsPerQuarter = data.sprints_per_quarter || 6;
         } else {
           const { data } = await axios.post(`/api/roadmap/shared/${accessToken}/access`, {});
           this.roadmapId = data.id;
           this.roadmapName = data.name;
           this.items = data.items || [];
           this.dependencies = data.dependencies || [];
+          this.quarterStart = data.quarter_start || "";
+          this.sprintsPerQuarter = data.sprints_per_quarter || 6;
         }
         
         this.renderGraph();
@@ -306,11 +335,18 @@ export default {
 
       // Обработчики событий
       this.graph.addListener(mxEvent.CELL_CONNECTED, (sender, evt) => {
+        const edge = evt.getProperty('edge');
         const source = evt.getProperty('source');
         const target = evt.getProperty('target');
         
-        if (source && target && source.id && target.id) {
-          this.createDependency(parseInt(source.id), parseInt(target.id));
+        if (edge && source && target && source.id && target.id) {
+          // Проверяем, что это не существующая зависимость
+          const existingDep = this.dependencies.find(d => 
+            d.from_item_id === parseInt(source.id) && d.to_item_id === parseInt(target.id)
+          );
+          if (!existingDep) {
+            this.createDependency(parseInt(source.id), parseInt(target.id));
+          }
         }
       });
 
@@ -343,6 +379,13 @@ export default {
           this.graph.removeCells(cells);
         }
 
+      const parent = this.graph.getDefaultParent();
+
+        // Рисуем кварталы и спринты, если настроены
+        if (this.quarterStart && this.sprintsPerQuarter > 0) {
+          this.renderQuartersAndSprints(parent);
+        }
+
         // Создаем вершины для элементов
         const vertexMap = {};
         this.items.forEach(item => {
@@ -351,7 +394,7 @@ export default {
             : 'fillColor=#E3F2FD;strokeColor=#1976D2;rounded=1;';
           
           const vertex = this.graph.insertVertex(
-            this.graph.getDefaultParent(),
+            parent,
             String(item.id),
             `${item.type === 'epic' ? '📦' : '📋'} ${item.title}`,
             item.position_x || 100,
@@ -369,7 +412,7 @@ export default {
           const target = vertexMap[dep.to_item_id];
           if (source && target) {
             this.graph.insertEdge(
-              this.graph.getDefaultParent(),
+              parent,
               String(dep.id),
               this.getDependencyLabel(dep.dependency_type),
               source,
@@ -380,6 +423,56 @@ export default {
         });
       } finally {
         model.endUpdate();
+      }
+    },
+    renderQuartersAndSprints(parent) {
+      if (!this.quarterStart || !this.sprintsPerQuarter) return;
+
+      const quarterWidth = 800;
+      const sprintWidth = quarterWidth / this.sprintsPerQuarter;
+      const rowHeight = 150;
+      const startY = 50;
+      const startX = 50;
+
+      // Парсим квартал (формат: "2024-Q1")
+      const match = this.quarterStart.match(/(\d{4})-Q(\d)/);
+      if (!match) return;
+
+      const year = parseInt(match[1]);
+      const startQuarter = parseInt(match[2]);
+
+      // Рисуем 4 квартала
+      for (let q = 0; q < 4; q++) {
+        const quarterNum = ((startQuarter - 1 + q) % 4) + 1;
+        const currentYear = year + Math.floor((startQuarter - 1 + q) / 4);
+        const quarterX = startX + q * (quarterWidth + 50);
+        
+        // Фон квартала
+        this.graph.insertVertex(
+          parent,
+          `quarter-${q}`,
+          `Q${quarterNum} ${currentYear}`,
+          quarterX,
+          startY,
+          quarterWidth,
+          rowHeight * 2,
+          `fillColor=#F5F5F5;strokeColor=#CCCCCC;strokeWidth=2;rounded=1;fontSize=16;fontStyle=1;`
+        );
+
+        // Рисуем спринты внутри квартала
+        for (let s = 0; s < this.sprintsPerQuarter; s++) {
+          const sprintX = quarterX + s * sprintWidth;
+          this.graph.insertVertex(
+            parent,
+            `sprint-${q}-${s}`,
+            `Sprint ${s + 1}`,
+            sprintX,
+            startY + rowHeight,
+            sprintWidth - 10,
+            rowHeight - 20,
+            `fillColor=#FFFFFF;strokeColor=#E0E0E0;strokeWidth=1;rounded=1;fontSize=12;`
+          );
+        }
       }
     },
     getDependencyLabel(type) {
@@ -503,6 +596,28 @@ export default {
       } catch (error) {
         console.error("Ошибка создания зависимости:", error);
         alert("Ошибка создания зависимости. Убедитесь, что у вас есть права на редактирование.");
+      }
+    },
+    async saveSettings() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Требуется авторизация");
+          return;
+        }
+        
+        await axios.put(`/api/roadmap/${this.roadmapId}`, {
+          quarter_start: this.quarterStart,
+          sprints_per_quarter: this.sprintsPerQuarter
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        this.showSettingsModal = false;
+        this.renderGraph(); // Перерисовываем граф с новыми настройками
+      } catch (error) {
+        console.error("Ошибка сохранения настроек:", error);
+        alert("Ошибка сохранения настроек");
       }
     },
     async createShareLink() {
@@ -686,13 +801,18 @@ export default {
   gap: 12px;
 }
 
-.share-btn, .add-btn, .upload-btn {
+.share-btn, .add-btn, .upload-btn, .settings-btn {
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s;
+}
+
+.settings-btn {
+  background: #9E9E9E;
+  color: white;
 }
 
 .share-btn {
@@ -773,6 +893,35 @@ export default {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+}
+
+.save-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.cancel-btn {
+  background: #9E9E9E;
+  color: white;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .save-btn {

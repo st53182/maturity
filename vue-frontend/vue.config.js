@@ -1,6 +1,8 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   transpileDependencies: true,
+  outputDir: '../static',
+  parallel: false, // Отключаем параллельную обработку для избежания проблем с thread-loader на Windows
   devServer: {
     proxy: {
       '/api': {

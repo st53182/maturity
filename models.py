@@ -333,3 +333,41 @@ class RoadmapAccess(db.Model):
     user = db.relationship('User', backref=db.backref('roadmap_accesses', lazy=True))
     
     __table_args__ = (db.UniqueConstraint('roadmap_id', 'user_id', name='unique_roadmap_access'),)
+
+class SystemThinkingIceberg(db.Model):
+    """Модель для айсберга системного мышления"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Уровни айсберга
+    event = db.Column(db.Text, nullable=True)  # Событие
+    pattern = db.Column(db.Text, nullable=True)  # Паттерн поведения
+    system_structure = db.Column(db.Text, nullable=True)  # Системная структура
+    mental_model = db.Column(db.Text, nullable=True)  # Ментальная модель
+    experience = db.Column(db.Text, nullable=True)  # Опыт
+    
+    # Решения
+    solutions = db.Column(JSON, nullable=True)  # Массив решений на трех уровнях
+    
+    # Статус заполнения
+    current_level = db.Column(db.String(50), default='event')  # event, pattern, system_structure, mental_model, experience, completed
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('system_thinking_icebergs', lazy=True))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'event': self.event,
+            'pattern': self.pattern,
+            'system_structure': self.system_structure,
+            'mental_model': self.mental_model,
+            'experience': self.experience,
+            'solutions': self.solutions,
+            'current_level': self.current_level,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

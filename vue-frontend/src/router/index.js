@@ -26,6 +26,7 @@ const routes = [
   {path: '/roadmap', name: 'RoadmapList', component: () => import('@/views/RoadmapList.vue'), meta: { requiresAuth: true }},
   {path: '/roadmap/:id', name: 'DependencyRoadmap', component: () => import('@/views/DependencyRoadmap.vue'), meta: { requiresAuth: true }},
   {path: '/roadmap/shared/:token', name: 'SharedRoadmap', component: () => import('@/views/DependencyRoadmap.vue')},
+  {path: '/system-thinking', name: 'SystemThinking', component: () => import('@/views/SystemThinkingIceberg.vue'), meta: { requiresAuth: true }},
 
 ];
 

@@ -41,12 +41,12 @@
                     :required="currentQuestion.required"></textarea>
           
           <div v-if="currentQuestion.type === 'radio'" class="radio-options">
-            <label v-for="option in currentQuestion.options" :key="option" class="radio-label">
+            <label v-for="option in currentQuestion.options" :key="typeof option === 'object' ? option.value : option" class="radio-label">
               <input type="radio" 
-                     :value="option" 
+                     :value="typeof option === 'object' ? option.value : option" 
                      v-model="answers[currentQuestion.id]"
                      :required="currentQuestion.required" />
-              <span>{{ option }}</span>
+              <span>{{ typeof option === 'object' ? option.text : option }}</span>
             </label>
           </div>
           
@@ -69,20 +69,21 @@
           <div v-if="currentQuestion.type === 'matrix'" class="matrix-rating">
             <div class="matrix-header">
               <div class="matrix-scale-labels">
-                <span v-for="label in currentQuestion.scale" :key="label" class="scale-label">
-                  {{ label }}
+                <span class="empty-cell"></span>
+                <span v-for="(label, idx) in (currentQuestion.columns || currentQuestion.scale || [])" :key="idx" class="scale-label">
+                  {{ typeof label === 'object' ? label.text : label }}
                 </span>
               </div>
             </div>
             
-            <div v-for="row in currentQuestion.rows" :key="row" class="matrix-row">
-              <div class="row-label">{{ row }}</div>
+            <div v-for="(row, rowIdx) in (currentQuestion.rows || [])" :key="rowIdx" class="matrix-row">
+              <div class="row-label">{{ typeof row === 'object' ? row.text : row }}</div>
               <div class="row-options">
-                <label v-for="(label, index) in currentQuestion.scale" :key="index" class="matrix-option">
+                <label v-for="(label, colIdx) in (currentQuestion.columns || currentQuestion.scale || [])" :key="colIdx" class="matrix-option">
                   <input type="radio" 
-                         :name="`matrix_${currentQuestion.id}_${row}`"
-                         :value="label"
-                         v-model="matrixAnswers[currentQuestion.id][row]" />
+                         :name="`matrix_${currentQuestion.id}_${rowIdx}`"
+                         :value="typeof label === 'object' ? label.value : label"
+                         v-model="matrixAnswers[currentQuestion.id][typeof row === 'object' ? row.value : row]" />
                   <span class="radio-custom"></span>
                 </label>
               </div>
@@ -241,9 +242,13 @@ export default {
 
 <style scoped>
 .take-survey-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
 .survey-header {
@@ -288,10 +293,25 @@ export default {
 
 .question {
   background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
+  padding: 32px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 32px;
+  transition: all 0.2s ease;
+}
+
+.question:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.question h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 24px;
+  line-height: 1.5;
 }
 
 .text-input, .textarea-input {
@@ -397,20 +417,33 @@ export default {
 
 .matrix-scale-labels {
   display: grid;
-  grid-template-columns: minmax(150px, 200px) repeat(5, minmax(60px, 1fr));
+  grid-template-columns: minmax(150px, 200px) repeat(auto-fit, minmax(80px, 1fr));
   gap: 10px;
   font-size: 12px;
   font-weight: bold;
   text-align: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.empty-cell {
+  /* Пустая ячейка для выравнивания */
 }
 
 .matrix-row {
   display: grid;
-  grid-template-columns: minmax(150px, 200px) repeat(5, minmax(60px, 1fr));
+  grid-template-columns: minmax(150px, 200px) repeat(auto-fit, minmax(80px, 1fr));
   gap: 10px;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s ease;
+}
+
+.matrix-row:hover {
+  background: #f9fafb;
+  border-radius: 8px;
 }
 
 @media (max-width: 768px) {
@@ -457,13 +490,15 @@ export default {
 }
 
 .nav-btn {
-  padding: 12px 24px;
+  padding: 14px 28px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .prev-btn {
@@ -481,14 +516,10 @@ export default {
   color: white;
 }
 
-.nav-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
 .nav-btn:disabled {
-  background: #bdc3c7;
+  background: #d1d5db;
   cursor: not-allowed;
+  opacity: 0.6;
   transform: none;
   box-shadow: none;
 }

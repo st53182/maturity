@@ -180,6 +180,9 @@ def submit_survey_response(access_token):
     if survey.status != 'active':
         return jsonify({'error': 'Survey is not active'}), 400
     
+    if invitation and invitation.responded_at:
+        return jsonify({'error': 'You have already responded to this survey'}), 400
+    
     data = request.get_json()
     answers = data.get('answers')
     respondent_name = data.get('respondent_name')

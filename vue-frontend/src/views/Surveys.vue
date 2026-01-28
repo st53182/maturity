@@ -847,10 +847,11 @@ h2 {
 }
 
 .create-survey-btn:disabled {
-  background: #9ca3af;
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
+  box-shadow: none;
 }
 
 .surveys-grid {
@@ -1004,22 +1005,23 @@ h2 {
 }
 
 .edit-template-btn {
-  background: #6b7280;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   color: white;
   border: none;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   margin-left: 12px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   transition: all 0.2s ease;
   font-family: inherit;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
 }
 
 .edit-template-btn:hover {
-  background: #4b5563;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
 }
 
 .optional-selection {
@@ -1127,28 +1129,37 @@ h2 {
 .save-btn, .cancel-btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: inherit;
+  min-width: 120px;
 }
 
 .save-btn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-}
-
-.cancel-btn {
-  background: #f3f4f6;
-  color: #374151;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .save-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.cancel-btn {
+  background: #ffffff;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .cancel-btn:hover {
-  background: #e5e7eb;
+  background: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

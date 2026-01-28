@@ -1,27 +1,46 @@
 <template>
-  <div class="modal-overlay" v-if="show">
+  <div class="modal-overlay" v-if="show" @click.self="$emit('close')">
     <div class="modal question-preview">
-      <h2>Предпросмотр вопросов: {{ surveyTitle }}</h2>
+      <div class="modal-header">
+        <h2>Предпросмотр опросника</h2>
+        <button @click="$emit('close')" class="close-btn">✖</button>
+      </div>
+      
+      <div class="survey-title-section">
+        <h3>{{ surveyTitle }}</h3>
+        <span class="survey-type-badge">{{ surveyType.toUpperCase() }}</span>
+      </div>
       
       <div class="questions-list">
         <div v-for="(question, index) in questions" :key="index" class="question-item">
           <div class="question-header">
             <span class="question-number">{{ index + 1 }}.</span>
-            <span class="question-text">{{ question.question }}</span>
+            <div class="question-content">
+              <span class="question-text">{{ question.question }}</span>
+              <span v-if="question.required" class="required-badge">Обязательный</span>
+            </div>
             <span class="question-type">{{ getQuestionTypeLabel(question.type) }}</span>
           </div>
           
           <div v-if="question.options" class="question-options">
-            <span v-for="option in question.options" :key="option.value" class="option-tag">
-              {{ option.text }}
+            <span v-for="option in question.options" :key="option.value || option" class="option-tag">
+              {{ typeof option === 'object' ? option.text : option }}
             </span>
           </div>
           
           <div v-if="question.type === 'matrix'" class="matrix-preview">
-            <div class="matrix-rows">
-              <span v-for="row in question.rows" :key="row.value" class="row-tag">
-                {{ row.text }}
-              </span>
+            <div class="matrix-info">
+              <div class="matrix-rows">
+                <div v-for="(row, idx) in (question.rows || [])" :key="idx" class="row-item">
+                  {{ typeof row === 'object' ? row.text : row }}
+                </div>
+              </div>
+              <div class="matrix-scale">
+                <span class="scale-label">Шкала оценки:</span>
+                <span v-for="(col, idx) in (question.columns || question.scale || [])" :key="idx" class="scale-item">
+                  {{ typeof col === 'object' ? col.text : col }}
+                </span>
+              </div>
             </div>
           </div>
           
@@ -31,10 +50,15 @@
         </div>
       </div>
       
-      <div class="modal-buttons">
-        <button @click="editQuestions" class="edit-btn">Редактировать вопросы</button>
-        <button @click="confirmCreate" class="confirm-btn">Создать опросник</button>
-        <button @click="$emit('close')" class="cancel-btn">Отмена</button>
+      <div class="modal-footer">
+        <div class="footer-info">
+          <span>Всего вопросов: {{ questions.length }}</span>
+        </div>
+        <div class="modal-buttons">
+          <button @click="editQuestions" class="edit-btn">✏️ Редактировать вопросы</button>
+          <button @click="confirmCreate" class="confirm-btn">✅ Создать опросник</button>
+          <button @click="$emit('close')" class="cancel-btn">Отмена</button>
+        </div>
       </div>
     </div>
   </div>
@@ -77,131 +101,325 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal {
   background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
 }
 
 .question-preview {
-  max-width: 800px;
-  max-height: 80vh;
-  overflow-y: auto;
+  max-width: 900px;
+  width: 100%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.survey-title-section {
+  padding: 20px 32px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.survey-title-section h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.survey-type-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .questions-list {
-  margin: 20px 0;
+  padding: 24px 32px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .question-item {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
-  background: #f9f9f9;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.question-item:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .question-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .question-number {
-  font-weight: bold;
-  color: #3498db;
-  min-width: 30px;
+  font-weight: 700;
+  color: #3b82f6;
+  min-width: 32px;
+  font-size: 16px;
+}
+
+.question-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .question-text {
-  flex: 1;
   font-weight: 500;
+  font-size: 15px;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.required-badge {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  align-self: flex-start;
 }
 
 .question-type {
-  background: #ecf0f1;
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: #f3f4f6;
+  padding: 4px 12px;
+  border-radius: 8px;
   font-size: 12px;
-  color: #666;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.question-options, .matrix-preview {
-  margin-top: 10px;
+.question-options {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.option-tag, .row-tag {
+.option-tag {
   display: inline-block;
-  background: #f8f9fa;
-  padding: 2px 6px;
-  margin: 2px;
-  border-radius: 3px;
+  background: #f0f9ff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+}
+
+.matrix-preview {
+  margin-top: 12px;
+}
+
+.matrix-info {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.matrix-rows {
+  margin-bottom: 12px;
+}
+
+.row-item {
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.matrix-scale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.scale-label {
+  font-weight: 600;
   font-size: 12px;
-  border: 1px solid #dee2e6;
+  color: #6b7280;
+  margin-right: 8px;
+}
+
+.scale-item {
+  background: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
 }
 
 .scale-preview {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .scale-info {
-  font-size: 12px;
-  color: #666;
-  background: #e9ecef;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-size: 13px;
+  color: #4b5563;
+  background: #f0f9ff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  display: inline-block;
+}
+
+.modal-footer {
+  padding: 20px 32px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-info {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .modal-buttons {
   display: flex;
-  gap: 15px;
-  justify-content: flex-end;
-  margin-top: 30px;
+  gap: 12px;
 }
 
 .edit-btn, .confirm-btn, .cancel-btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  min-width: 140px;
 }
 
 .edit-btn {
-  background: #6c757d;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
 }
 
 .edit-btn:hover {
-  background: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
 }
 
 .confirm-btn {
-  background: #2ecc71;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .confirm-btn:hover {
-  background: #27ae60;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .cancel-btn {
-  background: #95a5a6;
-  color: white;
+  background: #ffffff;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .cancel-btn:hover {
-  background: #7f8c8d;
+  background: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .modal {
+    max-height: 95vh;
+  }
+  
+  .modal-header, .survey-title-section, .questions-list, .modal-footer {
+    padding: 16px 20px;
+  }
+  
+  .modal-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .edit-btn, .confirm-btn, .cancel-btn {
+    width: 100%;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
 }
 </style>

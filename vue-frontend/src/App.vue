@@ -25,58 +25,60 @@
           EN
         </button>
       </div>
-      <button class="sidebar-btn" @click="$router.push('/profile')">
-        <span>👤</span>
-        <small>{{ $t('nav.profile') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/dashboard')">
-        <span>🏠</span>
-        <small>{{ $t('nav.dashboard') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/survey')">
-        <span>📝</span>
-        <small>{{ $t('nav.survey') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/conflicts')">
-        <span>🤝</span>
-        <small>{{ $t('nav.conflicts') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/motivation')">
-        <span>🧠</span>
-        <small>{{ $t('nav.motivation') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/meeting-design')">
-        <span>🎯</span>
-        <small>{{ $t('meetingDesign.title') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/backlog-prep')">
-        <span>🧭</span>
-        <small>{{ $t('nav.backlogPrep') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/roadmap')">
-        <span>🗺️</span>
-        <small>{{ $t('nav.roadmap') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/system-thinking')">
-        <span>🧊</span>
-        <small>Айсберг системного мышления</small>
-      </button>
-      <button class="sidebar-btn" @click="$router.push('/surveys')">
-        <span>📋</span>
-        <small>{{ $t('nav.surveys') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
-        <span>♠️</span>
-        <small>{{ $t('nav.poker') }}</small>
-      </button>
-      <button class="sidebar-btn" @click="showTeamModal = true">
-        <span style="color: white;">➕</span>
-        <small>{{ $t('dashboard.createTeam') }}</small>
-      </button>
-      <button class="sidebar-btn logout" @click="logout">
-        <span>🚪</span>
-        <small>{{ $t('nav.logout') }}</small>
-      </button>
+      <div class="sidebar-buttons-container">
+        <button class="sidebar-btn" @click="$router.push('/profile')">
+          <span>👤</span>
+          <small>{{ $t('nav.profile') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/dashboard')">
+          <span>🏠</span>
+          <small>{{ $t('nav.dashboard') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/survey')">
+          <span>📝</span>
+          <small>{{ $t('nav.survey') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/conflicts')">
+          <span>🤝</span>
+          <small>{{ $t('nav.conflicts') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/motivation')">
+          <span>🧠</span>
+          <small>{{ $t('nav.motivation') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/meeting-design')">
+          <span>🎯</span>
+          <small>{{ $t('meetingDesign.title') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/backlog-prep')">
+          <span>🧭</span>
+          <small>{{ $t('nav.backlogPrep') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/roadmap')">
+          <span>🗺️</span>
+          <small>{{ $t('nav.roadmap') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/system-thinking')">
+          <span>🧊</span>
+          <small>Айсберг системного мышления</small>
+        </button>
+        <button class="sidebar-btn" @click="$router.push('/surveys')">
+          <span>📋</span>
+          <small>{{ $t('nav.surveys') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
+          <span>♠️</span>
+          <small>{{ $t('nav.poker') }}</small>
+        </button>
+        <button class="sidebar-btn" @click="showTeamModal = true">
+          <span style="color: white;">➕</span>
+          <small>{{ $t('dashboard.createTeam') }}</small>
+        </button>
+        <button class="sidebar-btn logout" @click="logout">
+          <span>🚪</span>
+          <small>{{ $t('nav.logout') }}</small>
+        </button>
+      </div>
     </aside>
 
     <!-- Mobile Navigation Menu -->
@@ -323,30 +325,50 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  gap: 15px;
+  overflow: hidden;
+}
+
+.modern-sidebar .language-switcher {
+  flex-shrink: 0;
+  padding: 20px 0 15px 0;
+}
+
+.modern-sidebar .sidebar-buttons-container {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 0 0 15px 0;
+}
+
+.modern-sidebar .sidebar-btn.logout {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-bottom: 20px;
 }
 
 /* Стили для скроллбара в sidebar */
-.modern-sidebar::-webkit-scrollbar {
+.modern-sidebar .sidebar-buttons-container::-webkit-scrollbar {
   width: 4px;
 }
 
-.modern-sidebar::-webkit-scrollbar-track {
+.modern-sidebar .sidebar-buttons-container::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 
-.modern-sidebar::-webkit-scrollbar-thumb {
+.modern-sidebar .sidebar-buttons-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
 }
 
-.modern-sidebar::-webkit-scrollbar-thumb:hover {
+.modern-sidebar .sidebar-buttons-container::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
@@ -424,21 +446,7 @@ export default {
 }
 
 .sidebar-btn.logout {
-  margin-top: auto;
   color: #ffcccc;
-}
-
-/* Контейнер для кнопок sidebar с прокруткой */
-.modern-sidebar {
-  position: relative;
-}
-
-.modern-sidebar > .language-switcher {
-  flex-shrink: 0;
-}
-
-.modern-sidebar > .sidebar-btn {
-  flex-shrink: 0;
 }
 .main-content, .results-container {
   margin-left: 70px; /* равен ширине sidebar */

@@ -73,7 +73,7 @@
         <span style="color: white;">➕</span>
         <small>{{ $t('dashboard.createTeam') }}</small>
       </button>
-      <button class="sidebar-btn" @click="logout">
+      <button class="sidebar-btn logout" @click="logout">
         <span>🚪</span>
         <small>{{ $t('nav.logout') }}</small>
       </button>
@@ -327,6 +327,27 @@ export default {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   z-index: 1000;
   gap: 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Стили для скроллбара в sidebar */
+.modern-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modern-sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .language-switcher {
@@ -405,6 +426,19 @@ export default {
 .sidebar-btn.logout {
   margin-top: auto;
   color: #ffcccc;
+}
+
+/* Контейнер для кнопок sidebar с прокруткой */
+.modern-sidebar {
+  position: relative;
+}
+
+.modern-sidebar > .language-switcher {
+  flex-shrink: 0;
+}
+
+.modern-sidebar > .sidebar-btn {
+  flex-shrink: 0;
 }
 .main-content, .results-container {
   margin-left: 70px; /* равен ширине sidebar */

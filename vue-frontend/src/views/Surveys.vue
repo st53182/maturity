@@ -89,34 +89,60 @@
     </div>
     
     <div class="existing-surveys">
-      <h2>Мои опросники</h2>
+      <div class="surveys-header">
+        <h2>Мои опросники</h2>
+        <div class="filter-controls">
+          <select v-model="statusFilter" class="status-filter">
+            <option value="">Все статусы</option>
+            <option value="draft">Черновик</option>
+            <option value="active">Активные</option>
+            <option value="closed">Закрытые</option>
+          </select>
+        </div>
+      </div>
       
       <div v-if="loading" class="loading">⏳ Загрузка...</div>
       
-      <div v-else-if="surveys.length === 0" class="no-surveys">
-        Нет созданных опросников
+      <div v-else-if="filteredSurveys.length === 0" class="no-surveys">
+        Нет опросников
       </div>
       
       <div v-else class="surveys-grid">
-        <div v-for="survey in surveys" :key="survey.id" class="survey-card">
+        <div v-for="survey in filteredSurveys" :key="survey.id" class="survey-card">
           <div class="survey-header">
             <h3>{{ survey.title }}</h3>
-            <span class="survey-type">{{ survey.survey_type.toUpperCase() }}</span>
+            <div class="survey-badges">
+              <span class="survey-type">{{ survey.survey_type.toUpperCase() }}</span>
+              <span class="survey-status" :class="survey.status">
+                {{ getStatusLabel(survey.status) }}
+              </span>
+            </div>
           </div>
           
-          <div class="survey-stats">
-            <span>{{ $t('surveys.responses') }}: {{ survey.response_count }}</span>
-            <span class="survey-status" :class="survey.status">
-              {{ $t(`surveys.surveyStatus.${survey.status}`) }}
-            </span>
+          <div class="survey-info">
+            <div class="survey-stats">
+              <span>📊 {{ $t('surveys.responses') }}: <strong>{{ survey.response_count }}</strong></span>
+              <span v-if="survey.created_at" class="survey-date">
+                📅 Создан: {{ formatDate(survey.created_at) }}
+              </span>
+              <span v-if="survey.deadline" class="survey-deadline">
+                ⏰ Дедлайн: {{ formatDate(survey.deadline) }}
+              </span>
+            </div>
           </div>
           
           <div class="survey-actions">
-            <button @click="viewResults(survey.id)" class="view-results-btn">
+            <button @click="viewResults(survey.id)" class="view-results-btn" :disabled="survey.response_count === 0">
               📊 {{ $t('surveys.analytics') }}
+            </button>
+            <button @click="editSurvey(survey)" class="edit-survey-btn">
+              ✏️ Редактировать
             </button>
             <button @click="copySurveyLink(survey)" class="copy-link-btn">
               🔗 {{ $t('surveys.copyLink') }}
+            </button>
+            <button @click="toggleSurveyStatus(survey)" class="toggle-status-btn" :class="survey.status">
+              {{ survey.status === 'active' ? '⏸️ Остановить' : '▶️ Активировать' }}
             </button>
             <button @click="confirmDeleteSurvey(survey)" class="delete-survey-btn">
               🗑️ Удалить
@@ -143,6 +169,40 @@
       @close="showQuestionPreview = false"
       @edit-questions="openTemplateEditor"
       @confirm-create="confirmCreateSurvey" />
+    
+    <!-- Edit Survey Modal -->
+    <div v-if="showEditModal && editingSurvey" class="modal-overlay" @click.self="closeEditModal">
+      <div class="modal-content edit-modal">
+        <h2>Редактировать опросник</h2>
+        <div class="edit-form">
+          <div class="form-group">
+            <label>Название:</label>
+            <input v-model="editingSurvey.title" class="survey-input" />
+          </div>
+          <div class="form-group">
+            <label>Статус:</label>
+            <select v-model="editingSurvey.status" class="survey-select">
+              <option value="draft">Черновик</option>
+              <option value="active">Активен</option>
+              <option value="closed">Закрыт</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Дедлайн (необязательно):</label>
+            <input 
+              type="datetime-local" 
+              v-model="editingSurvey.deadline" 
+              class="survey-input"
+              :value="editingSurvey.deadline ? new Date(editingSurvey.deadline).toISOString().slice(0, 16) : ''"
+            />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button @click="saveSurveyChanges" class="save-btn">Сохранить</button>
+          <button @click="closeEditModal" class="cancel-btn">Отмена</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -174,7 +234,10 @@ export default {
       showTemplateEditor: false,
       editingTemplate: null,
       showQuestionPreview: false,
-      previewQuestions: []
+      previewQuestions: [],
+      statusFilter: '',
+      editingSurvey: null,
+      showEditModal: false
     }
   },
   
@@ -193,7 +256,11 @@ export default {
   canDeleteSelectedTemplate() {
     return !!(this.currentTemplate && !this.currentTemplate.is_default)
   },
-
+    
+    filteredSurveys() {
+      if (!this.statusFilter) return this.surveys
+      return this.surveys.filter(s => s.status === this.statusFilter)
+    }
   },
   
   async mounted() {
@@ -568,6 +635,75 @@ export default {
       } catch (error) {
         console.error('Error copying link:', error)
       }
+    },
+    
+    editSurvey(survey) {
+      this.editingSurvey = { ...survey }
+      this.showEditModal = true
+    },
+    
+    async saveSurveyChanges() {
+      try {
+        const token = localStorage.getItem('token')
+        await axios.put(`/api/surveys/${this.editingSurvey.id}`, {
+          title: this.editingSurvey.title,
+          status: this.editingSurvey.status,
+          deadline: this.editingSurvey.deadline || null
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        await this.fetchSurveys()
+        this.showEditModal = false
+        this.editingSurvey = null
+        alert('Опросник обновлен!')
+      } catch (error) {
+        console.error('Error updating survey:', error)
+        alert('Ошибка обновления опросника')
+      }
+    },
+    
+    async toggleSurveyStatus(survey) {
+      try {
+        const token = localStorage.getItem('token')
+        const newStatus = survey.status === 'active' ? 'closed' : 'active'
+        
+        await axios.put(`/api/surveys/${survey.id}`, {
+          status: newStatus
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        await this.fetchSurveys()
+        alert(`Опросник ${newStatus === 'active' ? 'активирован' : 'остановлен'}!`)
+      } catch (error) {
+        console.error('Error toggling survey status:', error)
+        alert('Ошибка изменения статуса')
+      }
+    },
+    
+    getStatusLabel(status) {
+      const labels = {
+        'draft': 'Черновик',
+        'active': 'Активен',
+        'closed': 'Закрыт'
+      }
+      return labels[status] || status
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    },
+    
+    closeEditModal() {
+      this.showEditModal = false
+      this.editingSurvey = null
     }
   }
 }
@@ -763,17 +899,44 @@ h2 {
   letter-spacing: 0.5px;
 }
 
+.survey-info {
+  margin-bottom: 16px;
+}
+
 .survey-stats {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 8px;
   font-size: 13px;
   color: #6b7280;
 }
 
-.survey-status.active {
-  color: #10b981;
+.survey-date, .survey-deadline {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.survey-status {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 600;
+  text-transform: uppercase;
+}
+
+.survey-status.draft {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.survey-status.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.survey-status.closed {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .survey-actions {
@@ -900,8 +1063,92 @@ h2 {
     flex-direction: column;
   }
   
-  .view-results-btn, .copy-link-btn, .delete-survey-btn {
+  .view-results-btn, .copy-link-btn, .delete-survey-btn, .edit-survey-btn, .toggle-status-btn {
     width: 100%;
   }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.edit-modal {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.edit-modal h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 24px;
+  color: #111827;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.cancel-btn:hover {
+  background: #e5e7eb;
 }
 </style>

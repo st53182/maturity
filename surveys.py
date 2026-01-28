@@ -55,7 +55,7 @@ def get_surveys():
             'survey_type': survey.survey_type,
             'status': survey.status,
             'response_count': response_count,
-            'created_at': survey.created_at.isoformat(),
+            'created_at': survey.created_at.isoformat() if survey.created_at else None,
             'deadline': survey.deadline.isoformat() if survey.deadline else None,
             'access_token': survey.access_token
         })
@@ -494,6 +494,42 @@ def delete_survey_template(template_id):
     db.session.delete(template)
     db.session.commit()
     return jsonify({'message': 'Template deleted successfully'})
+
+@surveys_bp.route('/surveys/<int:survey_id>', methods=['PUT'])
+@jwt_required()
+def update_survey(survey_id):
+    try:
+        user_id = get_jwt_identity()
+        survey = Survey.query.filter_by(id=survey_id, creator_id=user_id).first()
+        
+        if not survey:
+            return jsonify({'error': 'Survey not found'}), 404
+        
+        data = request.get_json() or {}
+        
+        if 'title' in data:
+            survey.title = data['title']
+        
+        if 'status' in data:
+            if data['status'] in ['draft', 'active', 'closed']:
+                survey.status = data['status']
+        
+        if 'deadline' in data:
+            if data['deadline']:
+                survey.deadline = datetime.fromisoformat(data['deadline'])
+            else:
+                survey.deadline = None
+        
+        db.session.commit()
+        return jsonify({
+            'id': survey.id,
+            'title': survey.title,
+            'status': survey.status,
+            'deadline': survey.deadline.isoformat() if survey.deadline else None
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update survey: {str(e)}'}), 500
 
 @surveys_bp.route('/surveys/<int:survey_id>', methods=['DELETE'])
 @jwt_required()

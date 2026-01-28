@@ -152,7 +152,10 @@
 
         <!-- Решения -->
         <div v-if="currentIceberg.solutions && currentIceberg.solutions.length > 0" class="solutions-block">
-          <h3>💡 Решения</h3>
+          <div class="solutions-header">
+            <h3>💡 Решения</h3>
+            <button class="modal-close" @click="showIcebergModal = false">✖</button>
+          </div>
           <div
             v-for="(solution, index) in currentIceberg.solutions"
             :key="index"
@@ -814,11 +817,30 @@ h1 {
   border: 2px solid #10b981;
 }
 
-.solutions-block h3 {
+.solutions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.solutions-header h3 {
   font-size: 20px;
   font-weight: 700;
   color: #059669;
-  margin-bottom: 20px;
+  margin: 0;
+}
+
+.solutions-header .modal-close {
+  background: #10b981;
+  color: white;
+  font-size: 18px;
+  padding: 8px 14px;
+  min-width: auto;
+}
+
+.solutions-header .modal-close:hover {
+  background: #059669;
 }
 
 .solution-card {

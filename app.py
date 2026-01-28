@@ -17,6 +17,7 @@ from meeting_design import bp_meeting_design
 from surveys import surveys_bp
 from backlog_prep import bp_backlog_prep
 from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
+from system_thinking import bp_system_thinking
 from flask_socketio import SocketIO
 
 app = Flask(__name__, static_folder="static")
@@ -76,6 +77,7 @@ app.register_blueprint(bp_meeting_design)
 app.register_blueprint(surveys_bp, url_prefix="/api")
 app.register_blueprint(bp_backlog_prep)
 app.register_blueprint(bp_roadmap)
+app.register_blueprint(bp_system_thinking)
 
 
 # 🎯 Отдача Vue SPA

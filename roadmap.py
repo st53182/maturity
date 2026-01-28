@@ -42,6 +42,12 @@ def _check_roadmap_access(roadmap: Roadmap, user_id: int, require_edit: bool = F
     
     return True
 
+def _broadcast_to_roadmap(roadmap_id: int, event: str, data: dict):
+    """Отправка события через WebSocket всем пользователям, подключенным к дорожной карте"""
+    if socketio:
+        room = f"roadmap_{roadmap_id}"
+        socketio.emit(event, data, room=room)
+
 # ========== Roadmap CRUD ==========
 
 @bp_roadmap.route("", methods=["POST"])
@@ -104,36 +110,66 @@ def list_roadmaps():
     try:
         user_id = int(get_jwt_identity())
         
+        # Проверяем, существуют ли новые колонки в БД
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        columns = [col['name'] for col in inspector.get_columns('roadmap')]
+        has_quarter_start = 'quarter_start' in columns
+        has_sprints_per_quarter = 'sprints_per_quarter' in columns
+        
         # Получаем карты, где пользователь создатель или имеет доступ
-        created_roadmaps = Roadmap.query.filter_by(creator_id=user_id).all()
-        accessed_roadmaps = db.session.query(Roadmap).join(RoadmapAccess).filter(
-            RoadmapAccess.user_id == user_id
-        ).all()
-        
-        all_roadmaps = list(set(created_roadmaps + accessed_roadmaps))
-        
-        result = []
-        for roadmap in all_roadmaps:
-            try:
-                quarter_start = getattr(roadmap, 'quarter_start', None)
-                sprints_per_quarter = getattr(roadmap, 'sprints_per_quarter', None) or 6
-            except AttributeError:
-                # Если поля не существуют в БД (старые записи)
-                quarter_start = None
-                sprints_per_quarter = 6
+        # Используем raw SQL, если колонок нет
+        if not has_quarter_start or not has_sprints_per_quarter:
+            # Используем raw SQL запрос без новых колонок
+            result = db.session.execute(text("""
+                SELECT r.id, r.name, r.creator_id, r.created_at, r.updated_at,
+                       COUNT(ri.id) as item_count
+                FROM roadmap r
+                LEFT JOIN roadmap_item ri ON ri.roadmap_id = r.id
+                WHERE r.creator_id = :user_id
+                   OR r.id IN (
+                       SELECT roadmap_id FROM roadmap_access WHERE user_id = :user_id
+                   )
+                GROUP BY r.id, r.name, r.creator_id, r.created_at, r.updated_at
+            """), {"user_id": user_id})
             
-            result.append({
-                "id": roadmap.id,
-                "name": roadmap.name,
-                "creator_id": roadmap.creator_id,
-                "quarter_start": quarter_start,
-                "sprints_per_quarter": sprints_per_quarter,
-                "created_at": roadmap.created_at.isoformat(),
-                "updated_at": roadmap.updated_at.isoformat(),
-                "item_count": len(roadmap.items)
-            })
-        
-        return jsonify(result), 200
+            roadmaps_list = []
+            for row in result:
+                roadmaps_list.append({
+                    "id": row.id,
+                    "name": row.name,
+                    "creator_id": row.creator_id,
+                    "quarter_start": None,
+                    "sprints_per_quarter": 6,
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                    "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                    "item_count": row.item_count or 0
+                })
+            
+            return jsonify(roadmaps_list), 200
+        else:
+            # Используем обычный ORM запрос
+            created_roadmaps = Roadmap.query.filter_by(creator_id=user_id).all()
+            accessed_roadmaps = db.session.query(Roadmap).join(RoadmapAccess).filter(
+                RoadmapAccess.user_id == user_id
+            ).all()
+            
+            all_roadmaps = list(set(created_roadmaps + accessed_roadmaps))
+            
+            result = []
+            for roadmap in all_roadmaps:
+                result.append({
+                    "id": roadmap.id,
+                    "name": roadmap.name,
+                    "creator_id": roadmap.creator_id,
+                    "quarter_start": roadmap.quarter_start,
+                    "sprints_per_quarter": roadmap.sprints_per_quarter or 6,
+                    "created_at": roadmap.created_at.isoformat(),
+                    "updated_at": roadmap.updated_at.isoformat(),
+                    "item_count": len(roadmap.items)
+                })
+            
+            return jsonify(result), 200
         
     except Exception as e:
         import traceback

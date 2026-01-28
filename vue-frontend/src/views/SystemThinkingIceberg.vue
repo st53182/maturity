@@ -112,7 +112,7 @@
         <div v-if="currentQuestion && currentIceberg.current_level !== 'completed'" class="question-block">
           <div class="question-text">{{ currentQuestion }}</div>
           
-          <div v-if="suggestions.length > 0" class="suggestions-block">
+          <div v-if="suggestions && suggestions.length > 0" class="suggestions-block">
             <p class="suggestions-title">💡 Предложения:</p>
             <div class="suggestions-list">
               <button
@@ -124,6 +124,10 @@
                 {{ suggestion }}
               </button>
             </div>
+          </div>
+          
+          <div v-if="loading && !suggestions.length" class="loading-suggestions">
+            ⏳ Генерируем предложения...
           </div>
 
           <div class="input-wrapper textarea-wrapper">
@@ -279,12 +283,15 @@ export default {
         if (res.ok) {
           const data = await res.json();
           this.currentQuestion = data.question || data.next_question;
-          this.suggestions = data.suggestions || [];
+          this.suggestions = (data.suggestions && Array.isArray(data.suggestions)) ? data.suggestions : [];
           
           // Если получен следующий вопрос, обновляем айсберг
           if (data.iceberg) {
             this.currentIceberg = data.iceberg;
           }
+        } else {
+          const error = await res.json();
+          console.error("Ошибка получения вопроса:", error);
         }
       } catch (err) {
         console.error(err);
@@ -315,10 +322,16 @@ export default {
             this.currentIceberg.solutions = data.solutions;
             this.currentIceberg.current_level = "completed";
             this.currentQuestion = "";
+            this.suggestions = [];
+          } else if (data.suggestions && data.suggestions.length > 0) {
+            // Если получены предложения (пользователь написал "не знаю")
+            this.suggestions = data.suggestions;
+            this.currentQuestion = data.question || this.currentQuestion;
+            // Не очищаем currentAnswer, чтобы пользователь мог выбрать предложение или написать свой ответ
           } else {
-            // Обновляем текущий вопрос
+            // Обновляем текущий вопрос после сохранения ответа
             this.currentQuestion = data.next_question || data.question;
-            this.suggestions = data.suggestions || [];
+            this.suggestions = [];
             this.currentAnswer = "";
             
             // Обновляем айсберг

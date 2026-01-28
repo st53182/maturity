@@ -93,7 +93,22 @@ def ask_question(iceberg_id):
         return jsonify({"error": "Все уровни уже заполнены"}), 400
     
     # Если пользователь ответил "не знаю" или похожее, предлагаем варианты
-    if user_response.lower() in ["не знаю", "не знаю", "не знаю.", "не знаю!", "не знаю?", "нет", "нет идей"]:
+    user_response_lower = user_response.lower().strip()
+    dont_know_phrases = [
+        "не знаю", "незнаю", "не знаю.", "не знаю!", "не знаю?", "не знаю,", 
+        "нет", "нет идей", "не понимаю", "не могу ответить", "не знаю что ответить",
+        "не знаю что сказать", "затрудняюсь ответить", "не могу придумать"
+    ]
+    
+    # Проверяем различные варианты "не знаю"
+    is_dont_know = (
+        user_response_lower in dont_know_phrases or 
+        "не знаю" in user_response_lower or
+        user_response_lower.startswith("не знаю") or
+        (len(user_response_lower) <= 15 and any(phrase in user_response_lower for phrase in ["не знаю", "незнаю", "не понимаю"]))
+    )
+    
+    if is_dont_know:
         # Генерируем варианты через AI
         context_parts = []
         if iceberg.event:
@@ -105,7 +120,7 @@ def ask_question(iceberg_id):
         if iceberg.mental_model:
             context_parts.append(f"Ментальная модель: {iceberg.mental_model}")
         
-        context = "\n".join(context_parts)
+        context = "\n".join(context_parts) if context_parts else "Пользователь только начал работу над айсбергом."
         
         prompt = f"""
 Ты эксперт по системному мышлению. Пользователь работает над построением айсберга системного мышления.
@@ -115,7 +130,7 @@ def ask_question(iceberg_id):
 Текущий вопрос: {current_config['question']}
 
 Пользователь ответил "не знаю". Предложи 3-5 конкретных вариантов ответа на этот вопрос, которые могут помочь пользователю. 
-Ответ должен быть в формате JSON массива строк, например: ["вариант 1", "вариант 2", "вариант 3"]
+Ответ должен быть в формате JSON объекта с ключом "suggestions" и массивом строк, например: {{"suggestions": ["вариант 1", "вариант 2", "вариант 3"]}}
 """
         
         try:
@@ -133,21 +148,22 @@ def ask_question(iceberg_id):
             ai_response = json.loads(response.choices[0].message.content)
             suggestions = ai_response.get("suggestions", [])
             
-            if isinstance(suggestions, list):
-                return jsonify({
-                    "suggestions": suggestions,
-                    "question": current_config['question'],
-                    "level": iceberg.current_level
-                })
-            else:
-                # Если формат не тот, пытаемся извлечь массив
-                suggestions = list(ai_response.values())[0] if ai_response else []
-                return jsonify({
-                    "suggestions": suggestions if isinstance(suggestions, list) else [],
-                    "question": current_config['question'],
-                    "level": iceberg.current_level
-                })
+            # Если suggestions не список, пытаемся найти массив в ответе
+            if not isinstance(suggestions, list):
+                for value in ai_response.values():
+                    if isinstance(value, list):
+                        suggestions = value
+                        break
+            
+            return jsonify({
+                "suggestions": suggestions if isinstance(suggestions, list) and len(suggestions) > 0 else [],
+                "question": current_config['question'],
+                "level": iceberg.current_level,
+                "message": "Вот несколько вариантов, которые могут помочь:"
+            })
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return jsonify({"error": f"Ошибка генерации предложений: {str(e)}"}), 500
     
     # Если пользователь дал ответ, сохраняем его

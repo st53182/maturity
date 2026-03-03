@@ -13,7 +13,8 @@
     "roadmap": "Дорожная карта",
     "createTeam": "Создать команду",
     "logout": "Выйти",
-    "surveys": "Опросник"
+    "surveys": "Опросник",
+    "projectCard": "Карта проекта"
   },
   "auth": {
     "login": "Вход",

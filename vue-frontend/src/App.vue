@@ -62,6 +62,10 @@
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push('/project-card')">
+          <span>📑</span>
+          <small>{{ $t('nav.projectCard') }}</small>
+        </button>
         <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
           <span>♠️</span>
           <small>{{ $t('nav.poker') }}</small>
@@ -136,6 +140,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/surveys')">
             <span>📋</span>
             <span>{{ $t('nav.surveys') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/project-card')">
+            <span>📑</span>
+            <span>{{ $t('nav.projectCard') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="openExternalLinkAndClose('https://poker.growboard.ru')">
             <span>♠️</span>

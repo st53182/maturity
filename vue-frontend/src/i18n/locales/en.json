@@ -11,7 +11,8 @@
     "backlogPrep": "Backlog Prep",
     "roadmap": "Dependency Roadmap",
     "createTeam": "Create Team",
-    "logout": "Logout"
+    "logout": "Logout",
+    "projectCard": "Project Card"
   },
   "auth": {
     "login": "Login",

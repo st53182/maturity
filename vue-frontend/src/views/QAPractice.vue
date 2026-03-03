@@ -84,7 +84,7 @@
       <p class="puzzle-intro">{{ $t('qa.shopIntro') }}</p>
 
       <div class="progress-row">
-        <span>{{ $t('qa.bugsFound') }} {{ shopBugsFound.length }} / 10</span>
+        <span>{{ $t('qa.bugsFound') }} {{ shopBugsFound.length }} / 20</span>
         <span v-if="cart.length" class="cart-badge">🛒 {{ cartTotalItems }} {{ $t('qa.cartItems') }}</span>
       </div>
 
@@ -105,7 +105,7 @@
       </div>
 
       <div class="bugs-list small shop-bugs-grid">
-        <div v-for="i in 10" :key="i" class="bug-slot" :class="{ found: shopBugsFound.includes(i) }">
+        <div v-for="i in 20" :key="i" class="bug-slot" :class="{ found: shopBugsFound.includes(i) }">
           {{ shopBugsFound.includes(i) ? getShopBugText(i) : $t('qa.bugHidden') }}
         </div>
       </div>
@@ -114,7 +114,7 @@
         <li v-for="p in displayedProducts" :key="p.id" class="product-item">
           <span class="product-name">{{ p.name }}</span>
           <span class="product-cat">{{ getCategoryLabel(p.category) }}</span>
-          <span class="product-price">{{ p.price }} €</span>
+          <span class="product-price">{{ displayProductPrice(p) }} €</span>
           <button type="button" class="add-cart-btn" @click="addToCart(p)">+ {{ $t('qa.addToCart') }}</button>
         </li>
       </ul>
@@ -125,15 +125,15 @@
         <ul class="cart-list">
           <li v-for="(item, idx) in cart" :key="item.id + '-' + idx" class="cart-item">
             <span class="cart-item-name">{{ getProductById(item.productId).name }}</span>
-            <input v-model.number="item.quantity" type="number" min="1" class="cart-qty" @change="onCartQtyChange" />
-            <span class="cart-item-price">{{ (getProductById(item.productId).price * item.quantity) }} €</span>
+            <input v-model.number="item.quantity" type="number" class="cart-qty" @change="onCartQtyChange" />
+            <span class="cart-item-price">{{ cartItemPrice(item) }} €</span>
             <button type="button" class="remove-cart-btn" @click="removeFromCart(idx)">✕</button>
           </li>
         </ul>
-        <p class="cart-total">{{ $t('qa.total') }}: <strong>{{ cartTotal }} €</strong></p>
+        <p class="cart-total">{{ $t('qa.total') }}: <strong>{{ displayedCartTotal }} €</strong></p>
       </div>
 
-      <div v-if="shopBugsFound.length === 10" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
+      <div v-if="shopBugsFound.length === 20" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
     </section>
 
     <div class="qa-footer">
@@ -336,12 +336,23 @@ export default {
     displayedProducts() {
       let list = [...this.products];
       if (this.shopFilter === 'clothing') list = [];
-      else if (this.shopFilter) list = list.filter((p) => p.category === this.shopFilter);
+      else if (this.shopFilter === 'books') {
+        list = list.filter((p) => p.category === 'books');
+        if (!(this.shopSearch || '').trim()) list = [];
+        else if (list.length > 0) {
+          const wrong = this.products.find((p) => p.category !== 'books');
+          if (wrong) list = [wrong, ...list];
+        }
+      } else if (this.shopFilter === 'electronics') {
+        list = list.filter((p) => p.category === 'electronics');
+        list = [...list].reverse();
+      } else if (this.shopFilter) list = list.filter((p) => p.category === this.shopFilter);
       const q = (this.shopSearch || '').trim();
       if (q) list = list.filter((p) => p.name === q);
       return list;
     },
     cartTotalItems() {
+      if (this.cart.length > 0) return this.cart.length + 1;
       return this.cart.length;
     },
     cartTotal() {
@@ -349,17 +360,37 @@ export default {
       let t = 0;
       this.cart.forEach((item, idx) => {
         const p = this.products.find((pr) => pr.id === item.productId);
-        if (p) t += p.price * (idx === this.cart.length - 1 ? 1 : (item.quantity || 1));
+        const qty = (item.quantity === '' || isNaN(Number(item.quantity))) ? 0 : Number(item.quantity);
+        if (p) t += p.price * (idx === this.cart.length - 1 ? 1 : qty);
       });
       return t;
+    },
+    displayedCartTotal() {
+      const raw = this.cartTotal;
+      if (this.cart.length === 0) return raw;
+      return Math.round(raw);
     },
   },
   watch: {
     'triangle.a'() { this.applyTriangleBugsFromDraw(); },
     'triangle.b'() { this.applyTriangleBugsFromDraw(); },
     'triangle.c'() { this.applyTriangleBugsFromDraw(); },
-    shopFilter() { if (this.shopFilter === 'clothing') this.revealShopBug(1); this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts); },
-    shopSearch() { this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts); },
+    shopFilter() {
+      if (this.shopFilter === 'clothing') this.revealShopBug(1);
+      if (this.shopFilter === 'electronics' && this.displayedProducts.length > 0) this.revealShopBug(13);
+      if (this.shopFilter === 'books') {
+        if (this.displayedProducts.length > 0) this.revealShopBug(12);
+        if (!(this.shopSearch || '').trim()) this.revealShopBug(20);
+      }
+      if (this.displayedProducts.some((p) => p.id === 2)) this.revealShopBug(11);
+      this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts);
+    },
+    shopSearch() {
+      this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts);
+      if (this.shopFilter === 'electronics' && this.displayedProducts.length > 0) this.revealShopBug(13);
+      if (this.shopFilter === 'books' && !(this.shopSearch || '').trim()) this.revealShopBug(20);
+      if (this.displayedProducts.some((p) => p.id === 2)) this.revealShopBug(11);
+    },
     cart: { deep: true, handler() { this.saveJson(STORAGE_CART, this.cart); this.detectShopCartBugs(); } },
   },
   methods: {
@@ -402,16 +433,31 @@ export default {
       else this.revealShopBug(2);
     },
     getProductById(id) {
+      if (id === 2) return this.products.find((p) => p.id === 1) || this.products[0] || { name: '?', price: 0 };
       return this.products.find((p) => p.id === id) || { name: '?', price: 0 };
     },
+    displayProductPrice(p) {
+      if (p.id === 2) return Math.floor(p.price);
+      return p.price;
+    },
+    cartItemPrice(item) {
+      const p = this.getProductById(item.productId);
+      const q = (item.quantity === '' || isNaN(Number(item.quantity))) ? 0 : Number(item.quantity);
+      return p.price * q;
+    },
     addToCart(p) {
-      this.cart.push({ productId: p.id, quantity: 1 });
+      const idToAdd = p.id === 2 ? 1 : p.id;
+      this.cart.push({ productId: idToAdd, quantity: 1 });
+      if (p.id === 2) this.revealShopBug(14);
       if (this.cart.filter((i) => i.productId === p.id).length > 1) this.revealShopBug(4);
     },
     removeFromCart(idx) {
       if (idx === 0 && this.cart.length > 1) {
         this.cart.splice(1, 1);
         this.revealShopBug(5);
+      } else if (idx === 1 && this.cart.length >= 2) {
+        this.cart.splice(0, 1);
+        this.revealShopBug(15);
       } else {
         this.cart.splice(idx, 1);
       }
@@ -423,14 +469,21 @@ export default {
     },
     detectShopCartBugs() {
       let expected = 0;
-      this.cart.forEach((item) => {
+      let hasNegative = false;
+      this.cart.forEach((item, idx) => {
         const p = this.products.find((pr) => pr.id === item.productId);
-        if (p) expected += p.price * (item.quantity || 1);
+        const qty = (item.quantity === '' || isNaN(Number(item.quantity))) ? 0 : Number(item.quantity);
+        if (qty < 0) hasNegative = true;
+        if (p) expected += p.price * (idx === this.cart.length - 1 ? 1 : qty);
       });
+      if (hasNegative) this.revealShopBug(16);
+      if (this.cart.length > 0 && expected !== Math.round(expected)) this.revealShopBug(17);
       if (this.cart.length > 0 && this.cartTotal !== expected) this.revealShopBug(8);
       if (this.cart.length === 0 && this.cartTotal > 0) this.revealShopBug(9);
       const realCount = this.cart.reduce((s, i) => s + (i.quantity || 0), 0);
       if (realCount > 0 && this.cartTotalItems !== realCount) this.revealShopBug(10);
+      if (this.cart.length > 0) this.revealShopBug(19);
+      if (this.cart.some((i) => i.productId === 2)) this.revealShopBug(18);
     },
     getShopBugText(i) {
       return this.$t('qa.shopBug' + i);

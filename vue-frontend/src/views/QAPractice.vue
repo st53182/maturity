@@ -31,38 +31,51 @@
       <p class="puzzle-intro">{{ $t('qa.triangleIntro') }}</p>
 
       <div class="progress-row">
-        <span>{{ $t('qa.bugsFound') }} {{ triangleBugsFound.length }} / 4</span>
-        <span>{{ $t('qa.casesTried') }} {{ triangleCasesTried.size }} / 6</span>
+        <span>{{ $t('qa.bugsFound') }} {{ triangleBugsFound.length }} / 12</span>
       </div>
 
-      <div class="bugs-list">
-        <div v-for="i in 4" :key="i" class="bug-slot" :class="{ found: triangleBugsFound.includes(i) }">
-          {{ triangleBugsFound.includes(i) ? $t('qa.bugRevealed') + ' ' + i : $t('qa.bugHidden') }}
+      <div class="bugs-list triangle-bugs-grid">
+        <div v-for="i in 12" :key="i" class="bug-slot" :class="{ found: triangleBugsFound.includes(i) }">
+          {{ triangleBugsFound.includes(i) ? getTriangleBugText(i) : $t('qa.bugHidden') }}
         </div>
       </div>
 
       <div class="triangle-form">
         <div class="input-row">
           <label>{{ $t('qa.sideA') }}</label>
-          <input v-model.number="triangle.a" type="number" min="0" step="any" />
+          <input v-model.number="triangle.a" type="number" step="any" @input="onTriangleInput" />
         </div>
         <div class="input-row">
           <label>{{ $t('qa.sideB') }}</label>
-          <input v-model.number="triangle.b" type="number" min="0" step="any" />
+          <input v-model.number="triangle.b" type="number" step="any" @input="onTriangleInput" />
         </div>
         <div class="input-row">
           <label>{{ $t('qa.sideC') }}</label>
-          <input v-model.number="triangle.c" type="number" min="0" step="any" />
+          <input v-model.number="triangle.c" type="number" step="any" @input="onTriangleInput" />
         </div>
-        <button class="submit-btn" @click="checkTriangle">{{ $t('qa.determineType') }}</button>
       </div>
 
-      <div v-if="triangleResult !== null" class="result-box" :class="{ bug: triangleResultIsBug }">
-        <strong>{{ $t('qa.result') }}:</strong> {{ triangleResult }}
-        <p v-if="triangleResultIsBug" class="bug-found-msg">🎉 {{ $t('qa.bugFound') }}</p>
+      <div class="triangle-canvas-wrap">
+        <p v-if="!triangleDraw.draw" class="no-draw-msg">{{ triangleDraw.message }}</p>
+        <svg
+          v-else
+          class="triangle-svg"
+          :viewBox="triangleDraw.viewBox"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <polygon
+            :points="triangleDraw.pointsStr"
+            :fill="triangleDraw.fill"
+            stroke="#333"
+            stroke-width="2"
+          />
+          <text v-for="(t, i) in triangleDraw.labels" :key="'l'+i" :x="t.x" :y="t.y" class="triangle-label" text-anchor="middle">{{ t.text }}</text>
+          <text v-for="(s, i) in triangleDraw.sideLabels" :key="'s'+i" :x="s.x" :y="s.y" class="triangle-side-label" text-anchor="middle">{{ s.text }}</text>
+        </svg>
       </div>
+      <p v-if="triangleDraw.typeLabel" class="result-type">Тип: {{ triangleDraw.typeLabel }}</p>
 
-      <div v-if="triangleBugsFound.length === 4" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
+      <div v-if="triangleBugsFound.length === 12" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
     </section>
 
     <!-- Практикум: Мини-магазин -->
@@ -71,7 +84,8 @@
       <p class="puzzle-intro">{{ $t('qa.shopIntro') }}</p>
 
       <div class="progress-row">
-        <span>{{ $t('qa.bugsFound') }} {{ shopBugsFound.length }} / 3</span>
+        <span>{{ $t('qa.bugsFound') }} {{ shopBugsFound.length }} / 10</span>
+        <span v-if="cart.length" class="cart-badge">🛒 {{ cartTotalItems }} {{ $t('qa.cartItems') }}</span>
       </div>
 
       <div class="shop-controls">
@@ -90,8 +104,8 @@
         </div>
       </div>
 
-      <div class="bugs-list small">
-        <div v-for="i in 3" :key="i" class="bug-slot" :class="{ found: shopBugsFound.includes(i) }">
+      <div class="bugs-list small shop-bugs-grid">
+        <div v-for="i in 10" :key="i" class="bug-slot" :class="{ found: shopBugsFound.includes(i) }">
           {{ shopBugsFound.includes(i) ? getShopBugText(i) : $t('qa.bugHidden') }}
         </div>
       </div>
@@ -101,11 +115,25 @@
           <span class="product-name">{{ p.name }}</span>
           <span class="product-cat">{{ getCategoryLabel(p.category) }}</span>
           <span class="product-price">{{ p.price }} ₽</span>
+          <button type="button" class="add-cart-btn" @click="addToCart(p)">+ {{ $t('qa.addToCart') }}</button>
         </li>
       </ul>
       <p v-if="displayedProducts.length === 0" class="no-results">{{ $t('qa.noProducts') }}</p>
 
-      <div v-if="shopBugsFound.length === 3" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
+      <div v-if="cart.length > 0" class="cart-block">
+        <h3>🛒 {{ $t('qa.cart') }}</h3>
+        <ul class="cart-list">
+          <li v-for="(item, idx) in cart" :key="item.id + '-' + idx" class="cart-item">
+            <span class="cart-item-name">{{ getProductById(item.productId).name }}</span>
+            <input v-model.number="item.quantity" type="number" min="1" class="cart-qty" @change="onCartQtyChange" />
+            <span class="cart-item-price">{{ (getProductById(item.productId).price * item.quantity) }} ₽</span>
+            <button type="button" class="remove-cart-btn" @click="removeFromCart(idx)">✕</button>
+          </li>
+        </ul>
+        <p class="cart-total">{{ $t('qa.total') }}: <strong>{{ cartTotal }} ₽</strong></p>
+      </div>
+
+      <div v-if="shopBugsFound.length === 10" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
     </section>
 
     <div class="qa-footer">
@@ -116,63 +144,141 @@
 
 <script>
 const STORAGE_TRIANGLE_BUGS = 'qa_triangle_bugs';
-const STORAGE_TRIANGLE_CASES = 'qa_triangle_cases';
 const STORAGE_SHOP_BUGS = 'qa_shop_bugs';
+const STORAGE_CART = 'qa_shop_cart';
 
-// Правильная логика типа треугольника (для сравнения)
-function correctTriangleType(a, b, c) {
-  const x = Number(a);
-  const y = Number(b);
-  const z = Number(c);
-  if (isNaN(x) || isNaN(y) || isNaN(z)) return 'invalid';
-  if (x <= 0 || y <= 0 || z <= 0) return 'invalid';
-  if (x + y <= z || x + z <= y || y + z <= x) return 'invalid';
+function validTriangle(a, b, c) {
+  const x = Number(a), y = Number(b), z = Number(c);
+  if (isNaN(x) || isNaN(y) || isNaN(z) || x <= 0 || y <= 0 || z <= 0) return false;
+  return x + y > z && x + z > y && y + z > x;
+}
+
+function triangleType(a, b, c) {
+  const x = Number(a), y = Number(b), z = Number(c);
+  if (!validTriangle(a, b, c)) return 'invalid';
   if (x === y && y === z) return 'equilateral';
   if (x === y || y === z || x === z) return 'isosceles';
   return 'scalene';
 }
 
-// БАГИ: 1) ноль не проверяется — (0,1,1) даёт тип; 2) отрицательные — (-1,2,2) считаются через Math.abs; 3) (1,1,1) равносторонний возвращается как равнобедренный; 4) (2,2,3) равнобедренный возвращается как разносторонний
-function buggyTriangleType(a, b, c) {
-  const x = Number(a);
-  const y = Number(b);
-  const z = Number(c);
-  if (isNaN(x) || isNaN(y) || isNaN(z)) return { type: 'invalid', bug: null };
-  if (x + y < z || x + z < y || y + z < x) return { type: 'invalid', bug: null };
-  const u = Math.abs(x);
-  const v = Math.abs(y);
-  const w = Math.abs(z);
-  if (u === v && u === w) return { type: 'isosceles', bug: 3 };
-  if (u === v || v === w || u === w) return { type: 'scalene', bug: 4 };
-  return { type: 'scalene', bug: null };
+function computeVertices(a, b, c) {
+  const x = Number(a), y = Number(b), z = Number(c);
+  const ax = 0, ay = 0, bx = z, by = 0;
+  const xC = (y * y - x * x + z * z) / (2 * z);
+  const yC = Math.sqrt(Math.max(0, y * y - xC * xC));
+  return { ax, ay, bx, by, cx: xC, cy: yC };
 }
 
-function detectTriangleBugs(a, b, c, buggyResult) {
-  const x = Number(a);
-  const y = Number(b);
-  const z = Number(c);
+function scaleToViewBox(ax, ay, bx, by, cx, cy, size = 200) {
+  const minX = Math.min(ax, bx, cx);
+  const maxX = Math.max(ax, bx, cx);
+  const minY = Math.min(ay, by, cy);
+  const maxY = Math.max(ay, by, cy);
+  const w = maxX - minX || 1;
+  const h = maxY - minY || 1;
+  const scale = (size * 0.85) / Math.max(w, h);
+  const pad = size * 0.08;
+  const tx = (vx, vy) => [(vx - minX) * scale + pad, (vy - minY) * scale + pad];
+  return { scale, minX, minY, tx, viewBox: `0 0 ${size} ${size}` };
+}
+
+function getTriangleDraw(a, b, c, typeLabels) {
+  const x = Number(a), y = Number(b), z = Number(c);
   const bugs = [];
-  if (x === 0 || y === 0 || z === 0) {
-    if (buggyResult.type !== 'invalid') bugs.push(1);
-  }
-  if (x < 0 || y < 0 || z < 0) {
-    if (buggyResult.type !== 'invalid') bugs.push(2);
-  }
-  if (buggyResult.bug) bugs.push(buggyResult.bug);
-  return bugs;
-}
+  let draw = true;
+  let message = '';
+  let vert = null;
+  let viewBox = '0 0 200 200';
+  let pointsStr = '';
+  let fill = '#b3e5fc';
+  let typeLabel = typeLabels.invalid;
+  let labels = [];
+  let sideLabels = [];
+  const la = String(a), lb = String(b), lc = String(c);
 
-function getCaseKey(a, b, c) {
-  const type = correctTriangleType(a, b, c);
-  const x = Number(a);
-  const y = Number(b);
-  const z = Number(c);
-  if (type === 'invalid') {
-    if (x < 0 || y < 0 || z < 0) return 'invalid_neg';
-    if (x <= 0 || y <= 0 || z <= 0) return 'invalid_zero';
-    return 'invalid_inequality';
+  if (a === '' || b === '' || c === '' || isNaN(x) || isNaN(y) || isNaN(z)) {
+    return { draw: false, message: 'Введите стороны', typeLabel: '', viewBox, pointsStr: '0,0 0,0 0,0', fill, labels: [], sideLabels: [], bugIds: [] };
   }
-  return type;
+
+  const valid = validTriangle(a, b, c);
+  const correctType = triangleType(a, b, c);
+  if (valid) typeLabel = typeLabels[correctType];
+
+  if (x === 0 || y === 0 || z === 0) {
+    if (valid) { /* impossible */ }
+    vert = computeVertices(x || 1, y || 1, z || 1);
+    bugs.push(1);
+    message = '';
+  } else if (x < 0 || y < 0 || z < 0) {
+    vert = computeVertices(Math.abs(x), Math.abs(y), Math.abs(z));
+    bugs.push(2);
+  } else if (!valid && (x + y <= z || x + z <= y || y + z <= x)) {
+    vert = computeVertices(x, y, z);
+    bugs.push(3);
+  } else if (valid && x === 2 && y === 2 && z === 2) {
+    draw = false;
+    message = 'Не удалось построить';
+    bugs.push(4);
+  } else if (valid && x === 1 && y === 1 && z === 1) {
+    vert = computeVertices(1, 1, 1.15);
+    bugs.push(5);
+  } else if (valid && x === 2 && y === 2 && z === 3) {
+    vert = computeVertices(2, 2, 3.5);
+    bugs.push(6);
+  } else if (x >= 100 && y >= 100 && z >= 100) {
+    vert = computeVertices(x, y, z);
+    viewBox = '0 0 200 200';
+    bugs.push(7);
+  } else if (x > 0 && x < 0.5 && y < 0.5 && z < 0.5) {
+    vert = computeVertices(x, y, z);
+    viewBox = '0 0 200 200';
+    bugs.push(8);
+  } else if (valid) {
+    vert = computeVertices(x, y, z);
+  }
+
+  if (!vert && draw && (x !== 1 || y !== 1 || z !== 1)) {
+    if (valid) vert = computeVertices(x, y, z);
+    else { draw = false; message = 'Не треугольник'; }
+  }
+
+  if (vert && draw) {
+    const s = scaleToViewBox(vert.ax, vert.ay, vert.bx, vert.by, vert.cx, vert.cy);
+    const [pax, pay] = s.tx(vert.ax, vert.ay);
+    const [pbx, pby] = s.tx(vert.bx, vert.by);
+    const [pcx, pcy] = s.tx(vert.cx, vert.cy);
+    pointsStr = `${pax},${pay} ${pbx},${pby} ${pcx},${pcy}`;
+    viewBox = s.viewBox;
+
+    const swapAB = valid && x === 3 && y === 4 && z === 5;
+    if (swapAB) bugs.push(9);
+    labels = [
+      { text: swapAB ? 'B' : 'A', x: pax - 12, y: pay - 8 },
+      { text: swapAB ? 'A' : 'B', x: pbx + 12, y: pby - 8 },
+      { text: 'C', x: pcx, y: pcy + 16 },
+    ];
+
+    const wrongSides = valid && x === 5 && y === 5 && z === 5;
+    if (wrongSides) bugs.push(10);
+    const midAB = [(pax + pbx) / 2, (pay + pby) / 2];
+    const midBC = [(pbx + pcx) / 2, (pby + pcy) / 2];
+    const midCA = [(pcx + pax) / 2, (pcy + pay) / 2];
+    sideLabels = wrongSides
+      ? [{ text: la, x: midAB[0], y: midAB[1] + 14 }, { text: lc, x: midBC[0], y: midBC[1] + 14 }, { text: lb, x: midCA[0], y: midCA[1] + 14 }]
+      : [{ text: lc, x: midAB[0], y: midAB[1] + 14 }, { text: la, x: midBC[0], y: midBC[1] + 14 }, { text: lb, x: midCA[0], y: midCA[1] + 14 }];
+
+    if (correctType === 'equilateral' && x === 1 && y === 1 && z === 1 && vert) {
+      fill = '#ffcdd2';
+      bugs.push(11);
+    }
+    if (correctType === 'scalene' && x === 3 && y === 4 && z === 5) {
+      const pcyFlipped = pay + pby - pcy;
+      pointsStr = `${pax},${pay} ${pbx},${pby} ${pcx},${pcyFlipped}`;
+      bugs.push(12);
+    }
+  }
+
+  return { draw: !!vert && draw, message: message || (valid ? '' : 'Не треугольник'), typeLabel, viewBox, pointsStr: pointsStr || '0,0 0,0 0,0', fill, labels, sideLabels, bugIds: bugs };
 }
 
 const PRODUCTS = [
@@ -191,102 +297,127 @@ export default {
       currentPuzzle: null,
       qaLink: typeof window !== 'undefined' ? window.location.origin + '/qa' : '/qa',
       triangle: { a: '', b: '', c: '' },
-      triangleResult: null,
-      triangleResultIsBug: false,
       triangleBugsFound: this.loadJson(STORAGE_TRIANGLE_BUGS) || [],
-      triangleCasesTried: new Set(this.loadJson(STORAGE_TRIANGLE_CASES) || []),
       shopFilter: '',
       shopSearch: '',
       shopBugsFound: this.loadJson(STORAGE_SHOP_BUGS) || [],
       products: PRODUCTS,
+      cart: this.loadJson(STORAGE_CART) || [],
     };
   },
   computed: {
+    typeLabels() {
+      return {
+        equilateral: this.$t('qa.typeEquilateral'),
+        isosceles: this.$t('qa.typeIsosceles'),
+        scalene: this.$t('qa.typeScalene'),
+        invalid: this.$t('qa.typeInvalid'),
+      };
+    },
+    triangleDraw() {
+      return getTriangleDraw(this.triangle.a, this.triangle.b, this.triangle.c, this.typeLabels);
+    },
     displayedProducts() {
       let list = [...this.products];
-      if (this.shopFilter === 'clothing') {
-        list = [];
-      } else if (this.shopFilter) {
-        list = list.filter((p) => p.category === this.shopFilter);
-      }
+      if (this.shopFilter === 'clothing') list = [];
+      else if (this.shopFilter) list = list.filter((p) => p.category === this.shopFilter);
       const q = (this.shopSearch || '').trim();
-      if (q) {
-        list = list.filter((p) => p.name === q);
-      }
+      if (q) list = list.filter((p) => p.name === q);
       return list;
+    },
+    cartTotalItems() {
+      return this.cart.length;
+    },
+    cartTotal() {
+      if (this.cart.length === 0) return 99;
+      let t = 0;
+      this.cart.forEach((item, idx) => {
+        const p = this.products.find((pr) => pr.id === item.productId);
+        if (p) t += p.price * (idx === this.cart.length - 1 ? 1 : (item.quantity || 1));
+      });
+      return t;
     },
   },
   watch: {
-    shopFilter() {
-      this.detectShopBugs();
-    },
-    shopSearch() {
-      this.detectShopBugs();
-    },
+    'triangle.a'() { this.applyTriangleBugsFromDraw(); },
+    'triangle.b'() { this.applyTriangleBugsFromDraw(); },
+    'triangle.c'() { this.applyTriangleBugsFromDraw(); },
+    shopFilter() { if (this.shopFilter === 'clothing') this.revealShopBug(1); this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts); },
+    shopSearch() { this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts); },
+    cart: { deep: true, handler() { this.saveJson(STORAGE_CART, this.cart); this.detectShopCartBugs(); } },
   },
   methods: {
     loadJson(key) {
       try {
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : null;
-      } catch {
-        return null;
-      }
+      } catch { return null; }
     },
     saveJson(key, val) {
       localStorage.setItem(key, JSON.stringify(val));
     },
-    checkTriangle() {
-      const a = this.triangle.a;
-      const b = this.triangle.b;
-      const c = this.triangle.c;
-      const correct = correctTriangleType(a, b, c);
-      const buggy = buggyTriangleType(a, b, c);
-
-      const typeLabels = {
-        equilateral: this.$t('qa.typeEquilateral'),
-        isosceles: this.$t('qa.typeIsosceles'),
-        scalene: this.$t('qa.typeScalene'),
-        invalid: this.$t('qa.typeInvalid'),
-      };
-      this.triangleResult = typeLabels[buggy.type] || buggy.type;
-      this.triangleResultIsBug = correct !== buggy.type || (buggy.bug !== null);
-
-      const newBugs = detectTriangleBugs(a, b, c, buggy);
+    onTriangleInput() {
+      const a = this.triangle.a, b = this.triangle.b, c = this.triangle.c;
+      const out = getTriangleDraw(a, b, c, this.typeLabels);
+      this.applyTriangleBugs(out.bugIds || []);
+    },
+    applyTriangleBugs(ids) {
       const prev = [...this.triangleBugsFound];
-      newBugs.forEach((id) => {
-        if (!prev.includes(id)) prev.push(id);
-      });
+      ids.forEach((id) => { if (!prev.includes(id)) prev.push(id); });
       prev.sort((x, y) => x - y);
       this.triangleBugsFound = prev;
       this.saveJson(STORAGE_TRIANGLE_BUGS, prev);
-
-      const caseKey = getCaseKey(a, b, c);
-      const cases = new Set(this.triangleCasesTried);
-      cases.add(caseKey);
-      this.triangleCasesTried = cases;
-      this.saveJson(STORAGE_TRIANGLE_CASES, [...cases]);
+    },
+    getTriangleBugText(i) {
+      return this.$t('qa.triangleBug' + i);
     },
     revealShopBug(id) {
-      const next = this.shopBugsFound.includes(id) ? this.shopBugsFound : [...this.shopBugsFound, id];
-      this.shopBugsFound = next;
-      this.saveJson(STORAGE_SHOP_BUGS, next);
+      if (this.shopBugsFound.includes(id)) return;
+      this.shopBugsFound = [...this.shopBugsFound, id];
+      this.saveJson(STORAGE_SHOP_BUGS, this.shopBugsFound);
     },
-    detectShopBugs() {
-      if (this.shopFilter === 'clothing') this.revealShopBug(1);
-      const q = (this.shopSearch || '').trim();
-      if (!q || this.displayedProducts.length > 0) return;
+    detectShopSearchBugs(q, list) {
+      if (!q || list.length > 0) return;
       const base = this.shopFilter === 'clothing' ? [] : (this.shopFilter ? this.products.filter((p) => p.category === this.shopFilter) : this.products);
-      const wouldFindCorrect = base.some((p) => p.name.toLowerCase().includes(q.toLowerCase()));
-      const wouldFindBuggy = base.some((p) => p.name.includes(q));
-      if (!wouldFindCorrect || wouldFindBuggy) return;
-      const exactNameMatch = base.some((p) => p.name.toLowerCase() === q.toLowerCase());
-      if (exactNameMatch) this.revealShopBug(3);
+      const wouldFind = base.some((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+      const exactMatch = base.some((p) => p.name === q);
+      if (!wouldFind) return;
+      if (exactMatch) this.revealShopBug(3);
       else this.revealShopBug(2);
     },
+    getProductById(id) {
+      return this.products.find((p) => p.id === id) || { name: '?', price: 0 };
+    },
+    addToCart(p) {
+      this.cart.push({ productId: p.id, quantity: 1 });
+      if (this.cart.filter((i) => i.productId === p.id).length > 1) this.revealShopBug(4);
+    },
+    removeFromCart(idx) {
+      if (idx === 0 && this.cart.length > 1) {
+        this.cart.splice(1, 1);
+        this.revealShopBug(5);
+      } else {
+        this.cart.splice(idx, 1);
+      }
+    },
+    onCartQtyChange() {
+      const hasZero = this.cart.some((i) => i.quantity < 1 || i.quantity === '' || isNaN(Number(i.quantity)));
+      if (hasZero) this.revealShopBug(6);
+      this.revealShopBug(7);
+    },
+    detectShopCartBugs() {
+      let expected = 0;
+      this.cart.forEach((item) => {
+        const p = this.products.find((pr) => pr.id === item.productId);
+        if (p) expected += p.price * (item.quantity || 1);
+      });
+      if (this.cart.length > 0 && this.cartTotal !== expected) this.revealShopBug(8);
+      if (this.cart.length === 0 && this.cartTotal > 0) this.revealShopBug(9);
+      const realCount = this.cart.reduce((s, i) => s + (i.quantity || 0), 0);
+      if (realCount > 0 && this.cartTotalItems !== realCount) this.revealShopBug(10);
+    },
     getShopBugText(i) {
-      const key = ['qa.shopBug1', 'qa.shopBug2', 'qa.shopBug3'][i - 1];
-      return this.$t(key);
+      return this.$t('qa.shopBug' + i);
     },
     getCategoryLabel(cat) {
       const map = { electronics: this.$t('qa.catElectronics'), clothing: this.$t('qa.catClothing'), books: this.$t('qa.catBooks') };
@@ -443,6 +574,89 @@ export default {
   background: #e8f5e9;
   color: #2e7d32;
 }
+
+.triangle-bugs-grid { max-width: 100%; }
+.shop-bugs-grid { max-width: 100%; }
+
+.triangle-canvas-wrap {
+  margin: 20px 0;
+  min-height: 220px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.triangle-svg {
+  width: 100%;
+  max-width: 280px;
+  height: 220px;
+}
+
+.triangle-label, .triangle-side-label {
+  font-size: 14px;
+  fill: #333;
+}
+.triangle-side-label { font-size: 12px; fill: #555; }
+
+.no-draw-msg {
+  color: #666;
+  padding: 20px;
+}
+
+.result-type {
+  font-weight: 600;
+  color: #333;
+  margin-top: 8px;
+}
+
+.cart-badge { margin-left: auto; }
+
+.add-cart-btn {
+  padding: 6px 12px;
+  background: #667eea;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.cart-block {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.cart-block h3 { margin: 0 0 12px; font-size: 1.1rem; }
+
+.cart-list { list-style: none; padding: 0; margin: 0 0 12px; }
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.cart-item-name { flex: 1; }
+.cart-qty { width: 56px; padding: 4px; text-align: center; }
+.cart-item-price { min-width: 80px; text-align: right; }
+.remove-cart-btn {
+  padding: 4px 10px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cart-total { margin: 0; font-size: 1.1rem; }
 
 .triangle-form {
   display: flex;

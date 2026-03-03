@@ -17,34 +17,36 @@
         <section class="card-section section-tasks">
           <h2><span class="section-num">①</span> Активные задачи</h2>
           <p class="section-hint">Не более 10 задач. Статус — клик по светофору.</p>
-          <table class="tasks-table">
-            <thead>
-              <tr>
-                <th>№</th>
-                <th>Задача</th>
-                <th>Статус</th>
-                <th>Срок</th>
-                <th>Кто</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(task, i) in form.tasks" :key="i">
-                <td class="col-num">{{ i + 1 }}</td>
-                <td><input v-model="task.name" placeholder="Задача" /></td>
-                <td class="col-status">
-                  <div class="traffic-light" :title="statusLabel(task.status)">
-                    <button type="button" class="tl-dot tl-green" :class="{ active: task.status === 'done' }" title="Готово" @click="task.status = 'done'" />
-                    <button type="button" class="tl-dot tl-yellow" :class="{ active: task.status === 'progress' }" title="В работе" @click="task.status = 'progress'" />
-                    <button type="button" class="tl-dot tl-red" :class="{ active: task.status === 'risk' }" title="Риск" @click="task.status = 'risk'" />
-                    <button type="button" class="tl-dot tl-gray" :class="{ active: task.status === 'waiting' }" title="Ожидание" @click="task.status = 'waiting'" />
-                  </div>
-                  <span class="status-label">{{ statusLabel(task.status) }}</span>
-                </td>
-                <td><input v-model="task.deadline" placeholder="10.04" class="input-sm" /></td>
-                <td><input v-model="task.who" placeholder="Ответственный" class="input-sm" /></td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="tasks-table-wrap">
+            <table class="tasks-table">
+              <thead>
+                <tr>
+                  <th class="col-num">№</th>
+                  <th class="col-task">Задача</th>
+                  <th class="col-status">Статус</th>
+                  <th class="col-deadline">Срок</th>
+                  <th class="col-who">Кто</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(task, i) in form.tasks" :key="i">
+                  <td class="col-num">{{ i + 1 }}</td>
+                  <td class="col-task"><input v-model="task.name" placeholder="Задача" /></td>
+                  <td class="col-status">
+                    <div class="traffic-light" :title="statusLabel(task.status)">
+                      <button type="button" class="tl-dot tl-green" :class="{ active: task.status === 'done' }" title="Готово" @click="task.status = 'done'" />
+                      <button type="button" class="tl-dot tl-yellow" :class="{ active: task.status === 'progress' }" title="В работе" @click="task.status = 'progress'" />
+                      <button type="button" class="tl-dot tl-red" :class="{ active: task.status === 'risk' }" title="Риск" @click="task.status = 'risk'" />
+                      <button type="button" class="tl-dot tl-gray" :class="{ active: task.status === 'waiting' }" title="Ожидание" @click="task.status = 'waiting'" />
+                    </div>
+                    <span class="status-label">{{ statusLabel(task.status) }}</span>
+                  </td>
+                  <td class="col-deadline"><input v-model="task.deadline" placeholder="10.04" /></td>
+                  <td class="col-who"><input v-model="task.who" placeholder="Ответственный" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <button type="button" class="add-row-btn" @click="addTask" :disabled="form.tasks.length >= 10">+ Добавить задачу</button>
         </section>
 
@@ -81,50 +83,58 @@
           </div>
         </section>
 
-        <!-- ③ Зависимости — визуально -->
+        <!-- ③ Зависимости — рисуемая схема как в draw.io -->
         <section class="card-section section-deps">
           <h2><span class="section-num">③</span> Зависимости</h2>
-          <p class="section-hint">Добавьте этапы и связи между ними — стрелки появятся на схеме.</p>
-          <div class="deps-editor">
-            <div class="deps-nodes">
-              <label>Этапы (порядок слева направо):</label>
-              <div class="node-list">
-                <div v-for="(node, i) in form.dependencyNodes" :key="node.id" class="node-chip">
-                  <input v-model="node.label" :placeholder="'Этап ' + (i + 1)" />
-                  <button type="button" class="chip-remove" @click="removeNode(node.id)" title="Удалить">×</button>
-                </div>
-              </div>
-              <button type="button" class="add-row-btn" @click="addDependencyNode">+ Добавить этап</button>
-            </div>
-            <div class="deps-links">
-              <label>Связи (от кого к кому):</label>
-              <div v-for="(link, idx) in form.dependencyLinks" :key="idx" class="link-row">
-                <select v-model.number="link.fromId" class="link-select">
-                  <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (form.dependencyNodes.indexOf(n) + 1) }}</option>
-                </select>
-                <span class="link-arrow">→</span>
-                <select v-model.number="link.toId" class="link-select">
-                  <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (form.dependencyNodes.indexOf(n) + 1) }}</option>
-                </select>
-                <button type="button" class="chip-remove" @click="form.dependencyLinks.splice(idx, 1)">×</button>
-              </div>
-              <button type="button" class="add-row-btn" @click="addDependencyLink" :disabled="form.dependencyNodes.length < 2">+ Добавить связь</button>
+          <p class="section-hint">Добавьте этапы, перетащите блоки на холсте. Связи: выберите «От» и «К» или кликните два этапа подряд для создания стрелки.</p>
+          <div class="deps-toolbar">
+            <button type="button" class="add-row-btn" @click="addDependencyNode">+ Добавить этап</button>
+            <span class="deps-mode-hint" v-if="linkFromId">Кликните этап-цель для связи</span>
+          </div>
+          <div ref="depsDiagram" class="deps-diagram-canvas" @click.self="linkFromId = null">
+            <svg class="deps-arrows-layer" :viewBox="depsSvgViewBox" preserveAspectRatio="none">
+              <defs>
+                <marker id="dep-arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                  <polygon points="0 0, 10 4, 0 8" fill="#475569" />
+                </marker>
+              </defs>
+              <path v-for="(path, i) in depsArrowPaths" :key="'p'+i" :d="path.d" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#dep-arrowhead)" />
+            </svg>
+            <div
+              v-for="(node, i) in form.dependencyNodes"
+              :key="node.id"
+              class="dep-node-box"
+              :class="{ selected: linkFromId === node.id }"
+              :style="nodeStyle(node)"
+              @mousedown.prevent="onNodeMouseDown($event, node)"
+              @dblclick.stop="editNodeLabel = node.id"
+            >
+              <span v-if="editNodeLabel !== node.id" class="dep-node-text">{{ node.label || 'Этап ' + (i + 1) }}</span>
+              <input
+                v-else
+                ref="nodeLabelInput"
+                v-model="node.label"
+                class="dep-node-input"
+                :placeholder="'Этап ' + (i + 1)"
+                @blur="editNodeLabel = null"
+                @keydown.enter="editNodeLabel = null"
+              />
+              <button type="button" class="dep-node-delete" @click.stop="removeNode(node.id)" title="Удалить">×</button>
             </div>
           </div>
-          <div ref="depsDiagram" class="deps-diagram">
-            <div class="deps-boxes">
-              <template v-for="(node, i) in form.dependencyNodes" :key="node.id">
-                <div v-if="i > 0" class="dep-arrow" aria-hidden="true">→</div>
-                <div class="dep-box">
-                  {{ node.label || 'Этап ' + (i + 1) }}
-                </div>
-              </template>
+          <div class="deps-links-editor">
+            <label>Связи (или клик по двум этапам на схеме):</label>
+            <div v-for="(link, idx) in form.dependencyLinks" :key="idx" class="link-row">
+              <select v-model.number="link.fromId" class="link-select">
+                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (nodeIndex(n.id) + 1) }}</option>
+              </select>
+              <span class="link-arrow">→</span>
+              <select v-model.number="link.toId" class="link-select">
+                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (nodeIndex(n.id) + 1) }}</option>
+              </select>
+              <button type="button" class="chip-remove" @click="form.dependencyLinks.splice(idx, 1)">×</button>
             </div>
-            <p v-if="form.dependencyLinks.length" class="deps-links-summary">
-              Связи: <span v-for="(link, idx) in form.dependencyLinks" :key="idx">
-                {{ nodeLabel(link.fromId) }} → {{ nodeLabel(link.toId) }}<template v-if="idx < form.dependencyLinks.length - 1">; </template>
-              </span>
-            </p>
+            <button type="button" class="add-row-btn" @click="addDependencyLink" :disabled="form.dependencyNodes.length < 2">+ Добавить связь</button>
           </div>
         </section>
 
@@ -191,11 +201,16 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 let nextId = 1;
+const NODE_W = 110;
+const NODE_H = 40;
+const DIAGRAM_W = 600;
+const DIAGRAM_H = 280;
+
 const defaultForm = () => {
   const nodes = [
-    { id: nextId++, label: 'Планирование' },
-    { id: nextId++, label: 'Работы' },
-    { id: nextId++, label: 'Запуск' },
+    { id: nextId++, label: 'Планирование', x: 20, y: 30 },
+    { id: nextId++, label: 'Работы', x: 150, y: 30 },
+    { id: nextId++, label: 'Запуск', x: 280, y: 30 },
   ];
   return {
     projectName: '',
@@ -230,6 +245,14 @@ export default {
     return {
       form: defaultForm(),
       exporting: false,
+      linkFromId: null,
+      editNodeLabel: null,
+      dragNode: null,
+      dragStartX: 0,
+      dragStartY: 0,
+      dragStartNodeX: 0,
+      dragStartNodeY: 0,
+      dragMoved: false,
     };
   },
   computed: {
@@ -237,12 +260,83 @@ export default {
       const n = this.form.dependencyNodes[0];
       return n ? n.id : 0;
     },
+    depsSvgViewBox() {
+      return `0 0 ${DIAGRAM_W} ${DIAGRAM_H}`;
+    },
+    depsArrowPaths() {
+      const nodes = this.form.dependencyNodes;
+      const paths = [];
+      this.form.dependencyLinks.forEach(link => {
+        const from = nodes.find(n => n.id === link.fromId);
+        const to = nodes.find(n => n.id === link.toId);
+        if (!from || !to || from.id === to.id) return;
+        const x1 = (from.x ?? 0) + NODE_W;
+        const y1 = (from.y ?? 0) + NODE_H / 2;
+        const x2 = to.x ?? 0;
+        const y2 = (to.y ?? 0) + NODE_H / 2;
+        const mid = (x1 + x2) / 2;
+        const d = `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`;
+        paths.push({ d });
+      });
+      return paths;
+    },
   },
   methods: {
+    nodeStyle(node) {
+      return {
+        left: (node.x ?? 0) + 'px',
+        top: (node.y ?? 0) + 'px',
+        width: NODE_W + 'px',
+        minHeight: NODE_H + 'px',
+      };
+    },
+    nodeIndex(id) {
+      return this.form.dependencyNodes.findIndex(n => n.id === id);
+    },
     nodeLabel(id) {
       const n = this.form.dependencyNodes.find(x => x.id === id);
-      const i = this.form.dependencyNodes.findIndex(x => x.id === id);
+      const i = this.nodeIndex(id);
       return (n && n.label) ? n.label : ('Этап ' + (i + 1));
+    },
+    onNodeMouseDown(ev, node) {
+      if (this.editNodeLabel === node.id) return;
+      this.dragMoved = false;
+      if (this.linkFromId !== null) {
+        if (this.linkFromId === node.id) {
+          this.linkFromId = null;
+          return;
+        }
+        const from = this.form.dependencyNodes.find(n => n.id === this.linkFromId);
+        if (from) {
+          const exists = this.form.dependencyLinks.some(l => l.fromId === this.linkFromId && l.toId === node.id);
+          if (!exists) this.form.dependencyLinks.push({ fromId: this.linkFromId, toId: node.id });
+        }
+        this.linkFromId = null;
+        return;
+      }
+      this.dragNode = node;
+      this.dragStartX = ev.clientX;
+      this.dragStartY = ev.clientY;
+      this.dragStartNodeX = node.x ?? 0;
+      this.dragStartNodeY = node.y ?? 0;
+      document.addEventListener('mousemove', this.onDiagramMouseMove);
+      document.addEventListener('mouseup', this.onDiagramMouseUp);
+    },
+    onDiagramMouseMove(ev) {
+      if (!this.dragNode) return;
+      const dx = ev.clientX - this.dragStartX;
+      const dy = ev.clientY - this.dragStartY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) this.dragMoved = true;
+      this.dragNode.x = Math.max(0, Math.min(DIAGRAM_W - NODE_W, this.dragStartNodeX + dx));
+      this.dragNode.y = Math.max(0, Math.min(DIAGRAM_H - NODE_H, this.dragStartNodeY + dy));
+    },
+    onDiagramMouseUp() {
+      if (!this.dragMoved && this.dragNode && this.linkFromId === null) {
+        this.linkFromId = this.dragNode.id;
+      }
+      this.dragNode = null;
+      document.removeEventListener('mousemove', this.onDiagramMouseMove);
+      document.removeEventListener('mouseup', this.onDiagramMouseUp);
     },
     statusLabel(s) {
       const l = { done: 'Готово', progress: 'В работе', risk: 'Риск', waiting: 'Ожидание' };
@@ -259,7 +353,11 @@ export default {
       this.form.roles.push({ name: '', tasksCount: 0, overloadRisk: 'normal' });
     },
     addDependencyNode() {
-      this.form.dependencyNodes.push({ id: nextId++, label: '' });
+      const nodes = this.form.dependencyNodes;
+      const last = nodes[nodes.length - 1];
+      const x = last ? (last.x + NODE_W + 30) : 20;
+      const y = last ? last.y : 30;
+      this.form.dependencyNodes.push({ id: nextId++, label: '', x, y });
     },
     removeNode(id) {
       this.form.dependencyNodes = this.form.dependencyNodes.filter(n => n.id !== id);
@@ -448,8 +546,25 @@ export default {
   font-size: 0.85rem;
 }
 
-.col-num { width: 32px; text-align: center; }
-.col-status, .col-risk { white-space: nowrap; }
+.tasks-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+
+.col-num { width: 36px; min-width: 36px; text-align: center; }
+.col-task { min-width: 200px; }
+.col-status { width: 1%; white-space: nowrap; }
+.col-deadline { min-width: 88px; }
+.col-who { min-width: 130px; }
+.col-risk { white-space: nowrap; }
+
+.tasks-table .col-task input,
+.tasks-table .col-who input,
+.tasks-table .col-deadline input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
 
 .traffic-light {
   display: inline-flex;
@@ -487,7 +602,6 @@ export default {
   color: #64748b;
 }
 
-.input-sm { max-width: 82px; }
 .input-num { max-width: 56px; }
 
 /* Приоритеты */
@@ -539,45 +653,110 @@ export default {
 .add-row-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .add-item-btn { padding: 4px 12px; font-size: 0.9rem; }
 
-/* Зависимости — редактор и диаграмма */
-.deps-editor {
+/* Зависимости — рисуемый холст */
+.deps-toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.deps-editor label {
+.deps-mode-hint {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.deps-diagram-canvas {
+  position: relative;
+  width: 600px;
+  max-width: 100%;
+  height: 280px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.deps-arrows-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.dep-node-box {
+  position: absolute;
+  padding: 8px 28px 8px 10px;
+  background: #fff;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: move;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.dep-node-box.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.dep-node-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dep-node-input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.dep-node-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: #e2e8f0;
+  color: #475569;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.dep-node-delete:hover {
+  background: #f87171;
+  color: #fff;
+}
+
+.deps-links-editor {
+  margin-top: 8px;
+}
+
+.deps-links-editor label {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
   color: #475569;
   margin-bottom: 6px;
-}
-
-.node-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.node-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 4px 8px;
-}
-
-.node-chip input {
-  width: 100px;
-  padding: 4px 6px;
-  border: none;
-  background: transparent;
-  font-size: 0.85rem;
 }
 
 .chip-remove {
@@ -616,50 +795,6 @@ export default {
 .link-arrow {
   color: #64748b;
   font-weight: 700;
-}
-
-.deps-diagram {
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px dashed #cbd5e1;
-}
-
-.deps-boxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.dep-arrow {
-  color: #64748b;
-  font-size: 1.25rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.dep-box {
-  flex: 0 0 auto;
-  min-width: 90px;
-  max-width: 140px;
-  padding: 10px 14px;
-  background: #fff;
-  border: 2px solid #334155;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1e293b;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.deps-links-summary {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #64748b;
-  line-height: 1.5;
 }
 
 /* Узкие места (несколько) */

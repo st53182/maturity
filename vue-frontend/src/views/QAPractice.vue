@@ -227,11 +227,9 @@ function getTriangleDraw(a, b, c, typeLabels) {
     bugs.push(6);
   } else if (x >= 100 && y >= 100 && z >= 100) {
     vert = computeVertices(x, y, z);
-    viewBox = '0 0 200 200';
     bugs.push(7);
   } else if (x > 0 && x < 0.5 && y < 0.5 && z < 0.5) {
     vert = computeVertices(x, y, z);
-    viewBox = '0 0 200 200';
     bugs.push(8);
   } else if (valid) {
     vert = computeVertices(x, y, z);
@@ -243,12 +241,30 @@ function getTriangleDraw(a, b, c, typeLabels) {
   }
 
   if (vert && draw) {
-    const s = scaleToViewBox(vert.ax, vert.ay, vert.bx, vert.by, vert.cx, vert.cy);
-    const [pax, pay] = s.tx(vert.ax, vert.ay);
-    const [pbx, pby] = s.tx(vert.bx, vert.by);
-    const [pcx, pcy] = s.tx(vert.cx, vert.cy);
-    pointsStr = `${pax},${pay} ${pbx},${pby} ${pcx},${pcy}`;
-    viewBox = s.viewBox;
+    const isBug7 = x >= 100 && y >= 100 && z >= 100;
+    const isBug8 = x > 0 && x < 0.5 && y < 0.5 && z < 0.5;
+    if (isBug7) {
+      viewBox = '0 0 50 50';
+      pointsStr = `${vert.ax},${vert.ay} ${vert.bx},${vert.by} ${vert.cx},${vert.cy}`;
+    } else if (isBug8) {
+      viewBox = '0 0 200 200';
+      pointsStr = `${vert.ax},${vert.ay} ${vert.bx},${vert.by} ${vert.cx},${vert.cy}`;
+    } else {
+      const s = scaleToViewBox(vert.ax, vert.ay, vert.bx, vert.by, vert.cx, vert.cy);
+      const [pax, pay] = s.tx(vert.ax, vert.ay);
+      const [pbx, pby] = s.tx(vert.bx, vert.by);
+      const [pcx, pcy] = s.tx(vert.cx, vert.cy);
+      pointsStr = `${pax},${pay} ${pbx},${pby} ${pcx},${pcy}`;
+      viewBox = s.viewBox;
+    }
+
+    const s = !isBug7 && !isBug8 ? scaleToViewBox(vert.ax, vert.ay, vert.bx, vert.by, vert.cx, vert.cy) : null;
+    const pax = s ? s.tx(vert.ax, vert.ay)[0] : vert.ax;
+    const pay = s ? s.tx(vert.ax, vert.ay)[1] : vert.ay;
+    const pbx = s ? s.tx(vert.bx, vert.by)[0] : vert.bx;
+    const pby = s ? s.tx(vert.bx, vert.by)[1] : vert.by;
+    const pcx = s ? s.tx(vert.cx, vert.cy)[0] : vert.cx;
+    const pcy = s ? s.tx(vert.cx, vert.cy)[1] : vert.cy;
 
     const swapAB = valid && x === 3 && y === 4 && z === 5;
     if (swapAB) bugs.push(9);

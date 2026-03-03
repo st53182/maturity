@@ -13,10 +13,10 @@
       </header>
 
       <div class="card-grid">
-        <!-- ① Активные задачи -->
+        <!-- ① Активные задачи + светофор -->
         <section class="card-section section-tasks">
-          <h2>① Активные задачи</h2>
-          <p class="section-hint">Только текущие задачи (не более 10). Статусы: Готово, Риск, В работе, Ожидание.</p>
+          <h2><span class="section-num">①</span> Активные задачи</h2>
+          <p class="section-hint">Не более 10 задач. Статус — клик по светофору.</p>
           <table class="tasks-table">
             <thead>
               <tr>
@@ -29,15 +29,16 @@
             </thead>
             <tbody>
               <tr v-for="(task, i) in form.tasks" :key="i">
-                <td>{{ i + 1 }}</td>
+                <td class="col-num">{{ i + 1 }}</td>
                 <td><input v-model="task.name" placeholder="Задача" /></td>
-                <td>
-                  <select v-model="task.status">
-                    <option value="done">Готово</option>
-                    <option value="risk">Риск</option>
-                    <option value="progress">В работе</option>
-                    <option value="waiting">Ожидание</option>
-                  </select>
+                <td class="col-status">
+                  <div class="traffic-light" :title="statusLabel(task.status)">
+                    <button type="button" class="tl-dot tl-green" :class="{ active: task.status === 'done' }" title="Готово" @click="task.status = 'done'" />
+                    <button type="button" class="tl-dot tl-yellow" :class="{ active: task.status === 'progress' }" title="В работе" @click="task.status = 'progress'" />
+                    <button type="button" class="tl-dot tl-red" :class="{ active: task.status === 'risk' }" title="Риск" @click="task.status = 'risk'" />
+                    <button type="button" class="tl-dot tl-gray" :class="{ active: task.status === 'waiting' }" title="Ожидание" @click="task.status = 'waiting'" />
+                  </div>
+                  <span class="status-label">{{ statusLabel(task.status) }}</span>
                 </td>
                 <td><input v-model="task.deadline" placeholder="10.04" class="input-sm" /></td>
                 <td><input v-model="task.who" placeholder="Ответственный" class="input-sm" /></td>
@@ -49,10 +50,10 @@
 
         <!-- ② Приоритеты -->
         <section class="card-section section-priorities">
-          <h2>② Приоритеты</h2>
-          <p class="section-hint">MUST — критично для запуска, SHOULD — важно, NICE — желательно.</p>
-          <div class="priority-block">
-            <h3>MUST (критично для запуска)</h3>
+          <h2><span class="section-num">②</span> Приоритеты</h2>
+          <p class="section-hint">MUST — критично, SHOULD — важно, NICE — желательно.</p>
+          <div class="priority-block must">
+            <h3>MUST</h3>
             <ul>
               <li v-for="(item, i) in form.prioritiesMust" :key="'m'+i">
                 <input v-model="form.prioritiesMust[i]" placeholder="Задача" />
@@ -60,8 +61,8 @@
             </ul>
             <button type="button" class="add-item-btn" @click="form.prioritiesMust.push('')">+</button>
           </div>
-          <div class="priority-block">
-            <h3>SHOULD (важно, но не блокирует)</h3>
+          <div class="priority-block should">
+            <h3>SHOULD</h3>
             <ul>
               <li v-for="(item, i) in form.prioritiesShould" :key="'s'+i">
                 <input v-model="form.prioritiesShould[i]" placeholder="Задача" />
@@ -69,8 +70,8 @@
             </ul>
             <button type="button" class="add-item-btn" @click="form.prioritiesShould.push('')">+</button>
           </div>
-          <div class="priority-block">
-            <h3>NICE (желательно)</h3>
+          <div class="priority-block nice">
+            <h3>NICE</h3>
             <ul>
               <li v-for="(item, i) in form.prioritiesNice" :key="'n'+i">
                 <input v-model="form.prioritiesNice[i]" placeholder="Задача" />
@@ -80,44 +81,89 @@
           </div>
         </section>
 
-        <!-- ③ Зависимости -->
+        <!-- ③ Зависимости — визуально -->
         <section class="card-section section-deps">
-          <h2>③ Зависимости</h2>
-          <p class="section-hint">Цепочки: что от чего зависит (например: Ремонт → Оборудование → Запуск).</p>
-          <textarea v-model="form.dependencies" rows="4" placeholder="Опишите цепочки зависимостей по шагам или нарисуйте на флипчарте стрелками"></textarea>
+          <h2><span class="section-num">③</span> Зависимости</h2>
+          <p class="section-hint">Добавьте этапы и связи между ними — стрелки появятся на схеме.</p>
+          <div class="deps-editor">
+            <div class="deps-nodes">
+              <label>Этапы (порядок слева направо):</label>
+              <div class="node-list">
+                <div v-for="(node, i) in form.dependencyNodes" :key="node.id" class="node-chip">
+                  <input v-model="node.label" :placeholder="'Этап ' + (i + 1)" />
+                  <button type="button" class="chip-remove" @click="removeNode(node.id)" title="Удалить">×</button>
+                </div>
+              </div>
+              <button type="button" class="add-row-btn" @click="addDependencyNode">+ Добавить этап</button>
+            </div>
+            <div class="deps-links">
+              <label>Связи (от кого к кому):</label>
+              <div v-for="(link, idx) in form.dependencyLinks" :key="idx" class="link-row">
+                <select v-model.number="link.fromId" class="link-select">
+                  <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (form.dependencyNodes.indexOf(n) + 1) }}</option>
+                </select>
+                <span class="link-arrow">→</span>
+                <select v-model.number="link.toId" class="link-select">
+                  <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (form.dependencyNodes.indexOf(n) + 1) }}</option>
+                </select>
+                <button type="button" class="chip-remove" @click="form.dependencyLinks.splice(idx, 1)">×</button>
+              </div>
+              <button type="button" class="add-row-btn" @click="addDependencyLink" :disabled="form.dependencyNodes.length < 2">+ Добавить связь</button>
+            </div>
+          </div>
+          <div ref="depsDiagram" class="deps-diagram">
+            <div class="deps-boxes">
+              <template v-for="(node, i) in form.dependencyNodes" :key="node.id">
+                <div v-if="i > 0" class="dep-arrow" aria-hidden="true">→</div>
+                <div class="dep-box">
+                  {{ node.label || 'Этап ' + (i + 1) }}
+                </div>
+              </template>
+            </div>
+            <p v-if="form.dependencyLinks.length" class="deps-links-summary">
+              Связи: <span v-for="(link, idx) in form.dependencyLinks" :key="idx">
+                {{ nodeLabel(link.fromId) }} → {{ nodeLabel(link.toId) }}<template v-if="idx < form.dependencyLinks.length - 1">; </template>
+              </span>
+            </p>
+          </div>
         </section>
 
-        <!-- ④ Узкое место -->
+        <!-- ④ Узкие места (несколько) -->
         <section class="card-section section-bottleneck">
-          <h2>④ Узкое место</h2>
-          <p class="section-hint">Элемент, который ограничивает общий ход. Выделите по имени.</p>
-          <input v-model="form.bottleneckTitle" class="bottleneck-title" placeholder="Название узкого места (например: Подрядчик по ремонту)" />
-          <textarea v-model="form.bottleneckDesc" rows="3" placeholder="Почему это узкое место: причины, отставание, влияние на следующие задачи"></textarea>
+          <h2><span class="section-num">④</span> Узкие места</h2>
+          <p class="section-hint">Элементы, ограничивающие общий ход. Можно указать несколько.</p>
+          <div v-for="(b, i) in form.bottlenecks" :key="i" class="bottleneck-item">
+            <input v-model="b.title" class="bottleneck-title" placeholder="Название (например: Подрядчик по ремонту)" />
+            <textarea v-model="b.desc" rows="2" placeholder="Почему узкое место: причины, влияние"></textarea>
+            <button type="button" class="chip-remove bottleneck-remove" @click="form.bottlenecks.splice(i, 1)" title="Удалить">×</button>
+          </div>
+          <button type="button" class="add-row-btn" @click="form.bottlenecks.push({ title: '', desc: '' })">+ Добавить узкое место</button>
         </section>
 
         <!-- ⑤ Загрузка ключевых ролей -->
         <section class="card-section section-roles">
-          <h2>⑤ Загрузка ключевых ролей</h2>
-          <p class="section-hint">Кто перегружен — Норма, Средний, Высокий, Критический.</p>
+          <h2><span class="section-num">⑤</span> Загрузка ключевых ролей</h2>
+          <p class="section-hint">Риск перегруза: клик по индикатору.</p>
           <table class="roles-table">
             <thead>
               <tr>
                 <th>Роль</th>
                 <th>Задач</th>
-                <th>Риск перегруза</th>
+                <th>Риск</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(role, i) in form.roles" :key="i">
                 <td><input v-model="role.name" placeholder="Роль" /></td>
                 <td><input v-model.number="role.tasksCount" type="number" min="0" class="input-num" /></td>
-                <td>
-                  <select v-model="role.overloadRisk">
-                    <option value="normal">Норма</option>
-                    <option value="medium">Средний</option>
-                    <option value="high">Высокий</option>
-                    <option value="critical">Критический</option>
-                  </select>
+                <td class="col-risk">
+                  <div class="risk-dots">
+                    <button type="button" class="risk-dot" :class="{ active: role.overloadRisk === 'normal' }" title="Норма" @click="role.overloadRisk = 'normal'" />
+                    <button type="button" class="risk-dot medium" :class="{ active: role.overloadRisk === 'medium' }" title="Средний" @click="role.overloadRisk = 'medium'" />
+                    <button type="button" class="risk-dot high" :class="{ active: role.overloadRisk === 'high' }" title="Высокий" @click="role.overloadRisk = 'high'" />
+                    <button type="button" class="risk-dot critical" :class="{ active: role.overloadRisk === 'critical' }" title="Критический" @click="role.overloadRisk = 'critical'" />
+                  </div>
+                  <span class="risk-label">{{ riskLabel(role.overloadRisk) }}</span>
                 </td>
               </tr>
             </tbody>
@@ -127,8 +173,8 @@
 
         <!-- ⑥ Решения -->
         <section class="card-section section-decisions">
-          <h2>⑥ Что требует управленческого решения</h2>
-          <p class="section-hint">Конкретные вопросы для руководства, не отчёт о статусе.</p>
+          <h2><span class="section-num">⑥</span> Управленческие решения</h2>
+          <p class="section-hint">Вопросы, требующие решения здесь и сейчас.</p>
           <div v-for="(item, i) in form.decisions" :key="i" class="decision-item">
             <input v-model="form.decisions[i].question" placeholder="Вопрос (например: Усиливать подрядчика?)" class="decision-q" />
             <textarea v-model="form.decisions[i].context" rows="2" placeholder="Контекст / варианты" class="decision-ctx"></textarea>
@@ -144,26 +190,39 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-const defaultForm = () => ({
-  projectName: '',
-  tasks: [
-    { name: '', status: 'progress', deadline: '', who: '' },
-    { name: '', status: 'progress', deadline: '', who: '' },
-  ],
-  prioritiesMust: ['', ''],
-  prioritiesShould: [''],
-  prioritiesNice: [''],
-  dependencies: '',
-  bottleneckTitle: '',
-  bottleneckDesc: '',
-  roles: [
-    { name: '', tasksCount: 0, overloadRisk: 'normal' },
-    { name: '', tasksCount: 0, overloadRisk: 'normal' },
-  ],
-  decisions: [
-    { question: '', context: '' },
-  ],
-});
+let nextId = 1;
+const defaultForm = () => {
+  const nodes = [
+    { id: nextId++, label: 'Планирование' },
+    { id: nextId++, label: 'Работы' },
+    { id: nextId++, label: 'Запуск' },
+  ];
+  return {
+    projectName: '',
+    tasks: [
+      { name: '', status: 'progress', deadline: '', who: '' },
+      { name: '', status: 'progress', deadline: '', who: '' },
+    ],
+    prioritiesMust: ['', ''],
+    prioritiesShould: [''],
+    prioritiesNice: [''],
+    dependencyNodes: nodes,
+    dependencyLinks: [
+      { fromId: nodes[0].id, toId: nodes[1].id },
+      { fromId: nodes[1].id, toId: nodes[2].id },
+    ],
+    bottlenecks: [
+      { title: '', desc: '' },
+    ],
+    roles: [
+      { name: '', tasksCount: 0, overloadRisk: 'normal' },
+      { name: '', tasksCount: 0, overloadRisk: 'normal' },
+    ],
+    decisions: [
+      { question: '', context: '' },
+    ],
+  };
+};
 
 export default {
   name: 'ProjectManagementCard',
@@ -173,12 +232,44 @@ export default {
       exporting: false,
     };
   },
+  computed: {
+    firstNodeId() {
+      const n = this.form.dependencyNodes[0];
+      return n ? n.id : 0;
+    },
+  },
   methods: {
+    nodeLabel(id) {
+      const n = this.form.dependencyNodes.find(x => x.id === id);
+      const i = this.form.dependencyNodes.findIndex(x => x.id === id);
+      return (n && n.label) ? n.label : ('Этап ' + (i + 1));
+    },
+    statusLabel(s) {
+      const l = { done: 'Готово', progress: 'В работе', risk: 'Риск', waiting: 'Ожидание' };
+      return l[s] || s;
+    },
+    riskLabel(r) {
+      const l = { normal: 'Норма', medium: 'Средний', high: 'Высокий', critical: 'Критический' };
+      return l[r] || r;
+    },
     addTask() {
       if (this.form.tasks.length < 10) this.form.tasks.push({ name: '', status: 'progress', deadline: '', who: '' });
     },
     addRole() {
       this.form.roles.push({ name: '', tasksCount: 0, overloadRisk: 'normal' });
+    },
+    addDependencyNode() {
+      this.form.dependencyNodes.push({ id: nextId++, label: '' });
+    },
+    removeNode(id) {
+      this.form.dependencyNodes = this.form.dependencyNodes.filter(n => n.id !== id);
+      this.form.dependencyLinks = this.form.dependencyLinks.filter(l => l.fromId !== id && l.toId !== id);
+    },
+    addDependencyLink() {
+      const nodes = this.form.dependencyNodes;
+      const a = nodes[0]?.id;
+      const b = nodes[1]?.id ?? a;
+      this.form.dependencyLinks.push({ fromId: a, toId: b });
     },
     async exportPdf() {
       this.exporting = true;
@@ -218,23 +309,28 @@ export default {
 
 <style scoped>
 .project-card-page {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
 .page-actions {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .export-pdf-btn {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #fff;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.export-pdf-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
 }
 
 .export-pdf-btn:disabled {
@@ -243,67 +339,87 @@ export default {
 }
 
 .project-card-a3 {
-  background: #fff;
-  padding: 24px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 80px);
+  padding: 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
 .card-header {
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #333;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #1e293b;
 }
 
 .card-title {
-  margin: 0 0 8px;
-  font-size: 1.25rem;
-  color: #333;
+  margin: 0 0 12px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .card-project-name {
   width: 100%;
-  max-width: 500px;
-  padding: 8px 12px;
+  max-width: 520px;
+  padding: 10px 14px;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
 }
 
 .card-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 24px;
 }
 
 .card-section {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .card-section h2 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-  color: #333;
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #1e293b;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.85rem;
 }
 
 .section-hint {
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   font-size: 0.8rem;
-  color: #666;
-  line-height: 1.3;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .section-tasks { grid-column: 1; }
 .section-priorities { grid-column: 2; }
-.section-deps { grid-column: 1; }
+.section-deps { grid-column: 1; grid-row: span 1; }
 .section-bottleneck { grid-column: 2; }
 .section-roles { grid-column: 1; }
 .section-decisions { grid-column: 2; }
 
+/* Таблица задач + светофор */
 .tasks-table, .roles-table {
   width: 100%;
   border-collapse: collapse;
@@ -312,115 +428,338 @@ export default {
 
 .tasks-table th, .tasks-table td,
 .roles-table th, .roles-table td {
-  border: 1px solid #ddd;
-  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  padding: 8px 10px;
   text-align: left;
 }
 
 .tasks-table th, .roles-table th {
-  background: #eee;
+  background: #f1f5f9;
   font-weight: 600;
+  color: #475569;
 }
 
 .tasks-table input, .roles-table input,
 .tasks-table select, .roles-table select {
   width: 100%;
-  padding: 4px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-
-.input-sm { max-width: 80px; }
-.input-num { max-width: 56px; }
-
-.add-row-btn, .add-item-btn {
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: #e0e0e0;
-  border: none;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 0.85rem;
+}
+
+.col-num { width: 32px; text-align: center; }
+.col-status, .col-risk { white-space: nowrap; }
+
+.traffic-light {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.tl-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
   cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.add-row-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tl-dot:hover {
+  transform: scale(1.1);
+}
 
+.tl-green { background: #94a3b8; }
+.tl-green.active { background: #22c55e; border-color: #16a34a; box-shadow: 0 0 0 2px #22c55e; }
+.tl-yellow { background: #94a3b8; }
+.tl-yellow.active { background: #eab308; border-color: #ca8a04; box-shadow: 0 0 0 2px #eab308; }
+.tl-red { background: #94a3b8; }
+.tl-red.active { background: #ef4444; border-color: #dc2626; box-shadow: 0 0 0 2px #ef4444; }
+.tl-gray { background: #94a3b8; }
+.tl-gray.active { background: #64748b; border-color: #475569; box-shadow: 0 0 0 2px #64748b; }
+
+.status-label {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.input-sm { max-width: 82px; }
+.input-num { max-width: 56px; }
+
+/* Приоритеты */
 .priority-block {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 4px solid #cbd5e1;
 }
+
+.priority-block.must { border-left-color: #dc2626; background: #fef2f2; }
+.priority-block.should { border-left-color: #eab308; background: #fefce8; }
+.priority-block.nice { border-left-color: #22c55e; background: #f0fdf4; }
 
 .priority-block h3 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 0.9rem;
-  color: #555;
+  font-weight: 700;
+  color: #334155;
 }
 
-.priority-block ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.priority-block li {
-  margin-bottom: 4px;
-}
+.priority-block ul { list-style: none; padding: 0; margin: 0; }
+.priority-block li { margin-bottom: 6px; }
 
 .priority-block input {
   width: 100%;
-  padding: 4px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-size: 0.85rem;
 }
 
-.add-item-btn {
-  padding: 2px 10px;
-  font-size: 0.9rem;
+.add-row-btn, .add-item-btn {
+  margin-top: 10px;
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #475569;
+  font-weight: 500;
 }
 
-.section-deps textarea,
-.section-bottleneck textarea,
-.bottleneck-title {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  box-sizing: border-box;
+.add-row-btn:hover:not(:disabled), .add-item-btn:hover {
+  background: #e2e8f0;
 }
 
-.bottleneck-title {
+.add-row-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.add-item-btn { padding: 4px 12px; font-size: 0.9rem; }
+
+/* Зависимости — редактор и диаграмма */
+.deps-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.deps-editor label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.node-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
-.section-bottleneck {
-  border-left: 4px solid #c62828;
+.node-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px;
 }
 
-.decision-item {
-  margin-bottom: 12px;
-  padding: 8px;
-  background: #fff;
+.node-chip input {
+  width: 100px;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+}
+
+.chip-remove {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: #e2e8f0;
+  color: #475569;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.chip-remove:hover {
+  background: #f87171;
+  color: #fff;
+}
+
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.link-select {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  border: 1px solid #e0e0e0;
+  font-size: 0.85rem;
+  min-width: 100px;
+}
+
+.link-arrow {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.deps-diagram {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+}
+
+.deps-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.dep-arrow {
+  color: #64748b;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dep-box {
+  flex: 0 0 auto;
+  min-width: 90px;
+  max-width: 140px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.deps-links-summary {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Узкие места (несколько) */
+.section-bottleneck {
+  border-left: 4px solid #dc2626;
+  background: #fef2f2;
+}
+
+.bottleneck-item {
+  position: relative;
+  margin-bottom: 14px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.bottleneck-title {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.bottleneck-item textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.bottleneck-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+/* Роли — индикаторы риска */
+.risk-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.risk-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  padding: 0;
+  cursor: pointer;
+  background: #94a3b8;
+  transition: transform 0.15s;
+}
+
+.risk-dot:hover { transform: scale(1.15); }
+.risk-dot.active { box-shadow: 0 0 0 2px currentColor; }
+.risk-dot.active { background: #22c55e; border-color: #16a34a; }
+.risk-dot.medium.active { background: #eab308; border-color: #ca8a04; }
+.risk-dot.high.active { background: #f97316; border-color: #ea580c; }
+.risk-dot.critical.active { background: #ef4444; border-color: #dc2626; }
+
+.risk-label {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Решения */
+.decision-item {
+  margin-bottom: 14px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
 .decision-q {
   width: 100%;
-  padding: 6px 8px;
-  margin-bottom: 6px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-weight: 600;
+  font-size: 0.9rem;
   box-sizing: border-box;
 }
 
 .decision-ctx {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-size: 0.85rem;
   resize: vertical;
   box-sizing: border-box;
@@ -434,5 +773,6 @@ export default {
   .section-bottleneck, .section-roles, .section-decisions {
     grid-column: 1;
   }
+  .deps-boxes { justify-content: center; }
 }
 </style>

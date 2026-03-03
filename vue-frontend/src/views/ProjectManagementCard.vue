@@ -512,8 +512,8 @@ export default {
 
 .section-tasks { grid-column: 1; }
 .section-priorities { grid-column: 2; }
-.section-deps { grid-column: 1; grid-row: span 1; }
-.section-bottleneck { grid-column: 2; }
+.section-deps { grid-column: 1 / -1; }
+.section-bottleneck { grid-column: 1 / -1; }
 .section-roles { grid-column: 1; }
 .section-decisions { grid-column: 2; }
 

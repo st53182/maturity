@@ -407,7 +407,7 @@ export default {
 
 <style scoped>
 .project-card-page {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -471,6 +471,7 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  min-width: 0;
 }
 
 .card-section {
@@ -479,6 +480,7 @@ export default {
   border-radius: 10px;
   padding: 18px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  min-width: 0;
 }
 
 .card-section h2 {
@@ -551,11 +553,11 @@ export default {
   margin: 0 -4px;
 }
 
-.col-num { width: 36px; min-width: 36px; text-align: center; }
-.col-task { min-width: 200px; }
-.col-status { width: 1%; white-space: nowrap; }
-.col-deadline { min-width: 88px; }
-.col-who { min-width: 130px; }
+.col-num { width: 40px; min-width: 40px; text-align: center; }
+.col-task { min-width: 260px; }
+.col-status { width: 1%; white-space: nowrap; min-width: 140px; }
+.col-deadline { min-width: 100px; }
+.col-who { min-width: 160px; }
 .col-risk { white-space: nowrap; }
 
 .tasks-table .col-task input,
@@ -628,10 +630,12 @@ export default {
 
 .priority-block input {
   width: 100%;
+  min-width: 0;
   padding: 6px 10px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 0.85rem;
+  box-sizing: border-box;
 }
 
 .add-row-btn, .add-item-btn {
@@ -900,7 +904,7 @@ export default {
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .card-grid {
     grid-template-columns: 1fr;
   }
@@ -908,6 +912,12 @@ export default {
   .section-bottleneck, .section-roles, .section-decisions {
     grid-column: 1;
   }
-  .deps-boxes { justify-content: center; }
+  .deps-diagram-canvas { max-width: 100%; }
+}
+
+@media (max-width: 768px) {
+  .project-card-page { padding: 16px; }
+  .col-task { min-width: 180px; }
+  .col-who { min-width: 120px; }
 }
 </style>

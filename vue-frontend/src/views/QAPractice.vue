@@ -379,17 +379,17 @@ export default {
       if (this.shopFilter === 'clothing') this.revealShopBug(1);
       if (this.shopFilter === 'electronics' && this.displayedProducts.length > 0) this.revealShopBug(13);
       if (this.shopFilter === 'books') {
-        if (this.displayedProducts.length > 0) this.revealShopBug(12);
+        if (this.displayedProducts.length > 1) this.revealShopBug(12);
         if (!(this.shopSearch || '').trim()) this.revealShopBug(20);
       }
-      if (this.displayedProducts.some((p) => p.id === 2)) this.revealShopBug(11);
+      if ((this.shopFilter || (this.shopSearch || '').trim()) && this.displayedProducts.some((p) => p.id === 2)) this.revealShopBug(11);
       this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts);
     },
     shopSearch() {
       this.detectShopSearchBugs((this.shopSearch || '').trim(), this.displayedProducts);
-      if (this.shopFilter === 'electronics' && this.displayedProducts.length > 0) this.revealShopBug(13);
+      if (this.shopFilter === 'electronics' && this.displayedProducts.length > 1) this.revealShopBug(13);
       if (this.shopFilter === 'books' && !(this.shopSearch || '').trim()) this.revealShopBug(20);
-      if (this.displayedProducts.some((p) => p.id === 2)) this.revealShopBug(11);
+      if ((this.shopFilter || (this.shopSearch || '').trim()) && this.displayedProducts.some((p) => p.id === 2)) this.revealShopBug(11);
     },
     cart: { deep: true, handler() { this.saveJson(STORAGE_CART, this.cart); this.detectShopCartBugs(); } },
   },
@@ -446,10 +446,11 @@ export default {
       return p.price * q;
     },
     addToCart(p) {
-      const idToAdd = p.id === 2 ? 1 : p.id;
+      const list = this.displayedProducts;
+      const idx = list.findIndex((d) => d.id === p.id);
+      const idToAdd = (idx === 1 && list.length >= 2) ? list[0].id : p.id;
       this.cart.push({ productId: idToAdd, quantity: 1 });
-      if (p.id === 2) this.revealShopBug(14);
-      if (this.cart.filter((i) => i.productId === p.id).length > 1) this.revealShopBug(4);
+      if (this.cart.filter((i) => i.productId === idToAdd).length >= 3) this.revealShopBug(4);
     },
     removeFromCart(idx) {
       if (idx === 0 && this.cart.length > 1) {
@@ -465,7 +466,13 @@ export default {
     onCartQtyChange() {
       const hasZero = this.cart.some((i) => i.quantity < 1 || i.quantity === '' || isNaN(Number(i.quantity)));
       if (hasZero) this.revealShopBug(6);
-      this.revealShopBug(7);
+      let expected = 0;
+      this.cart.forEach((item, idx) => {
+        const p = this.products.find((pr) => pr.id === item.productId);
+        const qty = (item.quantity === '' || isNaN(Number(item.quantity))) ? 0 : Number(item.quantity);
+        if (p) expected += p.price * (idx === this.cart.length - 1 ? 1 : qty);
+      });
+      if (this.cart.length >= 2 && expected !== this.displayedCartTotal) this.revealShopBug(7);
     },
     detectShopCartBugs() {
       let expected = 0;
@@ -477,12 +484,14 @@ export default {
         if (p) expected += p.price * (idx === this.cart.length - 1 ? 1 : qty);
       });
       if (hasNegative) this.revealShopBug(16);
-      if (this.cart.length > 0 && expected !== Math.round(expected)) this.revealShopBug(17);
-      if (this.cart.length > 0 && this.cartTotal !== expected) this.revealShopBug(8);
+      if (this.cart.length >= 2 && expected !== Math.round(expected)) this.revealShopBug(17);
+      if (this.cart.length >= 2 && this.cartTotal !== expected) this.revealShopBug(8);
       if (this.cart.length === 0 && this.cartTotal > 0) this.revealShopBug(9);
       const realCount = this.cart.reduce((s, i) => s + (i.quantity || 0), 0);
-      if (realCount > 0 && this.cartTotalItems !== realCount) this.revealShopBug(10);
-      if (this.cart.length > 0) this.revealShopBug(19);
+      if (this.cart.length >= 2 && realCount > 0 && this.cartTotalItems !== realCount) this.revealShopBug(10);
+      if (this.cart.length === 2) this.revealShopBug(19);
+      const list = this.displayedProducts;
+      if (this.cart.length >= 2 && list.length >= 2 && this.cart.some((i) => i.productId === list[0].id) && this.cart.some((i) => i.productId === list[1].id)) this.revealShopBug(14);
       if (this.cart.some((i) => i.productId === 2)) this.revealShopBug(18);
     },
     getShopBugText(i) {

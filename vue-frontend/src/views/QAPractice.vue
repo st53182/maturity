@@ -114,7 +114,7 @@
         <li v-for="p in displayedProducts" :key="p.id" class="product-item">
           <span class="product-name">{{ p.name }}</span>
           <span class="product-cat">{{ getCategoryLabel(p.category) }}</span>
-          <span class="product-price">{{ p.price }} ₽</span>
+          <span class="product-price">{{ p.price }} €</span>
           <button type="button" class="add-cart-btn" @click="addToCart(p)">+ {{ $t('qa.addToCart') }}</button>
         </li>
       </ul>
@@ -126,11 +126,11 @@
           <li v-for="(item, idx) in cart" :key="item.id + '-' + idx" class="cart-item">
             <span class="cart-item-name">{{ getProductById(item.productId).name }}</span>
             <input v-model.number="item.quantity" type="number" min="1" class="cart-qty" @change="onCartQtyChange" />
-            <span class="cart-item-price">{{ (getProductById(item.productId).price * item.quantity) }} ₽</span>
+            <span class="cart-item-price">{{ (getProductById(item.productId).price * item.quantity) }} €</span>
             <button type="button" class="remove-cart-btn" @click="removeFromCart(idx)">✕</button>
           </li>
         </ul>
-        <p class="cart-total">{{ $t('qa.total') }}: <strong>{{ cartTotal }} ₽</strong></p>
+        <p class="cart-total">{{ $t('qa.total') }}: <strong>{{ cartTotal }} €</strong></p>
       </div>
 
       <div v-if="shopBugsFound.length === 10" class="surprise-msg">🎊 {{ $t('qa.allBugsFound') }}</div>
@@ -298,12 +298,12 @@ function getTriangleDraw(a, b, c, typeLabels) {
 }
 
 const PRODUCTS = [
-  { id: 1, name: 'Смартфон', category: 'electronics', price: 29900 },
-  { id: 2, name: 'Наушники', category: 'electronics', price: 3990 },
-  { id: 3, name: 'Футболка', category: 'clothing', price: 1290 },
-  { id: 4, name: 'Куртка', category: 'clothing', price: 5990 },
-  { id: 5, name: 'Книга Python', category: 'books', price: 890 },
-  { id: 6, name: 'Книга JavaScript', category: 'books', price: 990 },
+  { id: 1, name: 'Смартфон', category: 'electronics', price: 299 },
+  { id: 2, name: 'Наушники', category: 'electronics', price: 39.9 },
+  { id: 3, name: 'Футболка', category: 'clothing', price: 12.9 },
+  { id: 4, name: 'Куртка', category: 'clothing', price: 59.9 },
+  { id: 5, name: 'Книга Python', category: 'books', price: 8.9 },
+  { id: 6, name: 'Книга JavaScript', category: 'books', price: 9.9 },
 ];
 
 export default {

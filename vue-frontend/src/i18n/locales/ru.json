@@ -89,7 +89,10 @@
     "create": "Создать ссылку",
     "linkCreated": "Ссылка создана. Отправьте её участникам команды.",
     "copyLink": "Копировать ссылку",
-    "startAssessment": "Начать оценку"
+    "startAssessment": "Начать оценку",
+    "getRecommendations": "Получить рекомендации по улучшению (AI)",
+    "generatingRecs": "Генерируем рекомендации...",
+    "recommendationsTitle": "Рекомендации по улучшению"
   },
   "results": {
     "title": "Результаты оценки",

@@ -87,7 +87,10 @@
     "create": "Create link",
     "linkCreated": "Link created. Share it with your team.",
     "copyLink": "Copy link",
-    "startAssessment": "Start assessment"
+    "startAssessment": "Start assessment",
+    "getRecommendations": "Get improvement recommendations (AI)",
+    "generatingRecs": "Generating recommendations...",
+    "recommendationsTitle": "Improvement recommendations"
   },
   "results": {
     "title": "Assessment Results",

@@ -14,7 +14,8 @@
     "createTeam": "Создать команду",
     "logout": "Выйти",
     "surveys": "Опросник",
-    "projectCard": "Карта проекта"
+    "projectCard": "Карта проекта",
+    "maturityLink": "Оценка по ссылке"
   },
   "auth": {
     "login": "Вход",
@@ -63,6 +64,32 @@
     "assessmentSubmitted": "Оценка отправлена!",
     "errorLoadingQuestions": "Ошибка загрузки вопросов",
     "errorSubmitting": "Ошибка при отправке оценки"
+  },
+  "maturity": {
+    "title": "Оценка зрелости по ссылке",
+    "loading": "Загрузка...",
+    "alreadyCompleted": "Оценка по этой ссылке уже пройдена.",
+    "viewResults": "Перейти к результатам",
+    "progress": "Вопросы: {current} из {total}",
+    "yes": "Да",
+    "no": "Нет",
+    "prev": "← Назад",
+    "next": "Далее →",
+    "submit": "Завершить и посмотреть результаты",
+    "resultsTitle": "Результаты оценки зрелости",
+    "radarTitle": "Оценка по категориям",
+    "radarDataset": "Средняя оценка",
+    "overallScore": "Общий балл",
+    "downloadPdf": "Скачать PDF",
+    "exporting": "Формируем PDF...",
+    "pdfError": "Ошибка при формировании PDF. Попробуйте ещё раз.",
+    "createLink": "Создать ссылку для оценки",
+    "createLinkTitle": "Ссылка для оценки зрелости",
+    "teamNameOptional": "Название команды (необязательно)",
+    "create": "Создать ссылку",
+    "linkCreated": "Ссылка создана. Отправьте её участникам команды.",
+    "copyLink": "Копировать ссылку",
+    "startAssessment": "Начать оценку"
   },
   "results": {
     "title": "Результаты оценки",

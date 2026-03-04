@@ -62,6 +62,10 @@
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push('/maturity/create')">
+          <span>🔗</span>
+          <small>{{ $t('nav.maturityLink') }}</small>
+        </button>
         <button class="sidebar-btn" @click="$router.push('/project-card')">
           <span>📑</span>
           <small>{{ $t('nav.projectCard') }}</small>
@@ -140,6 +144,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/surveys')">
             <span>📋</span>
             <span>{{ $t('nav.surveys') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/maturity/create')">
+            <span>🔗</span>
+            <span>{{ $t('nav.maturityLink') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/project-card')">
             <span>📑</span>

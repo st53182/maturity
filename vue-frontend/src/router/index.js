@@ -29,6 +29,9 @@ const routes = [
   {path: '/system-thinking', name: 'SystemThinking', component: () => import('@/views/SystemThinkingIceberg.vue'), meta: { requiresAuth: true }},
   {path: '/qa', name: 'QAPractice', component: () => import('@/views/QAPractice.vue')},
   {path: '/project-card', name: 'ProjectManagementCard', component: () => import('@/views/ProjectManagementCard.vue'), meta: { requiresAuth: true }},
+  { path: '/maturity/create', name: 'CreateMaturityLink', component: () => import('@/views/CreateMaturityLink.vue'), meta: { requiresAuth: true } },
+  { path: '/maturity/:token', name: 'TakeMaturity', component: () => import('@/views/TakeMaturity.vue') },
+  { path: '/maturity/:token/results', name: 'MaturityResults', component: () => import('@/views/MaturityResults.vue') },
 ];
 
 const router = createRouter({

@@ -18,7 +18,7 @@
       <p class="progress-text">{{ $t('maturity.progress', { current: currentPage * 5 + currentBatch.length, total: survey.questions.length }) }}</p>
 
       <div class="batch">
-        <div v-for="(q, idx) in currentBatch" :key="q.id" class="question-block">
+        <div v-for="q in currentBatch" :key="q.id" class="question-block">
           <p class="question-text">{{ q.text }}</p>
           <div class="yes-no">
             <button

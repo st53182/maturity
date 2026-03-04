@@ -1,7 +1,7 @@
 # Оценка зрелости по ссылке: создание сессии, прохождение (да/нет), результаты для радара и PDF.
 import uuid
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_optional, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db
 from models import MaturityLinkSession
 from maturity_questions import MATURITY_QUESTIONS
@@ -27,7 +27,7 @@ def _results_from_answers(answers):
 
 
 @maturity_bp.route('/api/maturity-link', methods=['POST'])
-@jwt_optional()
+@jwt_required(optional=True)
 def create_maturity_link():
     """Создать сессию оценки по ссылке. Тело: { "team_name": "опционально" }. Возвращает token и url."""
     data = request.get_json() or {}

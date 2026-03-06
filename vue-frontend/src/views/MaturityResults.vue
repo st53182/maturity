@@ -233,7 +233,11 @@ export default {
 
 .radar-wrap {
   margin: 1.5rem 0;
-  min-height: 320px;
+  height: 440px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .recommendations-block {

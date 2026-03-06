@@ -13,7 +13,8 @@
     "createTeam": "Create Team",
     "logout": "Logout",
     "projectCard": "Project Card",
-    "maturityLink": "Assessment by link"
+    "maturityLink": "Assessment by link",
+    "roleModel": "Role model"
   },
   "auth": {
     "login": "Login",

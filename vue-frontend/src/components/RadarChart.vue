@@ -78,7 +78,8 @@ export default {
   width: 100%;
   max-width: 600px;
   height: 400px;
-  margin-bottom: 30px;
+  max-height: 100%;
+  margin-bottom: 0;
   background: white;
   border-radius: 10px;
   padding: 15px;

@@ -15,8 +15,7 @@
     "logout": "Выйти",
     "surveys": "Опросник",
     "projectCard": "Карта проекта",
-    "maturityLink": "Оценка по ссылке",
-    "roleModel": "Ролевая модель"
+    "maturityLink": "Оценка по ссылке"
   },
   "auth": {
     "login": "Вход",

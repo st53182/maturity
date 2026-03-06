@@ -52,6 +52,10 @@
               </button>
             </div>
           </div>
+          <div v-if="q.related_roles && q.related_roles.length" class="question-roles">
+            <span class="roles-label">Ролевая модель:</span>
+            <span class="roles-list">{{ q.related_roles.join(', ') }}</span>
+          </div>
           <div v-if="q.metrics_impact || q.negative_for_business" class="question-info">
             <div v-if="q.metrics_impact" class="info-block info-metrics">
               <div class="info-block-title">Метрики влияния</div>
@@ -310,6 +314,25 @@ export default {
 .why-label {
   font-weight: 600;
   color: #065f46;
+}
+
+.question-roles {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  font-size: 0.8125rem;
+}
+
+.roles-label {
+  font-weight: 600;
+  color: #0369a1;
+  margin-right: 0.35rem;
+}
+
+.roles-list {
+  color: #0c4a6e;
 }
 
 .question-info {

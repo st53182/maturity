@@ -58,10 +58,6 @@
           <span>🧊</span>
           <small>Айсберг системного мышления</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/role-model')">
-          <span>👥</span>
-          <small>{{ $t('nav.roleModel') }}</small>
-        </button>
         <button class="sidebar-btn" @click="$router.push('/surveys')">
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
@@ -144,10 +140,6 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/system-thinking')">
             <span>🧊</span>
             <span>Айсберг системного мышления</span>
-          </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/role-model')">
-            <span>👥</span>
-            <span>{{ $t('nav.roleModel') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose('/surveys')">
             <span>📋</span>

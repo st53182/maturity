@@ -33,7 +33,6 @@ const routes = [
   { path: '/maturity/:token', name: 'TakeMaturity', component: () => import('@/views/TakeMaturity.vue') },
   { path: '/maturity/:token/results', name: 'MaturityResults', component: () => import('@/views/MaturityResults.vue') },
   { path: '/flow-metrics', name: 'FlowMetricsDashboard', component: () => import('@/views/FlowMetricsDashboard.vue') },
-  { path: '/role-model', name: 'RoleModel', component: () => import('@/views/RoleModel.vue'), meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

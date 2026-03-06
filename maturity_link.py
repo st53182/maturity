@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db
 from models import MaturityLinkSession
-from maturity_questions import MATURITY_QUESTIONS, RADAR_GROUPS
+from maturity_questions import MATURITY_QUESTIONS, RADAR_GROUPS, ROLE_BY_THEME
 
 maturity_bp = Blueprint('maturity_link', __name__)
 
@@ -70,6 +70,7 @@ def get_maturity_survey(token):
             'why_important': q.get('why_important', ''),
             'metrics_impact': q.get('metrics_impact', ''),
             'negative_for_business': q.get('negative_for_business', ''),
+            'related_roles': ROLE_BY_THEME.get(q['theme'], []),
         }
         for i, q in enumerate(MATURITY_QUESTIONS)
     ]

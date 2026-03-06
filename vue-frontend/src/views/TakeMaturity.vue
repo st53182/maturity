@@ -19,25 +19,48 @@
 
       <div class="batch">
         <div v-for="q in currentBatch" :key="q.id" class="question-block">
-          <p class="question-text">{{ q.text }}</p>
-          <p v-if="q.why_important" class="question-why">Почему это важно: {{ q.why_important }}</p>
-          <p v-if="q.metrics_impact" class="question-metrics">Метрики влияния: {{ q.metrics_impact }}</p>
-          <p v-if="q.negative_for_business" class="question-negative">Негатив для бизнеса: {{ q.negative_for_business }}</p>
-          <div class="yes-no">
-            <button
-              type="button"
-              :class="['btn-answer', 'btn-yes', { active: answers[q.id] === true }]"
-              @click="setAnswer(q.id, true)"
-            >
-              {{ $t('maturity.yes') }}
-            </button>
-            <button
-              type="button"
-              :class="['btn-answer', 'btn-no', { active: answers[q.id] === false }]"
-              @click="setAnswer(q.id, false)"
-            >
-              {{ $t('maturity.no') }}
-            </button>
+          <div class="question-main">
+            <div class="question-row" :class="{ 'why-visible': expandedWhy[q.id] }">
+              <p class="question-text">{{ q.text }}</p>
+              <button
+                v-if="q.why_important"
+                type="button"
+                class="why-trigger"
+                :aria-expanded="!!expandedWhy[q.id]"
+                @click="toggleWhy(q.id)"
+              >
+                Почему это важно?
+              </button>
+              <div v-if="q.why_important" class="question-why-hint" :class="{ visible: expandedWhy[q.id] }">
+                <span class="why-label">Почему это важно:</span> {{ q.why_important }}
+              </div>
+            </div>
+            <div class="yes-no">
+              <button
+                type="button"
+                :class="['btn-answer', 'btn-yes', { active: answers[q.id] === true }]"
+                @click="setAnswer(q.id, true)"
+              >
+                {{ $t('maturity.yes') }}
+              </button>
+              <button
+                type="button"
+                :class="['btn-answer', 'btn-no', { active: answers[q.id] === false }]"
+                @click="setAnswer(q.id, false)"
+              >
+                {{ $t('maturity.no') }}
+              </button>
+            </div>
+          </div>
+          <div v-if="q.metrics_impact || q.negative_for_business" class="question-info">
+            <div v-if="q.metrics_impact" class="info-block info-metrics">
+              <div class="info-block-title">Метрики влияния</div>
+              <p class="info-block-text">{{ q.metrics_impact }}</p>
+            </div>
+            <div v-if="q.negative_for_business" class="info-block info-negative">
+              <div class="info-block-title">Если у команды проблемы в этом</div>
+              <p class="info-block-text">{{ q.negative_for_business }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -85,7 +108,8 @@ export default {
       loading: true,
       error: null,
       submitting: false,
-      questionsPerPage: QUESTIONS_PER_PAGE
+      questionsPerPage: QUESTIONS_PER_PAGE,
+      expandedWhy: {}
     };
   },
   computed: {
@@ -136,6 +160,9 @@ export default {
     },
     setAnswer(id, value) {
       this.answers[id] = value;
+    },
+    toggleWhy(id) {
+      this.expandedWhy = { ...this.expandedWhy, [id]: !this.expandedWhy[id] };
     },
     async submit() {
       if (!this.allFilled || this.submitting) return;
@@ -210,30 +237,125 @@ export default {
 .batch { margin-bottom: 2rem; }
 
 .question-block {
-  background: #f9fafb;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (min-width: 680px) {
+  .question-block {
+    grid-template-columns: 1fr minmax(200px, 280px);
+  }
+}
+
+.question-main {
+  min-width: 0;
+}
+
+.question-row {
+  position: relative;
+  margin-bottom: 0.75rem;
 }
 
 .question-text {
   font-size: 1rem;
   line-height: 1.5;
   color: #111;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem 0;
   font-weight: 600;
+  padding-right: 0.5rem;
 }
 
-.question-why, .question-metrics, .question-negative {
-  font-size: 0.875rem;
+/* «Почему это важно» показывается при наведении на блок вопроса */
+.question-why-hint {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #047857;
+  background: #ecfdf5;
+  border-left: 3px solid #10b981;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 6px 6px 0;
+  margin-top: 0.5rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
+}
+
+.question-row:hover .question-why-hint,
+.question-why-hint.visible {
+  max-height: 12em;
+  opacity: 1;
+}
+
+.why-trigger {
+  font-size: 0.75rem;
+  color: #059669;
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.why-trigger:hover { color: #047857; }
+
+.why-label {
+  font-weight: 600;
+  color: #065f46;
+}
+
+.question-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.info-block {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.info-block-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.info-block-text {
+  font-size: 0.8125rem;
   line-height: 1.45;
-  color: #4b5563;
-  margin: 0.35rem 0 0.6rem 0;
+  margin: 0;
 }
 
-.question-why { color: #059669; }
-.question-negative { color: #b91c1c; }
+.info-metrics {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.info-metrics .info-block-title { color: #1d4ed8; }
+.info-metrics .info-block-text { color: #1e40af; }
+
+.info-negative {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.info-negative .info-block-title { color: #b91c1c; }
+.info-negative .info-block-text { color: #991b1b; }
 
 .yes-no {
   display: flex;

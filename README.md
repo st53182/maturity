@@ -1,5 +1,17 @@
 # Scrum Maturity App – дополнительные заметки
 
+## Сборка фронта (static)
+
+Фронт на Vue лежит в `vue-frontend/`, в прод отдаётся папка **`static/`**. После изменений в `vue-frontend` нужно каждый раз генерировать static:
+
+```bash
+cd vue-frontend && npm run build
+```
+
+Затем закоммитить изменения в `static/` и задеплоить (например, пуш в master для Render).
+
+---
+
 ## Новая фича: подготовка бэклога с AI
 
 - API: `POST /api/backlog/prep` — поля `text` (описание, обязательно), `work_type` (`story`/`epic`), `context` (опционально), `language` (`ru`/`en`).

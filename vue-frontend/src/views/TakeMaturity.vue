@@ -15,11 +15,14 @@
       <div class="progress-bar">
         <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
       </div>
-      <p class="progress-text">{{ $t('maturity.progress', { current: currentPage * 5 + currentBatch.length, total: survey.questions.length }) }}</p>
+      <p class="progress-text">{{ $t('maturity.progress', { current: Math.min(currentPage * questionsPerPage + currentBatch.length, survey.questions.length), total: survey.questions.length }) }}</p>
 
       <div class="batch">
         <div v-for="q in currentBatch" :key="q.id" class="question-block">
           <p class="question-text">{{ q.text }}</p>
+          <p v-if="q.why_important" class="question-why">Почему это важно: {{ q.why_important }}</p>
+          <p v-if="q.metrics_impact" class="question-metrics">Метрики влияния: {{ q.metrics_impact }}</p>
+          <p v-if="q.negative_for_business" class="question-negative">Негатив для бизнеса: {{ q.negative_for_business }}</p>
           <div class="yes-no">
             <button
               type="button"
@@ -69,7 +72,7 @@
 <script>
 import axios from 'axios';
 
-const QUESTIONS_PER_PAGE = 5;
+const QUESTIONS_PER_PAGE = 10;
 
 export default {
   name: 'TakeMaturity',
@@ -81,7 +84,8 @@ export default {
       currentPage: 0,
       loading: true,
       error: null,
-      submitting: false
+      submitting: false,
+      questionsPerPage: QUESTIONS_PER_PAGE
     };
   },
   computed: {
@@ -217,8 +221,19 @@ export default {
   font-size: 1rem;
   line-height: 1.5;
   color: #111;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
+
+.question-why, .question-metrics, .question-negative {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #4b5563;
+  margin: 0.35rem 0 0.6rem 0;
+}
+
+.question-why { color: #059669; }
+.question-negative { color: #b91c1c; }
 
 .yes-no {
   display: flex;

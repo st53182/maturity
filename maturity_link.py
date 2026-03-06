@@ -9,20 +9,31 @@ from maturity_questions import MATURITY_QUESTIONS, RADAR_GROUPS
 maturity_bp = Blueprint('maturity_link', __name__)
 
 QUESTIONS_COUNT = len(MATURITY_QUESTIONS)
-QUESTIONS_PER_CATEGORY = 3
+QUESTIONS_PER_THEME = 3
+
+# Индексы вопросов по темам (для радара)
+def _theme_indices():
+    from collections import OrderedDict
+    out = OrderedDict()
+    for i, q in enumerate(MATURITY_QUESTIONS):
+        theme = q["theme"]
+        if theme not in out:
+            out[theme] = []
+        out[theme].append(i)
+    return out
+
+THEME_INDICES = _theme_indices()
 
 
 def _results_from_answers(answers):
-    """answers: list of 75 bool. Return { category: { "1".."3": 0-5 } } for radar."""
+    """answers: list of bool. Return { theme: { "1".."3": 0-5 } } for radar."""
     if not answers or len(answers) != QUESTIONS_COUNT:
         return {}
     results = {}
-    for i, q in enumerate(MATURITY_QUESTIONS):
-        cat = q["category"]
-        if cat not in results:
-            results[cat] = {}
-        sub_idx = (i % QUESTIONS_PER_CATEGORY) + 1
-        results[cat][str(sub_idx)] = 5.0 if answers[i] else 0.0
+    for theme, indices in THEME_INDICES.items():
+        results[theme] = {}
+        for sub_one_based, q_idx in enumerate(indices[:QUESTIONS_PER_THEME], 1):
+            results[theme][str(sub_one_based)] = 5.0 if answers[q_idx] else 0.0
     return results
 
 
@@ -46,12 +57,20 @@ def create_maturity_link():
 
 @maturity_bp.route('/api/maturity/<token>', methods=['GET'])
 def get_maturity_survey(token):
-    """Публично: получить опрос по токену (вопросы с id 0..74)."""
+    """Публично: получить опрос по токену (вопросы с id 0..N-1, по 10 на страницу)."""
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена или недействительна'}), 404
     questions = [
-        {'id': i, 'category': q['category'], 'text': q['text']}
+        {
+            'id': i,
+            'category': q['category'],
+            'theme': q['theme'],
+            'text': q['text'],
+            'why_important': q.get('why_important', ''),
+            'metrics_impact': q.get('metrics_impact', ''),
+            'negative_for_business': q.get('negative_for_business', ''),
+        }
         for i, q in enumerate(MATURITY_QUESTIONS)
     ]
     return jsonify({
@@ -63,7 +82,7 @@ def get_maturity_survey(token):
 
 @maturity_bp.route('/api/maturity/<token>/submit', methods=['POST'])
 def submit_maturity_answers(token):
-    """Публично: отправить ответы. Тело: { "answers": [true, false, ... ] } — 75 элементов."""
+    """Публично: отправить ответы. Тело: { "answers": [true, false, ... ] } — N элементов."""
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404

@@ -52,10 +52,6 @@
               </button>
             </div>
           </div>
-          <div v-if="q.related_roles && q.related_roles.length" class="question-roles">
-            <span class="roles-label">Ролевая модель:</span>
-            <span class="roles-list">{{ q.related_roles.join(', ') }}</span>
-          </div>
           <div v-if="q.metrics_impact || q.negative_for_business" class="question-info">
             <div v-if="q.metrics_impact" class="info-block info-metrics">
               <div class="info-block-title">Метрики влияния</div>
@@ -276,7 +272,7 @@ export default {
   padding-right: 0.5rem;
 }
 
-/* «Почему это важно» показывается при наведении на блок вопроса */
+/* «Почему это важно» показывается только по клику на кнопку */
 .question-why-hint {
   font-size: 0.8125rem;
   line-height: 1.5;
@@ -292,7 +288,6 @@ export default {
   transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
 }
 
-.question-row:hover .question-why-hint,
 .question-why-hint.visible {
   max-height: 12em;
   opacity: 1;
@@ -314,25 +309,6 @@ export default {
 .why-label {
   font-weight: 600;
   color: #065f46;
-}
-
-.question-roles {
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #f0f9ff;
-  border-radius: 8px;
-  border: 1px solid #bae6fd;
-  font-size: 0.8125rem;
-}
-
-.roles-label {
-  font-weight: 600;
-  color: #0369a1;
-  margin-right: 0.35rem;
-}
-
-.roles-list {
-  color: #0c4a6e;
 }
 
 .question-info {

@@ -70,6 +70,10 @@
           <span>📑</span>
           <small>{{ $t('nav.projectCard') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push('/testing-types')">
+          <span>🧪</span>
+          <small>{{ $t('nav.testingTypes') }}</small>
+        </button>
         <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
           <span>♠️</span>
           <small>{{ $t('nav.poker') }}</small>
@@ -152,6 +156,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/project-card')">
             <span>📑</span>
             <span>{{ $t('nav.projectCard') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/testing-types')">
+            <span>🧪</span>
+            <span>{{ $t('nav.testingTypes') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="openExternalLinkAndClose('https://poker.growboard.ru')">
             <span>♠️</span>

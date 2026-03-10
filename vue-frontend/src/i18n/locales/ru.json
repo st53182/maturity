@@ -15,7 +15,8 @@
     "logout": "Выйти",
     "surveys": "Опросник",
     "projectCard": "Карта проекта",
-    "maturityLink": "Оценка по ссылке"
+    "maturityLink": "Оценка по ссылке",
+    "testingTypes": "Типы тестирования"
   },
   "auth": {
     "login": "Вход",

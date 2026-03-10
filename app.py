@@ -19,6 +19,7 @@ from maturity_link import maturity_bp
 from backlog_prep import bp_backlog_prep
 from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
 from system_thinking import bp_system_thinking
+from testing_types import bp_testing_types
 from flask_socketio import SocketIO
 
 app = Flask(__name__, static_folder="static")
@@ -80,6 +81,7 @@ app.register_blueprint(maturity_bp)
 app.register_blueprint(bp_backlog_prep)
 app.register_blueprint(bp_roadmap)
 app.register_blueprint(bp_system_thinking)
+app.register_blueprint(bp_testing_types)
 
 
 # 🎯 Отдача Vue SPA

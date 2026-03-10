@@ -79,15 +79,20 @@
         </div>
       </div>
     </div>
+
+    <p class="app-version">Growboard · {{ appVersion }}</p>
   </div>
 </template>
 <script>
 import axios from "axios";
 
+const APP_VERSION = '1.0';
+
 export default {
   name: "UserProfile",
   data() {
     return {
+      appVersion: APP_VERSION,
       profile: {
         name: "",
         position: "",
@@ -537,5 +542,13 @@ hr {
   color: #374151;
   line-height: 1.7;
   font-size: 14px;
+}
+
+.app-version {
+  margin-top: 2rem;
+  margin-bottom: 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: normal;
 }
 </style>

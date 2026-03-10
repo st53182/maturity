@@ -432,10 +432,12 @@ export default {
     detectShopSearchBugs(q, list) {
       if (!q || list.length > 0) return;
       const base = this.shopFilter === 'clothing' ? [] : (this.shopFilter ? this.products.filter((p) => p.category === this.shopFilter) : this.products);
-      const wouldFind = base.some((p) => p.name.toLowerCase().includes(q.toLowerCase()));
       const exactMatch = base.some((p) => p.name === q);
-      if (!wouldFind) return;
-      if (exactMatch) this.revealShopBug(3);
+      const exactMatchIgnoreCase = base.some((p) => p.name.toLowerCase() === q.toLowerCase());
+      const wouldFindPartial = base.some((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+      if (!wouldFindPartial) return;
+      if (exactMatch) return;
+      if (exactMatchIgnoreCase) this.revealShopBug(3);
       else this.revealShopBug(2);
     },
     getProductById(id) {

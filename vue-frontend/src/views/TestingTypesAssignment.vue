@@ -4,7 +4,7 @@
     <header class="tt-header">
       <h1>Задание 3: Типы тестирования</h1>
       <p class="tt-intro">
-        Для приложения <strong>Growboard</strong> (разделы <strong>Опрос</strong> и <strong>Дашборд</strong>) опишите <strong>по шагам</strong>, как вы видите процесс каждого типа тестирования. Нейросеть оценит ответ по шкале 1–5. При оценке 5 баллов появится пример краткого отчёта, который можно получить после такого тестирования. После 5 попыток без пятёрки — эталонный вариант.
+        Для приложения <strong>Growboard</strong> (разделы <strong>Опрос</strong> и <strong>Дашборд</strong>) опишите <strong>по шагам</strong>, как вы видите процесс каждого типа тестирования. Нейросеть оценит ответ по шкале 1–5. При оценке <strong>4 или 5 баллов</strong> засчитывается успех и появится пример краткого отчёта, который можно получить после такого тестирования. После 5 попыток без четвёрки — эталонный вариант.
       </p>
     </header>
 
@@ -14,11 +14,11 @@
         v-for="item in types"
         :key="item.key"
         class="tt-card"
-        :class="{ done: getState(item.key).score === 5 }"
+        :class="{ done: getState(item.key).score >= 4 }"
       >
         <div class="tt-card-header">
           <h2 class="tt-type-name">{{ item.name }}</h2>
-          <span v-if="getState(item.key).score === 5" class="tt-badge">✓ 5/5</span>
+          <span v-if="getState(item.key).score >= 4" class="tt-badge">✓ {{ getState(item.key).score }}/5</span>
         </div>
         <div class="tt-card-body">
           <div class="tt-input-row">
@@ -27,13 +27,13 @@
               class="tt-textarea"
               rows="3"
               :placeholder="placeholderText"
-              :disabled="getState(item.key).score === 5"
+              :disabled="getState(item.key).score >= 4"
             />
             <div class="tt-actions">
               <button
                 type="button"
                 class="tt-btn"
-                :disabled="!stateByKey[item.key].definition.trim() || getState(item.key).loading || getState(item.key).score === 5"
+                :disabled="!stateByKey[item.key].definition.trim() || getState(item.key).loading || getState(item.key).score >= 4"
                 @click="evaluate(item.key)"
               >
                 {{ getState(item.key).loading ? '…' : 'Отправить' }}
@@ -47,12 +47,12 @@
             </span>
             <p v-if="getState(item.key).feedback" class="tt-feedback">{{ getState(item.key).feedback }}</p>
           </div>
-          <div v-if="getState(item.key).score === 5" class="tt-example-report">
+          <div v-if="getState(item.key).score >= 4" class="tt-example-report">
             <strong>Пример отчёта после такого тестирования:</strong>
             <p v-if="getState(item.key).reportLoading" class="tt-report-loading">Формируем отчёт…</p>
             <p v-else-if="getState(item.key).exampleReport" class="tt-report-text">{{ getState(item.key).exampleReport }}</p>
           </div>
-          <div v-if="getState(item.key).attempts >= 5 && getState(item.key).score !== 5" class="tt-suggestion-block">
+          <div v-if="getState(item.key).attempts >= 5 && getState(item.key).score < 4" class="tt-suggestion-block">
             <button
               v-if="!getState(item.key).suggestion"
               type="button"
@@ -98,7 +98,7 @@ export default {
       types: [],
       stateByKey: {},
       loading: true,
-      placeholderText: 'Опишите, как вы понимаете этот тип тестирования в контексте Growboard (Опрос, Дашборд)...',
+      placeholderText: 'Опишите по шагам, как вы бы проводили этот тип тестирования для Growboard (Опрос, Дашборд). Например: 1) Открыть раздел Опрос. 2) …',
     };
   },
   async mounted() {
@@ -133,7 +133,7 @@ export default {
     async evaluate(typeKey) {
       const state = this.getState(typeKey);
       const text = (state.definition || '').trim();
-      if (!text || state.attempts >= MAX_ATTEMPTS || state.score === 5) return;
+      if (!text || state.attempts >= MAX_ATTEMPTS || state.score >= 4) return;
       state.loading = true;
       state.feedback = '';
       try {
@@ -146,8 +146,8 @@ export default {
         state.attempts += 1;
         state.lastScore = data.score ?? 3;
         state.feedback = data.feedback || '';
-        if (state.lastScore === 5) {
-          state.score = 5;
+        if (state.lastScore >= 4) {
+          state.score = state.lastScore;
           this.fetchExampleReport(typeKey);
         }
       } catch (e) {

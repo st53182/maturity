@@ -30,6 +30,7 @@ const routes = [
   {path: '/qa', name: 'QAPractice', component: () => import('@/views/QAPractice.vue')},
   {path: '/project-card', name: 'ProjectManagementCard', component: () => import('@/views/ProjectManagementCard.vue'), meta: { requiresAuth: true }},
   {path: '/testing-types', name: 'TestingTypesAssignment', component: () => import('@/views/TestingTypesAssignment.vue'), meta: { requiresAuth: true }},
+  {path: '/usability-report', name: 'UsabilityReport', component: () => import('@/views/UsabilityReport.vue'), meta: { requiresAuth: true }},
   { path: '/maturity/create', name: 'CreateMaturityLink', component: () => import('@/views/CreateMaturityLink.vue'), meta: { requiresAuth: true } },
   { path: '/maturity/:token', name: 'TakeMaturity', component: () => import('@/views/TakeMaturity.vue') },
   { path: '/maturity/:token/results', name: 'MaturityResults', component: () => import('@/views/MaturityResults.vue') },

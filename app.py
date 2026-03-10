@@ -20,6 +20,7 @@ from backlog_prep import bp_backlog_prep
 from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
 from system_thinking import bp_system_thinking
 from testing_types import bp_testing_types
+from usability_report import bp_usability_report
 from flask_socketio import SocketIO
 
 app = Flask(__name__, static_folder="static")
@@ -82,6 +83,7 @@ app.register_blueprint(bp_backlog_prep)
 app.register_blueprint(bp_roadmap)
 app.register_blueprint(bp_system_thinking)
 app.register_blueprint(bp_testing_types)
+app.register_blueprint(bp_usability_report)
 
 
 # 🎯 Отдача Vue SPA

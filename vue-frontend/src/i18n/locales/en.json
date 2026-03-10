@@ -327,6 +327,8 @@
     "puzzleShopDesc": "Catalog with filter, search, cart: add, quantity, remove, total. Find 10 bugs.",
     "puzzleTestingTypesTitle": "Testing types",
     "puzzleTestingTypesDesc": "Assignment 3: define testing types for Growboard (Survey, Dashboard). AI scores 1–5; after 5 attempts shows reference.",
+    "puzzleUsabilityReportTitle": "Usability report",
+    "puzzleUsabilityReportDesc": "Assignment 4: fill in the usability test report template. Hints in Russian, AI help per section, PDF export.",
     "puzzleStart": "Start",
     "backToList": "Back to list",
     "triangleIntro": "Enter sides A, B, C. The triangle is drawn below. Try zero, negative, invalid inequality, equilateral, large/small numbers, vertex and side labels. Find 12 drawing bugs.",

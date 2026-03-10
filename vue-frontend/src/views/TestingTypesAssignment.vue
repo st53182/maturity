@@ -47,10 +47,11 @@
             </span>
             <p v-if="getState(item.key).feedback" class="tt-feedback">{{ getState(item.key).feedback }}</p>
           </div>
-          <div v-if="getState(item.key).score >= 4" class="tt-example-report">
+          <div v-if="shouldShowExampleReport(item.key)" class="tt-example-report">
             <strong>Пример отчёта после такого тестирования:</strong>
             <p v-if="getState(item.key).reportLoading" class="tt-report-loading">Формируем отчёт…</p>
             <p v-else-if="getState(item.key).exampleReport" class="tt-report-text">{{ getState(item.key).exampleReport }}</p>
+            <p v-else class="tt-report-loading">Загрузка отчёта…</p>
           </div>
           <div v-if="getState(item.key).attempts >= 5 && getState(item.key).score < 4" class="tt-suggestion-block">
             <button
@@ -115,6 +116,12 @@ export default {
       if (score >= 3) return 'score-3';
       return 'score-low';
     },
+    shouldShowExampleReport(key) {
+      const s = this.getState(key);
+      const score = s.score != null ? Number(s.score) : null;
+      const lastScore = s.lastScore != null ? Number(s.lastScore) : null;
+      return (score !== null && score >= 4) || (lastScore !== null && lastScore >= 4);
+    },
     async loadList() {
       this.loading = true;
       try {
@@ -144,11 +151,12 @@ export default {
           { headers: token ? { Authorization: `Bearer ${token}` } : {} }
         );
         state.attempts += 1;
-        state.lastScore = data.score ?? 3;
+        const numScore = Number(data.score);
+        state.lastScore = Number.isFinite(numScore) ? numScore : 3;
         state.feedback = data.feedback || '';
         if (state.lastScore >= 4) {
           state.score = state.lastScore;
-          this.fetchExampleReport(typeKey);
+          this.$nextTick(() => this.fetchExampleReport(typeKey));
         }
       } catch (e) {
         state.feedback = e.response?.data?.error || 'Ошибка запроса';

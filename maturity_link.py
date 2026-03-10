@@ -107,7 +107,7 @@ def submit_maturity_answers(token):
 
 @maturity_bp.route('/api/maturity/<token>/results', methods=['GET'])
 def get_maturity_results(token):
-    """Публично: результаты для радара и PDF. Формат results как team_results (category -> subcategory -> score 0-5)."""
+    """Публично: результаты для радара и PDF. Возвращает также answers и questions для детализации по клику."""
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
@@ -115,11 +115,24 @@ def get_maturity_results(token):
         return jsonify({'error': 'Оценка ещё не пройдена'}), 400
     results = _results_from_answers(session.answers)
     completed_at = session.completed_at.isoformat() if session.completed_at else None
+    questions = [
+        {
+            'id': i,
+            'theme': q['theme'],
+            'text': q['text'],
+            'why_important': q.get('why_important', ''),
+            'metrics_impact': q.get('metrics_impact', ''),
+            'negative_for_business': q.get('negative_for_business', ''),
+        }
+        for i, q in enumerate(MATURITY_QUESTIONS)
+    ]
     return jsonify({
         'team_name': session.team_name or 'Команда',
         'completed_at': completed_at,
         'results': results,
         'radar_groups': RADAR_GROUPS,
+        'answers': session.answers,
+        'questions': questions,
     })
 
 

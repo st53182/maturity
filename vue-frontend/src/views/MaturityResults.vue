@@ -17,9 +17,23 @@
           v-for="group in radarGroups"
           :key="group.title"
           v-show="chartDataForGroup(group).labels.length"
-          class="radar-wrap"
+          class="group-block"
         >
-          <RadarChart :chart-data="chartDataForGroup(group)" :title="group.title" />
+          <div class="radar-wrap">
+            <RadarChart :chart-data="chartDataForGroup(group)" :title="group.title" />
+          </div>
+          <div class="themes-list">
+            <button
+              v-for="cat in themesInGroup(group)"
+              :key="cat.theme"
+              type="button"
+              class="theme-row"
+              @click="openDetail(cat.theme)"
+            >
+              <span class="theme-name">{{ cat.theme }}</span>
+              <span class="theme-score" :class="scoreClass(cat.avg)">{{ formatScore(cat.avg) }}</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="recommendationsHtml" class="recommendations-block">
@@ -41,6 +55,37 @@
           {{ exporting ? $t('maturity.exporting') : $t('maturity.downloadPdf') }}
         </button>
       </div>
+
+      <!-- Модальное окно: карточки вопросов и ответов по выбранной теме -->
+      <div v-if="selectedTheme" class="detail-overlay" @click.self="selectedTheme = null">
+        <div class="detail-modal">
+          <div class="detail-header">
+            <h3>{{ selectedTheme }}</h3>
+            <button type="button" class="detail-close" aria-label="Закрыть" @click="selectedTheme = null">×</button>
+          </div>
+          <div class="detail-cards">
+            <div
+              v-for="item in questionsForTheme(selectedTheme)"
+              :key="item.id"
+              class="detail-card"
+            >
+              <p class="detail-question">{{ item.text }}</p>
+              <div class="detail-answer" :class="item.answer ? 'answer-yes' : 'answer-no'">
+                {{ item.answer ? $t('maturity.yes') : $t('maturity.no') }}
+              </div>
+              <div v-if="item.why_important" class="detail-why">
+                <strong>Почему это важно:</strong> {{ item.why_important }}
+              </div>
+              <div v-if="item.metrics_impact" class="detail-metrics">
+                <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
+              </div>
+              <div v-if="item.negative_for_business" class="detail-negative">
+                <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -61,6 +106,9 @@ export default {
       completedAt: null,
       results: {},
       radarGroups: [],
+      answers: [],
+      questions: [],
+      selectedTheme: null,
       loading: true,
       error: null,
       exporting: false,
@@ -69,6 +117,18 @@ export default {
     };
   },
   computed: {
+    questionsByTheme() {
+      const map = {};
+      if (!this.questions.length || !Array.isArray(this.answers)) return map;
+      for (const q of this.questions) {
+        if (!map[q.theme]) map[q.theme] = [];
+        map[q.theme].push({
+          ...q,
+          answer: this.answers[q.id] === true
+        });
+      }
+      return map;
+    },
     averageScore() {
       if (!this.results || !Object.keys(this.results).length) return 0;
       let total = 0;
@@ -133,11 +193,37 @@ export default {
         this.completedAt = res.data.completed_at;
         this.results = res.data.results || {};
         this.radarGroups = res.data.radar_groups || [];
+        this.answers = res.data.answers || [];
+        this.questions = res.data.questions || [];
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки результатов';
       } finally {
         this.loading = false;
       }
+    },
+    themesInGroup(group) {
+      if (!group || !group.categories || !this.results) return [];
+      return group.categories
+        .filter(cat => this.results[cat])
+        .map(cat => {
+          const vals = Object.values(this.results[cat]).map(v => parseFloat(v) || 0);
+          const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+          return { theme: cat, avg };
+        });
+    },
+    questionsForTheme(theme) {
+      return this.questionsByTheme[theme] || [];
+    },
+    openDetail(theme) {
+      this.selectedTheme = theme;
+    },
+    formatScore(avg) {
+      return avg != null ? avg.toFixed(1) : '—';
+    },
+    scoreClass(avg) {
+      if (avg >= 4) return 'score-high';
+      if (avg >= 2) return 'score-mid';
+      return 'score-low';
     },
     async fetchRecommendations() {
       if (this.loadingRecs) return;
@@ -231,13 +317,171 @@ export default {
   font-size: 1.1rem;
 }
 
-.radar-wrap {
+.group-block {
   margin: 1.5rem 0;
+}
+
+.radar-wrap {
+  margin-bottom: 0.75rem;
   height: 440px;
   overflow: hidden;
   display: flex;
   align-items: flex-start;
   justify-content: center;
+}
+
+.themes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.theme-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.theme-row:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+}
+
+.theme-name {
+  color: #334155;
+}
+
+.theme-score {
+  font-weight: 600;
+  min-width: 2rem;
+  text-align: right;
+}
+
+.theme-score.score-high { color: #059669; }
+.theme-score.score-mid { color: #d97706; }
+.theme-score.score-low { color: #dc2626; }
+
+/* Модальное окно с карточками вопросов/ответов */
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.detail-modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.detail-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #111;
+}
+
+.detail-close {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.detail-close:hover {
+  background: #e5e7eb;
+  color: #111;
+}
+
+.detail-cards {
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+}
+
+.detail-card {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.detail-card:last-child {
+  margin-bottom: 0;
+}
+
+.detail-question {
+  font-weight: 600;
+  color: #111;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+}
+
+.detail-answer {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.detail-answer.answer-yes {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.detail-answer.answer-no {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.detail-why,
+.detail-metrics,
+.detail-negative {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #4b5563;
+  margin: 0.5rem 0 0 0;
+}
+
+.detail-why strong,
+.detail-metrics strong,
+.detail-negative strong {
+  color: #374151;
 }
 
 .recommendations-block {

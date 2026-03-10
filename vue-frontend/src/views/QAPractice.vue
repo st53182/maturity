@@ -20,6 +20,12 @@
         <p>{{ $t('qa.puzzleShopDesc') }}</p>
         <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
       </div>
+      <div class="puzzle-card" @click="$router.push('/testing-types')">
+        <span class="puzzle-icon">🧪</span>
+        <h2>{{ $t('qa.puzzleTestingTypesTitle') }}</h2>
+        <p>{{ $t('qa.puzzleTestingTypesDesc') }}</p>
+        <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
+      </div>
     </div>
 
     <!-- Кнопка назад -->

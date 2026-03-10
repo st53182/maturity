@@ -1,5 +1,6 @@
 <template>
   <div class="testing-types-page">
+    <button type="button" class="tt-back" @click="$router.push('/qa')">← К списку практикумов (/qa)</button>
     <header class="tt-header">
       <h1>Задание 3: Типы тестирования</h1>
       <p class="tt-intro">
@@ -167,6 +168,21 @@ export default {
   max-width: 900px;
   margin: 0 auto;
   padding: 24px 16px;
+}
+
+.tt-back {
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.tt-back:hover {
+  background: #e2e8f0;
 }
 
 .tt-header {

@@ -4,7 +4,7 @@
     <header class="tt-header">
       <h1>Задание 3: Типы тестирования</h1>
       <p class="tt-intro">
-        Определите, какие типы тестирования применимы к приложению <strong>Growboard</strong> — разделы <strong>Опрос</strong> и <strong>Дашборд</strong>. Напишите своё определение типа слева от названия; нейросеть оценит ответ по шкале от 1 до 5. После 5 попыток, если не набрали 5 баллов, можно посмотреть эталонный вариант.
+        Для приложения <strong>Growboard</strong> (разделы <strong>Опрос</strong> и <strong>Дашборд</strong>) опишите <strong>по шагам</strong>, как вы видите процесс каждого типа тестирования. Нейросеть оценит ответ по шкале 1–5. При оценке 5 баллов появится пример краткого отчёта, который можно получить после такого тестирования. После 5 попыток без пятёрки — эталонный вариант.
       </p>
     </header>
 
@@ -47,6 +47,11 @@
             </span>
             <p v-if="getState(item.key).feedback" class="tt-feedback">{{ getState(item.key).feedback }}</p>
           </div>
+          <div v-if="getState(item.key).score === 5" class="tt-example-report">
+            <strong>Пример отчёта после такого тестирования:</strong>
+            <p v-if="getState(item.key).reportLoading" class="tt-report-loading">Формируем отчёт…</p>
+            <p v-else-if="getState(item.key).exampleReport" class="tt-report-text">{{ getState(item.key).exampleReport }}</p>
+          </div>
           <div v-if="getState(item.key).attempts >= 5 && getState(item.key).score !== 5" class="tt-suggestion-block">
             <button
               v-if="!getState(item.key).suggestion"
@@ -81,6 +86,8 @@ function defaultState() {
     score: null,
     loading: false,
     suggestion: '',
+    exampleReport: '',
+    reportLoading: false,
   };
 }
 
@@ -99,7 +106,7 @@ export default {
   },
   methods: {
     getState(key) {
-      if (!this.stateByKey[key]) this.$set(this.stateByKey, key, defaultState());
+      if (!this.stateByKey[key]) this.stateByKey[key] = defaultState();
       return this.stateByKey[key];
     },
     scoreClass(score) {
@@ -139,7 +146,10 @@ export default {
         state.attempts += 1;
         state.lastScore = data.score ?? 3;
         state.feedback = data.feedback || '';
-        if (state.lastScore === 5) state.score = 5;
+        if (state.lastScore === 5) {
+          state.score = 5;
+          this.fetchExampleReport(typeKey);
+        }
       } catch (e) {
         state.feedback = e.response?.data?.error || 'Ошибка запроса';
       } finally {
@@ -157,6 +167,24 @@ export default {
         state.suggestion = data.suggestion || '';
       } catch (e) {
         state.suggestion = 'Не удалось загрузить вариант.';
+      }
+    },
+    async fetchExampleReport(typeKey) {
+      const state = this.getState(typeKey);
+      if (state.exampleReport || state.reportLoading) return;
+      state.reportLoading = true;
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.post(
+          '/api/testing-types/example-report',
+          { type_key: typeKey, user_steps: state.definition },
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        state.exampleReport = data.report || '';
+      } catch (e) {
+        state.exampleReport = 'Не удалось сформировать пример отчёта.';
+      } finally {
+        state.reportLoading = false;
       }
     },
   },
@@ -361,5 +389,33 @@ export default {
   font-size: 0.95rem;
   color: #475569;
   line-height: 1.5;
+}
+
+.tt-example-report {
+  margin-top: 12px;
+  padding: 12px;
+  background: #ecfdf5;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.tt-example-report strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #065f46;
+}
+
+.tt-report-loading {
+  margin: 0;
+  color: #047857;
+  font-size: 0.9rem;
+}
+
+.tt-report-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #064e3b;
+  line-height: 1.5;
+  white-space: pre-line;
 }
 </style>

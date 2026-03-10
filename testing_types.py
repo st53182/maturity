@@ -117,19 +117,20 @@ def evaluate():
     name = ref["name_ru"]
 
     client = get_openai_client()
-    prompt = f"""Ты эксперт по тестированию ПО. Контекст: приложение для тестирования — Growboard (разделы «Опрос» и «Дашборд»).
+    prompt = f"""Ты эксперт по тестированию ПО. Контекст: приложение — Growboard (разделы «Опрос» и «Дашборд»).
 
 Тип тестирования: {name}
-Эталонное определение (как должно быть): {ref_text}
+Эталон (как правильно понимать этот тип): {ref_text}
 
-Определение студента: {user_definition}
+Студент описал по шагам, как он видит процесс этого тестирования для Growboard:
+{user_definition}
 
-Оцени, насколько определение студента совпадает с эталоном по шкале от 1 до 5:
-5 — полностью верно по смыслу (можно своими словами)
-4 — в целом верно, есть небольшие неточности
-3 — частично верно, но упущена существенная часть
-2 — в основном неверно или очень неполно
-1 — неверно или не по теме
+Оцени по шкале 1–5, насколько шаги студента соответствуют эталону и применимы к Опросу и Дашборду:
+5 — процесс описан верно и по шагам, применимо к Growboard
+4 — в целом верно, небольшие неточности
+3 — частично верно, упущена существенная часть
+2 — в основном неверно или не по теме
+1 — неверно или не про этот тип тестирования
 
 Ответь СТРОГО в формате JSON, без другого текста:
 {{"score": <число 1-5>, "feedback": "<короткий комментарий на русском 1-2 предложения>"}}"""
@@ -188,3 +189,44 @@ def suggest(type_key):
         "suggestion": REFERENCE[type_key]["definition_ru"],
         "name": REFERENCE[type_key]["name_ru"],
     })
+
+
+@bp_testing_types.route("/example-report", methods=["POST"])
+@jwt_required()
+def example_report():
+    """
+    При оценке 5 баллов — сгенерировать краткий пример отчёта по тестированию.
+    Body: { "type_key": "smoke", "user_steps": "..." }
+    Returns: { "report": "..." }
+    """
+    data = request.json or {}
+    type_key = (data.get("type_key") or "").strip()
+    user_steps = (data.get("user_steps") or data.get("user_definition") or "").strip()
+
+    if not type_key or type_key not in REFERENCE:
+        return jsonify({"error": "Неверный type_key"}), 400
+
+    name = REFERENCE[type_key]["name_ru"]
+    client = get_openai_client()
+
+    prompt = f"""Контекст: приложение Growboard (разделы «Опрос» и «Дашборд»). Тип тестирования: {name}.
+
+Студент описал шаги тестирования:
+{user_steps or "(не указано)"}
+
+Напиши краткий пример отчёта (5–7 предложений), который бы получили после такого тестирования. Структура: что тестировали, что сделали, результат (пройдено/критичные замечания). Только текст отчёта, без заголовков и пометок. Язык: русский."""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Ты пишешь краткие отчёты о тестировании ПО. Только суть, без лишнего."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.5,
+            max_tokens=400,
+        )
+        report = (response.choices[0].message.content or "").strip()
+        return jsonify({"report": report})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

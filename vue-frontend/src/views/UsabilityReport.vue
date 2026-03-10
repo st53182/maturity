@@ -5,6 +5,7 @@
       <h1>📋 Отчёт по юзабилити-тестированию</h1>
       <p class="ur-intro">Заполните шаблон отчёта. Подсказки — под полями. По каждому разделу можно запросить помощь нейросети.</p>
       <div class="ur-actions">
+        <button type="button" class="ur-btn secondary" @click="loadExample">📋 Загрузить пример отчёта</button>
         <button type="button" class="ur-btn primary" :disabled="exporting" @click="exportPdf">
           {{ exporting ? 'Формируем PDF…' : '📄 Скачать PDF' }}
         </button>
@@ -28,7 +29,6 @@
           <div class="ur-field"><label>Версия / сборка</label><input v-model="form.productVersion" type="text" placeholder="1.2.0"></div>
           <div class="ur-field"><label>Среда</label><select v-model="form.environment"><option value="">—</option><option value="Web">Web</option><option value="iOS">iOS</option><option value="Android">Android</option><option value="Desktop">Desktop</option></select></div>
           <div class="ur-field"><label>Браузер / устройство</label><input v-model="form.browserDevice" type="text" placeholder="Chrome 120, iPhone 14"></div>
-          <div class="ur-field"><label>Место теста</label><select v-model="form.testLocation"><option value="">—</option><option value="Lab">Лаборатория</option><option value="Remote">Удалённо</option><option value="Unmoderated">Немодерируемый</option><option value="Moderated">Модерируемый</option></select></div>
           <div class="ur-field"><label>Дата теста</label><input v-model="form.dateOfTest" type="text" placeholder="ДД.ММ.ГГГГ"></div>
           <div class="ur-field"><label>QA / UX-исследователь</label><input v-model="form.qaResearcher" type="text" placeholder="ФИО или роль"></div>
           <div class="ur-field"><label>Стейкхолдеры</label><input v-model="form.stakeholders" type="text" placeholder="Кто заинтересован в результатах"></div>
@@ -210,7 +210,6 @@ function defaultForm() {
     productVersion: '',
     environment: '',
     browserDevice: '',
-    testLocation: '',
     dateOfTest: '',
     qaResearcher: '',
     stakeholders: '',
@@ -269,6 +268,73 @@ function defaultForm() {
   };
 }
 
+function getExampleReport() {
+  return {
+    reportId: 'UTR-2024-001',
+    projectName: 'Growboard',
+    productSystem: 'Веб-приложение для оценки зрелости команд',
+    featureModule: 'Опрос: создание и прохождение опроса',
+    productVersion: '2.1.0',
+    environment: 'Web',
+    browserDevice: 'Chrome 120, Windows 10',
+    dateOfTest: '15.02.2024',
+    qaResearcher: 'Иванова А.С.',
+    stakeholders: 'Product Owner, команда разработки, заказчик',
+    primaryObjective: 'Оценить, насколько легко новый пользователь может создать опрос и отправить ссылку участникам без инструкции.',
+    secondaryObjectives: 'Проверить понятность формулировок кнопок и полей.\nОценить время до первого успешного действия.\nВыявить точки сбоя при прохождении опроса с мобильного.',
+    successCriteria: 'Не менее 80% участников создают опрос и отправляют ссылку за одну сессию. SUS не ниже 70.',
+    numParticipants: '5',
+    participantProfile: 'Сотрудники офиса, не работавшие с системой ранее; опыт работы с веб-формами — от базового до продвинутого.',
+    participantsTable: [
+      { id: 'P1', role: 'Менеджер проекта', experience: 'Базовый', notes: 'Редко заполняет формы онлайн' },
+      { id: 'P2', role: 'Аналитик', experience: 'Продвинутый', notes: 'Часто пользуется веб-приложениями' },
+      { id: 'P3', role: 'Разработчик', experience: 'Продвинутый', notes: '' },
+      { id: 'P4', role: 'HR', experience: 'Средний', notes: 'Использовал похожие системы' },
+      { id: 'P5', role: 'Студент', experience: 'Базовый', notes: '' },
+    ],
+    scenarioId: 'S1',
+    scenarioName: 'Создание опроса и отправка ссылки',
+    scenarioDescription: 'Пользователь хочет провести опрос в своей команде: создать опрос, добавить вопросы и отправить ссылку коллегам.',
+    preconditions: 'Пользователь авторизован в системе. Команда уже создана в Growboard.',
+    taskSteps: '1. Открыть раздел «Опросник».\n2. Нажать «Создать опрос» и ввести название.\n3. Добавить минимум один вопрос и сохранить.\n4. Найти способ отправить ссылку на опрос участникам.\n5. Открыть ссылку в режиме инкогнито и пройти опрос до конца.',
+    expectedOutcome: 'Опрос создан, ссылка скопирована или отправлена, тестовое прохождение завершено с отображением «Спасибо» или результата.',
+    performanceTable: [
+      { participantId: 'P1', completed: 'Да', time: '420', errors: '1', assistance: 'Подсказка про кнопку «Скопировать»', notes: 'Долго искал, где взять ссылку' },
+      { participantId: 'P2', completed: 'Да', time: '180', errors: '0', assistance: 'Нет', notes: '' },
+      { participantId: 'P3', completed: 'Да', time: '150', errors: '0', assistance: 'Нет', notes: '' },
+      { participantId: 'P4', completed: 'Да', time: '310', errors: '1', assistance: 'Нет', notes: 'Сначала нажал «Сохранить» вместо «Опубликовать»' },
+      { participantId: 'P5', completed: 'Нет', time: '600', errors: '2', assistance: 'Да', notes: 'Не нашёл, как добавить второй вопрос; вышел' },
+    ],
+    avgCompletionTime: '332',
+    taskSuccessRate: '80',
+    observedBehavior: 'Четыре из пяти участников успешно завершили сценарий. Основная путаница — различие между «Сохранить черновик» и «Опубликовать опрос». На мобильном кнопка «Скопировать ссылку» перекрывалась клавиатурой у двух участников.',
+    issueId: 'U1',
+    issueTitle: 'Неочевидное различие между «Сохранить» и «Опубликовать»',
+    issueDescription: 'Пользователи сохраняют опрос как черновик и не понимают, что ссылка для участников появляется только после публикации. В интерфейсе нет явного указания на это.',
+    issueScenario: 'S1, шаги 3–4',
+    issueSteps: '1. Создать опрос и добавить вопрос.\n2. Нажать «Сохранить».\n3. Искать кнопку или ссылку для приглашения участников.',
+    issueObserved: 'Участники ожидают увидеть ссылку сразу после сохранения; часть нажимает «Назад» и теряет контекст.',
+    issueExpected: 'После сохранения черновика должна быть явная подсказка: «Опубликуйте опрос, чтобы получить ссылку для участников» и заметная кнопка «Опубликовать».',
+    issueImpact: 'High',
+    issueFrequency: '3 из 5',
+    issueSeverity: '4',
+    issueScreenshot: 'Скрин: экран после «Сохранить» без пояснения про публикацию',
+    issueRecommendation: 'Добавить на экран черновика баннер: «Опрос сохранён. Опубликуйте его, чтобы участники могли пройти опрос» и выделенную кнопку «Опубликовать и получить ссылку».',
+    keyQuotes: '«Я не понял, куда делась ссылка — я же сохранил.» (P1)\n«Думал, «Сохранить» уже всё делает.» (P4)\n«На телефоне кнопка «Скопировать» уехала вниз, пришлось скроллить.» (P2)',
+    painPoints: 'Неочевидность шага «Опубликовать» после сохранения.\nКнопка «Скопировать ссылку» на мобильном уходит за клавиатуру.\nНет подсказки при первом создании опроса.',
+    positiveObservations: 'Понятное название раздела «Опросник».\nБыстрое создание опроса при понимании потока.\nУдобный предпросмотр перед отправкой.',
+    metricsTaskSuccessRate: '80',
+    metricsAvgTime: '332',
+    metricsErrorRate: '20',
+    metricsSatisfaction: '3.6',
+    metricsSus: '72',
+    majorRisks: 'Риск оттока пользователей на шаге «черновик → публикация» из-за неочевидности.\nНа мобильных часть пользователей может не найти кнопку копирования ссылки.',
+    overallAssessment: 'Функциональность в целом достижима для целевой аудитории, но критичный шаг «публикация» нуждается в явном выделении и подсказках. Рекомендуется доработать онбординг и мобильную вёрстку перед массовым запуском.',
+    recommendations: '1. Добавить явный шаг/модальное окно «Опубликовать опрос» с пояснением и кнопкой «Получить ссылку».\n2. На мобильных закрепить кнопку «Скопировать ссылку» над клавиатурой или в фиксированной панели.\n3. При первом создании опроса показать короткую подсказку (tooltip или один экран) о разнице между черновиком и опубликованным опросом.',
+    attachmentsNotes: 'Скриншоты: экран черновика (P1, P4), мобильный вид с кнопкой «Скопировать» (P2). Запись сессии P5 (отказ от задачи).',
+  };
+}
+
 function safeStr(v) {
   return (v != null && typeof v === 'string') ? v : '';
 }
@@ -308,6 +374,10 @@ export default {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.form));
       } catch (e) { /* ignore */ }
+    },
+    loadExample() {
+      if (!confirm('Загрузить пример заполненного отчёта? Текущие данные будут заменены.')) return;
+      this.form = JSON.parse(JSON.stringify(getExampleReport()));
     },
     getSection1Context() {
       const f = this.form;
@@ -433,7 +503,13 @@ export default {
   margin: 0 0 16px;
 }
 
-.ur-actions { margin-bottom: 20px; }
+.ur-actions {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
 
 .ur-btn {
   padding: 10px 20px;
@@ -454,6 +530,14 @@ export default {
   background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
 }
+
+.ur-btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.ur-btn.secondary:hover { background: #e2e8f0; }
 
 .ur-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 

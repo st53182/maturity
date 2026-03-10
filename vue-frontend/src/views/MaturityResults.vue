@@ -323,7 +323,7 @@ export default {
 
 .radar-wrap {
   margin-bottom: 0.75rem;
-  height: 440px;
+  height: 540px;
   overflow: hidden;
   display: flex;
   align-items: flex-start;

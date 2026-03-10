@@ -76,8 +76,8 @@ export default {
 <style scoped>
 .radar-chart {
   width: 100%;
-  max-width: 600px;
-  height: 400px;
+  max-width: 720px;
+  height: 500px;
   max-height: 100%;
   margin-bottom: 0;
   background: white;

@@ -10,6 +10,7 @@ MATURITY_QUESTIONS = [
         "why_important": "Фокусирует работу команды на результате, а не на механическом закрытии задач.",
         "metrics_impact": "Достижение цели спринта, поставленная бизнес-ценность",
         "negative_for_business": "Спринты завершаются без достижения бизнес-результата, растёт доля работы без ценности для клиента.",
+        "business_metrics": "Retention rate (до 10%), LTV (транзитивно до 15%), конверсия в активацию (до 5%).",
     },
     {
         "category": "Люди",
@@ -18,6 +19,7 @@ MATURITY_QUESTIONS = [
         "why_important": "Помогает сохранять фокус и не распыляться на несвязанные задачи.",
         "metrics_impact": "Время цикла, стабильность объёма, достижение цели спринта",
         "negative_for_business": "Растёт объём незапланированной работы, увеличивается Cycle Time, падает вероятность достижения цели спринта.",
+        "business_metrics": "Конверсия заявки (до 10%), Time to First Transaction (транзитивно).",
     },
     {
         "category": "Люди",
@@ -26,6 +28,7 @@ MATURITY_QUESTIONS = [
         "why_important": "Позволяет выбирать работу по ожидаемому эффекту, а не по мнению самого громкого заказчика или владельца продукта.",
         "metrics_impact": "Внедрение эпиков и историй, конверсия, влияние на выручку, удержание",
         "negative_for_business": "Эпики и истории реализуются без измеримого эффекта, замедляется рост продуктовых и бизнес-метрик.",
+        "business_metrics": "Retention rate (до 15%), Churn rate (снижение до −10%), LTV (до 20%), MRR/ARR (транзитивно).",
     },
     # --- Люди / Кросс-функциональность ---
     {
@@ -802,6 +805,28 @@ MATURITY_QUESTIONS = [
         "metrics_impact": "Качество решений",
         "negative_for_business": "Решения принимаются на основе мнений.",
     },
+]
+
+# Бизнес-метрики: дисклеймер и глоссарий для карточек вопросов (влияние на примере банков Citibank, Deutsche Bank; связь часто транзитивная).
+BUSINESS_METRICS_DISCLAIMER = (
+    "Оценка влияния на бизнес-метрики приведена на примере банков (в т.ч. Citibank, Deutsche Bank). "
+    "Под метриками понимаются: NOI, снижение издержек, Retention / Churn, DAU/MAU, LTV, MRR/ARR, "
+    "CPA, Cost per Approved Client, конверсия заявки, активация карт, доходность (Interchange, Interest, Fee, ARPU), "
+    "просрочка и NPL. Связь практики с метрикой часто транзитивная, а не прямая."
+)
+BUSINESS_METRICS_GLOSSARY = [
+    {"id": "noi", "name": "Чистый операционный доход (NOI)", "description": "Доход от операционной деятельности за вычетом операционных расходов."},
+    {"id": "retention", "name": "Retention rate", "description": "Доля клиентов, оставшихся с продуктом за период."},
+    {"id": "churn", "name": "Churn rate", "description": "Доля клиентов, прекративших пользоваться продуктом."},
+    {"id": "dau_mau", "name": "DAU / MAU", "description": "Соотношение дневных и месячных активных пользователей; вовлечённость."},
+    {"id": "ltv", "name": "LTV (Customer Lifetime Value)", "description": "Совокупный доход с одного клиента за всё время пользования продуктом."},
+    {"id": "mrr_arr", "name": "MRR / ARR", "description": "Месячный / годовой регулярный доход (recurring revenue)."},
+    {"id": "cpa", "name": "Cost per Application (CPA)", "description": "Стоимость одной заявки на продукт."},
+    {"id": "cost_approved", "name": "Cost per Approved Client", "description": "Стоимость привлечения одобренного клиента."},
+    {"id": "conversion", "name": "Application Conversion Rate", "description": "Конверсия заявки в одобрение."},
+    {"id": "activation", "name": "Card Activation Rate / First Transaction Rate", "description": "Доля активированных карт или первых операций."},
+    {"id": "revenue", "name": "Interchange Revenue, Interest Income, Fee Income, ARPU", "description": "Доходы от платежей, процентов, комиссий; доход на пользователя."},
+    {"id": "delinquency", "name": "Delinquency Rate / Default Rate (NPL)", "description": "Просрочка и доля дефолтов по кредитному портфелю."},
 ]
 
 # Привязка тем к ролям из ролевой модели (Фреймворк и управление): вопросы учитывают эти роли.

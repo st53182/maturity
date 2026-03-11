@@ -4,7 +4,13 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db
 from models import MaturityLinkSession
-from maturity_questions import MATURITY_QUESTIONS, RADAR_GROUPS, ROLE_BY_THEME
+from maturity_questions import (
+    MATURITY_QUESTIONS,
+    RADAR_GROUPS,
+    ROLE_BY_THEME,
+    BUSINESS_METRICS_DISCLAIMER,
+    BUSINESS_METRICS_GLOSSARY,
+)
 
 maturity_bp = Blueprint('maturity_link', __name__)
 
@@ -70,6 +76,7 @@ def get_maturity_survey(token):
             'why_important': q.get('why_important', ''),
             'metrics_impact': q.get('metrics_impact', ''),
             'negative_for_business': q.get('negative_for_business', ''),
+            'business_metrics': q.get('business_metrics', ''),
             'related_roles': ROLE_BY_THEME.get(q['theme'], []),
         }
         for i, q in enumerate(MATURITY_QUESTIONS)
@@ -77,7 +84,9 @@ def get_maturity_survey(token):
     return jsonify({
         'team_name': session.team_name,
         'completed': session.completed_at is not None,
-        'questions': questions
+        'questions': questions,
+        'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
+        'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,
     })
 
 
@@ -105,6 +114,24 @@ def submit_maturity_answers(token):
     }), 200
 
 
+@maturity_bp.route('/api/maturity/<token>/answers', methods=['PUT'])
+def update_maturity_answers(token):
+    """Обновить ответы (в т.ч. для уже пройденной оценки — пересчёт отчёта)."""
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    data = request.get_json()
+    answers = data.get('answers')
+    if not isinstance(answers, list) or len(answers) != QUESTIONS_COUNT:
+        return jsonify({'error': f'Нужен массив из {QUESTIONS_COUNT} ответов (да/нет)'}), 400
+    session.answers = [bool(a) for a in answers]
+    db.session.commit()
+    return jsonify({
+        'message': 'Ответы обновлены',
+        'results_url': f'/maturity/{token}/results'
+    }), 200
+
+
 @maturity_bp.route('/api/maturity/<token>/results', methods=['GET'])
 def get_maturity_results(token):
     """Публично: результаты для радара и PDF. Возвращает также answers и questions для детализации по клику."""
@@ -123,6 +150,7 @@ def get_maturity_results(token):
             'why_important': q.get('why_important', ''),
             'metrics_impact': q.get('metrics_impact', ''),
             'negative_for_business': q.get('negative_for_business', ''),
+            'business_metrics': q.get('business_metrics', ''),
         }
         for i, q in enumerate(MATURITY_QUESTIONS)
     ]
@@ -133,6 +161,8 @@ def get_maturity_results(token):
         'radar_groups': RADAR_GROUPS,
         'answers': session.answers,
         'questions': questions,
+        'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
+        'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,
     })
 
 
@@ -181,6 +211,45 @@ def get_maturity_recommendations(token):
             ],
             temperature=0.6,
             max_tokens=2000,
+        )
+        content = response.choices[0].message.content
+        return jsonify({"content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@maturity_bp.route('/api/maturity/<token>/clarify', methods=['POST'])
+def clarify_question(token):
+    """Разъяснение вопроса нейросетью с примерами для банковской сферы (продуктовые, платформенные, сервисные команды)."""
+    import os
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    if not os.getenv('OPENAI_API_KEY'):
+        return jsonify({'error': 'Сервис разъяснений не настроен (OPENAI_API_KEY)'}), 503
+    data = request.get_json() or {}
+    question_text = data.get('question_text', '').strip() or data.get('text', '').strip()
+    if not question_text:
+        return jsonify({'error': 'Укажите question_text'}), 400
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    prompt = f"""Разъясни, что имеется в виду в этом утверждении оценки зрелости команды. Приведи конкретные примеры в банковской сфере для трёх типов команд:
+1) продуктовые команды (разработка продуктов для клиентов — карты, кредиты, приложения);
+2) платформенные команды (внутренние платформы, API, инфраструктура);
+3) сервисные команды (поддержка, операции, сервисы для внутренних заказчиков).
+
+Утверждение: «{question_text}»
+
+Ответ дай кратко, по-русски, с 1–2 примерами на каждый тип команды где уместно."""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Ты эксперт по Agile и банковской разработке. Разъясняешь вопросы оценки зрелости с примерами из банков (Citibank, Deutsche Bank и др.)."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.5,
+            max_tokens=800,
         )
         content = response.choices[0].message.content
         return jsonify({"content": content})

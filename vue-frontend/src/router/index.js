@@ -33,6 +33,7 @@ const routes = [
   {path: '/usability-report', name: 'UsabilityReport', component: () => import('@/views/UsabilityReport.vue'), meta: { requiresAuth: true }},
   { path: '/maturity/create', name: 'CreateMaturityLink', component: () => import('@/views/CreateMaturityLink.vue'), meta: { requiresAuth: true } },
   { path: '/maturity/:token', name: 'TakeMaturity', component: () => import('@/views/TakeMaturity.vue') },
+  { path: '/maturity/:token/edit', name: 'EditMaturity', component: () => import('@/views/EditMaturity.vue') },
   { path: '/maturity/:token/results', name: 'MaturityResults', component: () => import('@/views/MaturityResults.vue') },
   { path: '/flow-metrics', name: 'FlowMetricsDashboard', component: () => import('@/views/FlowMetricsDashboard.vue') },
 ];

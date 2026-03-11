@@ -10,6 +10,14 @@
       <header class="maturity-header">
         <h1>{{ $t('maturity.title') }}</h1>
         <p v-if="survey.team_name" class="team-name">{{ survey.team_name }}</p>
+        <button v-if="survey.business_metrics_glossary && survey.business_metrics_glossary.length" type="button" class="glossary-toggle" @click="showGlossary = !showGlossary">
+          {{ showGlossary ? 'Скрыть глоссарий метрик' : 'Что значат метрики (глоссарий)' }}
+        </button>
+        <div v-if="showGlossary && survey.business_metrics_glossary" class="glossary-block">
+          <div v-for="m in survey.business_metrics_glossary" :key="m.id" class="glossary-item">
+            <strong>{{ m.name }}</strong> — {{ m.description }}
+          </div>
+        </div>
       </header>
 
       <div class="progress-bar">
@@ -31,6 +39,14 @@
               >
                 Почему это важно?
               </button>
+              <button
+                type="button"
+                class="clarify-trigger"
+                :disabled="clarifyLoading === q.id"
+                @click="askClarify(q)"
+              >
+                {{ clarifyLoading === q.id ? '...' : 'Попросить разъяснения' }}
+              </button>
               <div v-if="q.why_important" class="question-why-hint" :class="{ visible: expandedWhy[q.id] }">
                 <span class="why-label">Почему это важно:</span> {{ q.why_important }}
               </div>
@@ -51,6 +67,15 @@
                 {{ $t('maturity.no') }}
               </button>
             </div>
+          </div>
+          <div v-if="clarifyResult && clarifyResult.id === q.id" class="clarify-block">
+              <strong>Разъяснение (на примере банковских команд):</strong>
+              <p class="clarify-text">{{ clarifyResult.content }}</p>
+            </div>
+          <div v-if="q.business_metrics" class="info-block info-business-metrics">
+            <div class="info-block-title">Бизнес-метрики</div>
+            <p class="info-block-text">{{ q.business_metrics }}</p>
+            <p class="business-metrics-disclaimer">{{ survey.business_metrics_disclaimer }}</p>
           </div>
           <div v-if="q.metrics_impact || q.negative_for_business" class="question-info">
             <div v-if="q.metrics_impact" class="info-block info-metrics">
@@ -109,7 +134,10 @@ export default {
       error: null,
       submitting: false,
       questionsPerPage: QUESTIONS_PER_PAGE,
-      expandedWhy: {}
+      expandedWhy: {},
+      clarifyLoading: null,
+      clarifyResult: null,
+      showGlossary: false
     };
   },
   computed: {
@@ -149,6 +177,8 @@ export default {
       try {
         const res = await axios.get(`/api/maturity/${this.token}`);
         this.survey = res.data;
+        this.survey.business_metrics_disclaimer = res.data.business_metrics_disclaimer || '';
+        this.survey.business_metrics_glossary = res.data.business_metrics_glossary || [];
         this.survey.questions.forEach(q => {
           if (this.answers[q.id] === undefined) this.answers[q.id] = null;
         });
@@ -163,6 +193,20 @@ export default {
     },
     toggleWhy(id) {
       this.expandedWhy = { ...this.expandedWhy, [id]: !this.expandedWhy[id] };
+    },
+    async askClarify(q) {
+      this.clarifyLoading = q.id;
+      this.clarifyResult = null;
+      try {
+        const res = await axios.post(`/api/maturity/${this.token}/clarify`, {
+          question_text: q.text
+        });
+        this.clarifyResult = { id: q.id, content: res.data.content || '' };
+      } catch (e) {
+        this.clarifyResult = { id: q.id, content: 'Ошибка: ' + (e.response?.data?.error || 'Сервис недоступен') };
+      } finally {
+        this.clarifyLoading = null;
+      }
     },
     async submit() {
       if (!this.allFilled || this.submitting) return;
@@ -213,6 +257,32 @@ export default {
 
 .maturity-header h1 { font-size: 1.5rem; color: #111; }
 .team-name { color: #555; margin-top: 0.5rem; }
+.glossary-toggle {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #0369a1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.glossary-block {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: left;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.glossary-item {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  color: #475569;
+}
+.glossary-item strong { color: #334155; }
 
 .progress-bar {
   height: 8px;
@@ -311,6 +381,30 @@ export default {
   color: #065f46;
 }
 
+.clarify-trigger {
+  font-size: 0.75rem;
+  color: #0369a1;
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}
+.clarify-trigger:hover:not(:disabled) { color: #0284c7; }
+.clarify-trigger:disabled { opacity: 0.7; cursor: wait; }
+
+.clarify-block {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f0f9ff;
+  border-left: 3px solid #0ea5e9;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.875rem;
+}
+.clarify-block strong { color: #0369a1; }
+.clarify-text { margin: 0.5rem 0 0 0; line-height: 1.5; color: #0c4a6e; white-space: pre-wrap; }
+
 .question-info {
   display: flex;
   flex-direction: column;
@@ -355,6 +449,19 @@ export default {
 
 .info-negative .info-block-title { color: #b91c1c; }
 .info-negative .info-block-text { color: #991b1b; }
+
+.info-business-metrics {
+  background: #fefce8;
+  border-color: #fde047;
+}
+.info-business-metrics .info-block-title { color: #854d0e; }
+.info-business-metrics .info-block-text { color: #713f12; }
+.business-metrics-disclaimer {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
 
 .yes-no {
   display: flex;

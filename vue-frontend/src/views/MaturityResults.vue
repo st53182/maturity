@@ -43,6 +43,12 @@
       </div>
 
       <div class="actions">
+        <button type="button" class="btn-edit" @click="$router.push(`/maturity/${token}/edit`)">
+          Изменить ответы
+        </button>
+        <button type="button" class="btn-show-all" @click="showAllModal = true">
+          Показать все
+        </button>
         <button
           type="button"
           class="btn-rec"
@@ -82,6 +88,45 @@
               <div v-if="item.negative_for_business" class="detail-negative">
                 <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
               </div>
+              <div v-if="item.business_metrics" class="detail-business-metrics">
+                <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
+                <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модальное окно: все вопросы и ответы -->
+      <div v-if="showAllModal" class="detail-overlay" @click.self="showAllModal = false">
+        <div class="detail-modal detail-modal-full">
+          <div class="detail-header">
+            <h3>Все вопросы и ответы</h3>
+            <button type="button" class="detail-close" aria-label="Закрыть" @click="showAllModal = false">×</button>
+          </div>
+          <div class="detail-cards">
+            <div
+              v-for="item in allQuestionsWithAnswers"
+              :key="item.id"
+              class="detail-card"
+            >
+              <p class="detail-question"><span class="detail-q-num">{{ item.id + 1 }}.</span> {{ item.text }}</p>
+              <div class="detail-answer" :class="item.answer ? 'answer-yes' : 'answer-no'">
+                {{ item.answer ? $t('maturity.yes') : $t('maturity.no') }}
+              </div>
+              <div v-if="item.why_important" class="detail-why">
+                <strong>Почему это важно:</strong> {{ item.why_important }}
+              </div>
+              <div v-if="item.metrics_impact" class="detail-metrics">
+                <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
+              </div>
+              <div v-if="item.negative_for_business" class="detail-negative">
+                <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
+              </div>
+              <div v-if="item.business_metrics" class="detail-business-metrics">
+                <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
+                <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -109,11 +154,14 @@ export default {
       answers: [],
       questions: [],
       selectedTheme: null,
+      showAllModal: false,
       loading: true,
       error: null,
       exporting: false,
       recommendationsHtml: '',
-      loadingRecs: false
+      loadingRecs: false,
+      businessMetricsDisclaimer: '',
+      businessMetricsGlossary: []
     };
   },
   computed: {
@@ -195,6 +243,8 @@ export default {
         this.radarGroups = res.data.radar_groups || [];
         this.answers = res.data.answers || [];
         this.questions = res.data.questions || [];
+        this.businessMetricsDisclaimer = res.data.business_metrics_disclaimer || '';
+        this.businessMetricsGlossary = res.data.business_metrics_glossary || [];
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки результатов';
       } finally {
@@ -213,6 +263,13 @@ export default {
     },
     questionsForTheme(theme) {
       return this.questionsByTheme[theme] || [];
+    },
+    allQuestionsWithAnswers() {
+      if (!this.questions.length || !Array.isArray(this.answers)) return [];
+      return this.questions.map(q => ({
+        ...q,
+        answer: this.answers[q.id] === true
+      }));
     },
     openDetail(theme) {
       this.selectedTheme = theme;
@@ -392,6 +449,14 @@ export default {
   flex-direction: column;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
+.detail-modal-full {
+  max-width: 800px;
+  max-height: 95vh;
+}
+.detail-q-num {
+  color: #6b7280;
+  margin-right: 0.25rem;
+}
 
 .detail-header {
   display: flex;
@@ -482,6 +547,21 @@ export default {
 .detail-metrics strong,
 .detail-negative strong {
   color: #374151;
+}
+
+.detail-business-metrics {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: #713f12;
+  background: #fefce8;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+}
+.detail-disclaimer {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0.35rem 0 0 0;
 }
 
 .recommendations-block {

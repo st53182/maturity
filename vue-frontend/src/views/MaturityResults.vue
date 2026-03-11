@@ -104,7 +104,8 @@
             <h3>Все вопросы и ответы</h3>
             <button type="button" class="detail-close" aria-label="Закрыть" @click="showAllModal = false">×</button>
           </div>
-          <div class="detail-cards">
+          <div class="detail-cards detail-cards-full">
+            <p v-if="!allQuestionsWithAnswers.length" class="detail-empty">Нет данных о вопросах и ответах.</p>
             <div
               v-for="item in allQuestionsWithAnswers"
               :key="item.id"
@@ -265,10 +266,12 @@ export default {
       return this.questionsByTheme[theme] || [];
     },
     allQuestionsWithAnswers() {
-      if (!this.questions.length || !Array.isArray(this.answers)) return [];
-      return this.questions.map(q => ({
+      const questions = this.questions || [];
+      const answers = Array.isArray(this.answers) ? this.answers : [];
+      if (!questions.length) return [];
+      return questions.map(q => ({
         ...q,
-        answer: this.answers[q.id] === true
+        answer: answers[q.id] === true
       }));
     },
     openDetail(theme) {
@@ -453,6 +456,14 @@ export default {
   max-width: 800px;
   max-height: 95vh;
 }
+.detail-cards-full {
+  min-height: 200px;
+}
+.detail-empty {
+  padding: 2rem;
+  color: #6b7280;
+  margin: 0;
+}
 .detail-q-num {
   color: #6b7280;
   margin-right: 0.25rem;
@@ -594,7 +605,7 @@ export default {
   gap: 0.75rem;
 }
 
-.btn-rec, .btn-pdf {
+.btn-edit, .btn-show-all, .btn-rec, .btn-pdf {
   padding: 0.75rem 1.5rem;
   color: #fff;
   border: none;
@@ -602,6 +613,16 @@ export default {
   font-weight: 600;
   cursor: pointer;
 }
+
+.btn-edit {
+  background: #64748b;
+}
+.btn-edit:hover { background: #475569; }
+
+.btn-show-all {
+  background: #0d9488;
+}
+.btn-show-all:hover { background: #0f766e; }
 
 .btn-rec {
   background: #059669;

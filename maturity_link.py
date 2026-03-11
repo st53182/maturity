@@ -30,6 +30,12 @@ def _theme_indices():
 
 THEME_INDICES = _theme_indices()
 
+DEFAULT_BUSINESS_METRICS = (
+    "Позитивный ответ («Да») способствует улучшению продуктовых и операционных метрик в рамках продукта "
+    "(retention, LTV, конверсия, снижение издержек — связь транзитивная). "
+    "(На примере анализа данных из Citibank, Deutsche Bank.)"
+)
+
 
 def _results_from_answers(answers):
     """answers: list of bool. Return { theme: { "1".."3": 0-5 } } for radar."""
@@ -76,7 +82,7 @@ def get_maturity_survey(token):
             'why_important': q.get('why_important', ''),
             'metrics_impact': q.get('metrics_impact', ''),
             'negative_for_business': q.get('negative_for_business', ''),
-            'business_metrics': q.get('business_metrics', ''),
+            'business_metrics': q.get('business_metrics') or DEFAULT_BUSINESS_METRICS,
             'related_roles': ROLE_BY_THEME.get(q['theme'], []),
         }
         for i, q in enumerate(MATURITY_QUESTIONS)
@@ -150,7 +156,7 @@ def get_maturity_results(token):
             'why_important': q.get('why_important', ''),
             'metrics_impact': q.get('metrics_impact', ''),
             'negative_for_business': q.get('negative_for_business', ''),
-            'business_metrics': q.get('business_metrics', ''),
+            'business_metrics': q.get('business_metrics') or DEFAULT_BUSINESS_METRICS,
         }
         for i, q in enumerate(MATURITY_QUESTIONS)
     ]

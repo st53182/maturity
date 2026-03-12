@@ -383,8 +383,9 @@ export default {
 
 .radar-wrap {
   margin-bottom: 0.75rem;
-  height: 460px;
-  overflow: hidden;
+  min-height: 320px;
+  max-height: 380px;
+  overflow: visible;
   display: flex;
   align-items: flex-start;
   justify-content: center;

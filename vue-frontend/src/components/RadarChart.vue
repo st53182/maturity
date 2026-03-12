@@ -49,6 +49,9 @@ export default {
       return {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: 20
+        },
         scales: {
           r: {
             beginAtZero: true,
@@ -64,7 +67,7 @@ export default {
             position: 'top'
           },
           title: {
-            display: false // Мы используем <h3>{{ title }}</h3> вместо встроенного title
+            display: false
           }
         }
       };
@@ -77,8 +80,7 @@ export default {
 .radar-chart {
   width: 100%;
   max-width: 640px;
-  height: 100%;
-  max-height: 360px;
+  height: 380px;
   margin-bottom: 0;
   background: white;
   border-radius: 10px;

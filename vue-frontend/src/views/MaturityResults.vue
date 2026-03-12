@@ -379,15 +379,14 @@ export default {
 
 .group-block {
   margin: 1.5rem 0;
+  overflow: visible;
 }
 
 .radar-wrap {
   margin-bottom: 0.75rem;
-  min-height: 320px;
-  max-height: 380px;
-  overflow: visible;
+  height: 420px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 
@@ -396,19 +395,21 @@ export default {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  min-height: 3rem;
 }
 
 .theme-row {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
 
 .theme-row:hover {

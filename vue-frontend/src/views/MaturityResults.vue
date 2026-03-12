@@ -384,7 +384,7 @@ export default {
 
 .radar-wrap {
   margin-bottom: 0.75rem;
-  height: 620px;
+  height: 770px;
   display: flex;
   align-items: center;
   justify-content: center;

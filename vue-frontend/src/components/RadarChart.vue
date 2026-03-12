@@ -80,7 +80,7 @@ export default {
 .radar-chart {
   width: 100%;
   max-width: 640px;
-  height: 580px;
+  height: 730px;
   margin-bottom: 0;
   background: white;
   border-radius: 10px;

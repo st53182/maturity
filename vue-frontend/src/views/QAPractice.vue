@@ -32,6 +32,12 @@
         <p>{{ $t('qa.puzzleUsabilityReportDesc') }}</p>
         <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
       </div>
+      <div class="puzzle-card" @click="$router.push('/qa/user-story')">
+        <span class="puzzle-icon">📝</span>
+        <h2>{{ $t('qa.puzzleUserStoryTitle') }}</h2>
+        <p>{{ $t('qa.puzzleUserStoryDesc') }}</p>
+        <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
+      </div>
     </div>
 
     <!-- Кнопка назад -->

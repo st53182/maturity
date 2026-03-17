@@ -382,3 +382,15 @@ class SystemThinkingIceberg(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+
+class QAUserStorySubmission(db.Model):
+    """Пул разработки: пользовательские истории и критерии приёмки (QA задание 5)."""
+    __tablename__ = 'qa_user_story_submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    team_name = db.Column(db.String(255), nullable=False, default='')
+    user_story = db.Column(db.Text, nullable=False, default='')
+    acceptance_criteria = db.Column(db.Text, nullable=False, default='[]')  # JSON array of strings
+    score = db.Column(db.Integer, nullable=True)
+    ac_count = db.Column(db.Integer, nullable=True)

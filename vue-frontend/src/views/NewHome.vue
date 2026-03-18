@@ -425,6 +425,12 @@ export default {
   background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
 }
 
+.cta-btn--primary:hover {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.9));
+  border-color: rgba(32, 90, 255, 0.72);
+  box-shadow: 0 14px 34px rgba(32, 90, 255, 0.22);
+}
+
 .hero-panel {
   border-radius: 18px;
   border: 1px solid rgba(10, 20, 45, 0.1);
@@ -493,7 +499,7 @@ export default {
   display: flex;
   gap: 10px;
   width: max-content;
-  animation: marquee 26s linear infinite;
+  animation: marquee 58s linear infinite;
 }
 
 .marquee__track--clone {

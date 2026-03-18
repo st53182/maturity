@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" :class="{ 'app--new': isNewUi }">
     <!-- Mobile Hamburger Button -->
     <button v-if="isAuthenticated" class="mobile-hamburger" :class="{ 'menu-open': showMobileMenu }" @click="showMobileMenu = !showMobileMenu">
       <span class="hamburger-line"></span>
@@ -202,14 +202,17 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 import { computed, ref, getCurrentInstance } from "vue";
+import { useRoute } from "vue-router";
 
 
 export default {
   setup() {
     const authStore = useAuthStore();
+    const route = useRoute();
 
     // ✅ Проверяем авторизацию
     const isAuthenticated = computed(() => authStore.isAuthenticated);
+    const isNewUi = computed(() => (route.path || "").startsWith("/new"));
 
     // ✅ Добавляем реактивные переменные
     const showTeamModal = ref(false);
@@ -295,6 +298,7 @@ export default {
 
     return { 
       isAuthenticated, 
+      isNewUi,
       showTeamModal, 
       newTeamName, 
       showMobileMenu,
@@ -322,6 +326,35 @@ export default {
 <style>
 /* Основной контейнер */
 
+.app--new .modern-sidebar {
+  background: rgba(247, 249, 255, 0.82) !important;
+  border-right: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 2px 0 18px rgba(10, 20, 45, 0.08);
+}
+
+.app--new .modern-sidebar .lang-btn {
+  border-color: rgba(10, 20, 45, 0.14);
+  color: rgba(10, 20, 45, 0.78);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.app--new .modern-sidebar .lang-btn.active {
+  border-color: rgba(32, 90, 255, 0.32);
+  background: rgba(32, 90, 255, 0.1);
+}
+
+.app--new .modern-sidebar .sidebar-btn {
+  color: rgba(10, 20, 45, 0.86);
+}
+
+.app--new .modern-sidebar .sidebar-btn.logout {
+  color: rgba(220, 40, 70, 0.75);
+}
+
+.app--new .main-content,
+.app--new .results-container {
+  background: transparent;
+}
 
 .modern-sidebar {
   position: fixed;

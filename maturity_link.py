@@ -49,6 +49,25 @@ def _results_from_answers(answers):
     return results
 
 
+def _extract_answers_and_comments(raw_answers):
+    """
+    Backward-compatible storage:
+    - old format: list[bool]
+    - new format: { "answers": list[bool], "comments": list[str|null] }
+    """
+    if isinstance(raw_answers, dict):
+        answers = raw_answers.get("answers")
+        comments = raw_answers.get("comments")
+        if not isinstance(answers, list):
+            answers = None
+        if not isinstance(comments, list):
+            comments = None
+        return answers, comments
+    if isinstance(raw_answers, list):
+        return raw_answers, None
+    return None, None
+
+
 @maturity_bp.route('/api/maturity-link', methods=['POST'])
 @jwt_required(optional=True)
 def create_maturity_link():
@@ -104,14 +123,31 @@ def submit_maturity_answers(token):
         return jsonify({'error': 'Ссылка не найдена'}), 404
     if session.completed_at:
         return jsonify({'error': 'Оценка уже пройдена', 'results_url': f'/maturity/{token}/results'}), 400
-    data = request.get_json()
+    data = request.get_json() or {}
     answers = data.get('answers')
+    comments = data.get('comments')
     if not isinstance(answers, list) or len(answers) != QUESTIONS_COUNT:
         return jsonify({'error': f'Нужен массив из {QUESTIONS_COUNT} ответов (да/нет)'}), 400
+    if comments is not None and (not isinstance(comments, list) or len(comments) != QUESTIONS_COUNT):
+        return jsonify({'error': f'Поле comments должно быть массивом из {QUESTIONS_COUNT} элементов (или отсутствовать)'}), 400
     # normalize to bool
     normalized = [bool(a) for a in answers]
+    normalized_comments = None
+    if isinstance(comments, list):
+        # normalize: strings or null; trim and cap to reasonable length
+        out = []
+        for c in comments:
+            if c is None:
+                out.append(None)
+                continue
+            s = str(c).strip()
+            if not s:
+                out.append(None)
+                continue
+            out.append(s[:2000])
+        normalized_comments = out
     from datetime import datetime
-    session.answers = normalized
+    session.answers = {"answers": normalized, "comments": normalized_comments} if normalized_comments is not None else normalized
     session.completed_at = datetime.utcnow()
     db.session.commit()
     return jsonify({
@@ -126,11 +162,33 @@ def update_maturity_answers(token):
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
-    data = request.get_json()
+    data = request.get_json() or {}
     answers = data.get('answers')
+    comments = data.get('comments')
     if not isinstance(answers, list) or len(answers) != QUESTIONS_COUNT:
         return jsonify({'error': f'Нужен массив из {QUESTIONS_COUNT} ответов (да/нет)'}), 400
-    session.answers = [bool(a) for a in answers]
+    if comments is not None and (not isinstance(comments, list) or len(comments) != QUESTIONS_COUNT):
+        return jsonify({'error': f'Поле comments должно быть массивом из {QUESTIONS_COUNT} элементов (или отсутствовать)'}), 400
+    normalized = [bool(a) for a in answers]
+    if isinstance(comments, list):
+        out = []
+        for c in comments:
+            if c is None:
+                out.append(None)
+                continue
+            s = str(c).strip()
+            if not s:
+                out.append(None)
+                continue
+            out.append(s[:2000])
+        session.answers = {"answers": normalized, "comments": out}
+    else:
+        # keep any previously stored comments if present
+        prev_answers, prev_comments = _extract_answers_and_comments(session.answers)
+        if isinstance(prev_comments, list) and len(prev_comments) == QUESTIONS_COUNT:
+            session.answers = {"answers": normalized, "comments": prev_comments}
+        else:
+            session.answers = normalized
     db.session.commit()
     return jsonify({
         'message': 'Ответы обновлены',
@@ -144,9 +202,10 @@ def get_maturity_results(token):
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
-    if not session.completed_at or not session.answers:
+    answers_list, comments_list = _extract_answers_and_comments(session.answers)
+    if not session.completed_at or not answers_list:
         return jsonify({'error': 'Оценка ещё не пройдена'}), 400
-    results = _results_from_answers(session.answers)
+    results = _results_from_answers(answers_list)
     completed_at = session.completed_at.isoformat() if session.completed_at else None
     questions = [
         {
@@ -165,7 +224,8 @@ def get_maturity_results(token):
         'completed_at': completed_at,
         'results': results,
         'radar_groups': RADAR_GROUPS,
-        'answers': session.answers,
+        'answers': answers_list,
+        'comments': comments_list or [None] * QUESTIONS_COUNT,
         'questions': questions,
         'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
         'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,

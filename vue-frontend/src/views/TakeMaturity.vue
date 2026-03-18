@@ -67,6 +67,17 @@
                 {{ $t('maturity.no') }}
               </button>
             </div>
+
+            <div class="comment-block">
+              <label class="comment-label">Комментарий (опционально)</label>
+              <textarea
+                v-model="comments[q.id]"
+                class="comment-input"
+                :disabled="answers[q.id] === null || answers[q.id] === undefined"
+                placeholder="Например: контекст, примеры, почему ответ такой…"
+                rows="2"
+              />
+            </div>
           </div>
           <div v-if="clarifyResult && clarifyResult.id === q.id" class="clarify-block">
               <strong>Разъяснение (на примере банковских команд):</strong>
@@ -129,6 +140,7 @@ export default {
       token: '',
       survey: { team_name: null, questions: [], completed: false },
       answers: {},
+      comments: {},
       currentPage: 0,
       loading: true,
       error: null,
@@ -181,6 +193,7 @@ export default {
         this.survey.business_metrics_glossary = res.data.business_metrics_glossary || [];
         this.survey.questions.forEach(q => {
           if (this.answers[q.id] === undefined) this.answers[q.id] = null;
+          if (this.comments[q.id] === undefined) this.comments[q.id] = '';
         });
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки опроса';
@@ -214,10 +227,13 @@ export default {
       try {
         const total = this.survey.questions.length;
         const arr = [];
+        const commentsArr = [];
         for (let i = 0; i < total; i++) {
           arr.push(this.answers[i] === true);
+          const c = (this.comments[i] || '').toString().trim();
+          commentsArr.push(c ? c : null);
         }
-        await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr });
+        await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr, comments: commentsArr });
         this.$router.push(`/maturity/${this.token}/results`);
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка отправки';
@@ -467,6 +483,42 @@ export default {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.comment-block {
+  margin-top: 0.75rem;
+}
+
+.comment-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.comment-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.comment-input:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .btn-answer {

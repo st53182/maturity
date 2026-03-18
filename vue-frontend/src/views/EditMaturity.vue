@@ -28,6 +28,17 @@
               Нет
             </button>
           </div>
+
+          <div class="edit-comment">
+            <label class="edit-comment-label">Комментарий (опционально)</label>
+            <textarea
+              v-model="comments[q.id]"
+              class="edit-comment-input"
+              :disabled="answers[q.id] === undefined || answers[q.id] === null"
+              placeholder="Контекст, примеры, пояснение к ответу…"
+              rows="2"
+            />
+          </div>
         </div>
       </div>
 
@@ -59,6 +70,7 @@ export default {
       teamName: '',
       questions: [],
       answers: {},
+      comments: {},
       loading: true,
       error: null,
       saving: false
@@ -82,9 +94,12 @@ export default {
         this.teamName = surveyRes.data.team_name || resultsRes.data.team_name;
         this.questions = surveyRes.data.questions || [];
         const ansList = resultsRes.data.answers || [];
+        const comList = resultsRes.data.comments || [];
         this.answers = {};
+        this.comments = {};
         this.questions.forEach(q => {
           this.answers[q.id] = ansList[q.id] === true;
+          this.comments[q.id] = (comList[q.id] || '').toString();
         });
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки';
@@ -98,9 +113,13 @@ export default {
     async saveAndRecalc() {
       if (this.saving) return;
       const arr = this.questions.map(q => this.answers[q.id] === true);
+      const commentsArr = this.questions.map(q => {
+        const s = (this.comments[q.id] || '').toString().trim();
+        return s ? s : null;
+      });
       this.saving = true;
       try {
-        await axios.put(`/api/maturity/${this.token}/answers`, { answers: arr });
+        await axios.put(`/api/maturity/${this.token}/answers`, { answers: arr, comments: commentsArr });
         this.$router.push(`/maturity/${this.token}/results`);
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка сохранения';
@@ -158,6 +177,36 @@ export default {
   font-size: 0.9rem;
   color: #334155;
   line-height: 1.45;
+}
+
+.edit-comment {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.edit-comment-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+.edit-comment-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.edit-comment-input:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .edit-yes-no {

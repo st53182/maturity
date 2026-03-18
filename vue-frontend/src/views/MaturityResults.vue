@@ -92,6 +92,9 @@
                 <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
                 <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
               </div>
+              <div v-if="item.comment" class="detail-comment">
+                <strong>Комментарий:</strong> {{ item.comment }}
+              </div>
             </div>
           </div>
         </div>
@@ -128,6 +131,9 @@
                 <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
                 <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
               </div>
+              <div v-if="item.comment" class="detail-comment">
+                <strong>Комментарий:</strong> {{ item.comment }}
+              </div>
             </div>
           </div>
         </div>
@@ -153,6 +159,7 @@ export default {
       results: {},
       radarGroups: [],
       answers: [],
+      comments: [],
       questions: [],
       selectedTheme: null,
       showAllModal: false,
@@ -173,7 +180,8 @@ export default {
         if (!map[q.theme]) map[q.theme] = [];
         map[q.theme].push({
           ...q,
-          answer: this.answers[q.id] === true
+          answer: this.answers[q.id] === true,
+          comment: (Array.isArray(this.comments) && this.comments[q.id]) ? this.comments[q.id] : ''
         });
       }
       return map;
@@ -243,6 +251,7 @@ export default {
         this.results = res.data.results || {};
         this.radarGroups = res.data.radar_groups || [];
         this.answers = res.data.answers || [];
+        this.comments = res.data.comments || [];
         this.questions = res.data.questions || [];
         this.businessMetricsDisclaimer = res.data.business_metrics_disclaimer || '';
         this.businessMetricsGlossary = res.data.business_metrics_glossary || [];
@@ -268,10 +277,12 @@ export default {
     allQuestionsWithAnswers() {
       const questions = this.questions || [];
       const answers = Array.isArray(this.answers) ? this.answers : [];
+      const comments = Array.isArray(this.comments) ? this.comments : [];
       if (!questions.length) return [];
       return questions.map(q => ({
         ...q,
-        answer: answers[q.id] === true
+        answer: answers[q.id] === true,
+        comment: comments[q.id] || ''
       }));
     },
     openDetail(theme) {
@@ -575,6 +586,21 @@ export default {
   color: #6b7280;
   font-style: italic;
   margin: 0.35rem 0 0 0;
+}
+
+.detail-comment {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #334155;
+  margin: 0.5rem 0 0 0;
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.detail-comment strong {
+  color: #1d4ed8;
 }
 
 .recommendations-block {

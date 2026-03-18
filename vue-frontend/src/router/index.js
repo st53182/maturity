@@ -8,6 +8,7 @@ import AssessmentResults from '../views/AssessmentResults.vue';
 
 const routes = [
   { path: '/', component: UserHome },
+  { path: '/new', name: 'NewHome', component: () => import('@/views/NewHome.vue') },
   { path: '/login', component: UserLogin },
   { path: '/register', component: UserRegister },
   { path: '/survey', name: "UserSurvey", component: UserSurvey, meta: { requiresAuth: true } },

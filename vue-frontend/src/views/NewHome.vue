@@ -32,14 +32,45 @@
     </header>
 
     <main class="new-main">
-      <section class="hero">
-        <h1 class="hero__title">Инструменты развития команд и продуктов</h1>
-        <p class="hero__subtitle">
-          Новая версия: группируем инструменты по ролям. Функциональность будем переносить постепенно.
-        </p>
+      <div class="bg-orbs" aria-hidden="true">
+        <div class="orb orb--1"></div>
+        <div class="orb orb--2"></div>
+        <div class="orb orb--3"></div>
+      </div>
+
+      <section class="hero" :class="{ 'is-ready': isReady }">
+        <div class="hero__grid">
+          <div class="hero__left">
+            <div class="hero__kicker">Новая версия интерфейса</div>
+            <h1 class="hero__title">Инструменты развития команд и продуктов</h1>
+            <p class="hero__subtitle">
+              Мы группируем инструменты по ролям и будем улучшать функциональность постепенно — без поломок текущей версии.
+            </p>
+
+            <div class="hero__cta">
+              <router-link to="/maturity/create" class="cta-btn cta-btn--primary">Начать с оценки зрелости</router-link>
+              <router-link to="/dashboard" class="cta-btn">Открыть дашборд</router-link>
+            </div>
+          </div>
+
+          <div class="hero__right">
+            <div class="hero-panel">
+              <div class="hero-panel__title">4 области инструментов</div>
+              <div class="hero-panel__list">
+                <div class="pill">Скрам Мастера / Тим Лиды</div>
+                <div class="pill">PM / руководители</div>
+                <div class="pill">Product / владельцы продукта</div>
+                <div class="pill">Бизнес / предприниматели</div>
+              </div>
+              <div class="hero-panel__note">
+                Дальше перенесём «Оценку зрелости команды» и «Дашборд» в ветку <code>/new</code>.
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section class="areas">
+      <section class="areas" :class="{ 'is-ready': isReady }">
         <article class="area-card">
           <div class="area-card__head">
             <h2 class="area-card__title">Для Скрам Мастеров / Тим Лидов / Фасилитаторов</h2>
@@ -91,7 +122,7 @@
         </article>
       </section>
 
-      <section class="next">
+      <section class="next" :class="{ 'is-ready': isReady }">
         <div class="next__box">
           <div class="next__title">Дальше</div>
           <div class="next__text">
@@ -113,6 +144,14 @@
 
 <script>
 export default {
+  data() {
+    return { isReady: false };
+  },
+  mounted() {
+    window.requestAnimationFrame(() => {
+      this.isReady = true;
+    });
+  },
   methods: {
     switchLanguage(lang) {
       this.$i18n.locale = lang;
@@ -125,10 +164,11 @@ export default {
 <style scoped>
 .new-app {
   min-height: 100vh;
-  background: radial-gradient(1200px 600px at 10% 10%, rgba(102, 126, 234, 0.15), transparent 60%),
-    radial-gradient(1000px 500px at 90% 20%, rgba(118, 75, 162, 0.14), transparent 55%),
-    #0b1020;
-  color: rgba(255, 255, 255, 0.92);
+  background: radial-gradient(900px 500px at 15% 10%, rgba(32, 90, 255, 0.25), transparent 60%),
+    radial-gradient(900px 520px at 90% 18%, rgba(0, 194, 255, 0.16), transparent 62%),
+    radial-gradient(700px 420px at 55% 90%, rgba(32, 90, 255, 0.12), transparent 58%),
+    #060b19;
+  color: rgba(255, 255, 255, 0.93);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Apple Color Emoji",
     "Segoe UI Emoji";
 }
@@ -141,8 +181,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
-  background: rgba(11, 16, 32, 0.7);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 11, 25, 0.62);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
   backdrop-filter: blur(10px);
 }
 
@@ -215,28 +255,89 @@ export default {
 
 .new-nav__btn:hover {
   background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .new-nav__btn--primary {
-  border-color: rgba(102, 126, 234, 0.65);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.9));
+  border-color: rgba(32, 90, 255, 0.65);
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.95), rgba(0, 194, 255, 0.85));
 }
 
 .new-main {
   max-width: 1100px;
   margin: 0 auto;
   padding: 34px 18px 56px;
+  position: relative;
+}
+
+.bg-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.55;
+  transform: translate3d(0, 0, 0);
+  animation: float 8.5s ease-in-out infinite;
+}
+
+.orb--1 {
+  left: -220px;
+  top: -160px;
+  background: radial-gradient(circle at 30% 30%, rgba(32, 90, 255, 0.55), transparent 62%);
+}
+
+.orb--2 {
+  right: -240px;
+  top: 40px;
+  background: radial-gradient(circle at 35% 35%, rgba(0, 194, 255, 0.42), transparent 60%);
+  animation-delay: -2.4s;
+}
+
+.orb--3 {
+  left: 280px;
+  bottom: -280px;
+  background: radial-gradient(circle at 40% 40%, rgba(32, 90, 255, 0.32), transparent 60%);
+  animation-delay: -4.1s;
 }
 
 .hero {
-  padding: 22px 4px 10px;
+  padding: 10px 4px 6px;
+  position: relative;
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.hero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  width: fit-content;
 }
 
 .hero__title {
-  margin: 0;
-  font-size: 34px;
-  line-height: 1.12;
-  letter-spacing: -0.4px;
+  margin: 12px 0 0;
+  font-size: 42px;
+  line-height: 1.06;
+  letter-spacing: -0.8px;
 }
 
 .hero__subtitle {
@@ -244,6 +345,70 @@ export default {
   color: rgba(255, 255, 255, 0.72);
   max-width: 840px;
   line-height: 1.5;
+}
+
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.cta-btn {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  font-size: 14px;
+}
+
+.cta-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.cta-btn--primary {
+  border-color: rgba(32, 90, 255, 0.62);
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+}
+
+.hero-panel {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+  padding: 16px;
+}
+
+.hero-panel__title {
+  font-weight: 650;
+}
+
+.hero-panel__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pill {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(6, 11, 25, 0.35);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.hero-panel__note {
+  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .areas {
@@ -258,11 +423,18 @@ export default {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .area-card--accent {
-  border-color: rgba(102, 126, 234, 0.4);
-  background: linear-gradient(180deg, rgba(102, 126, 234, 0.18), rgba(255, 255, 255, 0.06));
+  border-color: rgba(32, 90, 255, 0.4);
+  background: linear-gradient(180deg, rgba(32, 90, 255, 0.2), rgba(255, 255, 255, 0.06));
+}
+
+.area-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .area-card__head {
@@ -300,12 +472,13 @@ export default {
   background: rgba(11, 16, 32, 0.35);
   color: rgba(255, 255, 255, 0.88);
   font-size: 13px;
-  transition: 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .area-link:hover {
   background: rgba(11, 16, 32, 0.55);
   border-color: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
 }
 
 .next {
@@ -317,6 +490,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   padding: 16px 18px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
 }
 
 .next__title {
@@ -368,7 +542,44 @@ export default {
   }
 
   .hero__title {
-    font-size: 28px;
+    font-size: 30px;
+  }
+
+  .hero__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hero,
+.areas,
+.next {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+
+.hero.is-ready,
+.areas.is-ready,
+.next.is-ready {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.areas.is-ready {
+  transition-delay: 80ms;
+}
+
+.next.is-ready {
+  transition-delay: 140ms;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
   }
 }
 </style>

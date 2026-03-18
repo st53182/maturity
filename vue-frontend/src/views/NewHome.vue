@@ -70,6 +70,26 @@
         </div>
       </section>
 
+      <section class="trusted" :class="{ 'is-ready': isReady }">
+        <div class="trusted__inner">
+          <div class="trusted__title">Нам доверяют</div>
+          <div class="trusted__subtitle">Международные бренды (умеренный фильтр, не российские компании).</div>
+
+          <div class="marquee" aria-label="Trusted by brands">
+            <div class="marquee__track">
+              <div v-for="(c, idx) in trustedCompaniesLoop" :key="`a-${idx}-${c}`" class="logo-pill">
+                {{ c }}
+              </div>
+            </div>
+            <div class="marquee__track marquee__track--clone" aria-hidden="true">
+              <div v-for="(c, idx) in trustedCompaniesLoop" :key="`b-${idx}-${c}`" class="logo-pill">
+                {{ c }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="areas" :class="{ 'is-ready': isReady }">
         <article class="area-card">
           <div class="area-card__head">
@@ -145,12 +165,21 @@
 <script>
 export default {
   data() {
-    return { isReady: false };
+    return {
+      isReady: false,
+      trustedCompanies: ["Mastercard", "TUI", "Toyota", "Nordea", "Auchan", "Renault"],
+    };
   },
   mounted() {
     window.requestAnimationFrame(() => {
       this.isReady = true;
     });
+  },
+  computed: {
+    trustedCompaniesLoop() {
+      // repeat to keep marquee dense even on wide screens
+      return [...this.trustedCompanies, ...this.trustedCompanies, ...this.trustedCompanies];
+    },
   },
   methods: {
     switchLanguage(lang) {
@@ -164,11 +193,11 @@ export default {
 <style scoped>
 .new-app {
   min-height: 100vh;
-  background: radial-gradient(900px 500px at 15% 10%, rgba(32, 90, 255, 0.25), transparent 60%),
-    radial-gradient(900px 520px at 90% 18%, rgba(0, 194, 255, 0.16), transparent 62%),
-    radial-gradient(700px 420px at 55% 90%, rgba(32, 90, 255, 0.12), transparent 58%),
-    #060b19;
-  color: rgba(255, 255, 255, 0.93);
+  background: radial-gradient(1100px 560px at 15% 10%, rgba(32, 90, 255, 0.12), transparent 60%),
+    radial-gradient(900px 520px at 90% 18%, rgba(0, 194, 255, 0.1), transparent 62%),
+    radial-gradient(800px 520px at 55% 95%, rgba(32, 90, 255, 0.08), transparent 58%),
+    #f7f9ff;
+  color: rgba(10, 20, 45, 0.92);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Apple Color Emoji",
     "Segoe UI Emoji";
 }
@@ -181,8 +210,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
-  background: rgba(6, 11, 25, 0.62);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(247, 249, 255, 0.72);
+  border-bottom: 1px solid rgba(10, 20, 45, 0.08);
   backdrop-filter: blur(10px);
 }
 
@@ -200,9 +229,9 @@ export default {
 .brand__tag {
   font-size: 12px;
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(10, 20, 45, 0.14);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(32, 90, 255, 0.08);
 }
 
 .new-header__right {
@@ -218,9 +247,9 @@ export default {
 
 .lang-btn {
   padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(10, 20, 45, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+  color: rgba(10, 20, 45, 0.88);
   border-radius: 10px;
   cursor: pointer;
   font-size: 12px;
@@ -228,12 +257,12 @@ export default {
 }
 
 .lang-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .lang-btn.active {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(32, 90, 255, 0.35);
+  background: rgba(32, 90, 255, 0.1);
 }
 
 .new-nav {
@@ -244,11 +273,11 @@ export default {
 
 .new-nav__btn {
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(10, 20, 45, 0.9);
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  background: rgba(255, 255, 255, 0.78);
   transition: 0.2s ease;
   font-size: 14px;
 }
@@ -260,7 +289,8 @@ export default {
 
 .new-nav__btn--primary {
   border-color: rgba(32, 90, 255, 0.65);
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.95), rgba(0, 194, 255, 0.85));
+  color: white;
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88));
 }
 
 .new-main {
@@ -283,7 +313,7 @@ export default {
   height: 520px;
   border-radius: 50%;
   filter: blur(40px);
-  opacity: 0.55;
+  opacity: 0.6;
   transform: translate3d(0, 0, 0);
   animation: float 8.5s ease-in-out infinite;
 }
@@ -326,9 +356,9 @@ export default {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  color: rgba(10, 20, 45, 0.78);
   font-size: 13px;
   width: fit-content;
 }
@@ -342,7 +372,7 @@ export default {
 
 .hero__subtitle {
   margin: 14px 0 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(10, 20, 45, 0.72);
   max-width: 840px;
   line-height: 1.5;
 }
@@ -356,11 +386,11 @@ export default {
 
 .cta-btn {
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 20, 45, 0.9);
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  background: rgba(255, 255, 255, 0.82);
   transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   font-size: 14px;
 }
@@ -373,14 +403,15 @@ export default {
 
 .cta-btn--primary {
   border-color: rgba(32, 90, 255, 0.62);
+  color: white;
   background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
 }
 
 .hero-panel {
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 20px 70px rgba(10, 20, 45, 0.12);
   padding: 16px;
 }
 
@@ -398,17 +429,71 @@ export default {
 .pill {
   padding: 8px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(6, 11, 25, 0.35);
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  background: rgba(247, 249, 255, 0.85);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(10, 20, 45, 0.78);
 }
 
 .hero-panel__note {
   margin-top: 12px;
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(10, 20, 45, 0.68);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.trusted {
+  margin-top: 18px;
+}
+
+.trusted__inner {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 18px 60px rgba(10, 20, 45, 0.1);
+  padding: 16px 18px;
+  overflow: hidden;
+}
+
+.trusted__title {
+  font-weight: 650;
+}
+
+.trusted__subtitle {
+  margin-top: 6px;
+  color: rgba(10, 20, 45, 0.62);
+  font-size: 13px;
+}
+
+.marquee {
+  position: relative;
+  margin-top: 14px;
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.marquee__track {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+}
+
+.marquee__track--clone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateX(100%);
+}
+
+.logo-pill {
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  background: rgba(247, 249, 255, 0.9);
+  color: rgba(10, 20, 45, 0.78);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .areas {
@@ -419,11 +504,11 @@ export default {
 }
 
 .area-card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(10, 20, 45, 0.1);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.76);
   overflow: hidden;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 18px 60px rgba(10, 20, 45, 0.12);
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -449,7 +534,7 @@ export default {
 
 .area-card__desc {
   margin: 10px 0 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(10, 20, 45, 0.68);
   font-size: 13px;
   line-height: 1.45;
 }
@@ -468,16 +553,16 @@ export default {
   padding: 10px 12px;
   border-radius: 14px;
   text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(11, 16, 32, 0.35);
-  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  background: rgba(247, 249, 255, 0.92);
+  color: rgba(10, 20, 45, 0.86);
   font-size: 13px;
   transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .area-link:hover {
-  background: rgba(11, 16, 32, 0.55);
-  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(32, 90, 255, 0.22);
   transform: translateY(-1px);
 }
 
@@ -487,10 +572,10 @@ export default {
 
 .next__box {
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: rgba(255, 255, 255, 0.72);
   padding: 16px 18px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 18px 60px rgba(10, 20, 45, 0.1);
 }
 
 .next__title {
@@ -504,9 +589,9 @@ export default {
 }
 
 .new-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(10, 20, 45, 0.08);
   padding: 18px 18px 24px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(10, 20, 45, 0.62);
 }
 
 .new-footer__inner {
@@ -522,9 +607,9 @@ export default {
 }
 
 .back-link {
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(10, 20, 45, 0.8);
   text-decoration: none;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.35);
+  border-bottom: 1px dashed rgba(10, 20, 45, 0.35);
 }
 
 .back-link:hover {
@@ -551,6 +636,7 @@ export default {
 }
 
 .hero,
+.trusted,
 .areas,
 .next {
   opacity: 0;
@@ -559,18 +645,23 @@ export default {
 }
 
 .hero.is-ready,
+.trusted.is-ready,
 .areas.is-ready,
 .next.is-ready {
   opacity: 1;
   transform: translateY(0);
 }
 
+.trusted.is-ready {
+  transition-delay: 60ms;
+}
+
 .areas.is-ready {
-  transition-delay: 80ms;
+  transition-delay: 110ms;
 }
 
 .next.is-ready {
-  transition-delay: 140ms;
+  transition-delay: 170ms;
 }
 
 @keyframes float {
@@ -580,6 +671,15 @@ export default {
   }
   50% {
     transform: translate3d(0, -14px, 0);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
   }
 }
 </style>

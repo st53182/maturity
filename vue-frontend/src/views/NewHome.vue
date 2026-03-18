@@ -25,8 +25,8 @@
         </div>
 
         <nav class="new-nav">
-          <router-link to="/login" class="new-nav__btn">Войти</router-link>
-          <router-link to="/register" class="new-nav__btn new-nav__btn--primary">Регистрация</router-link>
+          <router-link to="/login" class="new-nav__btn">{{ $t('newHome.navLogin') }}</router-link>
+          <router-link to="/register" class="new-nav__btn new-nav__btn--primary">{{ $t('newHome.navRegister') }}</router-link>
         </nav>
       </div>
     </header>
@@ -41,29 +41,29 @@
       <section class="hero" :class="{ 'is-ready': isReady }">
         <div class="hero__grid">
           <div class="hero__left">
-            <div class="hero__kicker">Новая версия интерфейса</div>
-            <h1 class="hero__title">Инструменты развития команд и продуктов</h1>
+            <div class="hero__kicker">{{ $t('newHome.kicker') }}</div>
+            <h1 class="hero__title">{{ $t('newHome.title') }}</h1>
             <p class="hero__subtitle">
-              Мы группируем инструменты по ролям и будем улучшать функциональность постепенно — без поломок текущей версии.
+              {{ $t('newHome.subtitle') }}
             </p>
 
             <div class="hero__cta">
-              <router-link to="/maturity/create" class="cta-btn cta-btn--primary">Начать с оценки зрелости</router-link>
-              <router-link to="/dashboard" class="cta-btn">Открыть дашборд</router-link>
+              <router-link to="/maturity/create" class="cta-btn cta-btn--primary">{{ $t('newHome.ctaPrimary') }}</router-link>
+              <router-link to="/dashboard" class="cta-btn">{{ $t('newHome.ctaSecondary') }}</router-link>
             </div>
           </div>
 
           <div class="hero__right">
             <div class="hero-panel">
-              <div class="hero-panel__title">4 области инструментов</div>
+              <div class="hero-panel__title">{{ $t('newHome.panelTitle') }}</div>
               <div class="hero-panel__list">
-                <div class="pill">Скрам Мастера / Тим Лиды</div>
-                <div class="pill">PM / руководители</div>
-                <div class="pill">Product / владельцы продукта</div>
-                <div class="pill">Бизнес / предприниматели</div>
+                <div class="pill">{{ $t('newHome.panelPill1') }}</div>
+                <div class="pill">{{ $t('newHome.panelPill2') }}</div>
+                <div class="pill">{{ $t('newHome.panelPill3') }}</div>
+                <div class="pill">{{ $t('newHome.panelPill4') }}</div>
               </div>
               <div class="hero-panel__note">
-                Дальше перенесём «Оценку зрелости команды» и «Дашборд» в ветку <code>/new</code>.
+                {{ $t('newHome.panelNote') }}
               </div>
             </div>
           </div>
@@ -72,18 +72,18 @@
 
       <section class="trusted" :class="{ 'is-ready': isReady }">
         <div class="trusted__inner">
-          <div class="trusted__title">Нам доверяют</div>
-          <div class="trusted__subtitle">Международные бренды (умеренный фильтр, не российские компании).</div>
+          <div class="trusted__title">{{ $t('newHome.trustedTitle') }}</div>
+          <div class="trusted__subtitle">{{ $t('newHome.trustedSubtitle') }}</div>
 
           <div class="marquee" aria-label="Trusted by brands">
             <div class="marquee__track">
-              <div v-for="(c, idx) in trustedCompaniesLoop" :key="`a-${idx}-${c}`" class="logo-pill">
-                {{ c }}
+              <div v-for="(c, idx) in trustedCompaniesLoop" :key="`a-${idx}-${c.name}`" class="logo-pill">
+                <span class="logo-wordmark">{{ c.name }}</span>
               </div>
             </div>
             <div class="marquee__track marquee__track--clone" aria-hidden="true">
-              <div v-for="(c, idx) in trustedCompaniesLoop" :key="`b-${idx}-${c}`" class="logo-pill">
-                {{ c }}
+              <div v-for="(c, idx) in trustedCompaniesLoop" :key="`b-${idx}-${c.name}`" class="logo-pill">
+                <span class="logo-wordmark">{{ c.name }}</span>
               </div>
             </div>
           </div>
@@ -93,60 +93,60 @@
       <section class="areas" :class="{ 'is-ready': isReady }">
         <article class="area-card">
           <div class="area-card__head">
-            <h2 class="area-card__title">Для Скрам Мастеров / Тим Лидов / Фасилитаторов</h2>
-            <p class="area-card__desc">Фасилитация, работа с конфликтами, улучшение процессов.</p>
+            <h2 class="area-card__title">{{ $t('newHome.areas.smTitle') }}</h2>
+            <p class="area-card__desc">{{ $t('newHome.areas.smDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/conflicts" class="area-link">Разрешение конфликтов</router-link>
-            <router-link to="/meeting-design" class="area-link">Дизайн встреч</router-link>
-            <router-link to="/system-thinking" class="area-link">Айсберг системного мышления</router-link>
-            <router-link to="/backlog-prep" class="area-link">Подготовка бэклога</router-link>
+            <router-link to="/conflicts" class="area-link">{{ $t('newHome.links.conflicts') }}</router-link>
+            <router-link to="/meeting-design" class="area-link">{{ $t('newHome.links.meetingDesign') }}</router-link>
+            <router-link to="/system-thinking" class="area-link">{{ $t('newHome.links.systemThinking') }}</router-link>
+            <router-link to="/backlog-prep" class="area-link">{{ $t('newHome.links.backlogPrep') }}</router-link>
           </div>
         </article>
 
         <article class="area-card">
           <div class="area-card__head">
-            <h2 class="area-card__title">Для руководителей и менеджеров проекта</h2>
-            <p class="area-card__desc">Прозрачность, управление рисками и предсказуемость поставки.</p>
+            <h2 class="area-card__title">{{ $t('newHome.areas.pmTitle') }}</h2>
+            <p class="area-card__desc">{{ $t('newHome.areas.pmDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/flow-metrics" class="area-link">Flow Metrics</router-link>
-            <router-link to="/roadmap" class="area-link">Зависимости и дорожная карта</router-link>
-            <router-link to="/project-card" class="area-link">Карточка проекта</router-link>
-            <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noreferrer">Planning Poker</a>
+            <router-link to="/flow-metrics" class="area-link">{{ $t('newHome.links.flowMetrics') }}</router-link>
+            <router-link to="/roadmap" class="area-link">{{ $t('newHome.links.roadmap') }}</router-link>
+            <router-link to="/project-card" class="area-link">{{ $t('newHome.links.projectCard') }}</router-link>
+            <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noreferrer">{{ $t('newHome.links.planningPoker') }}</a>
           </div>
         </article>
 
         <article class="area-card">
           <div class="area-card__head">
-            <h2 class="area-card__title">Для владельцев продукта / менеджеров продукта</h2>
-            <p class="area-card__desc">Качество гипотез, совместная работа с командой и фокус на ценности.</p>
+            <h2 class="area-card__title">{{ $t('newHome.areas.poTitle') }}</h2>
+            <p class="area-card__desc">{{ $t('newHome.areas.poDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/maturity/create" class="area-link">Оценка зрелости команды (по ссылке)</router-link>
-            <router-link to="/surveys" class="area-link">Опросы и результаты</router-link>
-            <router-link to="/qa" class="area-link">Практика QA</router-link>
+            <router-link to="/maturity/create" class="area-link">{{ $t('newHome.links.maturityLink') }}</router-link>
+            <router-link to="/surveys" class="area-link">{{ $t('newHome.links.surveys') }}</router-link>
+            <router-link to="/qa" class="area-link">{{ $t('newHome.links.qaPractice') }}</router-link>
           </div>
         </article>
 
         <article class="area-card area-card--accent">
           <div class="area-card__head">
-            <h2 class="area-card__title">Для владельцев бизнеса / предпринимателей</h2>
-            <p class="area-card__desc">Понимание проблем в поставке ценности и точки роста.</p>
+            <h2 class="area-card__title">{{ $t('newHome.areas.bizTitle') }}</h2>
+            <p class="area-card__desc">{{ $t('newHome.areas.bizDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/dashboard" class="area-link">Дашборд</router-link>
-            <router-link to="/survey" class="area-link">Диагностика (опрос)</router-link>
-            <router-link to="/usability-report" class="area-link">Отчёт по удобству</router-link>
+            <router-link to="/dashboard" class="area-link">{{ $t('newHome.links.dashboard') }}</router-link>
+            <router-link to="/survey" class="area-link">{{ $t('newHome.links.survey') }}</router-link>
+            <router-link to="/usability-report" class="area-link">{{ $t('newHome.links.usabilityReport') }}</router-link>
           </div>
         </article>
       </section>
 
       <section class="next" :class="{ 'is-ready': isReady }">
         <div class="next__box">
-          <div class="next__title">Дальше</div>
+          <div class="next__title">{{ $t('newHome.nextTitle') }}</div>
           <div class="next__text">
-            Следующие шаги: переносим «Оценку зрелости команды» и «Дашборд» в ветку <code>/new</code>.
+            {{ $t('newHome.nextText') }}
           </div>
         </div>
       </section>
@@ -156,7 +156,7 @@
       <div class="new-footer__inner">
         <span>GrowBoard</span>
         <span class="dot">•</span>
-        <router-link to="/" class="back-link">Перейти на текущую версию</router-link>
+        <router-link to="/" class="back-link">{{ $t('newHome.backToCurrent') }}</router-link>
       </div>
     </footer>
   </div>
@@ -167,7 +167,25 @@ export default {
   data() {
     return {
       isReady: false,
-      trustedCompanies: ["Mastercard", "TUI", "Toyota", "Nordea", "Auchan", "Renault"],
+      trustedCompanies: [
+        { name: "Mastercard" },
+        { name: "TUI" },
+        { name: "Toyota" },
+        { name: "Nordea" },
+        { name: "Auchan" },
+        { name: "Renault" },
+        { name: "1NCE" },
+        { name: "Novartis" },
+        { name: "Sanofi" },
+        { name: "Ipsen" },
+        { name: "Semrush" },
+        { name: "Mars" },
+        { name: "Cognizant" },
+        { name: "Danone" },
+        { name: "JavaGuru" },
+        { name: "Bella" },
+        { name: "Vialet" }
+      ],
     };
   },
   mounted() {
@@ -494,6 +512,14 @@ export default {
   font-weight: 600;
   letter-spacing: 0.2px;
   white-space: nowrap;
+}
+
+.logo-wordmark {
+  font-weight: 750;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: rgba(10, 20, 45, 0.72);
 }
 
 .areas {

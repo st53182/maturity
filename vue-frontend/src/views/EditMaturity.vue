@@ -79,6 +79,11 @@ export default {
       saving: false
     };
   },
+  computed: {
+    maturityBase() {
+      return this.variant === 'new' ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
+    }
+  },
   async mounted() {
     this.token = this.$route.params.token;
     await this.load();
@@ -286,5 +291,81 @@ export default {
 
 .edit-maturity--new .btn-back {
   border-radius: 12px;
+}
+
+.edit-maturity--new .all-questions {
+  border-radius: 16px;
+  border: 1px solid rgba(10, 20, 45, 0.09);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 255, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.edit-maturity--new .edit-question-block {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.86);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.edit-maturity--new .edit-question-block:hover {
+  transform: translateY(-1px);
+  border-color: rgba(32, 90, 255, 0.22);
+  box-shadow: 0 16px 36px rgba(10, 20, 45, 0.1);
+}
+
+.edit-maturity--new .btn-answer {
+  border-radius: 11px;
+  border-color: rgba(10, 20, 45, 0.16);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.edit-maturity--new .btn-answer:hover {
+  transform: translateY(-1px);
+  border-color: rgba(32, 90, 255, 0.42);
+  box-shadow: 0 8px 20px rgba(32, 90, 255, 0.12);
+}
+
+.edit-maturity--new .btn-answer.btn-yes.active {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(16, 185, 129, 0.84));
+  border-color: rgba(34, 197, 94, 0.58);
+  color: #fff;
+}
+
+.edit-maturity--new .btn-answer.btn-no.active {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(244, 63, 94, 0.86));
+  border-color: rgba(239, 68, 68, 0.58);
+  color: #fff;
+}
+
+.edit-maturity--new .edit-comment-input {
+  border-color: rgba(10, 20, 45, 0.14);
+  background: rgba(248, 250, 255, 0.94);
+}
+
+.edit-maturity--new .edit-comment-input:focus {
+  outline: none;
+  border-color: rgba(32, 90, 255, 0.58);
+  box-shadow: 0 0 0 5px rgba(32, 90, 255, 0.12);
+}
+
+.edit-maturity--new .btn-save,
+.edit-maturity--new .btn-back {
+  position: relative;
+  overflow: hidden;
+}
+
+.edit-maturity--new .btn-save::after,
+.edit-maturity--new .btn-back::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 24%, rgba(255, 255, 255, 0.32), transparent 76%);
+  transform: translateX(-125%);
+  transition: transform 0.6s ease;
+}
+
+.edit-maturity--new .btn-save:hover::after,
+.edit-maturity--new .btn-back:hover::after {
+  transform: translateX(125%);
 }
 </style>

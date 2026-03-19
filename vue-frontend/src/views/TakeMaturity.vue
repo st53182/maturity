@@ -181,6 +181,9 @@ export default {
         if (this.answers[i] === undefined || this.answers[i] === null) return false;
       }
       return true;
+    },
+    maturityBase() {
+      return this.variant === "new" ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
     }
   },
   async mounted() {
@@ -628,5 +631,84 @@ export default {
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(32, 90, 255, 0.12), rgba(0, 194, 255, 0.1));
   text-decoration: none;
+}
+
+.take-maturity--new .question-block {
+  position: relative;
+  overflow: hidden;
+  animation: maturityCardIn 360ms ease-out;
+}
+
+.take-maturity--new .question-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.28), transparent 40%);
+  pointer-events: none;
+}
+
+.take-maturity--new .comment-input,
+.take-maturity--new .glossary-block {
+  background: rgba(248, 250, 255, 0.95);
+  border-color: rgba(10, 20, 45, 0.12);
+}
+
+.take-maturity--new .comment-input:focus {
+  border-color: rgba(32, 90, 255, 0.55);
+  box-shadow: 0 0 0 5px rgba(32, 90, 255, 0.12);
+}
+
+.take-maturity--new .btn-answer {
+  border-color: rgba(10, 20, 45, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.take-maturity--new .btn-answer:hover:not(.active) {
+  border-color: rgba(32, 90, 255, 0.45);
+  box-shadow: 0 8px 20px rgba(32, 90, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.take-maturity--new .btn-yes.active {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(16, 185, 129, 0.86));
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.take-maturity--new .btn-no.active {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(244, 63, 94, 0.88));
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.take-maturity--new .btn-nav.prev {
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.9), rgba(100, 116, 139, 0.86));
+}
+
+.take-maturity--new .btn-nav {
+  position: relative;
+  overflow: hidden;
+}
+
+.take-maturity--new .btn-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 18%, rgba(255, 255, 255, 0.3), transparent 82%);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+}
+
+.take-maturity--new .btn-nav:hover::after {
+  transform: translateX(120%);
+}
+
+@keyframes maturityCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>

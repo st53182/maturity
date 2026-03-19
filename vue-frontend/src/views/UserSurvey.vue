@@ -93,6 +93,9 @@
 import axios from "axios";
 
 export default {
+  props: {
+    variant: { type: String, default: "legacy" },
+  },
   data() {
     return {
       teams: [],
@@ -677,6 +680,93 @@ h1 {
   border-radius: 18px;
   border: 1px solid rgba(10, 20, 45, 0.08);
   box-shadow: 0 24px 70px rgba(10, 20, 45, 0.14);
+}
+
+.survey--new {
+  position: relative;
+  overflow: hidden;
+}
+
+.survey--new::before {
+  content: "";
+  position: absolute;
+  inset: -40% -30% auto auto;
+  width: 420px;
+  height: 420px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(120, 119, 255, 0.18), rgba(0, 194, 255, 0));
+  pointer-events: none;
+  animation: premiumFloat 12s ease-in-out infinite;
+}
+
+.survey--new .question-card {
+  animation: cardRise 380ms ease-out;
+}
+
+.survey--new .team-btn,
+.survey--new .modern-button.purple,
+.survey--new .confirm-btn,
+.survey--new .cancel-btn,
+.survey--new .back-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.survey--new .team-btn::after,
+.survey--new .modern-button.purple::after,
+.survey--new .confirm-btn::after,
+.survey--new .cancel-btn::after,
+.survey--new .back-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.35), transparent 80%);
+  transform: translateX(-130%);
+  transition: transform 0.6s ease;
+}
+
+.survey--new .team-btn:hover::after,
+.survey--new .modern-button.purple:hover::after,
+.survey--new .confirm-btn:hover::after,
+.survey--new .cancel-btn:hover::after,
+.survey--new .back-btn:hover::after {
+  transform: translateX(130%);
+}
+
+.survey--new .team-input {
+  border: 1px solid rgba(10, 20, 45, 0.16);
+  background: rgba(248, 250, 255, 0.95);
+  border-radius: 12px;
+}
+
+.survey--new .team-input:focus {
+  border-color: rgba(32, 90, 255, 0.55);
+  box-shadow: 0 0 0 5px rgba(32, 90, 255, 0.12);
+}
+
+.survey--new .modal {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 255, 0.95));
+}
+
+@keyframes premiumFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-10px, 12px, 0) scale(1.04);
+  }
+}
+
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 </style>

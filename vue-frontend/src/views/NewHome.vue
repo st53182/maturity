@@ -714,5 +714,134 @@ export default {
     transform: translateX(-100%);
   }
 }
+
+/* Premium refresh */
+.new-app {
+  background:
+    radial-gradient(980px 560px at 8% 6%, rgba(98, 70, 255, 0.16), transparent 62%),
+    radial-gradient(900px 520px at 88% 14%, rgba(0, 194, 255, 0.14), transparent 64%),
+    radial-gradient(760px 520px at 55% 92%, rgba(32, 90, 255, 0.13), transparent 58%),
+    linear-gradient(180deg, #f4f7ff 0%, #f8fbff 56%, #f7f9ff 100%);
+}
+
+.new-header {
+  background: rgba(248, 250, 255, 0.78);
+  border-bottom-color: rgba(10, 20, 45, 0.07);
+  box-shadow: 0 8px 30px rgba(10, 20, 45, 0.06);
+}
+
+.hero__title {
+  font-size: clamp(34px, 5.5vw, 52px);
+  line-height: 1.02;
+}
+
+.hero__subtitle {
+  font-size: 16px;
+}
+
+.hero-panel,
+.trusted__inner,
+.area-card,
+.next__box {
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 255, 0.72));
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+.hero-panel {
+  box-shadow: 0 24px 80px rgba(10, 20, 45, 0.12);
+  transform: translateZ(0);
+  animation: panelFloat 9s ease-in-out infinite;
+}
+
+.hero-panel__title {
+  font-size: 17px;
+}
+
+.pill {
+  border-color: rgba(32, 90, 255, 0.2);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.cta-btn,
+.new-nav__btn,
+.area-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-btn::after,
+.new-nav__btn::after,
+.area-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 22%, rgba(255, 255, 255, 0.35), transparent 78%);
+  transform: translateX(-125%);
+  transition: transform 0.6s ease;
+}
+
+.cta-btn:hover::after,
+.new-nav__btn:hover::after,
+.area-link:hover::after {
+  transform: translateX(125%);
+}
+
+.cta-btn {
+  padding: 13px 16px;
+  border-radius: 15px;
+  font-weight: 560;
+}
+
+.cta-btn--primary {
+  background: linear-gradient(135deg, #365cff 0%, #2a7dff 55%, #14b8ff 100%);
+  box-shadow: 0 14px 34px rgba(41, 84, 255, 0.26);
+}
+
+.cta-btn--primary:hover {
+  box-shadow: 0 18px 42px rgba(41, 84, 255, 0.32);
+}
+
+.area-card {
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.area-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 26px 70px rgba(16, 35, 70, 0.15);
+  border-color: rgba(32, 90, 255, 0.24);
+}
+
+.area-card__title {
+  font-size: 18px;
+}
+
+.area-link {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(10, 20, 45, 0.11);
+}
+
+.area-link:hover {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.next__text {
+  color: rgba(10, 20, 45, 0.7);
+}
+
+.logo-pill {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+@keyframes panelFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
 </style>
 

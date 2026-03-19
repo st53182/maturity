@@ -71,7 +71,10 @@ import RadarChart from "@/components/RadarChart.vue";
  /* eslint-disable */
 export default {
   components: { RadarChart },
-  props: ["team_id"],
+  props: {
+    team_id: { type: [String, Number], default: null },
+    variant: { type: String, default: "legacy" },
+  },
 
   setup() {
     const authStore = useAuthStore(); // Подключаем Pinia
@@ -726,5 +729,59 @@ h1 {
 .dashboard--new .cancel-btn:hover {
   filter: brightness(1.06);
   transform: translateY(-1px);
+}
+
+.dashboard--new .team-card,
+.dashboard--new .create-team-card,
+.dashboard--new .modal {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard--new .team-card::before,
+.dashboard--new .create-team-card::before,
+.dashboard--new .modal::before {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -35%;
+  width: 42%;
+  height: 320%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: rotate(16deg);
+  pointer-events: none;
+  animation: premiumShine 9s linear infinite;
+}
+
+.dashboard--new .team-card:nth-child(2n)::before {
+  animation-delay: 1.4s;
+}
+
+.dashboard--new .team-card:nth-child(3n)::before {
+  animation-delay: 2.6s;
+}
+
+.dashboard--new .team-score-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 14px 32px rgba(32, 90, 255, 0.22);
+}
+
+.dashboard--new .team-input {
+  border-color: rgba(32, 90, 255, 0.38);
+  background: rgba(248, 250, 255, 0.95);
+}
+
+.dashboard--new .team-input:focus {
+  border-color: rgba(32, 90, 255, 0.6);
+  box-shadow: 0 0 0 5px rgba(32, 90, 255, 0.12);
+}
+
+@keyframes premiumShine {
+  0% {
+    transform: translateX(-220px) rotate(16deg);
+  }
+  45%,
+  100% {
+    transform: translateX(940px) rotate(16deg);
+  }
 }
 </style>

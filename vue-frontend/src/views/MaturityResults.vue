@@ -711,4 +711,98 @@ export default {
 .maturity-results--new .btn-pdf {
   background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
 }
+
+.maturity-results--new .results-content {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.maturity-results--new .results-content::before {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -26%;
+  width: 36%;
+  height: 320%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.36), transparent);
+  transform: rotate(16deg);
+  animation: resultsShine 9s linear infinite;
+  pointer-events: none;
+}
+
+.maturity-results--new .group-block {
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.9), rgba(246, 249, 255, 0.85));
+  box-shadow: 0 16px 42px rgba(10, 20, 45, 0.08);
+}
+
+.maturity-results--new .theme-row {
+  border-radius: 11px;
+  border-color: rgba(10, 20, 45, 0.14);
+  background: rgba(255, 255, 255, 0.88);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.maturity-results--new .theme-row:hover {
+  transform: translateY(-1px);
+  border-color: rgba(32, 90, 255, 0.3);
+  box-shadow: 0 10px 24px rgba(32, 90, 255, 0.12);
+}
+
+.maturity-results--new .detail-modal {
+  border-radius: 16px;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 255, 0.95));
+}
+
+.maturity-results--new .detail-card {
+  border-radius: 12px;
+  border-color: rgba(10, 20, 45, 0.11);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 20px rgba(10, 20, 45, 0.07);
+}
+
+.maturity-results--new .recommendations-block {
+  border-top-color: rgba(10, 20, 45, 0.12);
+}
+
+.maturity-results--new .btn-edit,
+.maturity-results--new .btn-show-all,
+.maturity-results--new .btn-rec,
+.maturity-results--new .btn-pdf {
+  position: relative;
+  overflow: hidden;
+}
+
+.maturity-results--new .btn-edit::after,
+.maturity-results--new .btn-show-all::after,
+.maturity-results--new .btn-rec::after,
+.maturity-results--new .btn-pdf::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.34), transparent 80%);
+  transform: translateX(-125%);
+  transition: transform 0.6s ease;
+}
+
+.maturity-results--new .btn-edit:hover::after,
+.maturity-results--new .btn-show-all:hover::after,
+.maturity-results--new .btn-rec:hover::after,
+.maturity-results--new .btn-pdf:hover::after {
+  transform: translateX(125%);
+}
+
+@keyframes resultsShine {
+  0% {
+    transform: translateX(-220px) rotate(16deg);
+  }
+  45%,
+  100% {
+    transform: translateX(1050px) rotate(16deg);
+  }
+}
 </style>

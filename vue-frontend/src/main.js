@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import './styles/new-tool-shell-skin.css';
 import App from './App.vue';
 import router from './router';
 import { createPinia } from "pinia";

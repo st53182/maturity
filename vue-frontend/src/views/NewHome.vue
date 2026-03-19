@@ -97,10 +97,10 @@
             <p class="area-card__desc">{{ $t('newHome.areas.smDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/conflicts" class="area-link">{{ $t('newHome.links.conflicts') }}</router-link>
-            <router-link to="/meeting-design" class="area-link">{{ $t('newHome.links.meetingDesign') }}</router-link>
-            <router-link to="/system-thinking" class="area-link">{{ $t('newHome.links.systemThinking') }}</router-link>
-            <router-link to="/backlog-prep" class="area-link">{{ $t('newHome.links.backlogPrep') }}</router-link>
+            <router-link to="/new/conflicts" class="area-link">{{ $t('newHome.links.conflicts') }}</router-link>
+            <router-link to="/new/meeting-design" class="area-link">{{ $t('newHome.links.meetingDesign') }}</router-link>
+            <router-link to="/new/system-thinking" class="area-link">{{ $t('newHome.links.systemThinking') }}</router-link>
+            <router-link to="/new/backlog-prep" class="area-link">{{ $t('newHome.links.backlogPrep') }}</router-link>
           </div>
         </article>
 
@@ -112,7 +112,7 @@
           <div class="area-card__links">
             <router-link to="/flow-metrics" class="area-link">{{ $t('newHome.links.flowMetrics') }}</router-link>
             <router-link to="/roadmap" class="area-link">{{ $t('newHome.links.roadmap') }}</router-link>
-            <router-link to="/project-card" class="area-link">{{ $t('newHome.links.projectCard') }}</router-link>
+            <router-link to="/new/project-card" class="area-link">{{ $t('newHome.links.projectCard') }}</router-link>
             <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noreferrer">{{ $t('newHome.links.planningPoker') }}</a>
           </div>
         </article>
@@ -123,8 +123,8 @@
             <p class="area-card__desc">{{ $t('newHome.areas.poDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/maturity/create" class="area-link">{{ $t('newHome.links.maturityLink') }}</router-link>
-            <router-link to="/surveys" class="area-link">{{ $t('newHome.links.surveys') }}</router-link>
+            <router-link to="/new/maturity" class="area-link">{{ $t('newHome.links.maturityLink') }}</router-link>
+            <router-link to="/new/surveys" class="area-link">{{ $t('newHome.links.surveys') }}</router-link>
             <router-link to="/qa" class="area-link">{{ $t('newHome.links.qaPractice') }}</router-link>
           </div>
         </article>
@@ -135,8 +135,8 @@
             <p class="area-card__desc">{{ $t('newHome.areas.bizDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/dashboard" class="area-link">{{ $t('newHome.links.dashboard') }}</router-link>
-            <router-link to="/survey" class="area-link">{{ $t('newHome.links.survey') }}</router-link>
+            <router-link to="/new/dashboard" class="area-link">{{ $t('newHome.links.dashboard') }}</router-link>
+            <router-link to="/new/survey" class="area-link">{{ $t('newHome.links.survey') }}</router-link>
             <router-link to="/usability-report" class="area-link">{{ $t('newHome.links.usabilityReport') }}</router-link>
           </div>
         </article>

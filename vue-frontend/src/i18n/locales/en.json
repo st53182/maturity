@@ -14,7 +14,9 @@
     "logout": "Logout",
     "projectCard": "Project Card",
     "maturityLink": "Assessment by link",
-    "testingTypes": "Testing Types"
+    "testingTypes": "Testing Types",
+    "profile": "Profile",
+    "surveys": "Surveys"
   },
   "auth": {
     "login": "Login",
@@ -331,6 +333,7 @@
     "panelPill3": "Product / Product Owners",
     "panelPill4": "Business / founders",
     "panelNote": "We’re gradually moving key sections into the new /new experience without breaking the current UI.",
+    "toolShellSubtitle": "Same tool — refreshed layout and visuals in line with the new GrowBoard experience.",
     "trustedTitle": "Trusted by",
     "trustedSubtitle": "International brands that use practices aligned with what our tools support.",
     "areas": {

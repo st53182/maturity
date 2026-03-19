@@ -26,7 +26,7 @@
         </button>
       </div>
       <div class="sidebar-buttons-container">
-        <button class="sidebar-btn" @click="$router.push('/profile')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/profile' : '/profile')">
           <span>👤</span>
           <small>{{ $t('nav.profile') }}</small>
         </button>
@@ -38,27 +38,27 @@
           <span>📝</span>
           <small>{{ $t('nav.survey') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/conflicts')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/conflicts' : '/conflicts')">
           <span>🤝</span>
           <small>{{ $t('nav.conflicts') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/motivation')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/motivation' : '/motivation')">
           <span>🧠</span>
           <small>{{ $t('nav.motivation') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/meeting-design')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/meeting-design' : '/meeting-design')">
           <span>🎯</span>
-          <small>{{ $t('meetingDesign.title') }}</small>
+          <small>{{ $t('nav.meetingDesign') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/backlog-prep')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
           <span>🧭</span>
           <small>{{ $t('nav.backlogPrep') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/system-thinking')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/system-thinking' : '/system-thinking')">
           <span>🧊</span>
-          <small>Айсберг системного мышления</small>
+          <small>{{ $t('newHome.links.systemThinking') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/surveys')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/surveys' : '/surveys')">
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
         </button>
@@ -66,7 +66,7 @@
           <span>🔗</span>
           <small>{{ $t('nav.maturityLink') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/project-card')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/project-card' : '/project-card')">
           <span>📑</span>
           <small>{{ $t('nav.projectCard') }}</small>
         </button>
@@ -109,39 +109,39 @@
           <button class="mobile-menu-close" @click="showMobileMenu = false">✕</button>
         </div>
         <div class="mobile-menu-items">
-          <button class="mobile-menu-btn" @click="navigateAndClose('/profile')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/profile' : '/profile')">
             <span>👤</span>
-            <span>{{ $t('nav.dashboard') }}</span>
+            <span>{{ $t('nav.profile') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/dashboard')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/dashboard' : '/dashboard')">
             <span>🏠</span>
             <span>{{ $t('nav.dashboard') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/survey')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/survey' : '/survey')">
             <span>📝</span>
             <span>{{ $t('nav.survey') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/conflicts')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/conflicts' : '/conflicts')">
             <span>🤝</span>
             <span>{{ $t('nav.conflicts') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/motivation')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/motivation' : '/motivation')">
             <span>🧠</span>
             <span>{{ $t('nav.motivation') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/meeting-design')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/meeting-design' : '/meeting-design')">
             <span>🎯</span>
-            <span>{{ $t('meetingDesign.title') }}</span>
+            <span>{{ $t('nav.meetingDesign') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/backlog-prep')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
             <span>🧭</span>
             <span>{{ $t('nav.backlogPrep') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/system-thinking')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/system-thinking' : '/system-thinking')">
             <span>🧊</span>
-            <span>Айсберг системного мышления</span>
+            <span>{{ $t('newHome.links.systemThinking') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/surveys')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/surveys' : '/surveys')">
             <span>📋</span>
             <span>{{ $t('nav.surveys') }}</span>
           </button>
@@ -149,7 +149,7 @@
             <span>🔗</span>
             <span>{{ $t('nav.maturityLink') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/project-card')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/project-card' : '/project-card')">
             <span>📑</span>
             <span>{{ $t('nav.projectCard') }}</span>
           </button>

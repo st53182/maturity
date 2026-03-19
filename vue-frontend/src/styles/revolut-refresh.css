@@ -1,0 +1,166 @@
+:root {
+  --rv-font: "Inter", "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --rv-text: #0f172a;
+  --rv-muted: #475569;
+  --rv-border: #dbe3ef;
+  --rv-surface: #ffffff;
+  --rv-surface-soft: #f8fafc;
+  --rv-primary: #0f172a;
+  --rv-primary-hover: #020617;
+  --rv-danger: #dc2626;
+}
+
+html,
+body,
+#app,
+input,
+textarea,
+select,
+button {
+  font-family: var(--rv-font);
+}
+
+#app {
+  color: var(--rv-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Global button refresh */
+#app button {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+#app button:focus-visible {
+  outline: 3px solid rgba(15, 23, 42, 0.25);
+  outline-offset: 2px;
+}
+
+#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close) {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.cancel-btn):not(.delete-btn):not(.remove-btn):not(.remove-option-btn):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.us-btn.secondary) {
+  background: var(--rv-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
+#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.cancel-btn):not(.delete-btn):not(.remove-btn):not(.remove-option-btn):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.us-btn.secondary):hover:not(:disabled) {
+  background: var(--rv-primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.24);
+}
+
+#app .cancel-btn,
+#app .close-btn,
+#app .mobile-menu-close,
+#app .us-btn.secondary {
+  background: var(--rv-surface) !important;
+  color: var(--rv-text) !important;
+  border: 1px solid var(--rv-border) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+}
+
+#app .delete-btn,
+#app .remove-btn,
+#app .remove-option-btn,
+#app .us-btn.danger {
+  background: var(--rv-danger) !important;
+  color: #fff !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+  box-shadow: 0 10px 22px rgba(220, 38, 38, 0.2) !important;
+}
+
+#app .modal-close-top {
+  background: #eef2f7 !important;
+  color: #111827 !important;
+  border: 1px solid #d7dfeb !important;
+  box-shadow: none !important;
+}
+
+#app .modal-close-top:hover,
+#app .close-btn:hover,
+#app .mobile-menu-close:hover {
+  filter: brightness(0.98);
+  transform: none;
+}
+
+/* Modal shell refresh */
+#app .modal,
+#app .modal-content,
+#app .template-editor,
+#app .question-preview,
+#app .us-modal {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22) !important;
+}
+
+/* Input style refresh, especially in popups */
+#app .modal input,
+#app .modal textarea,
+#app .modal select,
+#app .modal-content input,
+#app .modal-content textarea,
+#app .modal-content select,
+#app .template-editor input,
+#app .template-editor textarea,
+#app .template-editor select,
+#app .question-preview input,
+#app .question-preview textarea,
+#app .question-preview select,
+#app .us-modal input,
+#app .us-modal textarea,
+#app .us-modal select {
+  background: var(--rv-surface-soft) !important;
+  border: 1px solid var(--rv-border) !important;
+  border-radius: 12px !important;
+  color: var(--rv-text) !important;
+  min-height: 44px;
+  padding: 10px 14px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+#app .modal textarea,
+#app .modal-content textarea,
+#app .template-editor textarea,
+#app .question-preview textarea,
+#app .us-modal textarea {
+  min-height: 104px;
+}
+
+#app .modal input:focus,
+#app .modal textarea:focus,
+#app .modal select:focus,
+#app .modal-content input:focus,
+#app .modal-content textarea:focus,
+#app .modal-content select:focus,
+#app .template-editor input:focus,
+#app .template-editor textarea:focus,
+#app .template-editor select:focus,
+#app .question-preview input:focus,
+#app .question-preview textarea:focus,
+#app .question-preview select:focus,
+#app .us-modal input:focus,
+#app .us-modal textarea:focus,
+#app .us-modal select:focus {
+  outline: none !important;
+  border-color: rgba(15, 23, 42, 0.35) !important;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1) !important;
+}
+
+#app h1,
+#app h2,
+#app h3,
+#app h4 {
+  letter-spacing: -0.015em;
+}
+
+#app .floating-label {
+  color: var(--rv-muted) !important;
+}

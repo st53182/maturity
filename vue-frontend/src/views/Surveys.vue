@@ -173,6 +173,7 @@
     <!-- Edit Survey Modal -->
     <div v-if="showEditModal && editingSurvey" class="modal-overlay" @click.self="closeEditModal">
       <div class="modal-content edit-modal">
+        <button class="modal-close-top" @click="closeEditModal" aria-label="Close">✕</button>
         <h2>Редактировать опросник</h2>
         <div class="edit-form">
           <div class="form-group">
@@ -1092,6 +1093,22 @@ h2 {
   max-width: 500px;
   width: 100%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
 }
 
 .edit-modal h2 {

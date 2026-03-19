@@ -1,6 +1,7 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
+      <button class="modal-close-top" @click="$emit('close')" aria-label="Close">✕</button>
       <h3>🏅 Уровни команды</h3>
       <ul>
         <li><strong>Начинающий:</strong> до 2 баллов</li>
@@ -8,7 +9,6 @@
         <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
         <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
       </ul>
-      <button @click="$emit('close')">Закрыть</button>
     </div>
   </div>
 </template>
@@ -25,12 +25,14 @@
 }
 
 .modal-content {
-  background: #8c7bc6;
+  background: #ffffff;
   padding: 20px 30px;
-  border-radius: 10px;
+  border-radius: 16px;
   max-width: 400px;
   text-align: left;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.24);
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  position: relative;
 }
 .modal-content h3 {
   margin-top: 0;
@@ -38,13 +40,18 @@
 .modal-content ul {
   padding-left: 20px;
 }
-.modal-content button {
-  margin-top: 20px;
-  background: #3f51b5;
-  color: white;
-  padding: 8px 16px;
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
+  font-size: 18px;
 }
 </style>

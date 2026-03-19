@@ -88,6 +88,7 @@
     <!-- Модалка редактирования -->
     <div v-if="editing" class="us-modal-overlay" @click.self="editing = null">
       <div class="us-modal">
+        <button class="us-modal-close-top" type="button" @click="editing = null" aria-label="Close">✕</button>
         <h3>{{ $t('qa.userStoryEditTitle') }}</h3>
         <div class="us-field">
           <label>{{ $t('qa.userStoryTeamName') }}</label>
@@ -111,6 +112,7 @@
     <!-- Подтверждение удаления -->
     <div v-if="deleting" class="us-modal-overlay" @click.self="deleting = null">
       <div class="us-modal">
+        <button class="us-modal-close-top" type="button" @click="deleting = null" aria-label="Close">✕</button>
         <h3>{{ $t('qa.userStoryDeleteConfirm') }}</h3>
         <p>{{ deleting.team_name || 'Запись' }} — {{ formatDate(deleting.created_at) }}</p>
         <div class="us-modal-actions">
@@ -509,6 +511,23 @@ export default {
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.24);
+}
+
+.us-modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
 }
 
 .us-modal h3 {

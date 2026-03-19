@@ -34,6 +34,7 @@
     <!-- Create Meeting Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
       <div class="modal create-modal">
+        <button class="close-btn" @click="closeCreateModal" aria-label="Close">✕</button>
         <h2>{{ $t('meetingDesign.createNew') }}</h2>
         
         <div class="form-group">
@@ -154,6 +155,7 @@
     <!-- Edit Block Modal -->
     <div v-if="showEditModal && editingBlock" class="modal-overlay" @click.self="showEditModal = false">
       <div class="modal edit-modal">
+        <button class="close-btn" @click="showEditModal = false" aria-label="Close">✕</button>
         <h2>Редактировать блок</h2>
         
         <div class="form-group">

@@ -39,6 +39,7 @@
     <div class="modal-overlay" v-if="showModal">
 
       <div class="modal-content">
+        <button class="modal-close-top" @click="showModal = false" aria-label="Close">✕</button>
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
         <h2>{{ form.id ? $t('conflicts.editConflict') : $t('conflicts.addConflict') }}</h2>
         
@@ -116,7 +117,6 @@
 >
   💾 {{ saving ? $t('common.loading') : $t('common.save') }}
 </button>
-  <button class="modal-close" @click="showModal = false">✖</button>
 </div>
 
       </div>
@@ -590,6 +590,21 @@ h1 {
   margin-bottom: 32px;
   color: #111827;
   letter-spacing: -0.5px;
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
+  z-index: 2;
 }
 
 /* Modern Form Styles with Floating Labels */

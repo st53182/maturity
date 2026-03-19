@@ -21,6 +21,7 @@
     <!-- 🔹 Pop-up для создания команды -->
     <div v-if="showTeamModal" class="modal-overlay">
       <div class="modal">
+        <button class="modal-close-top" :aria-label="$t('common.close')" @click="showTeamModal = false">✕</button>
         <h2>{{ $t('survey.createNewTeam') }}</h2>
         <input
           v-model="newTeamName"
@@ -460,6 +461,23 @@ h1 {
   max-width: 400px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   text-align: center;
+  position: relative;
+}
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.82);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .modal h2 {
   font-size: 22px;

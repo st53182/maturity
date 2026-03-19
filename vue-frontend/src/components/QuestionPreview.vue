@@ -57,7 +57,6 @@
         <div class="modal-buttons">
           <button @click="editQuestions" class="edit-btn">✏️ Редактировать вопросы</button>
           <button @click="confirmCreate" class="confirm-btn">✅ Создать опросник</button>
-          <button @click="$emit('close')" class="cancel-btn">Отмена</button>
         </div>
       </div>
     </div>

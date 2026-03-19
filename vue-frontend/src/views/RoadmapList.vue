@@ -25,6 +25,7 @@
     <!-- Модальное окно создания карты -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
       <div class="modal-content">
+        <button class="modal-close-top" @click="showCreateModal = false" aria-label="Close">✕</button>
         <h2>Создать дорожную карту</h2>
         <div class="modern-form">
           <div class="input-wrapper">
@@ -253,6 +254,23 @@ export default {
   border-radius: 12px;
   max-width: 500px;
   width: 90%;
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.24);
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
 }
 
 .modal-actions {

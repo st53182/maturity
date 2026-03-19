@@ -27,6 +27,7 @@
     <!-- Форма создания нового айсберга -->
     <div class="modal-overlay" v-if="showCreateForm">
       <div class="modal-content">
+        <button class="modal-close-top" @click="showCreateForm = false" aria-label="Close">✕</button>
         <h2>Создать новый айсберг</h2>
         <div class="modern-form">
           <div class="input-wrapper textarea-wrapper">
@@ -45,7 +46,6 @@
           <button class="save-btn" @click="createIceberg" :disabled="!newEvent.trim() || creating">
             {{ creating ? 'Создание...' : 'Создать' }}
           </button>
-          <button class="modal-close" @click="showCreateForm = false">✖</button>
         </div>
       </div>
     </div>
@@ -53,6 +53,7 @@
     <!-- Работа с айсбергом -->
     <div class="modal-overlay" v-if="showIcebergModal && currentIceberg">
       <div class="modal-content iceberg-modal">
+        <button class="modal-close-top" @click="showIcebergModal = false" aria-label="Close">✕</button>
         <h2>🧊 Айсберг системного мышления</h2>
 
         <!-- Визуализация уровней -->
@@ -146,7 +147,6 @@
             <button class="generate-btn" @click="submitAnswer" :disabled="!currentAnswer.trim() || loading">
               {{ loading ? 'Обработка...' : 'Ответить' }}
             </button>
-            <button class="modal-close" @click="showIcebergModal = false">✖</button>
           </div>
         </div>
 
@@ -154,7 +154,6 @@
         <div v-if="currentIceberg.solutions && currentIceberg.solutions.length > 0" class="solutions-block">
           <div class="solutions-header">
             <h3>💡 Решения</h3>
-            <button class="modal-close" @click="showIcebergModal = false">✖</button>
           </div>
           <div
             v-for="(solution, index) in currentIceberg.solutions"
@@ -807,6 +806,21 @@ h1 {
 
 .modal-close:hover {
   background: #e5e7eb;
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
+  z-index: 3;
 }
 
 .solutions-block {

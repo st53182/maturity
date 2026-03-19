@@ -30,6 +30,7 @@
     <!-- Модальное окно создания/редактирования элемента -->
     <div v-if="showItemModal" class="modal-overlay" @click.self="closeItemModal">
       <div class="modal-content">
+        <button class="modal-close-top" @click="closeItemModal" aria-label="Close">✕</button>
         <h2>{{ editingItem ? 'Редактировать элемент' : 'Создать элемент' }}</h2>
         <div class="modern-form">
           <div class="input-wrapper">
@@ -74,6 +75,7 @@
     <!-- Модальное окно настройки доступа -->
     <div v-if="showShareModal" class="modal-overlay" @click.self="showShareModal = false">
       <div class="modal-content">
+        <button class="modal-close-top" @click="showShareModal = false" aria-label="Close">✕</button>
         <h2>Поделиться дорожной картой</h2>
         <div class="modern-form">
           <div class="input-wrapper">
@@ -97,6 +99,7 @@
     <!-- Модальное окно загрузки изображения -->
     <div v-if="showImageUpload" class="modal-overlay" @click.self="showImageUpload = false">
       <div class="modal-content">
+        <button class="modal-close-top" @click="showImageUpload = false" aria-label="Close">✕</button>
         <h2>Загрузить изображение</h2>
         <p>Загрузите изображение дорожной карты или бэклога. AI автоматически распознает эпики и истории.</p>
         <input type="file" @change="handleImageUpload" accept="image/*" class="file-input" />
@@ -110,6 +113,7 @@
     <!-- Модальное окно настроек -->
     <div v-if="showSettingsModal" class="modal-overlay" @click.self="showSettingsModal = false">
       <div class="modal-content">
+        <button class="modal-close-top" @click="showSettingsModal = false" aria-label="Close">✕</button>
         <h2>Настройки дорожной карты</h2>
         <div class="form-group">
           <label>Начало квартала:</label>
@@ -878,6 +882,23 @@ export default {
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.24);
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
 }
 
 .modal-actions {

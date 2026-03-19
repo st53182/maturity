@@ -68,6 +68,7 @@
   </div>
   <div v-if="showModal" class="modal-overlay">
   <div class="modal-content">
+    <button class="modal-close-top" @click="showModal = false" aria-label="Close">✕</button>
 
 
     <form @submit.prevent="submitMotivation" class="form-group modern-form">
@@ -168,7 +169,6 @@
   <span v-if="loading">⏳ Генерация...</span>
   <span v-else>💬 {{ $t('motivation.analyze') }}</span>
 </button>
-  <button class="modal-close" @click="showModal = false">✖</button>
 </div>
     </form>
   </div>
@@ -177,6 +177,7 @@
 <!-- Avatar Selection Modal -->
 <div v-if="showAvatarModal" class="modal-overlay">
   <div class="modal-content avatar-modal">
+    <button class="modal-close-top" @click="showAvatarModal = false" aria-label="Close">✕</button>
     <h2>🎭 Выбор аватара</h2>
     
     <div class="avatar-section">
@@ -205,7 +206,6 @@
       </div>
     </div>
     
-    <button class="modal-close" @click="showAvatarModal = false">✖</button>
   </div>
 </div>
 </template>
@@ -780,6 +780,21 @@ button:hover {
   margin-bottom: 32px;
   color: #111827;
   letter-spacing: -0.5px;
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
+  z-index: 2;
 }
 
 /* Modern Form Styles with Floating Labels */

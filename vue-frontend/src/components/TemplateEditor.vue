@@ -1,6 +1,7 @@
 <template>
   <div class="modal-overlay" v-if="show">
     <div class="modal template-editor">
+      <button class="modal-close-top" @click="$emit('close')" aria-label="Close">✕</button>
       <h2>{{ isEditing ? 'Редактировать шаблон' : 'Создать шаблон' }}</h2>
       
       <input v-model="templateName" placeholder="Название шаблона" class="template-input" />
@@ -226,6 +227,23 @@ export default {
   max-height: 80vh;
   overflow-y: auto;
   width: 90%;
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.25);
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
 }
 
 .template-input, .question-text {

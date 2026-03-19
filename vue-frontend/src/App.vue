@@ -182,6 +182,7 @@
 
 <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
   <div class="modal">
+    <button class="modal-close-top" :aria-label="$t('common.close')" @click="showTeamModal = false">✕</button>
     <h2 style="text-align: center;">{{ $t('survey.createNewTeam') }}</h2>
     <p class="modal-subtitle"></p>
     <input
@@ -518,6 +519,31 @@ export default {
   border-radius: 10px;
   width: 350px; /* Ширина Pop-up */
   max-width: 90%; /* Адаптация к мобильным экранам */
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  box-shadow: 0 22px 60px rgba(10, 20, 45, 0.24);
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.82);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-top:hover {
+  background: rgba(10, 20, 45, 0.14);
 }
 
 .confirm-btn,

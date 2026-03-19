@@ -66,6 +66,17 @@
     "errorLoadingQuestions": "Error loading questions",
     "errorSubmitting": "Error submitting assessment"
   },
+  "newSurvey": {
+    "selectTeamForMaturity": "Select a team to assess maturity",
+    "teamPrefix": "Team",
+    "disclaimer": "Important: answer options go from lower maturity (1) to higher maturity (5). Choosing a higher level implies previous practices are already in place.",
+    "submitResults": "Submit results",
+    "enterTeamName": "Enter a team name",
+    "notAuthorized": "You are not authorized",
+    "teamCreateError": "Failed to create team",
+    "resultsSaved": "Results saved",
+    "submitError": "Failed to submit results"
+  },
   "maturity": {
     "title": "Maturity Assessment by Link",
     "loading": "Loading...",
@@ -200,7 +211,9 @@
     "upload": "Upload",
     "download": "Download",
     "date": "Date",
-    "company": "Company"
+    "company": "Company",
+    "menu": "Menu",
+    "notFound": "Not found"
   },
   "register": {
     "title": "Registration",
@@ -365,6 +378,12 @@
     "nextTitle": "What’s next",
     "nextText": "Next: we’ll bring the maturity assessment and dashboard into /new while keeping compatibility.",
     "backToCurrent": "Go to the current version"
+  },
+  "newUi": {
+    "dashboardTitle": "Dashboard",
+    "dashboardSubtitle": "Teams and maturity assessment in the refreshed shell.",
+    "maturityTitle": "Maturity assessment by link",
+    "maturitySubtitle": "Current functionality is available in the new shell while we continue polishing this flow."
   },
   "qa": {
     "title": "Practice: Manual Testing",

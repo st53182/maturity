@@ -113,7 +113,7 @@
             <router-link to="/flow-metrics" class="area-link">{{ $t('newHome.links.flowMetrics') }}</router-link>
             <router-link to="/roadmap" class="area-link">{{ $t('newHome.links.roadmap') }}</router-link>
             <router-link to="/new/project-card" class="area-link">{{ $t('newHome.links.projectCard') }}</router-link>
-            <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noreferrer">{{ $t('newHome.links.planningPoker') }}</a>
+            <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noopener noreferrer">{{ $t('newHome.links.planningPoker') }}</a>
           </div>
         </article>
 
@@ -301,8 +301,9 @@ export default {
 }
 
 .new-nav__btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
+  border-color: rgba(32, 90, 255, 0.28);
 }
 
 .new-nav__btn--primary {
@@ -415,8 +416,8 @@ export default {
 
 .cta-btn:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(32, 90, 255, 0.24);
 }
 
 .cta-btn--primary {
@@ -645,7 +646,16 @@ export default {
 }
 
 .back-link:hover {
-  border-bottom-color: rgba(255, 255, 255, 0.65);
+  border-bottom-color: rgba(32, 90, 255, 0.55);
+}
+
+.lang-btn:focus-visible,
+.new-nav__btn:focus-visible,
+.cta-btn:focus-visible,
+.area-link:focus-visible,
+.back-link:focus-visible {
+  outline: 3px solid rgba(32, 90, 255, 0.55);
+  outline-offset: 2px;
 }
 
 @media (max-width: 820px) {
@@ -712,6 +722,24 @@ export default {
   }
   100% {
     transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .marquee__track,
+  .hero-panel {
+    animation: none !important;
+  }
+  .hero,
+  .trusted,
+  .areas,
+  .next,
+  .cta-btn,
+  .new-nav__btn,
+  .area-link,
+  .area-card {
+    transition: none !important;
   }
 }
 

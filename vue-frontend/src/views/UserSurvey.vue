@@ -1,6 +1,6 @@
 <template>
   <div class="survey-container" :class="{ 'survey--new': variant === 'new' }">
-    <h1>📊 Выбери команду для оценки ее зрелости </h1>
+    <h1>{{ $t('newSurvey.selectTeamForMaturity') }}</h1>
 
     <!-- 🔹 Выбор команды -->
     <div v-if="!selectedTeam" class="team-selection">
@@ -21,45 +21,46 @@
     <!-- 🔹 Pop-up для создания команды -->
     <div v-if="showTeamModal" class="modal-overlay">
       <div class="modal">
-        <h2>Создать новую команду</h2>
+        <h2>{{ $t('survey.createNewTeam') }}</h2>
         <input
           v-model="newTeamName"
-          placeholder="Введите название команды"
+          :placeholder="$t('survey.teamName')"
           class="team-input"
         />
         <div class="modal-buttons">
-          <button class="confirm-btn" @click="createTeam">✅ Создать</button>
-          <button class="cancel-btn" @click="showTeamModal = false">❌ Отмена</button>
+          <button class="confirm-btn" @click="createTeam">✅ {{ $t('survey.create') }}</button>
+          <button class="cancel-btn" @click="showTeamModal = false">❌ {{ $t('survey.cancel') }}</button>
         </div>
       </div>
     </div>
 
     <!-- 🔹 Опросник -->
     <div v-else>
-      <h2 class="team-name">🛠 Команда: {{ selectedTeamName }}</h2>
+      <h2 class="team-name">{{ $t('newSurvey.teamPrefix') }}: {{ selectedTeamName }}</h2>
       <p class="disclaimer">
-  🧠 <strong>Важно:</strong> Варианты ответов расположены от менее зрелых (1) к более зрелым (5).
-  Выбирая более высокий уровень, предполагается, что предыдущие практики уже реализованы.
+        {{ $t('newSurvey.disclaimer') }}
 </p>
 
       <!-- 🔹 Прогресс-бар -->
 
       <div class="question-tracker">
-  <span
+  <button
+    type="button"
     v-for="(q, index) in questions"
     :key="q.id"
     class="tracker-dot"
+    :aria-label="`${$t('survey.question')} ${index + 1}`"
     :class="{
       answered: answers[q.id],
       active: currentQuestionIndex === index
     }"
     @click="currentQuestionIndex = index"
-  ></span>
+  ></button>
 </div>
 
       <!-- 🔹 Вопрос -->
       <div v-if="currentQuestion" class="question-card">
-        <button v-if="currentQuestionIndex > 0" class="back-btn" @click="prevQuestion">⬅</button>
+        <button v-if="currentQuestionIndex > 0" class="back-btn" :aria-label="$t('maturity.prev')" @click="prevQuestion">⬅</button>
         <h2 class="question-text"> {{ currentQuestion.question }}</h2>
 
         <div class="answer-options">
@@ -81,7 +82,7 @@
   class="modern-button purple"
   @click="submitAssessment"
 >
-  📩 Отправить результаты
+  {{ $t('newSurvey.submitResults') }}
 </button>
       </div>
     </div>
@@ -168,7 +169,7 @@ export default {
 
     async createTeam() {
       if (!this.newTeamName.trim()) {
-        alert("Введите название команды!");
+        alert(this.$t("newSurvey.enterTeamName"));
         return;
       }
 
@@ -178,7 +179,7 @@ export default {
 
         if (!token) {
           console.error("❌ Ошибка: Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          alert(this.$t("newSurvey.notAuthorized"));
           return;
         }
 
@@ -195,7 +196,7 @@ export default {
         this.showTeamModal = false; // Закрываем Pop-up
       } catch (error) {
         console.error("❌ Ошибка создания команды:", error.response?.data || error);
-        alert("❌ Ошибка создания команды.");
+        alert(this.$t("newSurvey.teamCreateError"));
       }
     },
 
@@ -219,7 +220,7 @@ export default {
 
     if (!token) {
       console.error("❌ Ошибка: Нет токена авторизации!");
-      alert("🚫 Вы не авторизованы!");
+      alert(this.$t("newSurvey.notAuthorized"));
       return;
     }
 
@@ -234,7 +235,7 @@ export default {
 
     const assessmentId = res.data.assessment_id; // ✅ берём ID созданной оценки
 
-    alert("🎉 Результаты сохранены!");
+    alert(this.$t("newSurvey.resultsSaved"));
 
     // 🔁 Переход с передачей assessment_id в параметры
     this.$router.push({
@@ -246,7 +247,7 @@ export default {
     });
   } catch (error) {
     console.error("❌ Ошибка отправки:", error.response?.data || error);
-    alert("❌ Ошибка отправки результатов.");
+    alert(this.$t("newSurvey.submitError"));
   }
 }
   },
@@ -541,6 +542,8 @@ h1 {
   background: #ccc;
   cursor: pointer;
   transition: background 0.3s ease;
+  border: none;
+  padding: 0;
 }
 .tracker-dot.answered {
   background: #2ecc71;
@@ -791,6 +794,16 @@ h1 {
 .survey--new .back-btn:hover {
   transform: translateY(-1px);
   border-color: rgba(32, 90, 255, 0.35);
+}
+
+.survey--new .team-btn:focus-visible,
+.survey--new .answer-options button:focus-visible,
+.survey--new .modern-button:focus-visible,
+.survey--new .back-btn:focus-visible,
+.survey--new .tracker-dot:focus-visible,
+.survey--new .team-input:focus-visible {
+  outline: 3px solid rgba(32, 90, 255, 0.55);
+  outline-offset: 2px;
 }
 
 @keyframes premiumFloat {

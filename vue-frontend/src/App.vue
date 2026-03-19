@@ -1,7 +1,7 @@
 <template>
   <div id="app" :class="{ 'app--new': isNewUi }">
     <!-- Mobile Hamburger Button -->
-    <button v-if="isAuthenticated" class="mobile-hamburger" :class="{ 'menu-open': showMobileMenu }" @click="showMobileMenu = !showMobileMenu">
+    <button v-if="isAuthenticated" class="mobile-hamburger" :class="{ 'menu-open': showMobileMenu }" :aria-label="$t('common.menu')" @click="showMobileMenu = !showMobileMenu">
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
       <span class="hamburger-line"></span>
@@ -13,6 +13,7 @@
         <button 
           @click="switchLanguage('ru')" 
           :class="{ active: $i18n.locale === 'ru' }"
+          :aria-pressed="$i18n.locale === 'ru'"
           class="lang-btn"
         >
           RU
@@ -20,6 +21,7 @@
         <button 
           @click="switchLanguage('en')" 
           :class="{ active: $i18n.locale === 'en' }"
+          :aria-pressed="$i18n.locale === 'en'"
           class="lang-btn"
         >
           EN
@@ -94,6 +96,7 @@
             <button 
               @click="switchLanguage('ru')" 
               :class="{ active: $i18n.locale === 'ru' }"
+              :aria-pressed="$i18n.locale === 'ru'"
               class="lang-btn-mobile"
             >
               RU
@@ -101,12 +104,13 @@
             <button 
               @click="switchLanguage('en')" 
               :class="{ active: $i18n.locale === 'en' }"
+              :aria-pressed="$i18n.locale === 'en'"
               class="lang-btn-mobile"
             >
               EN
             </button>
           </div>
-          <button class="mobile-menu-close" @click="showMobileMenu = false">✕</button>
+          <button class="mobile-menu-close" :aria-label="$t('common.close')" @click="showMobileMenu = false">✕</button>
         </div>
         <div class="mobile-menu-items">
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/profile' : '/profile')">
@@ -202,13 +206,14 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 import { computed, ref, getCurrentInstance } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 
 export default {
   setup() {
     const authStore = useAuthStore();
     const route = useRoute();
+    const router = useRouter();
 
     // ✅ Проверяем авторизацию
     const isAuthenticated = computed(() => authStore.isAuthenticated);
@@ -223,7 +228,7 @@ export default {
     const logout = () => {
       authStore.logout();
       showTeamModal.value = false;
-      window.location.href = "/login"; // Обновляем страницу после выхода
+      router.push("/login");
     };
 
     // ✅ Функция создания команды
@@ -269,7 +274,7 @@ export default {
     // ✅ Функции для мобильного меню
     const navigateAndClose = (route) => {
       showMobileMenu.value = false;
-      window.location.href = route;
+      router.push(route);
     };
 
     const openTeamModalAndClose = () => {
@@ -361,7 +366,7 @@ export default {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 85px;
+  width: 96px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   flex-direction: column;
@@ -469,7 +474,7 @@ export default {
   background: none;
   border: none;
   color: white;
-  font-size: 20px;
+  font-size: 19px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -479,18 +484,20 @@ export default {
 }
 
 .sidebar-btn small {
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .sidebar-btn:hover {
-  transform: scale(1.1);
+  transform: translateY(-1px);
 }
 
 .sidebar-btn.logout {
   color: #ffcccc;
 }
 .main-content, .results-container {
-  margin-left: 70px; /* равен ширине sidebar */
+  margin-left: 96px;
   padding: 20px;
    flex-grow: 1;
 }
@@ -688,6 +695,16 @@ export default {
 
 .mobile-menu-btn:hover {
   background: #f8f9fa;
+}
+
+.sidebar-btn:focus-visible,
+.lang-btn:focus-visible,
+.lang-btn-mobile:focus-visible,
+.mobile-menu-btn:focus-visible,
+.mobile-menu-close:focus-visible,
+.mobile-hamburger:focus-visible {
+  outline: 3px solid rgba(32, 90, 255, 0.55);
+  outline-offset: 2px;
 }
 
 .mobile-menu-btn span:first-child {

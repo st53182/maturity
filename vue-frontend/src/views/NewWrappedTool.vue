@@ -2,7 +2,7 @@
   <NewToolShell v-if="config" :title="title" :subtitle="subtitle">
     <component :is="asyncComp" />
   </NewToolShell>
-  <div v-else class="new-tool-shell-error">Unknown tool</div>
+  <div v-else class="new-tool-shell-error" role="alert">{{ $t("common.error") }}: {{ $t("common.notFound") }}</div>
 </template>
 
 <script>

@@ -21,6 +21,8 @@
   box-shadow: 0 22px 70px rgba(10, 20, 45, 0.09);
   padding: 22px 20px 28px;
   animation: newToolInnerReveal 440ms ease-out;
+  color: rgba(10, 20, 45, 0.92);
+  line-height: 1.5;
 }
 
 .new-tool-shell__inner > .conflict-container h1,
@@ -49,6 +51,13 @@
   transform: translateY(-1px);
 }
 
+.new-tool-shell__inner button:focus-visible,
+.new-tool-shell__inner a:focus-visible,
+.new-tool-shell__inner [role="button"]:focus-visible {
+  outline: 3px solid rgba(32, 90, 255, 0.52) !important;
+  outline-offset: 2px !important;
+}
+
 .new-tool-shell__inner input:not([type="checkbox"]):not([type="radio"]),
 .new-tool-shell__inner textarea,
 .new-tool-shell__inner select {
@@ -63,6 +72,20 @@
   outline: none !important;
   border-color: rgba(32, 90, 255, 0.55) !important;
   box-shadow: 0 0 0 5px rgba(32, 90, 255, 0.1) !important;
+}
+
+@media (max-width: 820px) {
+  .new-tool-shell__inner > .conflict-container,
+  .new-tool-shell__inner > .profile-page,
+  .new-tool-shell__inner > .surveys-container,
+  .new-tool-shell__inner > .prep-container,
+  .new-tool-shell__inner > .iceberg-container,
+  .new-tool-shell__inner > .meeting-design-container,
+  .new-tool-shell__inner > .motivation-container,
+  .new-tool-shell__inner > .project-card-page {
+    padding: 14px 12px 18px;
+    border-radius: 14px;
+  }
 }
 
 .new-tool-shell__inner .conflict-card,

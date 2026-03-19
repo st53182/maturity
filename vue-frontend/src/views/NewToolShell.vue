@@ -82,6 +82,20 @@ export default {
   margin-top: 14px;
 }
 
+@media (max-width: 820px) {
+  .new-tool-shell {
+    padding: 16px 12px 28px;
+  }
+
+  .new-tool-shell__header {
+    padding: 14px 14px;
+  }
+
+  .new-tool-shell__title {
+    font-size: 1.1rem;
+  }
+}
+
 @keyframes shellReveal {
   from {
     opacity: 0;

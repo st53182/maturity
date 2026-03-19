@@ -26,14 +26,43 @@ export default {
   max-width: 1100px;
   margin: 0 auto;
   padding: 24px 18px 46px;
+  position: relative;
+  animation: shellReveal 420ms ease-out;
+}
+
+.new-shell::before {
+  content: "";
+  position: absolute;
+  right: -180px;
+  top: -120px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(120, 119, 255, 0.18), rgba(120, 119, 255, 0));
+  pointer-events: none;
 }
 
 .new-shell__header {
   border-radius: 18px;
   border: 1px solid rgba(10, 20, 45, 0.08);
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow: 0 18px 60px rgba(10, 20, 45, 0.1);
-  padding: 16px 18px;
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.93), rgba(246, 249, 255, 0.82));
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.11);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.new-shell__header::after {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -22%;
+  width: 30%;
+  height: 300%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: rotate(16deg);
+  animation: headerShine 8.8s linear infinite;
+  pointer-events: none;
 }
 
 .new-shell__title {
@@ -48,6 +77,27 @@ export default {
 
 .new-shell__content {
   margin-top: 14px;
+}
+
+@keyframes shellReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes headerShine {
+  0% {
+    transform: translateX(-220px) rotate(16deg);
+  }
+  45%,
+  100% {
+    transform: translateX(820px) rotate(16deg);
+  }
 }
 </style>
 

@@ -609,11 +609,11 @@ h1 {
 
 .survey--new .question-card {
   position: relative;
-  padding: 20px 16px 24px;
-  border-radius: 16px;
-  border: 1px solid rgba(10, 20, 45, 0.08);
-  background: rgba(247, 249, 255, 0.6);
-  box-shadow: 0 12px 40px rgba(10, 20, 45, 0.06);
+  padding: 22px 18px 26px;
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.09);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 255, 0.9));
+  box-shadow: 0 18px 48px rgba(10, 20, 45, 0.08);
 }
 
 .survey--new .question-text {
@@ -621,15 +621,23 @@ h1 {
 }
 
 .survey--new .answer-options button {
-  border-radius: 14px;
-  border: 1px solid rgba(10, 20, 45, 0.1);
-  font-weight: 550;
+  border-radius: 13px;
+  border: 1px solid rgba(10, 20, 45, 0.14);
+  font-weight: 560;
+  text-align: left;
+  line-height: 1.38;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.94);
+  color: rgba(16, 28, 58, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 20px rgba(10, 20, 45, 0.06);
+  animation: optionIn 340ms ease-out;
 }
 
 .survey--new .answer-options button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(32, 90, 255, 0.12);
-  filter: brightness(1.02);
+  transform: translateY(-1px) scale(1.004);
+  box-shadow: 0 12px 26px rgba(32, 90, 255, 0.16);
+  border-color: rgba(32, 90, 255, 0.35);
+  filter: none;
 }
 
 .survey--new .answer-options button.selected {
@@ -637,6 +645,23 @@ h1 {
   color: #fff !important;
   border-color: rgba(32, 90, 255, 0.45);
   font-weight: 700;
+  box-shadow: 0 16px 34px rgba(32, 90, 255, 0.24);
+}
+
+.survey--new .answer-options button:nth-child(1) {
+  background: linear-gradient(180deg, rgba(255, 239, 243, 0.96), rgba(255, 247, 249, 0.94));
+}
+.survey--new .answer-options button:nth-child(2) {
+  background: linear-gradient(180deg, rgba(255, 248, 225, 0.96), rgba(255, 251, 236, 0.94));
+}
+.survey--new .answer-options button:nth-child(3) {
+  background: linear-gradient(180deg, rgba(239, 244, 255, 0.96), rgba(246, 249, 255, 0.94));
+}
+.survey--new .answer-options button:nth-child(4) {
+  background: linear-gradient(180deg, rgba(232, 246, 255, 0.96), rgba(241, 251, 255, 0.94));
+}
+.survey--new .answer-options button:nth-child(5) {
+  background: linear-gradient(180deg, rgba(234, 252, 237, 0.96), rgba(241, 255, 244, 0.94));
 }
 
 .survey--new .tracker-dot.answered {
@@ -646,6 +671,12 @@ h1 {
 .survey--new .tracker-dot.active {
   border: 2px solid rgba(32, 90, 255, 0.65);
   box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.15);
+}
+
+.survey--new .tracker-dot {
+  width: 10px;
+  height: 10px;
+  background: rgba(10, 20, 45, 0.2);
 }
 
 .survey--new .team-btn {
@@ -748,6 +779,20 @@ h1 {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 255, 0.95));
 }
 
+.survey--new .back-btn {
+  border-radius: 12px;
+  border: 1px solid rgba(10, 20, 45, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 7px 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(10, 20, 45, 0.08);
+}
+
+.survey--new .back-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(32, 90, 255, 0.35);
+}
+
 @keyframes premiumFloat {
   0%,
   100% {
@@ -766,6 +811,17 @@ h1 {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes optionIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

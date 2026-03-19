@@ -1,5 +1,5 @@
 <template>
-  <div class="create-maturity">
+  <div class="create-maturity" :class="{ 'create-maturity--new': isNewUi }">
     <h1>{{ $t('maturity.createLinkTitle') }}</h1>
     <div v-if="!createdUrl" class="form-block">
       <label>{{ $t('maturity.teamNameOptional') }}</label>
@@ -27,6 +27,9 @@ export default {
   computed: {
     maturityPathPrefix() {
       return (this.$route.path || '').startsWith('/new') ? '/new/maturity' : '/maturity';
+    },
+    isNewUi() {
+      return (this.$route.path || '').startsWith('/new');
     },
   },
   data() {
@@ -118,5 +121,109 @@ export default {
   border-radius: 8px;
   font-weight: 600;
   text-decoration: none;
+}
+
+/* Premium style for /new/maturity */
+.create-maturity--new {
+  max-width: 680px;
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(247, 250, 255, 0.9));
+  box-shadow: 0 26px 70px rgba(10, 20, 45, 0.12);
+  position: relative;
+  overflow: hidden;
+  animation: revealUp 420ms ease-out;
+}
+
+.create-maturity--new::before {
+  content: "";
+  position: absolute;
+  top: -120%;
+  left: -20%;
+  width: 34%;
+  height: 320%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: rotate(14deg);
+  animation: shineTravel 8.5s linear infinite;
+  pointer-events: none;
+}
+
+.create-maturity--new h1 {
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  color: rgba(10, 20, 45, 0.94);
+}
+
+.create-maturity--new .team-input,
+.create-maturity--new .url-input {
+  border-radius: 12px;
+  border-color: rgba(10, 20, 45, 0.14);
+  background: rgba(248, 250, 255, 0.96);
+}
+
+.create-maturity--new .team-input:focus,
+.create-maturity--new .url-input:focus {
+  outline: none;
+  border-color: rgba(32, 90, 255, 0.58);
+  box-shadow: 0 0 0 5px rgba(32, 90, 255, 0.12);
+}
+
+.create-maturity--new .btn-create,
+.create-maturity--new .btn-copy,
+.create-maturity--new .btn-start {
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 26px rgba(10, 20, 45, 0.12);
+}
+
+.create-maturity--new .btn-create {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.94), rgba(0, 194, 255, 0.84));
+}
+
+.create-maturity--new .btn-start {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.94), rgba(16, 185, 129, 0.84));
+}
+
+.create-maturity--new .btn-copy {
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.92), rgba(100, 116, 139, 0.85));
+}
+
+.create-maturity--new .btn-create::after,
+.create-maturity--new .btn-copy::after,
+.create-maturity--new .btn-start::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.34), transparent 80%);
+  transform: translateX(-125%);
+  transition: transform 0.6s ease;
+}
+
+.create-maturity--new .btn-create:hover::after,
+.create-maturity--new .btn-copy:hover::after,
+.create-maturity--new .btn-start:hover::after {
+  transform: translateX(125%);
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shineTravel {
+  0% {
+    transform: translateX(-240px) rotate(14deg);
+  }
+  45%,
+  100% {
+    transform: translateX(920px) rotate(14deg);
+  }
 }
 </style>

@@ -9,8 +9,12 @@ import AssessmentResults from '../views/AssessmentResults.vue';
 const routes = [
   { path: '/', component: UserHome },
   { path: '/new', name: 'NewHome', component: () => import('@/views/NewHome.vue') },
-  { path: '/new/maturity', name: 'NewMaturity', component: () => import('@/views/NewMaturity.vue') },
+  { path: '/new/maturity', name: 'NewMaturity', component: () => import('@/views/NewMaturity.vue'), meta: { requiresAuth: true } },
   { path: '/new/dashboard', name: 'NewDashboard', component: () => import('@/views/NewDashboard.vue') },
+  { path: '/new/survey', name: 'NewUserSurvey', component: UserSurvey, meta: { requiresAuth: true }, props: () => ({ variant: 'new' }) },
+  { path: '/new/maturity/:token/edit', name: 'EditMaturityNew', component: () => import('@/views/EditMaturity.vue'), props: () => ({ variant: 'new' }) },
+  { path: '/new/maturity/:token/results', name: 'MaturityResultsNew', component: () => import('@/views/MaturityResults.vue'), props: () => ({ variant: 'new' }) },
+  { path: '/new/maturity/:token', name: 'TakeMaturityNew', component: () => import('@/views/TakeMaturity.vue'), props: () => ({ variant: 'new' }) },
   { path: '/login', component: UserLogin },
   { path: '/register', component: UserRegister },
   { path: '/survey', name: "UserSurvey", component: UserSurvey, meta: { requiresAuth: true } },

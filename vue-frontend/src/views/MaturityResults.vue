@@ -1,5 +1,5 @@
 <template>
-  <div class="maturity-results">
+  <div class="maturity-results" :class="{ 'maturity-results--new': variant === 'new' }">
     <div v-if="loading" class="loading">{{ $t('maturity.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else class="results-content">
@@ -43,7 +43,7 @@
       </div>
 
       <div class="actions">
-        <button type="button" class="btn-edit" @click="$router.push(`/maturity/${token}/edit`)">
+        <button type="button" class="btn-edit" @click="$router.push(`${maturityBase}/edit`)">
           Изменить ответы
         </button>
         <button type="button" class="btn-show-all" @click="showAllModal = true">
@@ -151,6 +151,9 @@ import html2canvas from 'html2canvas';
 export default {
   name: 'MaturityResults',
   components: { RadarChart },
+  props: {
+    variant: { type: String, default: 'legacy' },
+  },
   data() {
     return {
       token: '',
@@ -209,7 +212,10 @@ export default {
       } catch {
         return this.completedAt;
       }
-    }
+    },
+    maturityBase() {
+      return this.variant === 'new' ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
+    },
   },
   async mounted() {
     this.token = this.$route.params.token;
@@ -665,4 +671,44 @@ export default {
 .btn-pdf:hover:not(:disabled) { background: #1d4ed8; }
 
 .btn-rec:disabled, .btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* —— New UI (/new/maturity/.../results) —— */
+.maturity-results.maturity-results--new {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+.maturity-results--new .results-content {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 22px 70px rgba(10, 20, 45, 0.08);
+  padding: 20px 18px 28px;
+}
+
+.maturity-results--new .results-title {
+  color: rgba(10, 20, 45, 0.92);
+}
+
+.maturity-results--new .btn-edit,
+.maturity-results--new .btn-show-all,
+.maturity-results--new .btn-rec,
+.maturity-results--new .btn-pdf {
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(10, 20, 45, 0.08);
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.maturity-results--new .btn-edit:hover,
+.maturity-results--new .btn-show-all:hover,
+.maturity-results--new .btn-rec:hover:not(:disabled),
+.maturity-results--new .btn-pdf:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.maturity-results--new .btn-pdf {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+}
 </style>

@@ -30,11 +30,11 @@
           <span>👤</span>
           <small>{{ $t('nav.profile') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/dashboard')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/dashboard' : '/dashboard')">
           <span>🏠</span>
           <small>{{ $t('nav.dashboard') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/survey')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/survey' : '/survey')">
           <span>📝</span>
           <small>{{ $t('nav.survey') }}</small>
         </button>
@@ -62,7 +62,7 @@
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/maturity/create')">
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
           <span>🔗</span>
           <small>{{ $t('nav.maturityLink') }}</small>
         </button>
@@ -145,7 +145,7 @@
             <span>📋</span>
             <span>{{ $t('nav.surveys') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/maturity/create')">
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/maturity' : '/maturity/create')">
             <span>🔗</span>
             <span>{{ $t('nav.maturityLink') }}</span>
           </button>

@@ -14,7 +14,7 @@
         <input :value="createdUrl" readonly class="url-input" />
         <button type="button" class="btn-copy" @click="copyLink">{{ $t('maturity.copyLink') }}</button>
       </div>
-      <router-link :to="`/maturity/${token}`" class="btn-start">{{ $t('maturity.startAssessment') }}</router-link>
+      <router-link :to="`${maturityPathPrefix}/${token}`" class="btn-start">{{ $t('maturity.startAssessment') }}</router-link>
     </div>
   </div>
 </template>
@@ -24,6 +24,11 @@ import axios from 'axios';
 
 export default {
   name: 'CreateMaturityLink',
+  computed: {
+    maturityPathPrefix() {
+      return (this.$route.path || '').startsWith('/new') ? '/new/maturity' : '/maturity';
+    },
+  },
   data() {
     return {
       teamName: '',
@@ -42,7 +47,7 @@ export default {
         });
         this.token = res.data.token;
         const base = window.location.origin;
-        this.createdUrl = `${base}/maturity/${this.token}`;
+        this.createdUrl = `${base}${this.maturityPathPrefix}/${this.token}`;
       } catch (e) {
         alert(e.response?.data?.error || 'Ошибка создания ссылки');
       } finally {

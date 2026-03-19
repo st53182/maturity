@@ -48,8 +48,8 @@
             </p>
 
             <div class="hero__cta">
-              <router-link to="/maturity/create" class="cta-btn cta-btn--primary">{{ $t('newHome.ctaPrimary') }}</router-link>
-              <router-link to="/dashboard" class="cta-btn">{{ $t('newHome.ctaSecondary') }}</router-link>
+              <router-link to="/new/maturity" class="cta-btn cta-btn--primary">{{ $t('newHome.ctaPrimary') }}</router-link>
+              <router-link to="/new/dashboard" class="cta-btn">{{ $t('newHome.ctaSecondary') }}</router-link>
             </div>
           </div>
 

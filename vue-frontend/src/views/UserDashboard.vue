@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="dashboard-container" :class="{ 'dashboard--new': variant === 'new' }">
 
 
     <div v-if="loading" class="loading">⏳ {{ $t('common.loading') }}</div>
@@ -318,7 +318,11 @@ export default {
     },
 
     goToSurvey(teamId) {
-      this.$router.push({ name: "UserSurvey", params: { team_id: teamId } });
+      if (this.variant === "new") {
+        this.$router.push({ path: "/new/survey", query: { team_id: String(teamId) } });
+      } else {
+        this.$router.push({ name: "UserSurvey", query: { team_id: String(teamId) } });
+      }
     }
   },
 
@@ -616,5 +620,111 @@ h1 {
     max-width: 250px;
     height: 250px;
   }
+}
+
+/* —— New UI (только variant="new", /new/dashboard) —— */
+.dashboard-container.dashboard--new {
+  margin-left: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+}
+
+.dashboard--new .teams-container {
+  gap: 18px;
+}
+
+.dashboard--new .team-card {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 18px 50px rgba(10, 20, 45, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.dashboard--new .team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 60px rgba(32, 90, 255, 0.12);
+}
+
+.dashboard--new .team-score-card {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.88), rgba(0, 194, 255, 0.75));
+  border-radius: 14px;
+  padding: 16px 12px 20px;
+  margin-bottom: 12px;
+}
+
+.dashboard--new .evaluate-btn,
+.dashboard--new .view-results-btn,
+.dashboard--new .delete-btn {
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 650;
+  border: 1px solid transparent;
+  box-shadow: 0 6px 18px rgba(10, 20, 45, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.dashboard--new .evaluate-btn {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+  color: #fff;
+}
+
+.dashboard--new .evaluate-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(32, 90, 255, 0.28);
+}
+
+.dashboard--new .view-results-btn {
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.95), rgba(34, 197, 94, 0.85));
+  color: #fff;
+}
+
+.dashboard--new .view-results-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.25);
+}
+
+.dashboard--new .delete-btn {
+  background: rgba(255, 255, 255, 0.95);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.dashboard--new .delete-btn:hover {
+  background: #fef2f2;
+  border-color: rgba(220, 38, 38, 0.55);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(220, 38, 38, 0.15);
+}
+
+.dashboard--new .create-team-card {
+  border: 2px dashed rgba(32, 90, 255, 0.28);
+  background: rgba(255, 255, 255, 0.65);
+  color: rgba(32, 90, 255, 0.9);
+  border-radius: 18px;
+}
+
+.dashboard--new .create-team-card:hover {
+  border-color: rgba(32, 90, 255, 0.45);
+  background: rgba(32, 90, 255, 0.06);
+  transform: translateY(-2px);
+}
+
+.dashboard--new .plus-icon {
+  color: rgba(32, 90, 255, 0.85);
+}
+
+.dashboard--new .modal {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.14);
+}
+
+.dashboard--new .confirm-btn:hover,
+.dashboard--new .cancel-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
 }
 </style>

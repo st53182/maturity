@@ -1,5 +1,5 @@
 <template>
-  <div class="survey-container">
+  <div class="survey-container" :class="{ 'survey--new': variant === 'new' }">
     <h1>📊 Выбери команду для оценки ее зрелости </h1>
 
     <!-- 🔹 Выбор команды -->
@@ -248,8 +248,15 @@ export default {
 }
   },
 
-  mounted() {
-    this.fetchTeams();
+  async mounted() {
+    await this.fetchTeams();
+    const tid = this.$route.query.team_id;
+    if (tid != null && tid !== "") {
+      const team = this.teams.find((t) => String(t.id) === String(tid));
+      if (team) {
+        this.selectTeam(team.id, team.name);
+      }
+    }
   },
 };
 </script>
@@ -567,6 +574,109 @@ h1 {
   background: linear-gradient(135deg, #732d91, #8e44ad);
   transform: scale(1.04);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* —— New UI (/new/survey) —— */
+.survey-container.survey--new {
+  max-width: 880px;
+  margin: 0 auto 40px;
+  padding: 28px 22px 36px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 22px 70px rgba(10, 20, 45, 0.1);
+}
+
+.survey--new h1 {
+  font-size: 1.65rem;
+  letter-spacing: -0.02em;
+  color: rgba(10, 20, 45, 0.92);
+}
+
+.survey--new .team-name {
+  color: rgba(10, 20, 45, 0.75);
+  font-weight: 650;
+}
+
+.survey--new .disclaimer {
+  background: rgba(32, 90, 255, 0.06);
+  border-left: 4px solid rgba(32, 90, 255, 0.55);
+  border-radius: 12px;
+}
+
+.survey--new .question-card {
+  position: relative;
+  padding: 20px 16px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: rgba(247, 249, 255, 0.6);
+  box-shadow: 0 12px 40px rgba(10, 20, 45, 0.06);
+}
+
+.survey--new .question-text {
+  color: rgba(10, 20, 45, 0.9);
+}
+
+.survey--new .answer-options button {
+  border-radius: 14px;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  font-weight: 550;
+}
+
+.survey--new .answer-options button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(32, 90, 255, 0.12);
+  filter: brightness(1.02);
+}
+
+.survey--new .answer-options button.selected {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.75)) !important;
+  color: #fff !important;
+  border-color: rgba(32, 90, 255, 0.45);
+  font-weight: 700;
+}
+
+.survey--new .tracker-dot.answered {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.85), rgba(0, 194, 255, 0.7));
+}
+
+.survey--new .tracker-dot.active {
+  border: 2px solid rgba(32, 90, 255, 0.65);
+  box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.15);
+}
+
+.survey--new .team-btn {
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.88), rgba(0, 194, 255, 0.72));
+  border: 1px solid rgba(32, 90, 255, 0.25);
+  box-shadow: 0 8px 22px rgba(32, 90, 255, 0.18);
+}
+
+.survey--new .team-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+}
+
+.survey--new .team-btn.active {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.92), rgba(16, 185, 129, 0.78));
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.survey--new .modern-button.purple {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+  box-shadow: 0 12px 32px rgba(32, 90, 255, 0.22);
+}
+
+.survey--new .modern-button.purple:hover {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.98), rgba(0, 194, 255, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(32, 90, 255, 0.28);
+}
+
+.survey--new .modal {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.14);
 }
 
 </style>

@@ -1,10 +1,10 @@
 <template>
-  <div class="take-maturity">
+  <div class="take-maturity" :class="{ 'take-maturity--new': variant === 'new' }">
     <div v-if="loading" class="loading">{{ $t('maturity.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="survey.completed" class="already-done">
       <p>{{ $t('maturity.alreadyCompleted') }}</p>
-      <router-link :to="`/maturity/${token}/results`" class="link-results">{{ $t('maturity.viewResults') }}</router-link>
+      <router-link :to="`${maturityBase}/results`" class="link-results">{{ $t('maturity.viewResults') }}</router-link>
     </div>
     <div v-else class="maturity-form">
       <header class="maturity-header">
@@ -135,6 +135,9 @@ const QUESTIONS_PER_PAGE = 10;
 
 export default {
   name: 'TakeMaturity',
+  props: {
+    variant: { type: String, default: 'legacy' },
+  },
   data() {
     return {
       token: '',
@@ -234,7 +237,7 @@ export default {
           commentsArr.push(c ? c : null);
         }
         await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr, comments: commentsArr });
-        this.$router.push(`/maturity/${this.token}/results`);
+        this.$router.push(`${this.maturityBase}/results`);
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка отправки';
       } finally {
@@ -557,4 +560,73 @@ export default {
 .prev { background: #9ca3af; color: #fff; }
 .next { background: #3b82f6; color: #fff; }
 .submit { background: #10b981; color: #fff; }
+
+/* —— New shell (variant new, /new/maturity/:token) —— */
+.take-maturity.take-maturity--new {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  background: linear-gradient(180deg, rgba(247, 249, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 40%);
+  border-radius: 20px;
+  border: 1px solid rgba(10, 20, 45, 0.06);
+  box-shadow: 0 20px 60px rgba(10, 20, 45, 0.08);
+}
+
+.take-maturity--new .maturity-header h1 {
+  font-size: 1.65rem;
+  letter-spacing: -0.02em;
+  color: rgba(10, 20, 45, 0.92);
+}
+
+.take-maturity--new .question-block {
+  border-radius: 16px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 12px 40px rgba(10, 20, 45, 0.06);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.take-maturity--new .progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(10, 20, 45, 0.06);
+}
+
+.take-maturity--new .progress-fill {
+  background: linear-gradient(90deg, rgba(32, 90, 255, 0.95), rgba(0, 194, 255, 0.85));
+  border-radius: 999px;
+}
+
+.take-maturity--new .btn-answer {
+  border-radius: 12px;
+  padding: 0.65rem 1.35rem;
+}
+
+.take-maturity--new .btn-nav {
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(10, 20, 45, 0.1);
+}
+
+.take-maturity--new .btn-nav.next,
+.take-maturity--new .btn-nav.submit {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+  color: #fff;
+}
+
+.take-maturity--new .btn-nav.next:hover:not(:disabled),
+.take-maturity--new .btn-nav.submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.take-maturity--new .btn-nav.prev:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.take-maturity--new .link-results {
+  font-weight: 650;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.12), rgba(0, 194, 255, 0.1));
+  text-decoration: none;
+}
 </style>

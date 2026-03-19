@@ -1,5 +1,5 @@
 <template>
-  <div class="edit-maturity">
+  <div class="edit-maturity" :class="{ 'edit-maturity--new': variant === 'new' }">
     <div v-if="loading" class="loading">Загрузка...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else class="edit-form">
@@ -43,7 +43,7 @@
       </div>
 
       <div class="edit-actions">
-        <button type="button" class="btn-back" @click="$router.push(`/maturity/${token}/results`)">
+        <button type="button" class="btn-back" @click="$router.push(`${maturityBase}/results`)">
           ← Назад к отчёту
         </button>
         <button
@@ -64,6 +64,9 @@ import axios from 'axios';
 
 export default {
   name: 'EditMaturity',
+  props: {
+    variant: { type: String, default: 'legacy' },
+  },
   data() {
     return {
       token: '',
@@ -120,7 +123,7 @@ export default {
       this.saving = true;
       try {
         await axios.put(`/api/maturity/${this.token}/answers`, { answers: arr, comments: commentsArr });
-        this.$router.push(`/maturity/${this.token}/results`);
+        this.$router.push(`${this.maturityBase}/results`);
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка сохранения';
       } finally {
@@ -253,4 +256,35 @@ export default {
 }
 .btn-save:hover:not(:disabled) { background: #1d4ed8; }
 .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* —— New UI —— */
+.edit-maturity.edit-maturity--new {
+  max-width: 820px;
+  padding: 20px 16px 40px;
+  background: linear-gradient(180deg, rgba(247, 249, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 45%);
+  border-radius: 20px;
+  border: 1px solid rgba(10, 20, 45, 0.06);
+  box-shadow: 0 20px 60px rgba(10, 20, 45, 0.08);
+}
+
+.edit-maturity--new .edit-question-block {
+  border-radius: 14px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: 0 10px 32px rgba(10, 20, 45, 0.05);
+}
+
+.edit-maturity--new .btn-save {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(32, 90, 255, 0.22);
+}
+
+.edit-maturity--new .btn-save:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.edit-maturity--new .btn-back {
+  border-radius: 12px;
+}
 </style>

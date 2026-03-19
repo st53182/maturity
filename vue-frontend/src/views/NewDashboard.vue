@@ -3,12 +3,12 @@
     <div class="new-shell__header">
       <div class="new-shell__title">Dashboard</div>
       <div class="new-shell__subtitle">
-        Новый дизайн дашборда — в работе. Сейчас отображаем текущий дашборд в новой оболочке.
+        Команды и оценка зрелости в обновлённом оформлении (маршрут <code>/new/dashboard</code>).
       </div>
     </div>
 
     <div class="new-shell__content">
-      <UserDashboard />
+      <UserDashboard variant="new" />
     </div>
   </div>
 </template>

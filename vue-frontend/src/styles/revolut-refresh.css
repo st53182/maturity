@@ -110,22 +110,22 @@ button {
   box-shadow: 0 30px 84px rgba(20, 43, 102, 0.24) !important;
 }
 
-/* Input layer, especially for popups */
-#app .modal input,
-#app .modal textarea,
-#app .modal select,
-#app .modal-content input,
-#app .modal-content textarea,
-#app .modal-content select,
-#app .template-editor input,
-#app .template-editor textarea,
-#app .template-editor select,
-#app .question-preview input,
-#app .question-preview textarea,
-#app .question-preview select,
-#app .us-modal input,
-#app .us-modal textarea,
-#app .us-modal select {
+/* Input layer, especially for popups (.modern-input uses floating label + left icon; keep its own padding) */
+#app .modal input:not(.modern-input),
+#app .modal textarea:not(.modern-input),
+#app .modal select:not(.modern-input),
+#app .modal-content input:not(.modern-input),
+#app .modal-content textarea:not(.modern-input),
+#app .modal-content select:not(.modern-input),
+#app .template-editor input:not(.modern-input),
+#app .template-editor textarea:not(.modern-input),
+#app .template-editor select:not(.modern-input),
+#app .question-preview input:not(.modern-input),
+#app .question-preview textarea:not(.modern-input),
+#app .question-preview select:not(.modern-input),
+#app .us-modal input:not(.modern-input),
+#app .us-modal textarea:not(.modern-input),
+#app .us-modal select:not(.modern-input) {
   background: var(--vl-surface-soft) !important;
   border: 1px solid var(--vl-border) !important;
   border-radius: 12px !important;
@@ -135,29 +135,29 @@ button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
-#app .modal textarea,
-#app .modal-content textarea,
-#app .template-editor textarea,
-#app .question-preview textarea,
-#app .us-modal textarea {
+#app .modal textarea:not(.modern-input),
+#app .modal-content textarea:not(.modern-input),
+#app .template-editor textarea:not(.modern-input),
+#app .question-preview textarea:not(.modern-input),
+#app .us-modal textarea:not(.modern-input) {
   min-height: 104px;
 }
 
-#app .modal input:focus,
-#app .modal textarea:focus,
-#app .modal select:focus,
-#app .modal-content input:focus,
-#app .modal-content textarea:focus,
-#app .modal-content select:focus,
-#app .template-editor input:focus,
-#app .template-editor textarea:focus,
-#app .template-editor select:focus,
-#app .question-preview input:focus,
-#app .question-preview textarea:focus,
-#app .question-preview select:focus,
-#app .us-modal input:focus,
-#app .us-modal textarea:focus,
-#app .us-modal select:focus {
+#app .modal input:not(.modern-input):focus,
+#app .modal textarea:not(.modern-input):focus,
+#app .modal select:not(.modern-input):focus,
+#app .modal-content input:not(.modern-input):focus,
+#app .modal-content textarea:not(.modern-input):focus,
+#app .modal-content select:not(.modern-input):focus,
+#app .template-editor input:not(.modern-input):focus,
+#app .template-editor textarea:not(.modern-input):focus,
+#app .template-editor select:not(.modern-input):focus,
+#app .question-preview input:not(.modern-input):focus,
+#app .question-preview textarea:not(.modern-input):focus,
+#app .question-preview select:not(.modern-input):focus,
+#app .us-modal input:not(.modern-input):focus,
+#app .us-modal textarea:not(.modern-input):focus,
+#app .us-modal select:not(.modern-input):focus {
   outline: none !important;
   border-color: rgba(39, 84, 199, 0.45) !important;
   box-shadow: 0 0 0 4px rgba(39, 84, 199, 0.12) !important;

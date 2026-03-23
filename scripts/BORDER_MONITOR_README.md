@@ -150,6 +150,48 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now border-monitor.service
 ```
 
+## Render.com (Background Worker + ntfy)
+
+Твой топик: **`border-moi-st53182`**. На телефоне в ntfy уже должен быть **Subscribe** на этот же топик.
+
+### 1. Новый сервис на Render
+
+1. Зайди в [Render Dashboard](https://dashboard.render.com) → **New +** → **Background Worker**.
+2. Подключи тот же репозиторий **maturity**, ветка **`master`**.
+3. Заполни поля:
+
+| Поле | Значение |
+|------|----------|
+| **Name** | например `border-monitor` |
+| **Region** | ближе к EU (Frankfurt), сайт границы в Эстонии |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `python scripts/border_queue_monitor.py` |
+
+4. **Environment** → **Add Environment Variable**:
+   - **Key:** `NTFY_TOPIC`  
+   - **Value:** `border-moi-st53182`
+
+   (Сервер ntfy по умолчанию `https://ntfy.sh` — менять не нужно.)
+
+5. **Create Background Worker** → дождись успешного деплоя.
+
+6. Открой **Logs** — должны идти строки вида  
+   `Koidula A/B='N/A' | Luhamaa A/B='N/A'` каждые ~30 с.
+
+### 2. Тариф
+
+**Background Worker** на Render обычно **не входит в бесплатный** веб-тариф (это отдельный платный тип сервиса). Если бесплатного воркера нет — варианты: платный Worker на Render, либо запуск скрипта на своём ПК/VPS.
+
+### 3. Тест ntfy
+
+Пока слотов нет, push не придёт. Проверка подписки: с телефона или с ПК выполни:
+
+```bash
+curl -d "Тест с Render" https://ntfy.sh/border-moi-st53182
+```
+
+В приложении ntfy должно прийти уведомление **«Тест с Render»**.
+
 ## Параметры
 
 | Переменная | По умолчанию |

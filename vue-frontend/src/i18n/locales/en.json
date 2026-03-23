@@ -345,8 +345,6 @@
     "panelPill2": "PMs / leaders",
     "panelPill3": "Product / Product Owners",
     "panelPill4": "Business / founders",
-    "panelNote": "We’re gradually moving key sections into the new /new experience without breaking the current UI.",
-    "toolShellSubtitle": "Same tool — refreshed layout and visuals in line with the new GrowBoard experience.",
     "trustedTitle": "Trusted by",
     "trustedSubtitle": "International brands that use practices aligned with what our tools support.",
     "areas": {
@@ -374,16 +372,13 @@
       "dashboard": "Dashboard",
       "survey": "Assessment survey",
       "usabilityReport": "Usability report"
-    },
-    "nextTitle": "What’s next",
-    "nextText": "Next: we’ll bring the maturity assessment and dashboard into /new while keeping compatibility.",
-    "backToCurrent": "Go to the current version"
+    }
   },
   "newUi": {
     "dashboardTitle": "Dashboard",
-    "dashboardSubtitle": "Teams and maturity assessment in the refreshed shell.",
+    "dashboardSubtitle": "Your teams, surveys, and quick links in one place.",
     "maturityTitle": "Maturity assessment by link",
-    "maturitySubtitle": "Current functionality is available in the new shell while we continue polishing this flow."
+    "maturitySubtitle": "Create a link and share it so people can complete the assessment."
   },
   "qa": {
     "title": "Practice: Manual Testing",

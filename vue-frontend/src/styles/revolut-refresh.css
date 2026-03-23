@@ -166,3 +166,31 @@ button {
 #app .floating-label {
   color: var(--vl-muted) !important;
 }
+
+/*
+ * Fields with .input-icon: emoji can render wider than 20px; select[multiple] looks like a multi-line list.
+ * Without textarea-wrapper, the icon used top:50% and sat over the middle rows. Extra inset keeps text clear.
+ */
+#app .input-wrapper.textarea-wrapper .input-icon,
+#app .input-wrapper:has(select[multiple]) .input-icon {
+  top: 1.5rem;
+  transform: none !important;
+}
+
+#app .input-wrapper:has(> .input-icon) .modern-input {
+  padding-left: 3.75rem !important;
+}
+
+#app .input-wrapper:has(> .input-icon) > .floating-label {
+  left: 3.75rem !important;
+}
+
+#app .input-wrapper:has(> .input-icon) .modern-input:focus + .floating-label,
+#app .input-wrapper:has(> .input-icon) .modern-input.has-value + .floating-label {
+  left: 3.75rem !important;
+}
+
+/* Icon is before the input in DOM; keep scale off so emoji doesn’t overlap text */
+#app .input-wrapper:has(> .input-icon):focus-within > .input-icon {
+  transform: none !important;
+}

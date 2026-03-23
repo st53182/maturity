@@ -55,7 +55,7 @@
             <label class="floating-label">{{ $t('conflicts.context') }}</label>
           </div>
 
-          <div class="input-wrapper">
+          <div class="input-wrapper textarea-wrapper">
             <span class="input-icon">👥</span>
             <select 
               v-model="form.participants" 

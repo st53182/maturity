@@ -3,7 +3,6 @@
     <header class="new-header">
       <div class="brand">
         <div class="brand__logo">GrowBoard</div>
-        <div class="brand__tag">New</div>
       </div>
 
       <div class="new-header__right">
@@ -61,9 +60,6 @@
                 <div class="pill">{{ $t('newHome.panelPill2') }}</div>
                 <div class="pill">{{ $t('newHome.panelPill3') }}</div>
                 <div class="pill">{{ $t('newHome.panelPill4') }}</div>
-              </div>
-              <div class="hero-panel__note">
-                {{ $t('newHome.panelNote') }}
               </div>
             </div>
           </div>
@@ -142,21 +138,13 @@
         </article>
       </section>
 
-      <section class="next" :class="{ 'is-ready': isReady }">
-        <div class="next__box">
-          <div class="next__title">{{ $t('newHome.nextTitle') }}</div>
-          <div class="next__text">
-            {{ $t('newHome.nextText') }}
-          </div>
-        </div>
-      </section>
     </main>
 
     <footer class="new-footer">
       <div class="new-footer__inner">
         <span>GrowBoard</span>
         <span class="dot">•</span>
-        <router-link to="/" class="back-link">{{ $t('newHome.backToCurrent') }}</router-link>
+        <span class="footer-copy">{{ $t('home.footer') }}</span>
       </div>
     </footer>
   </div>
@@ -242,14 +230,6 @@ export default {
 .brand__logo {
   font-weight: 700;
   letter-spacing: 0.2px;
-}
-
-.brand__tag {
-  font-size: 12px;
-  padding: 4px 8px;
-  border: 1px solid rgba(10, 20, 45, 0.14);
-  border-radius: 999px;
-  background: rgba(32, 90, 255, 0.08);
 }
 
 .new-header__right {
@@ -599,28 +579,6 @@ export default {
   transform: translateY(-1px);
 }
 
-.next {
-  margin-top: 18px;
-}
-
-.next__box {
-  border-radius: 18px;
-  border: 1px solid rgba(10, 20, 45, 0.08);
-  background: rgba(255, 255, 255, 0.72);
-  padding: 16px 18px;
-  box-shadow: 0 18px 60px rgba(10, 20, 45, 0.1);
-}
-
-.next__title {
-  font-weight: 650;
-}
-
-.next__text {
-  margin-top: 8px;
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.5;
-}
-
 .new-footer {
   border-top: 1px solid rgba(10, 20, 45, 0.08);
   padding: 18px 18px 24px;
@@ -679,8 +637,7 @@ export default {
 
 .hero,
 .trusted,
-.areas,
-.next {
+.areas {
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 420ms ease, transform 420ms ease;
@@ -688,8 +645,7 @@ export default {
 
 .hero.is-ready,
 .trusted.is-ready,
-.areas.is-ready,
-.next.is-ready {
+.areas.is-ready {
   opacity: 1;
   transform: translateY(0);
 }
@@ -700,10 +656,6 @@ export default {
 
 .areas.is-ready {
   transition-delay: 110ms;
-}
-
-.next.is-ready {
-  transition-delay: 170ms;
 }
 
 @keyframes float {
@@ -734,7 +686,6 @@ export default {
   .hero,
   .trusted,
   .areas,
-  .next,
   .cta-btn,
   .new-nav__btn,
   .area-link,
@@ -769,8 +720,7 @@ export default {
 
 .hero-panel,
 .trusted__inner,
-.area-card,
-.next__box {
+.area-card {
   background: linear-gradient(170deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 255, 0.72));
   border: 1px solid rgba(10, 20, 45, 0.08);
   backdrop-filter: blur(6px);
@@ -852,10 +802,6 @@ export default {
 
 .area-link:hover {
   background: rgba(255, 255, 255, 0.96);
-}
-
-.next__text {
-  color: rgba(10, 20, 45, 0.7);
 }
 
 .logo-pill {

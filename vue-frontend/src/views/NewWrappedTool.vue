@@ -1,5 +1,5 @@
 <template>
-  <NewToolShell v-if="config" :title="title" :subtitle="subtitle">
+  <NewToolShell v-if="config" :title="title">
     <component :is="asyncComp" />
   </NewToolShell>
   <div v-else class="new-tool-shell-error" role="alert">{{ $t("common.error") }}: {{ $t("common.notFound") }}</div>
@@ -63,9 +63,6 @@ export default {
     title() {
       if (!this.config) return "";
       return this.$t(this.config.titleKey);
-    },
-    subtitle() {
-      return this.$t("newHome.toolShellSubtitle");
     },
   },
   watch: {

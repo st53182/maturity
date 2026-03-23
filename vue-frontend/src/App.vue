@@ -206,15 +206,16 @@
 <script>
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
-import { computed, ref, getCurrentInstance } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-
+import { useI18n } from "vue-i18n";
 
 export default {
   setup() {
     const authStore = useAuthStore();
     const route = useRoute();
     const router = useRouter();
+    const { locale } = useI18n();
 
     // ✅ Проверяем авторизацию
     const isAuthenticated = computed(() => authStore.isAuthenticated);
@@ -314,14 +315,11 @@ export default {
       openTeamModalAndClose,
       openExternalLink,
       openExternalLinkAndClose,
-      switchLanguage: (lang) => {
-        // Access i18n through the global properties
-        const app = getCurrentInstance();
-        if (app) {
-          app.appContext.config.globalProperties.$i18n.locale = lang;
-          localStorage.setItem('language', lang);
-        }
-      }
+      switchLanguage(lang) {
+        // composition mode (legacy: false): locale is a ref — must use .value
+        locale.value = lang;
+        localStorage.setItem("language", lang);
+      },
     };
   },
 };

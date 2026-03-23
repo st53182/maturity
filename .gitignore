@@ -1,0 +1,3 @@
+# Локальные секреты монитора границы
+scripts/telegram.env
+border_monitor_state.json

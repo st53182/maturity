@@ -66,6 +66,13 @@
               >
                 {{ $t('maturity.no') }}
               </button>
+              <button
+                type="button"
+                :class="['btn-answer', 'btn-dont-know', { active: answers[q.id] === 'dont_know' }]"
+                @click="setAnswer(q.id, 'dont_know')"
+              >
+                Не знаю
+              </button>
             </div>
 
             <div class="comment-block">
@@ -235,7 +242,10 @@ export default {
         const arr = [];
         const commentsArr = [];
         for (let i = 0; i < total; i++) {
-          arr.push(this.answers[i] === true);
+          const a = this.answers[i];
+          if (a === true) arr.push(true);
+          else if (a === false) arr.push(false);
+          else arr.push('dont_know');
           const c = (this.comments[i] || '').toString().trim();
           commentsArr.push(c ? c : null);
         }
@@ -539,6 +549,7 @@ export default {
 
 .btn-yes.active { background: #10b981; border-color: #10b981; color: #fff; }
 .btn-no.active { background: #ef4444; border-color: #ef4444; color: #fff; }
+.btn-dont-know.active { background: #64748b; border-color: #64748b; color: #fff; }
 
 .btn-answer:hover:not(.active) { border-color: #9ca3af; background: #f3f4f6; }
 
@@ -677,6 +688,11 @@ export default {
 .take-maturity--new .btn-no.active {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(244, 63, 94, 0.88));
   border-color: rgba(239, 68, 68, 0.6);
+}
+
+.take-maturity--new .btn-dont-know.active {
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.95), rgba(71, 85, 105, 0.88));
+  border-color: rgba(100, 116, 139, 0.6);
 }
 
 .take-maturity--new .btn-nav.prev {

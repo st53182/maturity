@@ -23,3 +23,18 @@ cd vue-frontend && npm run build
 1. В `.env` или переменных окружения задайте `OPENAI_API_KEY=<ваш ключ>`. **Не коммитьте ключ в репозиторий.**
 2. Модель по умолчанию: `gpt-4o-mini`. Можно заменить через код, если требуется.
 3. При отсутствии ключа API вернёт `OPENAI_API_KEY не задан`.
+
+---
+
+## Оценка зрелости по ссылке (maturity link)
+
+- Канонический URL для участников: **`/new/maturity/{token}`** (старые `/maturity/...` редиректят на `/new/maturity/...`).
+- Ответы: **да / нет / не знаю** (`dont_know` в API); на радаре «не знаю» даёт тот же балл, что «нет» (0).
+- Рекомендации ИИ для пунктов «не знаю»: `POST /api/maturity/<token>/recommendations/dont-know` (кнопка на странице результатов).
+
+### Агрегированный дашборд (только для двух email)
+
+- Страницы: **`/maturity/artdash`** или **`/new/maturity/artdash`** (нужен вход).
+- Доступ: только пользователи с email **`artem@onagile.ru`** или **`artjoms.grinakins@gmail.com`** (проверка и на фронте, и на API).
+- API (с заголовком `Authorization: Bearer <JWT>`): `GET /api/maturity-admin/overview`, `GET /api/maturity-admin/aggregates`, `GET /api/maturity-admin/insights`, `DELETE /api/maturity-admin/session/<id>`.
+- Список email на сервере: `MATURITY_LINK_ADMIN_EMAILS` в [`maturity_link.py`](maturity_link.py); на клиенте — [`vue-frontend/src/config/maturityLinkAdmin.js`](vue-frontend/src/config/maturityLinkAdmin.js) (**держать в sync**).

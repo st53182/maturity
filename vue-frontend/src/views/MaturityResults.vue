@@ -40,6 +40,20 @@
           <h2 class="rec-title">{{ $t('maturity.recommendationsTitle') }}</h2>
           <div v-html="recommendationsHtml" class="rec-html"></div>
         </div>
+
+        <div v-if="hasDontKnow" class="recommendations-block dont-know-rec-block">
+          <h2 class="rec-title">Что сделать в следующем квартале (ответы «Не знаю»)</h2>
+          <p class="rec-hint">Практические шаги, чтобы команда прояснила, есть ли это у них.</p>
+          <button
+            type="button"
+            class="btn-rec btn-dont-know-rec"
+            :disabled="loadingDontKnowRecs"
+            @click="fetchDontKnowRecommendations"
+          >
+            {{ loadingDontKnowRecs ? 'Генерация…' : 'Получить рекомендации по «Не знаю»' }}
+          </button>
+          <div v-if="dontKnowHtml" v-html="dontKnowHtml" class="rec-html"></div>
+        </div>
       </div>
 
       <div class="actions">
@@ -76,8 +90,8 @@
               class="detail-card"
             >
               <p class="detail-question">{{ item.text }}</p>
-              <div class="detail-answer" :class="item.answer ? 'answer-yes' : 'answer-no'">
-                {{ item.answer ? $t('maturity.yes') : $t('maturity.no') }}
+              <div class="detail-answer" :class="item.answerClass">
+                {{ item.answerLabel }}
               </div>
               <div v-if="item.why_important" class="detail-why">
                 <strong>Почему это важно:</strong> {{ item.why_important }}
@@ -115,8 +129,8 @@
               class="detail-card"
             >
               <p class="detail-question"><span class="detail-q-num">{{ item.id + 1 }}.</span> {{ item.text }}</p>
-              <div class="detail-answer" :class="item.answer ? 'answer-yes' : 'answer-no'">
-                {{ item.answer ? $t('maturity.yes') : $t('maturity.no') }}
+              <div class="detail-answer" :class="item.answerClass">
+                {{ item.answerLabel }}
               </div>
               <div v-if="item.why_important" class="detail-why">
                 <strong>Почему это важно:</strong> {{ item.why_important }}
@@ -171,23 +185,48 @@ export default {
       exporting: false,
       recommendationsHtml: '',
       loadingRecs: false,
+      dontKnowHtml: '',
+      loadingDontKnowRecs: false,
       businessMetricsDisclaimer: '',
       businessMetricsGlossary: []
     };
   },
   computed: {
+    hasDontKnow() {
+      if (!Array.isArray(this.answers)) return false;
+      return this.answers.some((a) => a === 'dont_know');
+    },
     questionsByTheme() {
       const map = {};
       if (!this.questions.length || !Array.isArray(this.answers)) return map;
       for (const q of this.questions) {
         if (!map[q.theme]) map[q.theme] = [];
+        const raw = this.answers[q.id];
         map[q.theme].push({
           ...q,
-          answer: this.answers[q.id] === true,
+          answerRaw: raw,
+          answerLabel: this.formatAnswerLabel(raw),
+          answerClass: this.answerCssClass(raw),
           comment: (Array.isArray(this.comments) && this.comments[q.id]) ? this.comments[q.id] : ''
         });
       }
       return map;
+    },
+    allQuestionsWithAnswers() {
+      const questions = this.questions || [];
+      const answers = Array.isArray(this.answers) ? this.answers : [];
+      const comments = Array.isArray(this.comments) ? this.comments : [];
+      if (!questions.length) return [];
+      return questions.map(q => {
+        const raw = answers[q.id];
+        return {
+          ...q,
+          answerRaw: raw,
+          answerLabel: this.formatAnswerLabel(raw),
+          answerClass: this.answerCssClass(raw),
+          comment: comments[q.id] || ''
+        };
+      });
     },
     averageScore() {
       if (!this.results || !Object.keys(this.results).length) return 0;
@@ -280,16 +319,15 @@ export default {
     questionsForTheme(theme) {
       return this.questionsByTheme[theme] || [];
     },
-    allQuestionsWithAnswers() {
-      const questions = this.questions || [];
-      const answers = Array.isArray(this.answers) ? this.answers : [];
-      const comments = Array.isArray(this.comments) ? this.comments : [];
-      if (!questions.length) return [];
-      return questions.map(q => ({
-        ...q,
-        answer: answers[q.id] === true,
-        comment: comments[q.id] || ''
-      }));
+    formatAnswerLabel(raw) {
+      if (raw === true) return this.$t('maturity.yes');
+      if (raw === false) return this.$t('maturity.no');
+      return 'Не знаю';
+    },
+    answerCssClass(raw) {
+      if (raw === true) return 'answer-yes';
+      if (raw === false) return 'answer-no';
+      return 'answer-dont-know';
     },
     openDetail(theme) {
       this.selectedTheme = theme;
@@ -313,6 +351,19 @@ export default {
         this.recommendationsHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка загрузки рекомендаций') + '</p>';
       } finally {
         this.loadingRecs = false;
+      }
+    },
+    async fetchDontKnowRecommendations() {
+      if (this.loadingDontKnowRecs) return;
+      this.loadingDontKnowRecs = true;
+      this.dontKnowHtml = '';
+      try {
+        const res = await axios.post(`/api/maturity/${this.token}/recommendations/dont-know`);
+        this.dontKnowHtml = res.data.content || '';
+      } catch (e) {
+        this.dontKnowHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка') + '</p>';
+      } finally {
+        this.loadingDontKnowRecs = false;
       }
     },
     async exportPdf() {
@@ -562,6 +613,17 @@ export default {
 .detail-answer.answer-no {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.detail-answer.answer-dont-know {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.dont-know-rec-block .rec-hint {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0 0 0.75rem 0;
 }
 
 .detail-why,

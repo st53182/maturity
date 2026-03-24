@@ -27,6 +27,13 @@
             >
               Нет
             </button>
+            <button
+              type="button"
+              :class="['btn-answer', 'btn-dont-know', { active: answers[q.id] === 'dont_know' }]"
+              @click="setAnswer(q.id, 'dont_know')"
+            >
+              Не знаю
+            </button>
           </div>
 
           <div class="edit-comment">
@@ -106,7 +113,11 @@ export default {
         this.answers = {};
         this.comments = {};
         this.questions.forEach(q => {
-          this.answers[q.id] = ansList[q.id] === true;
+          const raw = ansList[q.id];
+          if (raw === true) this.answers[q.id] = true;
+          else if (raw === false) this.answers[q.id] = false;
+          else if (raw === 'dont_know') this.answers[q.id] = 'dont_know';
+          else this.answers[q.id] = !!raw;
           this.comments[q.id] = (comList[q.id] || '').toString();
         });
       } catch (e) {
@@ -120,7 +131,11 @@ export default {
     },
     async saveAndRecalc() {
       if (this.saving) return;
-      const arr = this.questions.map(q => this.answers[q.id] === true);
+      const arr = this.questions.map(q => {
+        const a = this.answers[q.id];
+        if (a === 'dont_know') return 'dont_know';
+        return a === true;
+      });
       const commentsArr = this.questions.map(q => {
         const s = (this.comments[q.id] || '').toString().trim();
         return s ? s : null;
@@ -234,6 +249,7 @@ export default {
 }
 .btn-answer.btn-yes.active { background: #d1fae5; border-color: #059669; color: #065f46; }
 .btn-answer.btn-no.active { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+.btn-answer.btn-dont-know.active { background: #e2e8f0; border-color: #64748b; color: #334155; }
 
 .edit-actions {
   display: flex;
@@ -334,6 +350,12 @@ export default {
 .edit-maturity--new .btn-answer.btn-no.active {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(244, 63, 94, 0.86));
   border-color: rgba(239, 68, 68, 0.58);
+  color: #fff;
+}
+
+.edit-maturity--new .btn-answer.btn-dont-know.active {
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.95), rgba(71, 85, 105, 0.86));
+  border-color: rgba(100, 116, 139, 0.58);
   color: #fff;
 }
 

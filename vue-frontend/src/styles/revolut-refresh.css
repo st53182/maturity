@@ -40,6 +40,59 @@ button {
   font-weight: 600;
   letter-spacing: 0.01em;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+  box-sizing: border-box;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.1rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* Compact / text-only controls (undo capsule sizing where components use plain links) */
+#app button.sidebar-btn,
+#app button.mobile-menu-btn,
+#app button.mobile-hamburger,
+#app button.lang-btn,
+#app button.lang-btn-mobile,
+#app button.modal-close-top,
+#app button.why-trigger,
+#app button.clarify-trigger,
+#app button.glossary-toggle {
+  min-height: unset;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+#app button.modal-close-top {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app button.mobile-hamburger {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+#app button.why-trigger,
+#app button.clarify-trigger,
+#app button.glossary-toggle {
+  min-height: auto;
+  padding: 0.25rem 0;
+  display: inline-flex;
+  width: auto;
+  white-space: normal;
+  text-align: left;
 }
 
 #app button:focus-visible {
@@ -47,18 +100,18 @@ button {
   outline-offset: 2px;
 }
 
-#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close) {
+#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.why-trigger):not(.clarify-trigger):not(.glossary-toggle):not(.btn-answer):not(.btn-nav):not(.theme-row):not(.detail-close):not(.btn-rec):not(.btn-dont-know-rec):not(.btn-edit):not(.btn-show-all):not(.btn-pdf) {
   border-radius: 14px !important;
   border: 1px solid rgba(20, 43, 102, 0.18);
 }
 
-#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.cancel-btn):not(.delete-btn):not(.remove-btn):not(.remove-option-btn):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.us-btn.secondary) {
+#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.cancel-btn):not(.delete-btn):not(.remove-btn):not(.remove-option-btn):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.us-btn.secondary):not(.why-trigger):not(.clarify-trigger):not(.glossary-toggle):not(.btn-answer):not(.btn-nav):not(.theme-row):not(.detail-close):not(.btn-rec):not(.btn-dont-know-rec):not(.btn-edit):not(.btn-show-all):not(.btn-pdf) {
   background: linear-gradient(145deg, var(--vl-primary-start), var(--vl-primary-end)) !important;
   color: #fff !important;
   box-shadow: 0 12px 26px rgba(20, 43, 102, 0.25);
 }
 
-#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.cancel-btn):not(.delete-btn):not(.remove-btn):not(.remove-option-btn):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.us-btn.secondary):hover:not(:disabled) {
+#app button:not(.sidebar-btn):not(.mobile-menu-btn):not(.mobile-hamburger):not(.lang-btn):not(.lang-btn-mobile):not(.cancel-btn):not(.delete-btn):not(.remove-btn):not(.remove-option-btn):not(.modal-close-top):not(.close-btn):not(.mobile-menu-close):not(.us-btn.secondary):not(.why-trigger):not(.clarify-trigger):not(.glossary-toggle):not(.btn-answer):not(.btn-nav):not(.theme-row):not(.detail-close):not(.btn-rec):not(.btn-dont-know-rec):not(.btn-edit):not(.btn-show-all):not(.btn-pdf):hover:not(:disabled) {
   background: linear-gradient(145deg, var(--vl-primary-hover-start), var(--vl-primary-hover-end)) !important;
   transform: translateY(-1px);
   box-shadow: 0 16px 32px rgba(20, 43, 102, 0.3);
@@ -193,4 +246,28 @@ button {
 /* Icon is before the input in DOM; keep scale off so emoji doesn’t overlap text */
 #app .input-wrapper:has(> .input-icon):focus-within > .input-icon {
   transform: none !important;
+}
+
+/* Админ-дашборд maturity: свои кнопки без глобальной «капсулы» */
+#app .maturity-admin-dash button {
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+#app .maturity-admin-dash button:hover:not(:disabled) {
+  filter: brightness(0.97);
+  transform: none;
+  background: #e2e8f0 !important;
+}
+
+#app .maturity-admin-dash button.dash-btn-danger {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border-color: #fecaca !important;
 }

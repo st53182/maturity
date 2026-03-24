@@ -1,0 +1,396 @@
+<template>
+  <div class="maturity-admin-dash">
+    <header class="dash-head">
+      <h1>Оценка зрелости по ссылке — сводка</h1>
+      <p class="dash-sub">Завершённых опросов (с валидными ответами): {{ aggregates.completed_sessions ?? '—' }}</p>
+    </header>
+
+    <div v-if="error" class="dash-error">{{ error }}</div>
+    <div v-if="loading" class="dash-loading">Загрузка…</div>
+
+    <template v-else>
+      <section class="dash-section">
+        <h2>Распределение ответов (все вопросы)</h2>
+        <div v-if="totalsChartData" class="chart-box">
+          <Bar :data="totalsChartData" :options="totalsChartOptions" />
+        </div>
+      </section>
+
+      <section class="dash-section">
+        <div class="insights-head">
+          <h2>ИИ: типичные слабые места</h2>
+          <button type="button" class="dash-btn" :disabled="loadingInsights" @click="loadInsights">
+            {{ loadingInsights ? '…' : 'Обновить текст' }}
+          </button>
+        </div>
+        <div v-if="insightsHtml" class="insights-html" v-html="insightsHtml"></div>
+        <p v-else class="muted">Нажмите «Обновить текст» (нужен OPENAI_API_KEY на сервере).</p>
+      </section>
+
+      <section class="dash-section">
+        <h2>Сессии</h2>
+        <div class="table-wrap">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Команда</th>
+                <th>Токен (хвост)</th>
+                <th>Создана</th>
+                <th>Завершена</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in sessions" :key="s.id">
+                <td>{{ s.id }}</td>
+                <td>{{ s.team_name || '—' }}</td>
+                <td class="mono">…{{ s.token_suffix }}</td>
+                <td>{{ formatDt(s.created_at) }}</td>
+                <td>{{ s.completed ? formatDt(s.completed_at) : '—' }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="dash-btn dash-btn-danger"
+                    :disabled="deletingId === s.id"
+                    @click="removeSession(s)"
+                  >
+                    {{ deletingId === s.id ? '…' : 'Удалить' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="dash-section">
+        <h2>Доли ответов по вопросам (первые 24)</h2>
+        <p class="muted small">Полная таблица — прокрутка; для каждого индекса — % среди завершённых сессий.</p>
+        <div class="q-grid">
+          <div v-for="q in previewQuestions" :key="q.index" class="q-card">
+            <div class="q-meta">
+              <span class="q-idx">#{{ q.index + 1 }}</span>
+              <span class="q-theme">{{ q.theme }}</span>
+            </div>
+            <p class="q-text">{{ q.short_text }}</p>
+            <div v-if="miniChartData(q)" class="mini-chart">
+              <Bar :data="miniChartData(q)" :options="miniChartOptions" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Bar } from 'vue-chartjs';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+function authHeaders() {
+  const t = localStorage.getItem('token');
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
+export default {
+  name: 'MaturityLinkAdminDashboard',
+  components: { Bar },
+  data() {
+    return {
+      loading: true,
+      error: null,
+      sessions: [],
+      aggregates: {},
+      deletingId: null,
+      insightsHtml: '',
+      loadingInsights: false
+    };
+  },
+  computed: {
+    previewQuestions() {
+      const qs = this.aggregates.questions;
+      if (!Array.isArray(qs)) return [];
+      return qs.slice(0, 24);
+    },
+    totalsChartData() {
+      const qs = this.aggregates.questions;
+      if (!Array.isArray(qs) || !qs.length) return null;
+      let y = 0;
+      let n = 0;
+      let d = 0;
+      for (const q of qs) {
+        const c = q.counts || {};
+        y += c.yes || 0;
+        n += c.no || 0;
+        d += c.dont_know || 0;
+      }
+      return {
+        labels: ['Все ответы'],
+        datasets: [
+          { label: 'Да', data: [y], backgroundColor: '#10b981' },
+          { label: 'Нет', data: [n], backgroundColor: '#ef4444' },
+          { label: 'Не знаю', data: [d], backgroundColor: '#94a3b8' }
+        ]
+      };
+    },
+    totalsChartOptions() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: { display: false }
+        },
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, beginAtZero: true }
+        }
+      };
+    },
+    miniChartOptions() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: false }
+        },
+        scales: {
+          x: { stacked: true, max: 100, ticks: { callback: (v) => `${v}%` } },
+          y: { stacked: true, display: false }
+        }
+      };
+    }
+  },
+  mounted() {
+    this.refresh();
+  },
+  methods: {
+    miniChartData(q) {
+      return {
+        labels: [''],
+        datasets: [
+          { label: 'Да', data: [q.yes_pct], backgroundColor: '#10b981' },
+          { label: 'Нет', data: [q.no_pct], backgroundColor: '#ef4444' },
+          { label: 'Не знаю', data: [q.dont_know_pct], backgroundColor: '#94a3b8' }
+        ]
+      };
+    },
+    formatDt(iso) {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+      } catch {
+        return iso;
+      }
+    },
+    async refresh() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const [ov, ag] = await Promise.all([
+          axios.get('/api/maturity-admin/overview', { headers: authHeaders() }),
+          axios.get('/api/maturity-admin/aggregates', { headers: authHeaders() })
+        ]);
+        this.sessions = ov.data.sessions || [];
+        this.aggregates = ag.data || {};
+      } catch (e) {
+        this.error = e.response?.data?.error || e.message || 'Ошибка загрузки';
+      } finally {
+        this.loading = false;
+      }
+    },
+    async loadInsights() {
+      this.loadingInsights = true;
+      this.insightsHtml = '';
+      try {
+        const res = await axios.get('/api/maturity-admin/insights', { headers: authHeaders() });
+        this.insightsHtml = res.data.content || '';
+      } catch (e) {
+        this.insightsHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
+      } finally {
+        this.loadingInsights = false;
+      }
+    },
+    async removeSession(s) {
+      if (!window.confirm(`Удалить сессию ${s.id} (${s.team_name || 'без имени'})?`)) return;
+      this.deletingId = s.id;
+      try {
+        await axios.delete(`/api/maturity-admin/session/${s.id}`, { headers: authHeaders() });
+        this.sessions = this.sessions.filter((x) => x.id !== s.id);
+        await this.refreshAggregatesOnly();
+      } catch (e) {
+        alert(e.response?.data?.error || 'Не удалось удалить');
+      } finally {
+        this.deletingId = null;
+      }
+    },
+    async refreshAggregatesOnly() {
+      try {
+        const ag = await axios.get('/api/maturity-admin/aggregates', { headers: authHeaders() });
+        this.aggregates = ag.data || {};
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.maturity-admin-dash {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.dash-head h1 {
+  font-size: 1.5rem;
+  margin: 0 0 0.35rem 0;
+  color: #0f172a;
+}
+
+.dash-sub {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.dash-error {
+  margin-top: 1rem;
+  padding: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 10px;
+}
+
+.dash-loading {
+  margin-top: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.dash-section {
+  margin-top: 2rem;
+}
+
+.dash-section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem 0;
+  color: #1e293b;
+}
+
+.chart-box {
+  height: 280px;
+  max-width: 520px;
+}
+
+.insights-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.insights-html {
+  margin-top: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.muted {
+  color: #64748b;
+}
+
+.muted.small {
+  font-size: 0.85rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.dash-table th,
+.dash-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dash-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.q-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.q-meta {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.q-idx {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.q-theme {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.q-text {
+  font-size: 0.8rem;
+  color: #334155;
+  margin: 0 0 8px 0;
+  line-height: 1.35;
+}
+
+.mini-chart {
+  height: 72px;
+}
+</style>

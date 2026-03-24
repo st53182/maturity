@@ -21,11 +21,25 @@ maturity_bp = Blueprint('maturity_link', __name__)
 QUESTIONS_COUNT = len(MATURITY_QUESTIONS)
 QUESTIONS_PER_THEME = 3
 
-# Держать в sync с vue-frontend/src/config/maturityLinkAdmin.js
-MATURITY_LINK_ADMIN_EMAILS = frozenset({
-    'artem@onagile.ru',
-    'artjoms.grinakins@gmail.com',
-})
+def _load_maturity_link_admin_emails():
+    """
+    Базовый список + MATURITY_LINK_ADMIN_EMAILS из окружения (через запятую).
+    Синхронизируйте дефолты с vue-frontend/src/config/maturityLinkAdmin.js (DEFAULT_EMAILS).
+    """
+    base = {
+        'artem@onagile.ru',
+        'artjoms.grinakins@gmail.com',
+    }
+    raw = os.environ.get('MATURITY_LINK_ADMIN_EMAILS') or ''
+    for part in raw.split(','):
+        e = part.strip().lower()
+        if e and '@' in e:
+            base.add(e)
+    return frozenset(base)
+
+
+# Держать дефолты в sync с vue-frontend/src/config/maturityLinkAdmin.js
+MATURITY_LINK_ADMIN_EMAILS = _load_maturity_link_admin_emails()
 
 
 def _theme_indices():

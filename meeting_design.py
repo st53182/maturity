@@ -9,6 +9,30 @@ from datetime import datetime, timedelta
 
 bp_meeting_design = Blueprint("meeting_design", __name__)
 
+LOCALE_NAMES = {
+    "ru": "Russian",
+    "en": "English",
+    "de": "German",
+    "uk": "Ukrainian",
+    "es": "Spanish",
+    "fr": "French",
+    "pl": "Polish",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "kk": "Kazakh",
+    "be": "Belarusian",
+}
+
+
+def locale_language_name(locale: str) -> str:
+    if not locale:
+        return "English"
+    base = str(locale).split("-")[0].split("_")[0].lower()
+    return LOCALE_NAMES.get(base, "English")
+
+
 def get_openai_client():
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -48,44 +72,34 @@ MEETING_SCHEMA = {
     }
 }
 
-def generate_meeting_prompt(meeting_type, goal, duration, constraints, lang='ru'):
-    if lang == 'ru':
-        return f"""
-Ты опытный фасилитатор встреч. Создай детальный дизайн встречи в формате фасилитационного гайда.
+TOPIC_SUGGESTIONS_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "meeting_conversation_topics",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "topics": {
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 5, "maxLength": 180},
+                    "minItems": 6,
+                    "maxItems": 8,
+                }
+            },
+            "required": ["topics"],
+            "additionalProperties": False,
+        },
+    },
+}
 
-Параметры встречи:
-- Тип: {meeting_type}
-- Цель: {goal}
-- Продолжительность: {duration} минут
-- Ограничения: {constraints}
 
-Используй лучшие практики из sessionlab.com и retromat.org. Включи разнообразные активности: ледоколы, групповые обсуждения, мозговые штурмы, рефлексии.
+def generate_meeting_prompt(meeting_type, goal, duration, constraints, locale="ru"):
+    lang_name = locale_language_name(locale)
+    return f"""
+You are an experienced meeting facilitator. Create a detailed meeting design as a facilitation guide.
 
-Формат ответа — ТОЛЬКО JSON-объект (никакого текста вне JSON) со структурой:
-{{
-  "blocks": [
-    {{
-      "time": "14:00",
-      "duration": 10,
-      "title": "Введение",
-      "description": "- Приветствие (30с)\\n- Логистика (60с)\\n- Правила (90с)",
-      "type": "opening"
-    }}
-  ]
-}}
-
-Требования:
-- "blocks" — массив объектов с полями: time (HH:MM), duration (мин., целое), title (строка), description (строка с пунктами), type (one of: opening, icebreaker, discussion, brainstorm, reflection, break, closing).
-- Время (time) должно идти по возрастанию без пересечений и соответствовать длительности каждого блока.
-- Сумма всех duration строго равна {duration}.
-- "description" оформляй как пункты, КАЖДЫЙ пункт с новой строки.
-- Разделяй пункты символом \n, не пиши несколько пунктов в одной строке.
-- Пример: "description": "- Приветствие (30с)\n- Логистика (60с)\n- Правила (90с)"
-- Не добавляй никаких лишних полей, комментариев или пояснений. Верни только валидный JSON-объект.
-"""
-    else:
-        return f"""
-You are an experienced meeting facilitator. Create a detailed meeting design in a facilitation guide format.
+IMPORTANT: All human-readable text inside JSON fields (title, description of each block) must be written in {lang_name} (locale: {locale}).
 
 Meeting parameters:
 - Type: {meeting_type}
@@ -95,7 +109,7 @@ Meeting parameters:
 
 Use best practices from sessionlab.com and retromat.org. Include diverse activities: icebreakers, group discussions, brainstorming, reflections.
 
-Response format — return ONLY a JSON object (no text outside JSON) with this structure:
+Return ONLY a JSON object (no text outside JSON) with this structure:
 {{
   "blocks": [
     {{
@@ -109,42 +123,17 @@ Response format — return ONLY a JSON object (no text outside JSON) with this s
 }}
 
 Requirements:
-- "blocks" is an array of objects with fields: time (HH:MM), duration (minutes, integer), title (string), description (string with bullet points), type (one of: opening, icebreaker, discussion, brainstorm, reflection, break, closing).
-- Times must be sequential, non-overlapping, and consistent with each block duration.
-- The sum of all durations MUST equal {duration}.
-- Format "description" as concise bullet points starting with "- ", no code fences or markdown.
-- Do not include extra fields, comments, or explanations. Return a valid JSON object only.
+- "blocks": array of objects with time (HH:MM), duration (integer minutes), title (string), description (string with bullet lines starting with "- "), type (one of: opening, icebreaker, discussion, brainstorm, reflection, break, closing).
+- Times sequential, non-overlapping; sum of durations MUST equal {duration}.
+- Separate description lines with \\n.
+- No extra fields or markdown fences. Valid JSON only.
 """
 
 
-def regenerate_block_prompt(block, meeting_context, lang='ru'):
-    if lang == 'ru':
-        return f"""
-Перегенерируй этот блок встречи с учетом контекста:
-
-Текущий блок:
-- Время: {block.get('time')}
-- Продолжительность: {block.get('duration')} минут
-- Название: {block.get('title')}
-- Описание: {block.get('description')}
-- Тип: {block.get('type')}
-
-Контекст встречи: {meeting_context}
-
-Создай альтернативную активность того же типа и продолжительности. Используй практики из sessionlab.com и retromat.org.
-
-Формат ответа - JSON объект (БЕЗ дополнительного текста):
-{{
-  "time": "{block.get('time')}",
-  "duration": {block.get('duration')},
-  "title": "Новое название",
-  "description": "Новое подробное описание активности",
-  "type": "{block.get('type')}"
-}}
-"""
-    else:
-        return f"""
-Regenerate this meeting block considering the context:
+def regenerate_block_prompt(block, meeting_context, locale="ru"):
+    lang_name = locale_language_name(locale)
+    return f"""
+Regenerate this meeting block. All text in title and description must be in {lang_name}.
 
 Current block:
 - Time: {block.get('time')}
@@ -155,17 +144,142 @@ Current block:
 
 Meeting context: {meeting_context}
 
-Create an alternative activity of the same type and duration. Use practices from sessionlab.com and retromat.org.
+Create an alternative activity of the same type and duration. Use sessionlab.com and retromat.org style practices.
 
-Response format - JSON object (NO additional text):
+Return ONLY a JSON object:
 {{
   "time": "{block.get('time')}",
   "duration": {block.get('duration')},
   "title": "New title",
-  "description": "New detailed activity description",
+  "description": "New detailed activity description with bullet lines",
   "type": "{block.get('type')}"
 }}
 """
+
+
+@bp_meeting_design.route("/api/meeting-design/ai-conversation-topics", methods=["POST"])
+@jwt_required()
+def ai_conversation_topics():
+    """Короткие темы и углы для разговора на заданную тему встречи (язык — locale)."""
+    try:
+        data = request.get_json() or {}
+        theme = (data.get("theme") or "").strip()
+        if not theme:
+            return jsonify({"error": "Укажите тему или фокус встречи"}), 400
+        meeting_type = (data.get("meeting_type") or "general").strip()
+        locale = (data.get("locale") or "ru").strip()[:12]
+        lang_name = locale_language_name(locale)
+
+        client = get_openai_client()
+        if not client:
+            return jsonify({"error": "OpenAI API не настроен"}), 500
+
+        prompt = f"""
+You help facilitators prepare discussion. Meeting type (hint): {meeting_type}.
+Focus / theme: {theme}
+
+Generate exactly 6 to 8 SHORT lines. Each line is ONE concise conversation theme or angle (max ~120 characters).
+Language: {lang_name}. No numbering in strings. Practical and specific.
+Return JSON only with key "topics" (array of strings).
+"""
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You output only valid JSON matching the schema. Be concise.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            response_format=TOPIC_SUGGESTIONS_SCHEMA,
+        )
+        out = json.loads(response.choices[0].message.content)
+        topics = out.get("topics") or []
+        return jsonify({"topics": topics}), 200
+    except Exception as e:
+        print(f"ai_conversation_topics: {e}")
+        return jsonify({"error": "Не удалось получить темы"}), 500
+
+
+@bp_meeting_design.route("/api/meeting-design/ai-facilitator-help", methods=["POST"])
+@jwt_required()
+def ai_facilitator_help():
+    """Текстовая подсказка фасилитатору (без озвучивания)."""
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json() or {}
+        design_id = data.get("design_id")
+        block_index = data.get("block_index")
+        question = (data.get("question") or "").strip()
+        locale = (data.get("locale") or "ru").strip()[:12]
+        lang_name = locale_language_name(locale)
+
+        if not design_id:
+            return jsonify({"error": "Не указан design_id"}), 400
+
+        design = MeetingDesign.query.filter_by(id=design_id, user_id=user_id).first()
+        if not design:
+            return jsonify({"error": "Дизайн встречи не найден"}), 404
+
+        ctx_lines = [
+            f"Title: {design.title}",
+            f"Type: {design.meeting_type}",
+            f"Goal: {design.goal}",
+            f"Duration minutes: {design.duration_minutes}",
+        ]
+        if design.constraints:
+            ctx_lines.append(f"Constraints: {design.constraints}")
+
+        if block_index is not None:
+            try:
+                bi = int(block_index)
+            except (TypeError, ValueError):
+                return jsonify({"error": "Некорректный block_index"}), 400
+            if bi < 0 or bi >= len(design.blocks or []):
+                return jsonify({"error": "Блок не найден"}), 404
+            b = design.blocks[bi]
+            ctx_lines.append(f"Selected block #{bi + 1}: {b.get('time')} {b.get('title')} ({b.get('duration')} min, type {b.get('type')})")
+            ctx_lines.append(f"Block description:\n{b.get('description', '')}")
+        else:
+            ctx_lines.append("Context: whole meeting agenda.")
+            for i, b in enumerate(design.blocks or []):
+                ctx_lines.append(f"Block {i+1}: {b.get('time')} {b.get('title')} — {b.get('type')}")
+
+        ctx = "\n".join(ctx_lines)
+
+        client = get_openai_client()
+        if not client:
+            return jsonify({"error": "OpenAI API не настроен"}), 500
+
+        if question:
+            user_msg = (
+                f"Facilitator question (answer in {lang_name}, plain text, short paragraphs or bullets, no preamble):\n"
+                f"{question}\n\n---\n{ctx}"
+            )
+        else:
+            user_msg = (
+                f"Give a concise facilitator cheat sheet in {lang_name}: opening phrases, 1–2 watch-outs, "
+                f"one tip if discussion stalls. Max 120 words. Plain text, bullets allowed. No greeting.\n\n{ctx}"
+            )
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a senior meeting facilitator. Reply only with helpful text, no JSON.",
+                },
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.6,
+            max_tokens=600,
+        )
+        answer = (response.choices[0].message.content or "").strip()
+        return jsonify({"answer": answer}), 200
+    except Exception as e:
+        print(f"ai_facilitator_help: {e}")
+        return jsonify({"error": "Не удалось получить ответ"}), 500
+
 
 @bp_meeting_design.route("/api/meeting-design/generate", methods=["POST"])
 @jwt_required()
@@ -180,11 +294,12 @@ def generate_meeting_design():
         constraints = data.get('constraints', '')
         team_id = data.get('team_id')
         title = data.get('title', f"{meeting_type} - {goal[:50]}")
-        
+        locale = (data.get("locale") or "ru").strip()[:12]
+
         if not all([meeting_type, goal, duration]):
             return jsonify({"error": "Отсутствуют обязательные поля"}), 400
         
-        prompt = generate_meeting_prompt(meeting_type, goal, duration, constraints)
+        prompt = generate_meeting_prompt(meeting_type, goal, duration, constraints, locale=locale)
         
         client = get_openai_client()
         if not client:
@@ -241,8 +356,9 @@ def regenerate_block():
         
         current_block = meeting_design.blocks[block_index]
         meeting_context = f"Тип: {meeting_design.meeting_type}, Цель: {meeting_design.goal}"
-        
-        prompt = regenerate_block_prompt(current_block, meeting_context)
+        locale = (data.get("locale") or "ru").strip()[:12]
+
+        prompt = regenerate_block_prompt(current_block, meeting_context, locale=locale)
         
         client = get_openai_client()
         if not client:

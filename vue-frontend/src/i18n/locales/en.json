@@ -310,7 +310,32 @@
     "errorLoading": "Error loading meeting designs",
     "errorSaving": "Error saving meeting design",
     "errorGenerating": "Error generating meeting design",
-    "errorRegenerating": "Error regenerating block"
+    "errorRegenerating": "Error regenerating block",
+    "ai": {
+      "fabTitle": "AI: conversation topics",
+      "panelTitle": "Conversation topics",
+      "panelSubtitle": "Set the meeting focus and response language — the AI will suggest short topic lines for discussion.",
+      "themeLabel": "Meeting focus / theme",
+      "themePlaceholder": "E.g. post-mortem after a failed release, onboarding a new lead…",
+      "responseLang": "Response language",
+      "topicContextType": "Meeting type (for context)",
+      "getTopics": "Get topics",
+      "topicsLoading": "Finding topics…",
+      "applyToGoal": "Insert into meeting goal",
+      "minimize": "Minimize",
+      "closePanel": "Close",
+      "viewAiTitle": "AI facilitator helper",
+      "viewAiHint": "Text-only hints (no voice). Pick context and optionally ask a question.",
+      "contextWhole": "Whole meeting",
+      "contextBlock": "Single block",
+      "selectBlock": "Block",
+      "yourQuestion": "Your question (optional)",
+      "questionPlaceholder": "E.g. how to engage quiet participants?",
+      "getHelp": "Get answer",
+      "helpLoading": "Processing…",
+      "quickHelp": "Quick hint",
+      "noTopics": "Topics will appear here after you request them."
+    }
   },
   "home": {
     "title": "Assess Your Agile Team's Maturity",

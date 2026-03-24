@@ -5,9 +5,94 @@
     <div v-if="loading" class="loading">⏳ {{ $t('common.loading') }}</div>
     <div v-else-if="error" class="error">❌ {{ error }}</div>
 
-    <div v-else>
+    <template v-else>
+    <button
+      v-if="!topicPanelOpen && !showCreateModal && !showViewModal && !showEditModal"
+      type="button"
+      class="ai-fab"
+      :title="$t('meetingDesign.ai.fabTitle')"
+      :aria-label="$t('meetingDesign.ai.fabTitle')"
+      @click="topicPanelOpen = true"
+    >
+      <span class="ai-fab__glyph" aria-hidden="true">✨</span>
+    </button>
+
+    <div
+      v-if="topicPanelOpen"
+      class="topic-panel-overlay"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="$t('meetingDesign.ai.panelTitle')"
+      @click.self="minimizeTopicPanel"
+    >
+      <div class="topic-panel" @click.stop>
+        <div class="topic-panel__head">
+          <h2>{{ $t('meetingDesign.ai.panelTitle') }}</h2>
+          <div class="topic-panel__head-actions">
+            <button type="button" class="topic-panel__icon-btn" :title="$t('meetingDesign.ai.minimize')" @click="minimizeTopicPanel">▁</button>
+          </div>
+        </div>
+        <p class="topic-panel__lead">{{ $t('meetingDesign.ai.panelSubtitle') }}</p>
+
+        <div class="form-group">
+          <label>{{ $t('meetingDesign.ai.responseLang') }}</label>
+          <select v-model="aiLocale" class="form-select">
+            <option value="">{{ $t('meetingDesign.ai.responseLang') }} ({{ $i18n.locale }})</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="uk">Українська</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="pl">Polski</option>
+            <option value="kk">Қазақша</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>{{ $t('meetingDesign.ai.topicContextType') }}</label>
+          <select v-model="topicMeetingType" class="form-select">
+            <option value="retrospective">{{ $t('meetingDesign.types.retrospective') }}</option>
+            <option value="planning">{{ $t('meetingDesign.types.planning') }}</option>
+            <option value="brainstorm">{{ $t('meetingDesign.types.brainstorm') }}</option>
+            <option value="workshop">{{ $t('meetingDesign.types.workshop') }}</option>
+            <option value="standup">{{ $t('meetingDesign.types.standup') }}</option>
+            <option value="review">{{ $t('meetingDesign.types.review') }}</option>
+            <option value="kickoff">{{ $t('meetingDesign.types.kickoff') }}</option>
+            <option value="training">{{ $t('meetingDesign.types.training') }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>{{ $t('meetingDesign.ai.themeLabel') }}</label>
+          <textarea
+            v-model="topicTheme"
+            class="form-textarea"
+            rows="3"
+            :placeholder="$t('meetingDesign.ai.themePlaceholder')"
+          />
+        </div>
+
+        <div class="topic-panel__actions">
+          <button type="button" class="confirm-btn" :disabled="topicLoading || !topicTheme.trim()" @click="fetchConversationTopics">
+            {{ topicLoading ? $t('meetingDesign.ai.topicsLoading') : $t('meetingDesign.ai.getTopics') }}
+          </button>
+        </div>
+
+        <p v-if="topicLoading" class="topic-panel__status">{{ $t('meetingDesign.ai.topicsLoading') }}</p>
+
+        <ul v-if="topicTopics.length" class="topic-list">
+          <li v-for="(t, idx) in topicTopics" :key="idx" class="topic-list__item">
+            <span class="topic-list__text">{{ t }}</span>
+            <button type="button" class="topic-list__apply" @click="applyTopicToGoal(t)">{{ $t('meetingDesign.ai.applyToGoal') }}</button>
+          </li>
+        </ul>
+        <p v-else-if="!topicLoading && topicRequestedOnce" class="topic-panel__empty">{{ $t('meetingDesign.ai.noTopics') }}</p>
+      </div>
+    </div>
+
       <div class="action-buttons">
-        <button class="create-btn" @click="showCreateModal = true">
+        <button type="button" class="create-btn" @click="openCreateModal">
           ➕ {{ $t('meetingDesign.createNew') }}
         </button>
       </div>
@@ -21,7 +106,7 @@
           <h3>{{ design.title }}</h3>
           <p><strong>{{ $t('meetingDesign.meetingType') }}:</strong> {{ design.meeting_type }}</p>
           <p><strong>{{ $t('meetingDesign.duration') }}:</strong> {{ design.duration_minutes }} {{ $t('meetingDesign.minutes') }}</p>
-          <p><strong>{{ $t('meetingDesign.goal') }}:</strong> {{ design.goal.substring(0, 100) }}...</p>
+          <p><strong>{{ $t('meetingDesign.goal') }}:</strong> {{ goalPreview(design.goal) }}</p>
           
           <div class="design-actions">
             <button class="view-btn" @click="viewDesign(design)">👁️ Просмотр</button>
@@ -29,7 +114,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </template>
 
     <!-- Create Meeting Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
@@ -89,6 +174,21 @@
         </div>
 
         <div class="form-group">
+          <label>{{ $t('meetingDesign.ai.responseLang') }}</label>
+          <select v-model="aiLocale" class="form-select">
+            <option value="">{{ $t('meetingDesign.ai.responseLang') }} ({{ $i18n.locale }})</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="uk">Українська</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="pl">Polski</option>
+            <option value="kk">Қазақша</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>{{ $t('meetingDesign.constraints') }}</label>
           <div class="constraint-labels">
             <label v-for="(label, key) in constraintLabels" :key="key" class="constraint-label">
@@ -98,6 +198,12 @@
           </div>
           <textarea v-model="newDesign.constraints" class="form-textarea" rows="2" placeholder="Дополнительные ограничения..."></textarea>
         </div>
+
+        <p class="create-modal__ai-row">
+          <button type="button" class="create-modal__ai-link" @click="openTopicPanelFromCreate">
+            <span aria-hidden="true">✨</span> {{ $t('meetingDesign.ai.fabTitle') }}
+          </button>
+        </p>
 
         <div class="modal-buttons">
           <button class="confirm-btn" @click="generateDesign" :disabled="generating">
@@ -109,11 +215,73 @@
     </div>
 
     <!-- View Design Modal -->
-    <div v-if="showViewModal && currentDesign" class="modal-overlay" @click.self="showViewModal = false">
+    <div v-if="showViewModal && currentDesign" class="modal-overlay" @click.self="closeViewModal">
       <div class="modal view-modal">
         <div class="modal-header">
           <h2>{{ currentDesign.title }}</h2>
-          <button class="close-btn" @click="showViewModal = false">✕</button>
+          <div class="modal-header__tools">
+            <button
+              type="button"
+              class="view-ai-fab"
+              :title="$t('meetingDesign.ai.viewAiTitle')"
+              :aria-expanded="viewAiOpen"
+              @click="viewAiOpen = !viewAiOpen"
+            >
+              <span aria-hidden="true">✨</span>
+            </button>
+            <button class="close-btn" @click="closeViewModal">✕</button>
+          </div>
+        </div>
+
+        <div v-show="viewAiOpen" class="view-ai-box">
+          <p class="view-ai-box__hint">{{ $t('meetingDesign.ai.viewAiHint') }}</p>
+          <div class="form-group">
+            <label>{{ $t('meetingDesign.ai.responseLang') }}</label>
+            <select v-model="viewAiLocale" class="form-select">
+              <option value="">{{ $t('meetingDesign.ai.responseLang') }} ({{ $i18n.locale }})</option>
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+              <option value="uk">Українська</option>
+              <option value="de">Deutsch</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="pl">Polski</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('meetingDesign.ai.selectBlock') }}</label>
+            <select v-model="viewAiContext" class="form-select">
+              <option value="whole">{{ $t('meetingDesign.ai.contextWhole') }}</option>
+              <option v-for="(b, i) in (currentDesign.blocks || [])" :key="'b-' + i" :value="String(i)">
+                {{ i + 1 }}. {{ b.title }} ({{ b.time }})
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('meetingDesign.ai.yourQuestion') }}</label>
+            <textarea
+              v-model="viewAiQuestion"
+              class="form-textarea"
+              rows="2"
+              :placeholder="$t('meetingDesign.ai.questionPlaceholder')"
+            />
+          </div>
+          <div class="view-ai-box__actions">
+            <button type="button" class="confirm-btn" :disabled="viewAiLoading" @click="fetchFacilitatorHelp(false)">
+              {{ viewAiLoading ? $t('meetingDesign.ai.helpLoading') : $t('meetingDesign.ai.quickHelp') }}
+            </button>
+            <button
+              type="button"
+              class="cancel-btn"
+              :disabled="viewAiLoading || !viewAiQuestion.trim()"
+              @click="fetchFacilitatorHelp(true)"
+            >
+              {{ viewAiLoading ? $t('meetingDesign.ai.helpLoading') : $t('meetingDesign.ai.getHelp') }}
+            </button>
+          </div>
+          <div v-if="viewAiLoading" class="view-ai-box__loading" role="status">{{ $t('meetingDesign.ai.helpLoading') }}</div>
+          <p v-if="viewAiError" class="view-ai-box__error">{{ viewAiError }}</p>
+          <div v-if="viewAiAnswer" class="view-ai-box__answer">{{ viewAiAnswer }}</div>
         </div>
 
         <div class="design-info">
@@ -125,7 +293,7 @@
 
         <div class="blocks-container">
           <h3>{{ $t('meetingDesign.blocks') }}</h3>
-          <div v-for="(block, index) in currentDesign.blocks" :key="index" class="block-card">
+          <div v-for="(block, index) in (currentDesign.blocks || [])" :key="index" class="block-card">
             <div class="block-header">
               <div class="block-time">
                 <strong>{{ block.time }}</strong> - {{ block.title }}
@@ -216,8 +384,33 @@ export default {
         team_id: '',
         constraints: ''
       },
-      constraintLabels: {}
+      constraintLabels: {},
+      topicPanelOpen: false,
+      topicTheme: '',
+      topicTopics: [],
+      topicLoading: false,
+      topicRequestedOnce: false,
+      topicError: '',
+      aiLocale: '',
+      topicMeetingType: 'retrospective',
+      viewAiOpen: true,
+      viewAiLocale: '',
+      viewAiContext: 'whole',
+      viewAiQuestion: '',
+      viewAiAnswer: '',
+      viewAiLoading: false,
+      viewAiError: ''
     };
+  },
+  computed: {
+    effectiveLocale() {
+      const l = (this.aiLocale || this.$i18n.locale || 'ru').toString();
+      return l.split('-')[0].slice(0, 12);
+    },
+    viewEffectiveLocale() {
+      const l = (this.viewAiLocale || this.$i18n.locale || 'ru').toString();
+      return l.split('-')[0].slice(0, 12);
+    }
   },
   async mounted() {
     this.constraintLabels = {
@@ -300,7 +493,8 @@ export default {
         
         const response = await axios.post('/api/meeting-design/regenerate-block', {
           design_id: this.currentDesign.id,
-          block_index: blockIndex
+          block_index: blockIndex,
+          locale: this.viewEffectiveLocale
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -383,9 +577,118 @@ export default {
       }
     },
 
+    goalPreview(goal) {
+      if (!goal || typeof goal !== 'string') {
+        return '';
+      }
+      return goal.length > 100 ? `${goal.slice(0, 100)}…` : goal;
+    },
+
+    openCreateModal() {
+      this.topicMeetingType = this.newDesign.meeting_type || 'retrospective';
+      this.showCreateModal = true;
+    },
+
+    minimizeTopicPanel() {
+      this.topicPanelOpen = false;
+    },
+
+    async fetchConversationTopics() {
+      const theme = (this.topicTheme || '').trim();
+      if (!theme) {
+        return;
+      }
+      this.topicLoading = true;
+      this.topicRequestedOnce = true;
+      this.topicError = '';
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.post(
+          '/api/meeting-design/ai-conversation-topics',
+          {
+            theme,
+            meeting_type: this.topicMeetingType,
+            locale: this.effectiveLocale
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        this.topicTopics = Array.isArray(data.topics) ? data.topics : [];
+      } catch (error) {
+        console.error('ai-conversation-topics:', error);
+        this.topicTopics = [];
+        const msg =
+          (error.response && error.response.data && error.response.data.error) ||
+          this.$t('meetingDesign.errorGenerating');
+        this.topicError = msg;
+      } finally {
+        this.topicLoading = false;
+      }
+    },
+
+    applyTopicToGoal(t) {
+      const line = (t || '').trim();
+      if (!line) {
+        return;
+      }
+      this.newDesign.goal = this.newDesign.goal
+        ? `${this.newDesign.goal.trim()}\n\n${line}`
+        : line;
+      this.topicPanelOpen = false;
+      this.showCreateModal = true;
+    },
+
+    async fetchFacilitatorHelp(useQuestion) {
+      if (!this.currentDesign || !this.currentDesign.id) {
+        return;
+      }
+      if (useQuestion && !(this.viewAiQuestion || '').trim()) {
+        return;
+      }
+      this.viewAiLoading = true;
+      this.viewAiError = '';
+      this.viewAiAnswer = '';
+      try {
+        const token = localStorage.getItem('token');
+        const block_index =
+          this.viewAiContext === 'whole' ? null : parseInt(this.viewAiContext, 10);
+        const question = useQuestion ? (this.viewAiQuestion || '').trim() : '';
+        const { data } = await axios.post(
+          '/api/meeting-design/ai-facilitator-help',
+          {
+            design_id: this.currentDesign.id,
+            block_index,
+            question,
+            locale: this.viewEffectiveLocale
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        this.viewAiAnswer = (data && data.answer) ? String(data.answer) : '';
+      } catch (error) {
+        console.error('ai-facilitator-help:', error);
+        const msg =
+          (error.response && error.response.data && error.response.data.error) ||
+          this.$t('meetingDesign.errorGenerating');
+        this.viewAiError = msg;
+      } finally {
+        this.viewAiLoading = false;
+      }
+    },
+
     viewDesign(design) {
-      this.currentDesign = { ...design };
+      this.currentDesign = JSON.parse(JSON.stringify(design));
+      this.viewAiOpen = true;
+      this.viewAiLocale = '';
+      this.viewAiContext = 'whole';
+      this.viewAiQuestion = '';
+      this.viewAiAnswer = '';
+      this.viewAiError = '';
+      this.viewAiLoading = false;
       this.showViewModal = true;
+    },
+
+    closeViewModal() {
+      this.showViewModal = false;
+      this.currentDesign = null;
     },
 
     editBlock(blockIndex) {
@@ -580,6 +883,28 @@ h1 {
 
 .create-modal {
   width: 600px;
+}
+
+.create-modal__ai-row {
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.create-modal__ai-link {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6366f1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: inherit;
+}
+
+.create-modal__ai-link:hover {
+  color: #4f46e5;
 }
 
 .view-modal {
@@ -820,6 +1145,238 @@ h1 {
   font-weight: bold;
 }
 
+.modal-header__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-ai-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: linear-gradient(145deg, #faf5ff 0%, #eef2ff 100%);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.view-ai-fab:hover {
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+  transform: translateY(-1px);
+}
+
+.view-ai-box {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.view-ai-box__hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.view-ai-box__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.view-ai-box__loading {
+  font-size: 14px;
+  color: #6366f1;
+  margin: 8px 0 0;
+}
+
+.view-ai-box__error {
+  color: #dc2626;
+  font-size: 14px;
+  margin: 8px 0 0;
+}
+
+.view-ai-box__answer {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.ai-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1005;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ai-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.5);
+}
+
+.ai-fab__glyph {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.topic-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+@media (min-width: 640px) {
+  .topic-panel-overlay {
+    align-items: center;
+  }
+}
+
+.topic-panel {
+  width: 100%;
+  max-width: 520px;
+  max-height: min(90vh, 640px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px 22px 24px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+
+.topic-panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.topic-panel__head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.topic-panel__head-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.topic-panel__icon-btn {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 8px;
+  width: 36px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.topic-panel__icon-btn:hover {
+  background: #f3f4f6;
+}
+
+.topic-panel__lead {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.topic-panel__actions {
+  margin-bottom: 12px;
+}
+
+.topic-panel__status,
+.topic-panel__error,
+.topic-panel__empty {
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.topic-panel__error {
+  color: #dc2626;
+}
+
+.topic-panel__empty {
+  color: #9ca3af;
+}
+
+.topic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.topic-list__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.topic-list__item:last-child {
+  border-bottom: none;
+}
+
+.topic-list__text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.topic-list__apply {
+  flex-shrink: 0;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #4338ca;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.topic-list__apply:hover {
+  background: #e0e7ff;
+}
+
 @media (max-width: 768px) {
   .meeting-design-container {
     margin-left: 0;
@@ -838,6 +1395,11 @@ h1 {
   
   .constraint-labels {
     grid-template-columns: 1fr;
+  }
+
+  .ai-fab {
+    right: 16px;
+    bottom: 16px;
   }
 }
 </style>

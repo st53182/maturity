@@ -11,6 +11,64 @@ def get_openai_client():
 
 bp_system_thinking = Blueprint("system_thinking", __name__)
 
+# Порядок уровней (сверху вниз айсберга). Имя ключа = имя поля в модели.
+LEVEL_ORDER = ["event", "pattern", "system_structure", "mental_model", "experience"]
+
+# Вопросы и описания для ИИ по каждому уровню (заполнение в любом порядке).
+PER_LEVEL = {
+    "event": {
+        "question": "Опишите конкретное событие или симптом: что произошло, кто участвовал, когда это заметили?",
+        "description": (
+            "Событие — видимая часть айсберга: факт, инцидент, симптом. "
+            "Пример: «За день до релиза снова отложили поставку из‑за ночных багов»."
+        ),
+    },
+    "pattern": {
+        "question": "Какая закономерность или повторяющийся паттерн за этим стоит?",
+        "description": (
+            "Паттерн — то, что повторяется во времени или при схожих условиях. "
+            "Пример: «Третий спринт подряд срываем демо из‑за недотестированных задач»."
+        ),
+    },
+    "system_structure": {
+        "question": "Какие структуры, процессы, правила или процедуры в системе поддерживают этот паттерн?",
+        "description": (
+            "Системная структура — формальные и неформальные процессы, роли, метрики, договорённости. "
+            "Пример: «Нет отдельного слота на регресс; приёмка только по чеклисту разработчика»."
+        ),
+    },
+    "mental_model": {
+        "question": "Какие убеждения или установки людей поддерживают эту конструкцию?",
+        "description": (
+            "Ментальная модель — то, во что люди искренне верят и что оправдывает текущее поведение. "
+            "Пример: «Тестирование всегда тормозит, лучше быстро выкатить и починить в бою»."
+        ),
+    },
+    "experience": {
+        "question": "Какой прошлый опыт мог сформировать такие установки?",
+        "description": (
+            "Опыт — конкретные ситуации из прошлого, которые укрепили убеждения. "
+            "Пример: «Год назад жёсткий дедлайн сорвали из‑за долгих тестов — с тех пор их недооценивают»."
+        ),
+    },
+}
+
+
+def _iceberg_fully_filled(iceberg) -> bool:
+    return all(
+        (getattr(iceberg, k) or "").strip()
+        for k in LEVEL_ORDER
+    )
+
+
+def _clear_solutions_if_needed(iceberg, fields_updated: bool, resume_level: str = None) -> None:
+    if not fields_updated:
+        return
+    if iceberg.solutions:
+        iceberg.solutions = None
+    if iceberg.current_level == "completed":
+        iceberg.current_level = resume_level if resume_level in LEVEL_ORDER else "experience"
+
 @bp_system_thinking.route("/api/system-thinking", methods=["POST"])
 @jwt_required()
 def create_iceberg():
@@ -50,70 +108,99 @@ def list_icebergs():
     
     return jsonify([iceberg.to_dict() for iceberg in icebergs])
 
-@bp_system_thinking.route("/api/system-thinking/<int:iceberg_id>/ask-question", methods=["POST"])
+@bp_system_thinking.route("/api/system-thinking/level-guide", methods=["GET"])
+def level_guide():
+    """Справка по уровням айсберга (можно вызывать без JWT для статического контента)."""
+    out = []
+    titles = {
+        "event": "Событие",
+        "pattern": "Паттерн поведения",
+        "system_structure": "Системная структура",
+        "mental_model": "Ментальная модель",
+        "experience": "Опыт",
+    }
+    for i, key in enumerate(LEVEL_ORDER, start=1):
+        cfg = PER_LEVEL[key]
+        out.append({
+            "id": key,
+            "order": i,
+            "title": titles[key],
+            "question": cfg["question"],
+            "description": cfg["description"],
+        })
+    return jsonify({"levels": out})
+
+
+@bp_system_thinking.route("/api/system-thinking/<int:iceberg_id>/save-state", methods=["POST"])
 @jwt_required()
-def ask_question(iceberg_id):
-    """Задать вопрос на текущем уровне айсберга"""
+def save_state(iceberg_id):
+    """Автосохранение полей и активного уровня (произвольный порядок заполнения)."""
     user_id = get_jwt_identity()
-    data = request.json
-    user_response = data.get("response", "").strip()
-    
     iceberg = SystemThinkingIceberg.query.filter_by(id=iceberg_id, user_id=user_id).first()
     if not iceberg:
         return jsonify({"error": "Айсберг не найден"}), 404
-    
+
+    data = request.json or {}
+    fields = data.get("fields")
+    active_level = data.get("active_level")
+
+    updated = False
+    if isinstance(fields, dict):
+        for key in LEVEL_ORDER:
+            if key not in fields:
+                continue
+            val = fields[key]
+            if val is None:
+                continue
+            s = val if isinstance(val, str) else str(val)
+            if getattr(iceberg, key) != s:
+                updated = True
+            setattr(iceberg, key, s)
+
+    _clear_solutions_if_needed(iceberg, updated, active_level if active_level in LEVEL_ORDER else None)
+
+    if active_level in LEVEL_ORDER:
+        iceberg.current_level = active_level
+    db.session.commit()
+    return jsonify(iceberg.to_dict())
+
+
+@bp_system_thinking.route("/api/system-thinking/<int:iceberg_id>/ask-question", methods=["POST"])
+@jwt_required()
+def ask_question(iceberg_id):
+    """Вопрос по выбранному уровню; ответ сохраняет поле этого уровня без линейного перехода."""
+    user_id = get_jwt_identity()
+    data = request.json or {}
+    user_response = (data.get("response") or "").strip()
+    requested_level = data.get("level")
+
+    iceberg = SystemThinkingIceberg.query.filter_by(id=iceberg_id, user_id=user_id).first()
+    if not iceberg:
+        return jsonify({"error": "Айсберг не найден"}), 404
+
+    if requested_level not in PER_LEVEL:
+        requested_level = iceberg.current_level if iceberg.current_level in PER_LEVEL else "event"
+
+    cfg = PER_LEVEL[requested_level]
     client = get_openai_client()
-    
-    # Определяем текущий уровень и вопрос
-    level_questions = {
-        "event": {
-            "question": "А есть ли какой-то паттерн в этой ситуации?",
-            "field": "pattern",
-            "next_level": "pattern",
-            "description": "Паттерн - это закономерность, которая повторяется. Например: это происходит регулярно, совпадает с определенными событиями или условиями, имеет цикличность."
-        },
-        "pattern": {
-            "question": "Какая структура, процесс, система, процедура в компании приводит к проблеме?",
-            "field": "system_structure",
-            "next_level": "system_structure",
-            "description": "Системная структура - это формальные или неформальные процессы, процедуры, организационные структуры, которые создают условия для возникновения проблемы."
-        },
-        "system_structure": {
-            "question": "А есть ли ментальная модель (убеждения, установки), которая поддерживает эту конструкцию?",
-            "field": "mental_model",
-            "next_level": "mental_model",
-            "description": "Ментальная модель - это убеждения и установки людей, которые поддерживают текущую систему. Например: 'Планирование никогда не работает, так зачем на него тратить время', 'Начальство все равно не слушает', 'Мы всегда так делали'."
-        },
-        "mental_model": {
-            "question": "Есть ли опыт, который мог сформировать такую ментальную модель?",
-            "field": "experience",
-            "next_level": "experience",
-            "description": "Опыт - это конкретные события, ситуации или переживания из прошлого, которые сформировали неправильные установки в умах людей. Например: неудачный проект, конфликт с руководством, провал предыдущей инициативы."
-        }
-    }
-    
-    current_config = level_questions.get(iceberg.current_level)
-    if not current_config:
-        return jsonify({"error": "Все уровни уже заполнены"}), 400
-    
-    # Если пользователь ответил "не знаю" или похожее, предлагаем варианты
+
     user_response_lower = user_response.lower().strip()
     dont_know_phrases = [
-        "не знаю", "незнаю", "не знаю.", "не знаю!", "не знаю?", "не знаю,", 
+        "не знаю", "незнаю", "не знаю.", "не знаю!", "не знаю?", "не знаю,",
         "нет", "нет идей", "не понимаю", "не могу ответить", "не знаю что ответить",
-        "не знаю что сказать", "затрудняюсь ответить", "не могу придумать"
+        "не знаю что сказать", "затрудняюсь ответить", "не могу придумать",
     ]
-    
-    # Проверяем различные варианты "не знаю"
     is_dont_know = (
-        user_response_lower in dont_know_phrases or 
-        "не знаю" in user_response_lower or
-        user_response_lower.startswith("не знаю") or
-        (len(user_response_lower) <= 15 and any(phrase in user_response_lower for phrase in ["не знаю", "незнаю", "не понимаю"]))
+        user_response_lower in dont_know_phrases
+        or "не знаю" in user_response_lower
+        or user_response_lower.startswith("не знаю")
+        or (
+            len(user_response_lower) <= 15
+            and any(phrase in user_response_lower for phrase in ["не знаю", "незнаю", "не понимаю"])
+        )
     )
-    
-    if is_dont_know:
-        # Генерируем варианты через AI
+
+    if is_dont_know and user_response:
         context_parts = []
         if iceberg.event:
             context_parts.append(f"Событие: {iceberg.event}")
@@ -123,86 +210,74 @@ def ask_question(iceberg_id):
             context_parts.append(f"Системная структура: {iceberg.system_structure}")
         if iceberg.mental_model:
             context_parts.append(f"Ментальная модель: {iceberg.mental_model}")
-        
+        if iceberg.experience:
+            context_parts.append(f"Опыт: {iceberg.experience}")
+
         context = "\n".join(context_parts) if context_parts else "Пользователь только начал работу над айсбергом."
-        
-        level_description = current_config.get('description', '')
-        
+        level_description = cfg.get("description", "")
+
         prompt = f"""
 Ты эксперт по системному мышлению. Пользователь работает над построением айсберга системного мышления.
 
 {context}
 
-Текущий вопрос: {current_config['question']}
-
+Уровень: {requested_level}
+Текущий вопрос: {cfg['question']}
 Контекст уровня: {level_description}
 
-Пользователь ответил "не знаю". Предложи 3-5 конкретных вариантов ответа на этот вопрос, которые могут помочь пользователю. 
-Варианты должны быть конкретными, практичными и соответствовать контексту уровня.
-Ответ должен быть в формате JSON объекта с ключом "suggestions" и массивом строк, например: {{"suggestions": ["вариант 1", "вариант 2", "вариант 3"]}}
+Пользователь ответил "не знаю". Предложи 3-5 конкретных вариантов ответа на этот вопрос.
+Ответ — JSON с ключом "suggestions" и массивом строк.
 """
-        
+
         try:
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "Ты эксперт по системному мышлению и помогаешь пользователям анализировать проблемы."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.7,
-                max_tokens=500
+                max_tokens=500,
             )
-            
+
             ai_response = json.loads(response.choices[0].message.content)
             suggestions = ai_response.get("suggestions", [])
-            
-            # Если suggestions не список, пытаемся найти массив в ответе
             if not isinstance(suggestions, list):
                 for value in ai_response.values():
                     if isinstance(value, list):
                         suggestions = value
                         break
-            
+
             return jsonify({
                 "suggestions": suggestions if isinstance(suggestions, list) and len(suggestions) > 0 else [],
-                "question": current_config['question'],
-                "level": iceberg.current_level,
-                "message": "Вот несколько вариантов, которые могут помочь:"
+                "question": cfg["question"],
+                "level": requested_level,
+                "message": "Вот несколько вариантов, которые могут помочь:",
             })
         except Exception as e:
             import traceback
             traceback.print_exc()
             return jsonify({"error": f"Ошибка генерации предложений: {str(e)}"}), 500
-    
-    # Если пользователь дал ответ, сохраняем его
+
     if user_response:
-        setattr(iceberg, current_config['field'], user_response)
-        iceberg.current_level = current_config['next_level']
+        setattr(iceberg, requested_level, user_response)
+        if iceberg.current_level != "completed":
+            iceberg.current_level = requested_level
+        _clear_solutions_if_needed(iceberg, True, requested_level)
+        if iceberg.current_level != "completed":
+            iceberg.current_level = requested_level
         db.session.commit()
-        
-        # Если это был последний уровень, генерируем решения
-        if iceberg.current_level == "experience":
-            iceberg.current_level = "completed"
-            db.session.commit()
-            
-            # Генерируем решения
-            return generate_solutions(iceberg)
-        
-        # Возвращаем следующий вопрос
-        next_config = level_questions.get(iceberg.current_level)
-        if next_config:
-            return jsonify({
-                "message": "Ответ сохранен",
-                "next_question": next_config['question'],
-                "level": iceberg.current_level,
-                "iceberg": iceberg.to_dict()
-            })
-    
-    # Если ответа нет, возвращаем текущий вопрос
+        return jsonify({
+            "message": "Ответ сохранен",
+            "level": requested_level,
+            "iceberg": iceberg.to_dict(),
+        })
+
     return jsonify({
-        "question": current_config['question'],
-        "level": iceberg.current_level
+        "question": cfg["question"],
+        "level": requested_level,
+        "description": cfg.get("description", ""),
     })
 
 @bp_system_thinking.route("/api/system-thinking/<int:iceberg_id>/save-level", methods=["POST"])
@@ -230,17 +305,17 @@ def save_level(iceberg_id):
     if level not in level_fields:
         return jsonify({"error": "Неверный уровень"}), 400
     
+    old_val = getattr(iceberg, level_fields[level])
     setattr(iceberg, level_fields[level], value)
-    
-    # Обновляем текущий уровень
-    level_order = ["event", "pattern", "system_structure", "mental_model", "experience"]
-    try:
-        current_index = level_order.index(iceberg.current_level)
-        if current_index < len(level_order) - 1:
-            iceberg.current_level = level_order[current_index + 1]
-    except ValueError:
-        pass
-    
+    if (old_val or "") != (value or ""):
+        _clear_solutions_if_needed(iceberg, True, level if level in LEVEL_ORDER else None)
+
+    active = data.get("active_level")
+    if active in LEVEL_ORDER and iceberg.current_level != "completed":
+        iceberg.current_level = active
+    elif level in LEVEL_ORDER and iceberg.current_level != "completed":
+        iceberg.current_level = level
+
     db.session.commit()
     
     return jsonify(iceberg.to_dict())
@@ -254,6 +329,9 @@ def generate_solutions_endpoint(iceberg_id):
     
     if not iceberg:
         return jsonify({"error": "Айсберг не найден"}), 404
+
+    if not _iceberg_fully_filled(iceberg):
+        return jsonify({"error": "Заполните все пять уровней айсберга перед генерацией решений"}), 400
     
     return generate_solutions(iceberg)
 

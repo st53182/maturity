@@ -1,11 +1,33 @@
 <template>
   <div class="iceberg-container">
-    <h1>🧊 Айсберг системного мышления</h1>
+    <h1>Айсберг системного мышления</h1>
 
-    <!-- Список существующих айсбергов -->
+    <!-- Введение до начала работы -->
+    <section class="iceberg-intro" aria-labelledby="iceberg-intro-title">
+      <h2 id="iceberg-intro-title" class="iceberg-intro__title">Зачем этот инструмент</h2>
+      <p class="iceberg-intro__lead">
+        Айсберг помогает уйти от одного «симптома» к причинам: повторяющимся паттернам, правилам в системе,
+        убеждениям людей и опыту, из которого эти убеждения выросли. Так проще найти устойчивые точки вмешательства,
+        а не чинить только верхушку.
+      </p>
+      <button type="button" class="iceberg-intro__toggle" @click="introExpanded = !introExpanded">
+        {{ introExpanded ? "Свернуть описание уровней" : "Показать описание каждого уровня с примерами" }}
+      </button>
+      <div v-show="introExpanded" class="iceberg-intro__levels">
+        <article v-for="lvl in levelDefinitions" :key="lvl.id" class="iceberg-intro__level-card">
+          <h3>
+            <span class="iceberg-intro__badge">{{ lvl.order }}</span>
+            {{ lvl.title }}
+          </h3>
+          <p class="iceberg-intro__q"><strong>Вопрос уровня:</strong> {{ lvl.question }}</p>
+          <p class="iceberg-intro__ex">{{ lvl.description }}</p>
+        </article>
+      </div>
+    </section>
+
     <div class="iceberg-list-section">
       <div class="filter-bar">
-        <button @click="showCreateForm = true" class="add-btn">➕ Создать новый айсберг</button>
+        <button type="button" class="add-btn" @click="openCreateFlow">Создать новый айсберг</button>
       </div>
 
       <div class="iceberg-list">
@@ -15,161 +37,224 @@
           class="iceberg-card"
           @click="openIceberg(iceberg)"
         >
-          <h3>🧊 Айсберг #{{ iceberg.id }}</h3>
-          <p><strong>Событие:</strong> {{ (iceberg.event || 'Не указано').slice(0, 100) }}{{ iceberg.event && iceberg.event.length > 100 ? '...' : '' }}</p>
-          <p><strong>Текущий уровень:</strong> {{ getLevelName(iceberg.current_level) }}</p>
-          <div v-if="iceberg.solutions" class="solutions-badge">✅ Решения готовы</div>
-          <button class="delete-btn" @click.stop="deleteIceberg(iceberg.id)">🗑</button>
+          <h3>Айсберг #{{ iceberg.id }}</h3>
+          <p>
+            <strong>Событие:</strong>
+            {{ (iceberg.event || "Не указано").slice(0, 100) }}{{ iceberg.event && iceberg.event.length > 100 ? "..." : "" }}
+          </p>
+          <p><strong>Прогресс:</strong> {{ fillCount(iceberg) }} / 5 уровней</p>
+          <div v-if="iceberg.solutions" class="solutions-badge">Решения готовы</div>
+          <button type="button" class="delete-btn" @click.stop="deleteIceberg(iceberg.id)">Удалить</button>
         </div>
       </div>
     </div>
 
-    <!-- Форма создания нового айсберга -->
-    <div class="modal-overlay" v-if="showCreateForm">
-      <div class="modal-content">
-        <button class="modal-close-top" @click="showCreateForm = false" aria-label="Close">✕</button>
+    <!-- Создание: примеры + подсказка ИИ + событие -->
+    <div v-if="showCreateForm" class="modal-overlay" @click.self="showCreateForm = false">
+      <div class="modal-content modal-content--wide">
+        <button type="button" class="modal-close-top" @click="showCreateForm = false" aria-label="Закрыть">✕</button>
         <h2>Создать новый айсберг</h2>
+        <p class="create-lead">
+          Сначала опишите <strong>событие</strong> — то, что видно на поверхности. Дальше вы сможете заполнять уровни в любом порядке.
+        </p>
+
+        <div class="create-toolbar">
+          <div class="ai-assistant-badge" @mouseenter="showCreateAiPopover = true" @mouseleave="showCreateAiPopover = false" @focusin="showCreateAiPopover = true" @focusout="showCreateAiPopover = false">
+            <span class="ai-assistant-badge__icon" aria-hidden="true">✨</span>
+            <span>Подсказки ИИ-ассистента</span>
+            <div v-show="showCreateAiPopover" class="ai-popover" role="tooltip">
+              <p>После создания на каждом уровне можно нажать «Вопрос ИИ» — появится наводящий вопрос.</p>
+              <p>Если сложно сформулировать ответ, напишите в поле «не знаю» — ИИ предложит несколько вариантов формулировок.</p>
+              <p>Прогресс сохраняется при переключении уровней и при выходе из окна.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="scenarios-title">Популярные ситуации — нажмите, чтобы подставить текст в поле «Событие»:</p>
+        <div class="scenario-chips">
+          <button v-for="(s, i) in scenarioPresets" :key="i" type="button" class="scenario-chip" @click="applyScenario(s)">
+            {{ s.label }}
+          </button>
+        </div>
+
         <div class="modern-form">
           <div class="input-wrapper textarea-wrapper">
-            <span class="input-icon">📝</span>
+            <span class="input-icon" aria-hidden="true">📝</span>
             <textarea
               v-model="newEvent"
-              rows="4"
+              rows="5"
               class="modern-input modern-textarea"
               :class="{ 'has-value': newEvent }"
-              placeholder="Опишите событие или проблему..."
-            ></textarea>
-            <label class="floating-label">Событие</label>
+              placeholder="Опишите событие или проблему…"
+            />
+            <label class="floating-label">Событие (видимая часть айсберга)</label>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="save-btn" @click="createIceberg" :disabled="!newEvent.trim() || creating">
-            {{ creating ? 'Создание...' : 'Создать' }}
+          <button type="button" class="save-btn" :disabled="!newEvent.trim() || creating" @click="createIceberg">
+            {{ creating ? "Создание…" : "Создать" }}
           </button>
         </div>
       </div>
     </div>
 
     <!-- Работа с айсбергом -->
-    <div class="modal-overlay" v-if="showIcebergModal && currentIceberg">
+    <div v-if="showIcebergModal && currentIceberg" class="modal-overlay">
       <div class="modal-content iceberg-modal">
-        <button class="modal-close-top" @click="showIcebergModal = false" aria-label="Close">✕</button>
-        <h2>🧊 Айсберг системного мышления</h2>
+        <button type="button" class="modal-close-top" @click="closeIcebergModal" aria-label="Закрыть">✕</button>
 
-        <!-- Визуализация уровней -->
-        <div class="iceberg-visualization">
-          <div class="iceberg-level" :class="{ active: currentIceberg.current_level === 'event', completed: currentIceberg.event }">
-            <div class="level-header">
-              <span class="level-number">1</span>
-              <span class="level-title">Событие</span>
+        <header class="iceberg-work-header">
+          <h2>Айсберг системного мышления</h2>
+          <div class="iceberg-work-actions">
+            <button type="button" class="toolbar-btn" title="Описание уровней и примеры" @click="showHelpModal = true">Подсказка</button>
+            <div
+              class="ai-assistant-inline"
+              tabindex="0"
+              @mouseenter="showWorkAiPopover = true"
+              @mouseleave="showWorkAiPopover = false"
+              @focusin="showWorkAiPopover = true"
+              @focusout="showWorkAiPopover = false"
+            >
+              <span class="ai-assistant-inline__icon" aria-hidden="true">✨</span>
+              <span class="sr-only">ИИ-ассистент</span>
+              <div v-show="showWorkAiPopover" class="ai-popover ai-popover--work" role="tooltip">
+                <p>Кнопка «Вопрос ИИ» подставляет наводящий вопрос для <strong>текущего</strong> уровня.</p>
+                <p>В ответе можно написать «не знаю» — получите варианты формулировок.</p>
+                <p>Можно переключаться между уровнями в любом порядке; черновик сохраняется автоматически.</p>
+              </div>
             </div>
-            <div class="level-content" v-if="currentIceberg.event">
-              {{ currentIceberg.event }}
-            </div>
+            <button type="button" class="toolbar-btn toolbar-btn--primary" :disabled="exportingPdf" @click="exportPdf">
+              {{ exportingPdf ? "PDF…" : "Сохранить PDF" }}
+            </button>
           </div>
+        </header>
 
-          <div class="iceberg-level" :class="{ active: currentIceberg.current_level === 'pattern', completed: currentIceberg.pattern }">
-            <div class="level-header">
-              <span class="level-number">2</span>
-              <span class="level-title">Паттерн поведения</span>
-            </div>
-            <div class="level-content" v-if="currentIceberg.pattern">
-              {{ currentIceberg.pattern }}
-            </div>
-          </div>
+        <p class="progress-line">
+          Заполнено уровней: <strong>{{ filledDraftCount }} / 5</strong>
+          <span v-if="saveStatus === 'saving'" class="save-pill">Сохранение…</span>
+          <span v-else-if="saveStatus === 'saved'" class="save-pill save-pill--ok">Сохранено</span>
+        </p>
 
-          <div class="iceberg-level" :class="{ active: currentIceberg.current_level === 'system_structure', completed: currentIceberg.system_structure }">
-            <div class="level-header">
-              <span class="level-number">3</span>
-              <span class="level-title">Системная структура</span>
-            </div>
-            <div class="level-content" v-if="currentIceberg.system_structure">
-              {{ currentIceberg.system_structure }}
-            </div>
-          </div>
-
-          <div class="iceberg-level" :class="{ active: currentIceberg.current_level === 'mental_model', completed: currentIceberg.mental_model }">
-            <div class="level-header">
-              <span class="level-number">4</span>
-              <span class="level-title">Ментальная модель</span>
-            </div>
-            <div class="level-content" v-if="currentIceberg.mental_model">
-              {{ currentIceberg.mental_model }}
-            </div>
-          </div>
-
-          <div class="iceberg-level" :class="{ active: currentIceberg.current_level === 'experience', completed: currentIceberg.experience }">
-            <div class="level-header">
-              <span class="level-number">5</span>
-              <span class="level-title">Опыт</span>
-            </div>
-            <div class="level-content" v-if="currentIceberg.experience">
-              {{ currentIceberg.experience }}
-            </div>
-          </div>
+        <div class="iceberg-level-nav">
+          <button
+            v-for="lvl in levelDefinitions"
+            :key="lvl.id"
+            type="button"
+            class="level-tab"
+            :class="{
+              active: selectedLevel === lvl.id,
+              filled: !!(draft[lvl.id] && draft[lvl.id].trim())
+            }"
+            @click="selectLevel(lvl.id)"
+          >
+            <span class="level-tab__num">{{ lvl.order }}</span>
+            {{ lvl.shortTitle }}
+          </button>
         </div>
 
-        <!-- Текущий вопрос -->
-        <div v-if="currentQuestion && currentIceberg.current_level !== 'completed'" class="question-block">
-          <div class="question-text">{{ currentQuestion }}</div>
-          
-          <div v-if="suggestions && suggestions.length > 0" class="suggestions-block">
-            <p class="suggestions-title">💡 Предложения:</p>
+        <div class="iceberg-editor">
+          <p class="level-question">{{ currentLevelDef.question }}</p>
+          <p class="level-hint">{{ currentLevelDef.description }}</p>
+
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon" aria-hidden="true">✍️</span>
+            <textarea
+              v-model="draft[selectedLevel]"
+              rows="6"
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': draft[selectedLevel] }"
+              :aria-label="'Текст уровня: ' + currentLevelDef.title"
+              @input="scheduleSave"
+            />
+            <label class="floating-label">Ответ для «{{ currentLevelDef.title }}»</label>
+          </div>
+
+          <div class="editor-actions">
+            <button type="button" class="secondary-btn" :disabled="aiQuestionLoading" @click="fetchAiQuestion">
+              {{ aiQuestionLoading ? "Загрузка…" : "Вопрос ИИ" }}
+            </button>
+          </div>
+
+          <div v-if="aiQuestionText" class="question-block question-block--soft">
+            <div class="question-text">{{ aiQuestionText }}</div>
+          </div>
+
+          <div v-if="suggestions.length" class="suggestions-block">
+            <p class="suggestions-title">Предложения ИИ:</p>
             <div class="suggestions-list">
-              <button
-                v-for="(suggestion, index) in suggestions"
-                :key="index"
-                class="suggestion-btn"
-                @click="selectSuggestion(suggestion)"
-              >
+              <button v-for="(suggestion, index) in suggestions" :key="index" type="button" class="suggestion-btn" @click="applySuggestion(suggestion)">
                 {{ suggestion }}
               </button>
             </div>
           </div>
-          
-          <div v-if="loading && !suggestions.length" class="loading-suggestions">
-            ⏳ Генерируем предложения...
-          </div>
 
-          <div class="input-wrapper textarea-wrapper">
-            <span class="input-icon">✍️</span>
+          <div class="input-wrapper textarea-wrapper ai-answer-row">
+            <span class="input-icon" aria-hidden="true">💬</span>
             <textarea
-              v-model="currentAnswer"
-              rows="3"
+              v-model="aiAnswerDraft"
+              rows="2"
               class="modern-input modern-textarea"
-              :class="{ 'has-value': currentAnswer }"
-              placeholder="Введите ваш ответ или напишите 'не знаю' для получения предложений..."
-            ></textarea>
-            <label class="floating-label">Ваш ответ</label>
+              :class="{ 'has-value': aiAnswerDraft }"
+              placeholder="Ответ для ИИ (или напишите «не знаю» для вариантов)…"
+            />
+            <label class="floating-label">Отправить ответ ИИ</label>
           </div>
-
-          <div class="modal-actions">
-            <button class="generate-btn" @click="submitAnswer" :disabled="!currentAnswer.trim() || loading">
-              {{ loading ? 'Обработка...' : 'Ответить' }}
+          <div class="modal-actions modal-actions--tight">
+            <button type="button" class="generate-btn" :disabled="!aiAnswerDraft.trim() || loading" @click="submitAiAnswer">
+              {{ loading ? "Обработка…" : "Отправить ИИ" }}
             </button>
           </div>
         </div>
 
-        <!-- Решения -->
-        <div v-if="currentIceberg.solutions && currentIceberg.solutions.length > 0" class="solutions-block">
-          <div class="solutions-header">
-            <h3>💡 Решения</h3>
+        <!-- Скрытый блок для PDF / печати -->
+        <div ref="pdfRoot" class="pdf-root">
+          <h1>Айсберг системного мышления</h1>
+          <p class="pdf-meta">ID: {{ currentIceberg.id }} · Экспорт: {{ pdfExportDate }}</p>
+          <div v-for="lvl in levelDefinitions" :key="'p-' + lvl.id" class="pdf-section">
+            <h2>{{ lvl.order }}. {{ lvl.title }}</h2>
+            <p class="pdf-q">{{ lvl.question }}</p>
+            <p class="pdf-body">{{ draft[lvl.id] || "—" }}</p>
           </div>
-          <div
-            v-for="(solution, index) in currentIceberg.solutions"
-            :key="index"
-            class="solution-card"
-          >
+          <template v-if="currentIceberg.solutions && currentIceberg.solutions.length">
+            <h2>Решения</h2>
+            <div v-for="(solution, index) in currentIceberg.solutions" :key="index" class="pdf-section">
+              <h3>{{ solution.title }}</h3>
+              <p class="pdf-body">{{ solution.text }}</p>
+            </div>
+          </template>
+        </div>
+
+        <div v-if="currentIceberg.solutions && currentIceberg.solutions.length" class="solutions-block">
+          <div class="solutions-header">
+            <h3>Решения</h3>
+          </div>
+          <div v-for="(solution, index) in currentIceberg.solutions" :key="index" class="solution-card">
             <h4>{{ solution.title }}</h4>
             <p>{{ solution.text }}</p>
           </div>
         </div>
 
-        <!-- Кнопка генерации решений если все заполнено -->
-        <div v-if="currentIceberg.current_level === 'experience' && !currentIceberg.solutions" class="generate-solutions-block">
-          <button class="generate-btn" @click="generateSolutions" :disabled="generatingSolutions">
-            {{ generatingSolutions ? 'Генерация решений...' : 'Сгенерировать решения' }}
+        <div v-if="canGenerateSolutions" class="generate-solutions-block">
+          <button type="button" class="generate-btn" :disabled="generatingSolutions" @click="generateSolutions">
+            {{ generatingSolutions ? "Генерация…" : "Сгенерировать решения" }}
           </button>
+          <p class="gen-hint">Доступно, когда заполнены все пять уровней.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модалка «Подсказка» -->
+    <div v-if="showHelpModal" class="modal-overlay" @click.self="showHelpModal = false">
+      <div class="modal-content modal-content--wide">
+        <button type="button" class="modal-close-top" @click="showHelpModal = false" aria-label="Закрыть">✕</button>
+        <h2>Уровни айсберга: назначение и примеры</h2>
+        <article v-for="lvl in levelDefinitions" :key="'h-' + lvl.id" class="help-card">
+          <h3>{{ lvl.order }}. {{ lvl.title }}</h3>
+          <p><strong>Вопрос:</strong> {{ lvl.question }}</p>
+          <p><strong>Пример формулировки:</strong> {{ lvl.description }}</p>
+        </article>
+        <div class="modal-actions">
+          <button type="button" class="save-btn" @click="showHelpModal = false">Понятно</button>
         </div>
       </div>
     </div>
@@ -177,65 +262,202 @@
 </template>
 
 <script>
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+
+const LEVEL_IDS = ["event", "pattern", "system_structure", "mental_model", "experience"];
+
+const LEVEL_DEFINITIONS = [
+  {
+    id: "event",
+    order: 1,
+    title: "Событие",
+    shortTitle: "Событие",
+    question: "Опишите конкретное событие или симптом: что произошло, кто участвовал, когда это заметили?",
+    description:
+      "Пример: «За день до релиза снова отложили поставку из‑за ночных багов»."
+  },
+  {
+    id: "pattern",
+    order: 2,
+    title: "Паттерн поведения",
+    shortTitle: "Паттерн",
+    question: "Какая закономерность или повторяющийся паттерн за этим стоит?",
+    description:
+      "Пример: «Третий спринт подряд срываем демо из‑за недотестированных задач»."
+  },
+  {
+    id: "system_structure",
+    order: 3,
+    title: "Системная структура",
+    shortTitle: "Структура",
+    question: "Какие структуры, процессы, правила или процедуры в системе поддерживают этот паттерн?",
+    description:
+      "Пример: «Нет отдельного слота на регресс; приёмка только по чеклисту разработчика»."
+  },
+  {
+    id: "mental_model",
+    order: 4,
+    title: "Ментальная модель",
+    shortTitle: "Ментальная модель",
+    question: "Какие убеждения или установки людей поддерживают эту конструкцию?",
+    description:
+      "Пример: «Тестирование всегда тормозит, лучше быстро выкатить и починить в бою»."
+  },
+  {
+    id: "experience",
+    order: 5,
+    title: "Опыт",
+    shortTitle: "Опыт",
+    question: "Какой прошлый опыт мог сформировать такие установки?",
+    description:
+      "Пример: «Год назад жёсткий дедлайн сорвали из‑за долгих тестов — с тех пор их недооценивают»."
+  }
+];
+
+const SCENARIO_PRESETS = [
+  {
+    label: "Срывы сроков",
+    text:
+      "Команда регулярно не укладывается в даты релизов: дедлайн переносят в последний момент, стейкхолдеры недовольны, разработчики перерабатывают."
+  },
+  {
+    label: "Конфликты на встречах",
+    text:
+      "На ежедневных синках повторяются одни и те же споры: кто что должен был сделать и почему задачи снова «висят»."
+  },
+  {
+    label: "Качество и баги",
+    text:
+      "После релизов пользователи сообщают об однотипных ошибках, исправления выкатывают срочными патчами, но проблема возвращается."
+  }
+];
+
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  const h = { "Content-Type": "application/json" };
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+}
+
+function emptyDraft() {
+  return {
+    event: "",
+    pattern: "",
+    system_structure: "",
+    mental_model: "",
+    experience: ""
+  };
+}
+
 export default {
+  name: "SystemThinkingIceberg",
   data() {
     return {
+      introExpanded: false,
+      levelDefinitions: LEVEL_DEFINITIONS,
+      scenarioPresets: SCENARIO_PRESETS,
       icebergs: [],
       showCreateForm: false,
+      showCreateAiPopover: false,
       showIcebergModal: false,
+      showHelpModal: false,
+      showWorkAiPopover: false,
       currentIceberg: null,
       newEvent: "",
       creating: false,
-      currentQuestion: "",
-      currentAnswer: "",
+      selectedLevel: "event",
+      draft: emptyDraft(),
+      saveTimer: null,
+      saveStatus: "idle",
+      aiQuestionText: "",
+      aiAnswerDraft: "",
       suggestions: [],
       loading: false,
-      generatingSolutions: false
+      aiQuestionLoading: false,
+      generatingSolutions: false,
+      exportingPdf: false,
+      pdfExportDate: ""
     };
   },
-
+  computed: {
+    currentLevelDef() {
+      return LEVEL_DEFINITIONS.find((l) => l.id === this.selectedLevel) || LEVEL_DEFINITIONS[0];
+    },
+    filledDraftCount() {
+      return LEVEL_IDS.filter((id) => (this.draft[id] || "").trim()).length;
+    },
+    canGenerateSolutions() {
+      return this.filledDraftCount === 5 && !(this.currentIceberg && this.currentIceberg.solutions && this.currentIceberg.solutions.length);
+    }
+  },
+  watch: {
+    selectedLevel() {
+      this.aiQuestionText = "";
+      this.suggestions = [];
+      this.aiAnswerDraft = "";
+      this.scheduleSave();
+    }
+  },
+  mounted() {
+    this.fetchIcebergs();
+    window.addEventListener("beforeunload", this.onBeforeUnload);
+  },
+  beforeUnmount() {
+    window.removeEventListener("beforeunload", this.onBeforeUnload);
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+  },
   methods: {
-    async fetchIcebergs() {
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch("/api/system-thinking", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          this.icebergs = await res.json();
-        }
-      } catch (err) {
-        console.error("Ошибка загрузки айсбергов:", err);
+    fillCount(iceberg) {
+      return LEVEL_IDS.filter((id) => (iceberg[id] || "").trim()).length;
+    },
+    openCreateFlow() {
+      this.newEvent = "";
+      this.showCreateForm = true;
+    },
+    applyScenario(s) {
+      this.newEvent = s.text;
+    },
+    applySuggestion(text) {
+      this.draft[this.selectedLevel] = text;
+      this.suggestions = [];
+      this.aiAnswerDraft = "";
+      this.scheduleSave();
+    },
+    selectLevel(id) {
+      this.selectedLevel = id;
+    },
+    onBeforeUnload() {
+      if (this.showIcebergModal && this.currentIceberg) {
+        this.flushSaveKeepalive();
       }
     },
-
+    async fetchIcebergs() {
+      try {
+        const res = await fetch("/api/system-thinking", { headers: authHeaders() });
+        if (res.ok) this.icebergs = await res.json();
+      } catch (err) {
+        console.error(err);
+      }
+    },
     async createIceberg() {
       if (!this.newEvent.trim()) return;
-      
       this.creating = true;
-      const token = localStorage.getItem("token");
-      
       try {
         const res = await fetch("/api/system-thinking", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
+          headers: authHeaders(),
           body: JSON.stringify({ event: this.newEvent })
         });
-
-        if (res.ok) {
-          const iceberg = await res.json();
-          this.showCreateForm = false;
-          this.newEvent = "";
-          await this.fetchIcebergs();
-          this.openIceberg(iceberg);
-        } else {
+        if (!res.ok) {
           alert("Ошибка при создании айсберга");
+          return;
         }
+        const iceberg = await res.json();
+        this.showCreateForm = false;
+        this.newEvent = "";
+        await this.fetchIcebergs();
+        await this.openIceberg(iceberg);
       } catch (err) {
         console.error(err);
         alert("Ошибка соединения");
@@ -243,163 +465,170 @@ export default {
         this.creating = false;
       }
     },
-
+    syncDraftFromIceberg(iceberg) {
+      const d = emptyDraft();
+      LEVEL_IDS.forEach((id) => {
+        d[id] = iceberg[id] || "";
+      });
+      this.draft = d;
+    },
     async openIceberg(iceberg) {
-      const token = localStorage.getItem("token");
-      
       try {
-        const res = await fetch(`/api/system-thinking/${iceberg.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        const res = await fetch(`/api/system-thinking/${iceberg.id}`, { headers: authHeaders() });
+        if (!res.ok) {
+          alert("Ошибка загрузки айсберга");
+          return;
+        }
+        this.currentIceberg = await res.json();
+        this.syncDraftFromIceberg(this.currentIceberg);
+        const cl = this.currentIceberg.current_level;
+        this.selectedLevel = LEVEL_IDS.includes(cl) ? cl : "event";
+        this.showIcebergModal = true;
+        this.aiQuestionText = "";
+        this.suggestions = [];
+        this.aiAnswerDraft = "";
+      } catch (err) {
+        console.error(err);
+        alert("Ошибка загрузки");
+      }
+    },
+    scheduleSave() {
+      if (!this.currentIceberg) return;
+      if (this.saveTimer) clearTimeout(this.saveTimer);
+      this.saveTimer = setTimeout(() => this.flushSave(), 800);
+    },
+    async flushSave() {
+      if (!this.currentIceberg) return;
+      this.saveStatus = "saving";
+      try {
+        const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/save-state`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            fields: { ...this.draft },
+            active_level: this.selectedLevel
+          })
         });
-
         if (res.ok) {
           this.currentIceberg = await res.json();
-          this.showIcebergModal = true;
-          
-          // Если айсберг не завершен, получаем текущий вопрос
-          if (this.currentIceberg.current_level !== 'completed') {
-            await this.getCurrentQuestion();
-          }
+          this.syncDraftFromIceberg(this.currentIceberg);
+          this.saveStatus = "saved";
+          setTimeout(() => {
+            if (this.saveStatus === "saved") this.saveStatus = "idle";
+          }, 2000);
+        } else {
+          this.saveStatus = "idle";
         }
-      } catch (err) {
-        console.error(err);
-        alert("Ошибка загрузки айсберга");
+      } catch (e) {
+        console.error(e);
+        this.saveStatus = "idle";
       }
     },
-
-    async getCurrentQuestion() {
+    flushSaveKeepalive() {
+      if (!this.currentIceberg) return;
+      const body = JSON.stringify({
+        fields: { ...this.draft },
+        active_level: this.selectedLevel
+      });
       const token = localStorage.getItem("token");
-      
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      fetch(`/api/system-thinking/${this.currentIceberg.id}/save-state`, {
+        method: "POST",
+        headers,
+        body,
+        keepalive: true
+      }).catch(() => {});
+    },
+    async closeIcebergModal() {
+      await this.flushSave();
+      this.showIcebergModal = false;
+      this.currentIceberg = null;
+      await this.fetchIcebergs();
+    },
+    async fetchAiQuestion() {
+      if (!this.currentIceberg) return;
+      this.aiQuestionLoading = true;
+      this.suggestions = [];
       try {
         const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ response: "" })
+          headers: authHeaders(),
+          body: JSON.stringify({ response: "", level: this.selectedLevel })
         });
-
         if (res.ok) {
           const data = await res.json();
-          this.currentQuestion = data.question || data.next_question;
-          this.suggestions = (data.suggestions && Array.isArray(data.suggestions)) ? data.suggestions : [];
-          
-          // Если получен следующий вопрос, обновляем айсберг
-          if (data.iceberg) {
-            this.currentIceberg = data.iceberg;
-          }
-        } else {
-          const error = await res.json();
-          console.error("Ошибка получения вопроса:", error);
+          this.aiQuestionText = data.question || "";
         }
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.aiQuestionLoading = false;
       }
     },
-
-    async submitAnswer() {
-      if (!this.currentAnswer.trim()) return;
-      
+    async submitAiAnswer() {
+      if (!this.aiAnswerDraft.trim() || !this.currentIceberg) return;
       this.loading = true;
-      const token = localStorage.getItem("token");
-      
       try {
         const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ response: this.currentAnswer })
+          headers: authHeaders(),
+          body: JSON.stringify({
+            response: this.aiAnswerDraft,
+            level: this.selectedLevel
+          })
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          
-          // Если получены решения, значит айсберг завершен
-          if (data.solutions) {
-            this.currentIceberg.solutions = data.solutions;
-            this.currentIceberg.current_level = "completed";
-            this.currentQuestion = "";
-            this.suggestions = [];
-          } else if (data.suggestions && data.suggestions.length > 0) {
-            // Если получены предложения (пользователь написал "не знаю")
-            this.suggestions = data.suggestions;
-            this.currentQuestion = data.question || this.currentQuestion;
-            // Не очищаем currentAnswer, чтобы пользователь мог выбрать предложение или написать свой ответ
-          } else {
-            // Обновляем текущий вопрос после сохранения ответа
-            this.currentQuestion = data.next_question || data.question;
-            this.suggestions = [];
-            this.currentAnswer = "";
-            
-            // Обновляем айсберг
-            if (data.iceberg) {
-              this.currentIceberg = data.iceberg;
-            } else {
-              await this.openIceberg({ id: this.currentIceberg.id });
-            }
-          }
-        } else {
-          const error = await res.json();
-          alert(error.error || "Ошибка при сохранении ответа");
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Ошибка");
+          return;
         }
-      } catch (err) {
-        console.error(err);
+        if (data.suggestions && data.suggestions.length) {
+          this.suggestions = data.suggestions;
+          this.aiQuestionText = data.question || this.aiQuestionText;
+        } else if (data.iceberg) {
+          this.currentIceberg = data.iceberg;
+          this.syncDraftFromIceberg(data.iceberg);
+          this.suggestions = [];
+          this.aiAnswerDraft = "";
+        }
+      } catch (e) {
+        console.error(e);
         alert("Ошибка соединения");
       } finally {
         this.loading = false;
       }
     },
-
-    selectSuggestion(suggestion) {
-      this.currentAnswer = suggestion;
-    },
-
     async generateSolutions() {
+      if (!this.currentIceberg) return;
+      await this.flushSave();
       this.generatingSolutions = true;
-      const token = localStorage.getItem("token");
-      
       try {
         const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/generate-solutions`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: authHeaders()
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          this.currentIceberg.solutions = data.solutions;
-          this.currentIceberg.current_level = "completed";
-        } else {
-          const error = await res.json();
-          alert(error.error || "Ошибка генерации решений");
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Ошибка генерации");
+          return;
         }
-      } catch (err) {
-        console.error(err);
+        this.currentIceberg = data.iceberg || this.currentIceberg;
+        if (data.solutions) this.currentIceberg.solutions = data.solutions;
+      } catch (e) {
+        console.error(e);
         alert("Ошибка соединения");
       } finally {
         this.generatingSolutions = false;
       }
     },
-
     async deleteIceberg(id) {
       if (!confirm("Удалить этот айсберг?")) return;
-      
-      const token = localStorage.getItem("token");
-      
       try {
         const res = await fetch(`/api/system-thinking/${id}`, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: authHeaders()
         });
-
         if (res.ok) {
           await this.fetchIcebergs();
           if (this.currentIceberg && this.currentIceberg.id === id) {
@@ -407,32 +636,60 @@ export default {
             this.currentIceberg = null;
           }
         }
-      } catch (err) {
-        console.error(err);
-        alert("Ошибка удаления");
+      } catch (e) {
+        console.error(e);
       }
     },
-
-    getLevelName(level) {
-      const names = {
-        event: "Событие",
-        pattern: "Паттерн поведения",
-        system_structure: "Системная структура",
-        mental_model: "Ментальная модель",
-        experience: "Опыт",
-        completed: "Завершен"
-      };
-      return names[level] || level;
+    async exportPdf() {
+      if (!this.$refs.pdfRoot || !this.currentIceberg) return;
+      this.exportingPdf = true;
+      this.pdfExportDate = new Date().toLocaleString("ru-RU");
+      await this.$nextTick();
+      try {
+        const el = this.$refs.pdfRoot;
+        const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
+        const imgData = canvas.toDataURL("image/png", 0.92);
+        const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const imgW = pageW - margin * 2;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        let heightLeft = imgH;
+        let y = margin;
+        pdf.addImage(imgData, "PNG", margin, y, imgW, imgH);
+        heightLeft -= pageH - margin * 2;
+        while (heightLeft > 1) {
+          y = heightLeft - imgH + margin;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", margin, y, imgW, imgH);
+          heightLeft -= pageH - margin * 2;
+        }
+        pdf.save(`iceberg-${this.currentIceberg.id}.pdf`);
+      } catch (e) {
+        console.error(e);
+        alert("Не удалось сформировать PDF. Попробуйте печать через браузер (Ctrl+P).");
+      } finally {
+        this.exportingPdf = false;
+      }
     }
-  },
-
-  async mounted() {
-    await this.fetchIcebergs();
   }
 };
 </script>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .iceberg-container {
   max-width: 1280px;
   margin: 40px auto;
@@ -446,13 +703,94 @@ export default {
 h1 {
   font-size: 32px;
   font-weight: 700;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   color: #1a1a1a;
+}
+
+.iceberg-intro {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  border-radius: 16px;
+  border: 1px solid #bae6fd;
+}
+
+.iceberg-intro__title {
+  font-size: 1.25rem;
+  margin: 0 0 12px;
+  color: #0c4a6e;
+}
+
+.iceberg-intro__lead {
+  margin: 0 0 16px;
+  line-height: 1.6;
+  color: #334155;
+  font-size: 15px;
+}
+
+.iceberg-intro__toggle {
+  background: #fff;
+  border: 2px solid #0ea5e9;
+  color: #0369a1;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.iceberg-intro__levels {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.iceberg-intro__level-card {
+  background: #fff;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.iceberg-intro__level-card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iceberg-intro__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.iceberg-intro__q {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.iceberg-intro__ex {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.55;
 }
 
 .filter-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 24px;
@@ -534,16 +872,9 @@ h1 {
   font-size: 12px;
 }
 
-.delete-btn:hover {
-  background: #dc2626;
-}
-
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   display: flex;
@@ -565,8 +896,362 @@ h1 {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+.modal-content--wide {
+  max-width: 720px;
+}
+
 .iceberg-modal {
-  max-width: 900px;
+  max-width: 920px;
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
+  z-index: 3;
+}
+
+.create-lead {
+  color: #475569;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.create-toolbar {
+  margin-bottom: 16px;
+}
+
+.ai-assistant-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b21b6;
+  cursor: default;
+}
+
+.ai-assistant-badge__icon {
+  font-size: 20px;
+}
+
+.ai-assistant-inline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+  cursor: help;
+}
+
+.ai-assistant-inline__icon {
+  font-size: 22px;
+}
+
+.ai-popover {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 8px;
+  width: min(340px, 85vw);
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+  font-weight: 400;
+  color: #334155;
+  line-height: 1.5;
+  z-index: 20;
+}
+
+.ai-popover p {
+  margin: 0 0 8px;
+}
+
+.ai-popover p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-popover--work {
+  left: auto;
+  right: 0;
+}
+
+.scenarios-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.scenario-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.scenario-chip {
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.scenario-chip:hover {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.iceberg-work-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.iceberg-work-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.iceberg-work-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-btn {
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.toolbar-btn--primary {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.progress-line {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 16px;
+}
+
+.save-pill {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.save-pill--ok {
+  color: #059669;
+}
+
+.iceberg-level-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.level-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #e5e7eb;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.level-tab.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.level-tab.filled:not(.active) {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.level-tab__num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  color: #fff;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-tab.active .level-tab__num {
+  background: #3b82f6;
+}
+
+.level-tab.filled .level-tab__num {
+  background: #22c55e;
+}
+
+.iceberg-editor {
+  margin-bottom: 24px;
+}
+
+.level-question {
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+.level-hint {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 16px;
+  line-height: 1.55;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border-left: 4px solid #94a3b8;
+}
+
+.secondary-btn {
+  border: 2px solid #cbd5e1;
+  background: #fff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  color: #334155;
+}
+
+.editor-actions {
+  margin-top: 12px;
+}
+
+.question-block--soft {
+  margin-top: 16px;
+  background: #f1f5f9;
+}
+
+.ai-answer-row {
+  margin-top: 20px;
+}
+
+.modal-actions--tight {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: none;
+}
+
+.pdf-root {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 794px;
+  padding: 32px;
+  background: #fff;
+  font-family: Arial, sans-serif;
+  color: #111;
+}
+
+.pdf-root h1 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.pdf-meta {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.pdf-section {
+  margin-bottom: 20px;
+  page-break-inside: avoid;
+}
+
+.pdf-section h2 {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.pdf-q {
+  font-size: 12px;
+  color: #555;
+  margin: 0 0 8px;
+}
+
+.pdf-body {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.help-card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.help-card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.help-card p {
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.gen-hint {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 8px;
 }
 
 .iceberg-visualization {
@@ -574,62 +1259,6 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.iceberg-level {
-  padding: 20px;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  background: #f9fafb;
-  transition: all 0.3s ease;
-}
-
-.iceberg-level.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.iceberg-level.completed {
-  border-color: #10b981;
-  background: #f0fdf4;
-}
-
-.level-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.level-number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #3b82f6;
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.iceberg-level.completed .level-number {
-  background: #10b981;
-}
-
-.level-title {
-  font-weight: 600;
-  font-size: 16px;
-  color: #111827;
-}
-
-.level-content {
-  font-size: 14px;
-  color: #4b5563;
-  line-height: 1.6;
-  padding-left: 44px;
 }
 
 .question-block {
@@ -640,10 +1269,10 @@ h1 {
 }
 
 .question-text {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   padding: 16px;
   background: white;
   border-radius: 8px;
@@ -681,7 +1310,6 @@ h1 {
 .suggestion-btn:hover {
   border-color: #3b82f6;
   background: #eff6ff;
-  transform: translateX(4px);
 }
 
 .modern-form {
@@ -713,6 +1341,8 @@ h1 {
   transition: all 0.3s ease;
   background: white;
   box-sizing: border-box;
+  color: #111827;
+  line-height: 1.5;
 }
 
 .modern-textarea {
@@ -731,7 +1361,6 @@ h1 {
   font-weight: 500;
   pointer-events: none;
   transition: all 0.3s ease;
-  background: transparent;
   z-index: 1;
 }
 
@@ -759,25 +1388,20 @@ h1 {
   border-top: 1px solid #e5e7eb;
 }
 
-.modal-actions button {
-  padding: 12px 24px;
+.generate-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
   border: none;
+  padding: 12px 24px;
   border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.generate-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .generate-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .generate-btn:disabled {
@@ -788,39 +1412,17 @@ h1 {
 .save-btn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.save-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-}
-
-.modal-close {
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 20px;
-  padding: 10px 16px;
-  min-width: 44px;
-}
-
-.modal-close:hover {
-  background: #e5e7eb;
-}
-
-.modal-close-top {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 32px;
-  height: 32px;
   border: none;
+  padding: 12px 24px;
   border-radius: 10px;
-  background: rgba(10, 20, 45, 0.08);
-  color: rgba(10, 20, 45, 0.84);
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  font-size: 18px;
-  z-index: 3;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .solutions-block {
@@ -831,30 +1433,11 @@ h1 {
   border: 2px solid #10b981;
 }
 
-.solutions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
 .solutions-header h3 {
   font-size: 20px;
   font-weight: 700;
   color: #059669;
-  margin: 0;
-}
-
-.solutions-header .modal-close {
-  background: #10b981;
-  color: white;
-  font-size: 18px;
-  padding: 8px 14px;
-  min-width: auto;
-}
-
-.solutions-header .modal-close:hover {
-  background: #059669;
+  margin: 0 0 16px;
 }
 
 .solution-card {
@@ -880,7 +1463,7 @@ h1 {
 }
 
 .generate-solutions-block {
-  margin-top: 32px;
+  margin-top: 24px;
   text-align: center;
 }
 

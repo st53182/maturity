@@ -78,16 +78,18 @@
         </div>
 
         <div class="modern-form">
-          <div class="input-wrapper textarea-wrapper">
-            <span class="input-icon" aria-hidden="true">📝</span>
-            <textarea
-              v-model="newEvent"
-              rows="5"
-              class="modern-input modern-textarea"
-              :class="{ 'has-value': newEvent }"
-              placeholder="Опишите событие или проблему…"
-            />
-            <label class="floating-label">Событие (видимая часть айсберга)</label>
+          <div class="textarea-wrapper textarea-wrapper--stacked">
+            <label for="iceberg-new-event" class="stacked-field-label">Событие (видимая часть айсберга)</label>
+            <div class="textarea-with-icon">
+              <span class="input-icon input-icon--stacked" aria-hidden="true">📝</span>
+              <textarea
+                id="iceberg-new-event"
+                v-model="newEvent"
+                rows="5"
+                class="modern-input modern-textarea modern-textarea--stacked"
+                placeholder="Опишите событие или проблему…"
+              />
+            </div>
           </div>
         </div>
         <div class="modal-actions">
@@ -101,31 +103,32 @@
     <!-- Работа с айсбергом -->
     <div v-if="showIcebergModal && currentIceberg" class="modal-overlay">
       <div class="modal-content iceberg-modal">
-        <button type="button" class="modal-close-top" @click="closeIcebergModal" aria-label="Закрыть">✕</button>
-
         <header class="iceberg-work-header">
           <h2>Айсберг системного мышления</h2>
-          <div class="iceberg-work-actions">
-            <button type="button" class="toolbar-btn" title="Описание уровней и примеры" @click="showHelpModal = true">Подсказка</button>
-            <div
-              class="ai-assistant-inline"
-              tabindex="0"
-              @mouseenter="showWorkAiPopover = true"
-              @mouseleave="showWorkAiPopover = false"
-              @focusin="showWorkAiPopover = true"
-              @focusout="showWorkAiPopover = false"
-            >
-              <span class="ai-assistant-inline__icon" aria-hidden="true">✨</span>
-              <span class="sr-only">ИИ-ассистент</span>
-              <div v-show="showWorkAiPopover" class="ai-popover ai-popover--work" role="tooltip">
-                <p>Кнопка «Вопрос ИИ» подставляет наводящий вопрос для <strong>текущего</strong> уровня.</p>
-                <p>В ответе можно написать «не знаю» — получите варианты формулировок.</p>
-                <p>Можно переключаться между уровнями в любом порядке; черновик сохраняется автоматически.</p>
+          <div class="iceberg-work-header__right">
+            <div class="iceberg-work-actions">
+              <button type="button" class="toolbar-btn" title="Описание уровней и примеры" @click="showHelpModal = true">Подсказка</button>
+              <div
+                class="ai-assistant-inline"
+                tabindex="0"
+                @mouseenter="showWorkAiPopover = true"
+                @mouseleave="showWorkAiPopover = false"
+                @focusin="showWorkAiPopover = true"
+                @focusout="showWorkAiPopover = false"
+              >
+                <span class="ai-assistant-inline__icon" aria-hidden="true">✨</span>
+                <span class="sr-only">ИИ-ассистент</span>
+                <div v-show="showWorkAiPopover" class="ai-popover ai-popover--work" role="tooltip">
+                  <p>Кнопка «Вопрос ИИ» подставляет наводящий вопрос для <strong>текущего</strong> уровня.</p>
+                  <p>В ответе можно написать «не знаю» — получите варианты формулировок.</p>
+                  <p>Можно переключаться между уровнями в любом порядке; черновик сохраняется автоматически.</p>
+                </div>
               </div>
+              <button type="button" class="toolbar-btn toolbar-btn--primary" :disabled="exportingPdf" @click="exportPdf">
+                {{ exportingPdf ? "PDF…" : "Сохранить PDF" }}
+              </button>
             </div>
-            <button type="button" class="toolbar-btn toolbar-btn--primary" :disabled="exportingPdf" @click="exportPdf">
-              {{ exportingPdf ? "PDF…" : "Сохранить PDF" }}
-            </button>
+            <button type="button" class="modal-close-inline" @click="closeIcebergModal" aria-label="Закрыть">✕</button>
           </div>
         </header>
 
@@ -904,6 +907,48 @@ h1 {
   max-width: 920px;
 }
 
+.textarea-wrapper--stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stacked-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.textarea-with-icon {
+  position: relative;
+}
+
+.textarea-with-icon .input-icon--stacked {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  font-size: 20px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.modern-textarea--stacked {
+  padding: 14px 16px 14px 52px;
+  min-height: 120px;
+}
+
+/* Плавающая подпись + placeholder: подсказка видна только при фокусе, иначе не наезжает на label */
+.ai-answer-row .modern-textarea::placeholder {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ai-answer-row .modern-textarea:focus::placeholder,
+.ai-answer-row .modern-textarea.has-value::placeholder {
+  opacity: 1;
+}
+
 .modal-close-top {
   position: absolute;
   top: 10px;
@@ -1037,6 +1082,15 @@ h1 {
 .iceberg-work-header h2 {
   margin: 0;
   font-size: 1.35rem;
+  flex: 1;
+  min-width: min(100%, 200px);
+}
+
+.iceberg-work-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .iceberg-work-actions {
@@ -1044,6 +1098,26 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+}
+
+.modal-close-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  color: rgba(10, 20, 45, 0.84);
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.modal-close-inline:hover {
+  background: rgba(10, 20, 45, 0.14);
 }
 
 .toolbar-btn {

@@ -1,30 +1,74 @@
 <template>
   <div class="roadmap-container">
-    <div class="roadmap-header">
-      <h1>{{ roadmapName || 'Дорожная карта зависимостей' }}</h1>
-      <div class="header-actions">
-        <button @click="showSettingsModal = true" class="settings-btn">⚙️ Настройки</button>
-        <button @click="showShareModal = true" class="share-btn">🔗 Поделиться</button>
-        <button @click="showItemModal = true" class="add-btn">➕ Добавить элемент</button>
-        <button @click="showImageUpload = true" class="upload-btn">📷 Загрузить изображение</button>
+    <header class="roadmap-top">
+      <div class="roadmap-top__lead">
+        <router-link v-if="!isSharedView" to="/roadmap" class="roadmap-back">Все карты</router-link>
+        <div class="roadmap-title-block">
+          <h1 class="roadmap-title">{{ roadmapName || 'Дорожная карта' }}</h1>
+          <p class="roadmap-subtitle">
+            <span v-if="isSharedView">Просмотр по ссылке</span>
+            <span v-else>
+              {{ items.length }} {{ itemsLabel }} · {{ dependencies.length }} {{ depsLabel }}
+            </span>
+          </p>
+        </div>
       </div>
-    </div>
+      <div v-if="!isSharedView" class="roadmap-actions" role="toolbar" aria-label="Действия с картой">
+        <button type="button" class="rm-btn rm-btn--primary" @click="openNewItemModal">Добавить элемент</button>
+        <button type="button" class="rm-btn rm-btn--secondary" @click="showShareModal = true">Поделиться</button>
+        <button type="button" class="rm-btn rm-btn--secondary" @click="showSettingsModal = true">Сетка кварталов</button>
+        <button type="button" class="rm-btn rm-btn--quiet" @click="showImageUpload = true">Импорт по фото</button>
+      </div>
+    </header>
 
     <div class="roadmap-toolbar">
-      <div class="toolbar-group">
-        <label>Фильтр:</label>
-        <select v-model="selectedFilterItem" @change="applyFilter">
-          <option value="">Все элементы</option>
-          <option v-for="item in items" :key="item.id" :value="item.id">
-            {{ item.title }}
-          </option>
-        </select>
+      <div class="toolbar-inner">
+        <div class="toolbar-group">
+          <label class="toolbar-label" for="roadmap-filter">Фокус на элементе</label>
+          <select id="roadmap-filter" v-model="selectedFilterItem" class="toolbar-select" @change="applyFilter">
+            <option :value="null">Все элементы</option>
+            <option v-for="item in items" :key="item.id" :value="item.id">
+              {{ item.title }}
+            </option>
+          </select>
+        </div>
+        <button
+          v-if="selectedFilterItem"
+          type="button"
+          class="rm-btn rm-btn--quiet rm-btn--sm"
+          @click="clearFilter"
+        >
+          Сбросить
+        </button>
       </div>
-      <button @click="clearFilter" v-if="selectedFilterItem" class="clear-filter-btn">Очистить фильтр</button>
+      <p class="toolbar-hint">
+        Перетаскивайте карточки. Чтобы задать зависимость, потяните соединитель от одной фигуры к другой и выберите тип связи.
+      </p>
     </div>
 
     <div class="roadmap-canvas-wrapper">
-      <div id="roadmap-graph-container" ref="graphContainer"></div>
+      <div id="roadmap-graph-container" ref="graphContainer" class="roadmap-graph-host"></div>
+    </div>
+
+    <!-- Выбор типа зависимости (вместо prompt) -->
+    <div v-if="showDependencyTypeModal" class="modal-overlay" @click.self="cancelDependencyType">
+      <div class="modal-content modal-content--deps">
+        <button type="button" class="modal-close-top" @click="cancelDependencyType" aria-label="Закрыть">✕</button>
+        <h2>Тип зависимости</h2>
+        <p class="modal-lead">
+          От <strong>{{ pendingLabelFrom }}</strong> к <strong>{{ pendingLabelTo }}</strong>
+        </p>
+        <ul class="dep-type-list">
+          <li v-for="opt in dependencyTypeOptions" :key="opt.value">
+            <button type="button" class="dep-type-btn" @click="confirmDependencyType(opt.value)">
+              {{ opt.label }}
+            </button>
+          </li>
+        </ul>
+        <div class="modal-actions modal-actions--start">
+          <button type="button" class="rm-btn rm-btn--quiet" @click="cancelDependencyType">Отмена</button>
+        </div>
+      </div>
     </div>
 
     <!-- Модальное окно создания/редактирования элемента -->
@@ -66,8 +110,8 @@
         </div>
 
         <div class="modal-actions">
-          <button @click="saveItem" class="save-btn">💾 Сохранить</button>
-          <button @click="closeItemModal" class="cancel-btn">Отмена</button>
+          <button type="button" class="rm-btn rm-btn--primary" @click="saveItem">Сохранить</button>
+          <button type="button" class="rm-btn rm-btn--quiet" @click="closeItemModal">Отмена</button>
         </div>
       </div>
     </div>
@@ -85,13 +129,13 @@
           </div>
         </div>
         <div v-if="shareLink" class="share-link">
-          <p>Ссылка для доступа:</p>
+          <p class="share-link__title">Ссылка для доступа</p>
           <input :value="shareLink" readonly class="link-input" />
-          <button @click="copyLink" class="copy-btn">📋 Копировать</button>
+          <button type="button" class="rm-btn rm-btn--secondary rm-btn--sm" @click="copyLink">Копировать</button>
         </div>
         <div class="modal-actions">
-          <button @click="createShareLink" class="save-btn">🔗 Создать ссылку</button>
-          <button @click="showShareModal = false" class="cancel-btn">Закрыть</button>
+          <button type="button" class="rm-btn rm-btn--primary" @click="createShareLink">Создать ссылку</button>
+          <button type="button" class="rm-btn rm-btn--quiet" @click="showShareModal = false">Закрыть</button>
         </div>
       </div>
     </div>
@@ -110,22 +154,27 @@
       </div>
     </div>
 
-    <!-- Модальное окно настроек -->
+    <!-- Сетка кварталов на холсте -->
     <div v-if="showSettingsModal" class="modal-overlay" @click.self="showSettingsModal = false">
       <div class="modal-content">
-        <button class="modal-close-top" @click="showSettingsModal = false" aria-label="Close">✕</button>
-        <h2>Настройки дорожной карты</h2>
-        <div class="form-group">
-          <label>Начало квартала:</label>
-          <input type="text" v-model="quarterStart" placeholder="2024-Q1" />
-        </div>
-        <div class="form-group">
-          <label>Количество спринтов в квартале:</label>
-          <input type="number" v-model.number="sprintsPerQuarter" min="1" max="12" />
+        <button type="button" class="modal-close-top" @click="showSettingsModal = false" aria-label="Закрыть">✕</button>
+        <h2>Сетка кварталов</h2>
+        <p class="modal-lead muted">
+          На доске появятся четыре квартала подряд, начиная с указанного, и колонки спринтов внутри каждого.
+        </p>
+        <div class="settings-fields">
+          <div class="settings-field">
+            <label for="rm-quarter-start">Начало (формат год-Q)</label>
+            <input id="rm-quarter-start" v-model="quarterStart" type="text" class="settings-input" placeholder="2024-Q1" autocomplete="off" />
+          </div>
+          <div class="settings-field">
+            <label for="rm-sprints">Спринтов в квартале</label>
+            <input id="rm-sprints" v-model.number="sprintsPerQuarter" type="number" min="1" max="12" class="settings-input" />
+          </div>
         </div>
         <div class="modal-actions">
-          <button @click="saveSettings" class="save-btn">Сохранить</button>
-          <button @click="showSettingsModal = false" class="cancel-btn">Отмена</button>
+          <button type="button" class="rm-btn rm-btn--primary" @click="saveSettings">Сохранить</button>
+          <button type="button" class="rm-btn rm-btn--quiet" @click="showSettingsModal = false">Отмена</button>
         </div>
       </div>
     </div>
@@ -165,34 +214,59 @@ export default {
       uploading: false,
       savePositionTimeout: null,
       quarterStart: "",
-      sprintsPerQuarter: 6
+      sprintsPerQuarter: 6,
+      showDependencyTypeModal: false,
+      pendingConnection: null,
+      dependencyTypeOptions: [
+        { value: "blocks", label: "Блокирует" },
+        { value: "depends_on", label: "Зависит от" },
+        { value: "related_to", label: "Связан с" },
+        { value: "requires", label: "Требует" },
+        { value: "precedes", label: "Предшествует" },
+        { value: "follows", label: "Следует за" }
+      ]
     };
   },
-    async mounted() {
-    // Получаем ID из роута
-    this.roadmapId = this.$route.params.id ? parseInt(this.$route.params.id) : null;
+  computed: {
+    isSharedView() {
+      return Boolean(this.$route.params.token);
+    },
+    itemsLabel() {
+      return this.pluralRu(this.items.length, ["элемент", "элемента", "элементов"]);
+    },
+    depsLabel() {
+      return this.pluralRu(this.dependencies.length, ["связь", "связи", "связей"]);
+    },
+    pendingLabelFrom() {
+      const id = this.pendingConnection?.fromId;
+      const item = this.items.find((i) => i.id === id);
+      return item?.title || "…";
+    },
+    pendingLabelTo() {
+      const id = this.pendingConnection?.toId;
+      const item = this.items.find((i) => i.id === id);
+      return item?.title || "…";
+    }
+  },
+  async mounted() {
+    this.roadmapId = this.$route.params.id ? parseInt(this.$route.params.id, 10) : null;
     const accessToken = this.$route.params.token;
 
     if (accessToken) {
-      // Доступ по ссылке
       await this.loadRoadmapByToken(accessToken);
     } else if (this.roadmapId) {
-      // Обычный доступ
       await this.loadRoadmap();
     }
 
-    // Загружаем команды (только если авторизован)
     const token = localStorage.getItem("token");
     if (token) {
       await this.loadTeams();
     }
 
-    // Инициализируем граф после загрузки данных
     this.$nextTick(() => {
       this.initGraph();
     });
 
-    // Подключаемся к WebSocket
     if (this.roadmapId) {
       this.connectWebSocket();
     }
@@ -325,9 +399,15 @@ export default {
 
       // Создаем граф
       this.graph = new mxGraph(this.graphContainer);
-      this.graph.setConnectable(true);
+      const readOnly = Boolean(this.$route.params.token);
+      this.graph.setConnectable(!readOnly);
       this.graph.setMultigraph(false);
       this.graph.setAllowDanglingEdges(false);
+      if (readOnly) {
+        this.graph.setCellsMovable(false);
+        this.graph.setCellsResizable(false);
+        this.graph.setCellsBendable(false);
+      }
 
       // Настраиваем стили
       const style = this.graph.getStylesheet().getDefaultVertexStyle();
@@ -339,19 +419,22 @@ export default {
 
       // Обработчики событий
       this.graph.addListener(mxEvent.CELL_CONNECTED, (sender, evt) => {
-        const edge = evt.getProperty('edge');
-        const source = evt.getProperty('source');
-        const target = evt.getProperty('target');
-        
-        if (edge && source && target && source.id && target.id) {
-          // Проверяем, что это не существующая зависимость
-          const existingDep = this.dependencies.find(d => 
-            d.from_item_id === parseInt(source.id) && d.to_item_id === parseInt(target.id)
-          );
-          if (!existingDep) {
-            this.createDependency(parseInt(source.id), parseInt(target.id));
-          }
-        }
+        const edge = evt.getProperty("edge");
+        const source = evt.getProperty("source");
+        const target = evt.getProperty("target");
+
+        if (!edge || !source || !target || source.id == null || target.id == null) return;
+        const fromId = parseInt(source.id, 10);
+        const toId = parseInt(target.id, 10);
+        if (Number.isNaN(fromId) || Number.isNaN(toId)) return;
+
+        const existingDep = this.dependencies.find(
+          (d) => d.from_item_id === fromId && d.to_item_id === toId
+        );
+        if (existingDep) return;
+
+        this.pendingConnection = { edge, fromId, toId };
+        this.showDependencyTypeModal = true;
       });
 
       this.graph.addListener(mxEvent.CELL_MOVED, (sender, evt) => {
@@ -394,13 +477,13 @@ export default {
         const vertexMap = {};
         this.items.forEach(item => {
           const style = item.type === 'epic' 
-            ? 'fillColor=#FFE0B2;strokeColor=#F57C00;rounded=1;' 
-            : 'fillColor=#E3F2FD;strokeColor=#1976D2;rounded=1;';
-          
+            ? 'fillColor=#FFF4E6;strokeColor=#C2410C;rounded=1;fontColor=#0d1733;' 
+            : 'fillColor=#EEF4FF;strokeColor=#2754c7;rounded=1;fontColor=#0d1733;';
+          const prefix = item.type === 'epic' ? 'Эпик' : 'История';
           const vertex = this.graph.insertVertex(
             parent,
             String(item.id),
-            `${item.type === 'epic' ? '📦' : '📋'} ${item.title}`,
+            `${prefix}: ${item.title}`,
             item.position_x || 100,
             item.position_y || 100,
             200,
@@ -567,40 +650,62 @@ export default {
         }
       }, 500);
     },
-    async createDependency(fromItemId, toItemId) {
-      // Показываем диалог выбора типа зависимости
-      const types = ['blocks', 'depends_on', 'related_to', 'requires', 'precedes', 'follows'];
-      const typeLabels = {
-        'blocks': 'Блокирует',
-        'depends_on': 'Зависит от',
-        'related_to': 'Связан с',
-        'requires': 'Требует',
-        'precedes': 'Предшествует',
-        'follows': 'Следует за'
-      };
-      
-      const selectedType = prompt(`Выберите тип зависимости:\n${types.map((t, i) => `${i + 1}. ${typeLabels[t]}`).join('\n')}\nВведите номер (1-6):`);
-      
-      if (!selectedType) return;
-      
-      const typeIndex = parseInt(selectedType) - 1;
-      if (typeIndex < 0 || typeIndex >= types.length) return;
-      
+    pluralRu(n, forms) {
+      const nAbs = Math.abs(n) % 100;
+      const n1 = nAbs % 10;
+      if (nAbs > 10 && nAbs < 20) return forms[2];
+      if (n1 > 1 && n1 < 5) return forms[1];
+      if (n1 === 1) return forms[0];
+      return forms[2];
+    },
+    openNewItemModal() {
+      this.showItemModal = true;
+    },
+    cancelDependencyType() {
+      if (this.pendingConnection?.edge && this.graph) {
+        try {
+          this.graph.removeCells([this.pendingConnection.edge]);
+        } catch (e) {
+          console.warn("Не удалось убрать ребро графа", e);
+        }
+      }
+      this.pendingConnection = null;
+      this.showDependencyTypeModal = false;
+    },
+    async confirmDependencyType(dependencyType) {
+      if (!this.pendingConnection) return;
+      const { edge, fromId, toId } = this.pendingConnection;
+      this.pendingConnection = null;
+      this.showDependencyTypeModal = false;
       try {
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        
-        await axios.post(`/api/roadmap/${this.roadmapId}/dependency`, {
+        await this.createDependency(fromId, toId, dependencyType);
+      } catch (err) {
+        console.error("Ошибка создания зависимости:", err);
+        alert("Не удалось создать зависимость. Проверьте права доступа.");
+        if (edge && this.graph) {
+          try {
+            this.graph.removeCells([edge]);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }
+    },
+    async createDependency(fromItemId, toItemId, dependencyType) {
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      await axios.post(
+        `/api/roadmap/${this.roadmapId}/dependency`,
+        {
           from_item_id: fromItemId,
           to_item_id: toItemId,
-          dependency_type: types[typeIndex]
-        }, { headers });
+          dependency_type: dependencyType
+        },
+        { headers }
+      );
 
-        await this.loadRoadmap();
-      } catch (error) {
-        console.error("Ошибка создания зависимости:", error);
-        alert("Ошибка создания зависимости. Убедитесь, что у вас есть права на редактирование.");
-      }
+      await this.loadRoadmap();
     },
     async saveSettings() {
       try {
@@ -779,226 +884,374 @@ export default {
 <style scoped>
 .roadmap-container {
   width: 100%;
-  height: 100vh;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  min-height: 0;
+  height: calc(100vh - 5.5rem);
+  max-height: calc(100dvh - 4.5rem);
+  background: var(--vl-surface-soft, #f6f9ff);
+  border-radius: 14px;
+  border: 1px solid var(--vl-border, #d8e0f0);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.roadmap-header {
-  padding: 20px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
+.roadmap-top {
+  flex-shrink: 0;
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
+  gap: 1rem 1.25rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--vl-surface, #fff);
+  border-bottom: 1px solid var(--vl-border, #d8e0f0);
 }
 
-.roadmap-header h1 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
-}
-
-.header-actions {
+.roadmap-top__lead {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-.share-btn, .add-btn, .upload-btn, .settings-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+.roadmap-back {
+  font-size: 0.8125rem;
   font-weight: 600;
-  transition: all 0.2s;
+  color: var(--vl-muted, #5d6b8a);
+  text-decoration: none;
+  align-self: flex-start;
 }
 
-.settings-btn {
-  background: #9E9E9E;
-  color: white;
+.roadmap-back:hover {
+  color: var(--vl-primary-end, #2754c7);
+  text-decoration: underline;
 }
 
-.share-btn {
-  background: #4CAF50;
-  color: white;
+.roadmap-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--vl-text, #0d1733);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
-.add-btn {
-  background: #2196F3;
-  color: white;
+.roadmap-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--vl-muted, #5d6b8a);
 }
 
-.upload-btn {
-  background: #FF9800;
-  color: white;
+.roadmap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.rm-btn {
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  line-height: 1.25;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.rm-btn--sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.rm-btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--vl-primary-start, #142b66), var(--vl-primary-end, #2754c7));
+  box-shadow: 0 2px 10px rgba(20, 43, 102, 0.22);
+}
+
+.rm-btn--primary:hover {
+  background: linear-gradient(135deg, var(--vl-primary-hover-start, #102457), var(--vl-primary-hover-end, #1f46ae));
+  box-shadow: 0 4px 14px rgba(20, 43, 102, 0.28);
+}
+
+.rm-btn--secondary {
+  color: var(--vl-text, #0d1733);
+  background: var(--vl-surface, #fff);
+  border: 1px solid var(--vl-border, #d8e0f0);
+  box-shadow: 0 1px 2px rgba(10, 20, 45, 0.06);
+}
+
+.rm-btn--secondary:hover {
+  border-color: rgba(39, 84, 199, 0.35);
+  background: var(--vl-surface-soft, #f6f9ff);
+}
+
+.rm-btn--quiet {
+  color: var(--vl-muted, #5d6b8a);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.rm-btn--quiet:hover {
+  color: var(--vl-text, #0d1733);
+  background: rgba(10, 20, 45, 0.06);
+  border-color: rgba(10, 20, 45, 0.08);
 }
 
 .roadmap-toolbar {
-  padding: 12px 20px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  padding: 0.75rem 1.25rem 0.9rem;
+  background: var(--vl-surface, #fff);
+  border-bottom: 1px solid var(--vl-border, #d8e0f0);
+}
+
+.toolbar-inner {
   display: flex;
-  gap: 16px;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
 }
 
 .toolbar-group {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 12rem;
+  flex: 1 1 200px;
+}
+
+.toolbar-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vl-muted, #5d6b8a);
+}
+
+.toolbar-select {
+  width: 100%;
+  max-width: 22rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--vl-text, #0d1733);
+  border: 1px solid var(--vl-border, #d8e0f0);
+  border-radius: 10px;
+  background: var(--vl-surface, #fff);
+  box-sizing: border-box;
+}
+
+.toolbar-select:focus {
+  outline: none;
+  border-color: rgba(39, 84, 199, 0.45);
+  box-shadow: 0 0 0 3px rgba(39, 84, 199, 0.12);
+}
+
+.toolbar-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--vl-muted, #5d6b8a);
 }
 
 .roadmap-canvas-wrapper {
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
   position: relative;
+  padding: 0.65rem;
+  box-sizing: border-box;
 }
 
-#roadmap-graph-container {
+.roadmap-graph-host {
   width: 100%;
   height: 100%;
-  background: #fafafa;
+  min-height: 360px;
+  border-radius: 12px;
+  border: 1px solid var(--vl-border, #d8e0f0);
+  background-color: #fbfcff;
+  background-image: radial-gradient(circle at 1px 1px, rgba(13, 23, 51, 0.07) 1px, transparent 0);
+  background-size: 18px 18px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(10, 20, 45, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .modal-content {
-  background: white;
-  padding: 32px;
-  border-radius: 12px;
+  background: var(--vl-surface, #fff);
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: 14px;
   max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
+  width: 100%;
+  max-height: min(90vh, 720px);
   overflow-y: auto;
   position: relative;
-  border: 1px solid rgba(10, 20, 45, 0.12);
-  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.24);
+  border: 1px solid var(--vl-border, #d8e0f0);
+  box-shadow: 0 24px 70px rgba(10, 20, 45, 0.2);
+  box-sizing: border-box;
+}
+
+.modal-content h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  color: var(--vl-text, #0d1733);
+}
+
+.modal-lead {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--vl-text, #0d1733);
+}
+
+.modal-lead.muted,
+.muted {
+  color: var(--vl-muted, #5d6b8a);
+}
+
+.modal-content--deps {
+  max-width: 400px;
 }
 
 .modal-close-top {
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 32px;
-  height: 32px;
-  border: none;
+}
+
+.dep-type-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dep-type-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
   border-radius: 10px;
-  background: rgba(10, 20, 45, 0.08);
-  color: rgba(10, 20, 45, 0.84);
+  border: 1px solid var(--vl-border, #d8e0f0);
+  background: var(--vl-surface-soft, #f6f9ff);
+  color: var(--vl-text, #0d1733);
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 18px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dep-type-btn:hover {
+  background: #fff;
+  border-color: rgba(39, 84, 199, 0.35);
 }
 
 .modal-actions {
-  margin-top: 24px;
+  margin-top: 1.25rem;
   display: flex;
-  gap: 12px;
+  gap: 0.5rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
-.save-btn, .cancel-btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
+.modal-actions--start {
+  justify-content: flex-start;
 }
 
-.save-btn {
-  background: #4CAF50;
-  color: white;
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.cancel-btn {
-  background: #9E9E9E;
-  color: white;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
+.settings-field label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vl-muted, #5d6b8a);
+  margin-bottom: 0.35rem;
 }
 
-.form-group input {
+.settings-input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9375rem;
+  border: 1px solid var(--vl-border, #d8e0f0);
+  border-radius: 10px;
+  box-sizing: border-box;
+  color: var(--vl-text, #0d1733);
 }
 
-.save-btn {
-  background: #4CAF50;
-  color: white;
-}
-
-.cancel-btn {
-  background: #f5f5f5;
-  color: #333;
+.settings-input:focus {
+  outline: none;
+  border-color: rgba(39, 84, 199, 0.45);
+  box-shadow: 0 0 0 3px rgba(39, 84, 199, 0.1);
 }
 
 .share-link {
-  margin-top: 20px;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: var(--vl-surface-soft, #f6f9ff);
+  border-radius: 12px;
+  border: 1px solid var(--vl-border, #d8e0f0);
+}
+
+.share-link__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--vl-muted, #5d6b8a);
 }
 
 .link-input {
   width: 100%;
-  padding: 8px;
-  margin-top: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.copy-btn {
-  margin-top: 8px;
-  padding: 8px 16px;
-  background: #2196F3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  padding: 0.5rem 0.65rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--vl-border, #d8e0f0);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  box-sizing: border-box;
+  font-family: ui-monospace, monospace;
 }
 
 .file-input {
-  margin-top: 16px;
-  padding: 8px;
+  margin-top: 1rem;
+  padding: 0.5rem 0;
   width: 100%;
+  font-size: 0.875rem;
 }
 
 .upload-status {
-  margin-top: 16px;
-  padding: 12px;
-  background: #E3F2FD;
-  border-radius: 8px;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--vl-surface-soft, #f6f9ff);
+  border-radius: 10px;
   text-align: center;
+  font-size: 0.875rem;
+  color: var(--vl-muted, #5d6b8a);
 }
 
-/* Modern form styles (из предыдущих компонентов) */
 .modern-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.25rem;
 }
 
 .input-wrapper {
@@ -1010,9 +1263,10 @@ export default {
   left: 18px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 20px;
+  font-size: 18px;
   z-index: 2;
   pointer-events: none;
+  opacity: 0.75;
 }
 
 .textarea-wrapper .input-icon {
@@ -1023,14 +1277,13 @@ export default {
 .modern-input {
   width: 100%;
   padding: 20px 18px 8px 52px;
-  border: 2px solid #e5e7eb;
-  border-radius: 14px;
+  border: 2px solid var(--vl-border, #d8e0f0);
+  border-radius: 12px;
   font-size: 15px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: var(--vl-surface, #fff);
   box-sizing: border-box;
-  color: #111827;
+  color: var(--vl-text, #0d1733);
   line-height: 1.5;
 }
 
@@ -1044,7 +1297,7 @@ export default {
   padding-right: 52px;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%236b7280' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%235d6b8a' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 18px center;
 }
@@ -1055,10 +1308,10 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   font-size: 15px;
-  color: #9ca3af;
+  color: var(--vl-muted, #5d6b8a);
   font-weight: 500;
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s ease;
   z-index: 1;
 }
 
@@ -1071,9 +1324,8 @@ export default {
 .modern-input.has-value {
   padding-top: 20px;
   padding-bottom: 8px;
-  border-color: #3b82f6;
-  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.15);
+  border-color: rgba(39, 84, 199, 0.45);
+  box-shadow: 0 0 0 3px rgba(39, 84, 199, 0.1);
 }
 
 .modern-input:focus + .floating-label,
@@ -1081,8 +1333,20 @@ export default {
   top: 12px;
   left: 52px;
   font-size: 12px;
-  color: #3b82f6;
+  color: var(--vl-primary-end, #2754c7);
   font-weight: 600;
   transform: none;
+}
+
+@media (max-width: 640px) {
+  .roadmap-container {
+    height: auto;
+    max-height: none;
+    min-height: 70vh;
+  }
+
+  .roadmap-canvas-wrapper {
+    min-height: 50vh;
+  }
 }
 </style>

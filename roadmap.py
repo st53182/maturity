@@ -551,7 +551,13 @@ def update_item(roadmap_id, item_id):
             else:
                 item.team_id = None
         if "metadata" in data:
-            item.item_metadata = data["metadata"]
+            patch = data["metadata"]
+            if isinstance(patch, dict):
+                base = dict(item.item_metadata or {})
+                base.update(patch)
+                item.item_metadata = base
+            else:
+                item.item_metadata = patch
         
         item.updated_at = datetime.utcnow()
         roadmap.updated_at = datetime.utcnow()

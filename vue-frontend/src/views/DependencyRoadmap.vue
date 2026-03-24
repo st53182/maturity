@@ -23,6 +23,27 @@
 
     <div class="roadmap-toolbar">
       <div class="toolbar-inner">
+        <div class="toolbar-group toolbar-group--compact">
+          <span class="toolbar-label">Вид</span>
+          <div class="roadmap-view-switch" role="group" aria-label="Режим отображения">
+            <button
+              type="button"
+              class="roadmap-view-switch__btn"
+              :class="{ 'roadmap-view-switch__btn--active': displayMode === 'canvas' }"
+              @click="setDisplayMode('canvas')"
+            >
+              Доска
+            </button>
+            <button
+              type="button"
+              class="roadmap-view-switch__btn"
+              :class="{ 'roadmap-view-switch__btn--active': displayMode === 'timeline' }"
+              @click="setDisplayMode('timeline')"
+            >
+              Таймлайн
+            </button>
+          </div>
+        </div>
         <div class="toolbar-group">
           <label class="toolbar-label" for="roadmap-filter">Фокус на элементе</label>
           <select id="roadmap-filter" v-model="selectedFilterItem" class="toolbar-select" @change="applyFilter">
@@ -42,12 +63,29 @@
         </button>
       </div>
       <p class="toolbar-hint">
-        Перетаскивайте карточки. Чтобы задать зависимость, потяните соединитель от одной фигуры к другой и выберите тип связи.
+        <template v-if="displayMode === 'canvas'">
+          Перетаскивайте карточки. Чтобы задать зависимость, потяните соединитель от одной фигуры к другой и выберите тип связи.
+        </template>
+        <template v-else>
+          Общая шкала по датам элементов и кварталам карты. Зависимости показаны пунктиром; красный — «блокирует». Двойной щелчок по карточке на доске или щелчок по полосе открывает редактирование (если есть доступ).
+        </template>
       </p>
     </div>
 
     <div class="roadmap-canvas-wrapper">
-      <div id="roadmap-graph-container" ref="graphContainer" class="roadmap-graph-host"></div>
+      <div v-show="displayMode === 'canvas'" class="roadmap-pane roadmap-pane--canvas">
+        <div id="roadmap-graph-container" ref="graphContainer" class="roadmap-graph-host"></div>
+      </div>
+      <div v-show="displayMode === 'timeline'" class="roadmap-pane roadmap-pane--timeline">
+        <RoadmapTimelinePanel
+          :items="items"
+          :dependencies="dependencies"
+          :teams="teams"
+          :quarter-start="quarterStart"
+          :read-only="isSharedView"
+          @select-item="onTimelineSelectItem"
+        />
+      </div>
     </div>
 
     <!-- Выбор типа зависимости (вместо prompt) -->
@@ -106,6 +144,28 @@
               <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
             </select>
             <label class="floating-label">Команда</label>
+          </div>
+
+          <p class="modal-section-title">Таймлайн (шкала и swimlanes)</p>
+          <p class="modal-section-hint">
+            Поле «Направление» создаёт группы как в Roadmunk. Даты в формате ГГГГ-ММ-ДД; если пусто, положение на таймлайне оценивается по горизонтали карточки на доске.
+          </p>
+          <div class="input-wrapper">
+            <span class="input-icon">▤</span>
+            <input v-model="itemForm.stream" class="modern-input" :class="{ 'has-value': itemForm.stream }" placeholder="Например: Продукт" />
+            <label class="floating-label">Направление (stream)</label>
+          </div>
+          <div class="input-wrapper input-row-dates">
+            <div class="input-wrapper input-wrapper--inline">
+              <span class="input-icon">📅</span>
+              <input v-model="itemForm.timeline_start" type="date" class="modern-input" :class="{ 'has-value': itemForm.timeline_start }" />
+              <label class="floating-label">Начало</label>
+            </div>
+            <div class="input-wrapper input-wrapper--inline">
+              <span class="input-icon">📅</span>
+              <input v-model="itemForm.timeline_end" type="date" class="modern-input" :class="{ 'has-value': itemForm.timeline_end }" />
+              <label class="floating-label">Конец</label>
+            </div>
           </div>
         </div>
 
@@ -184,11 +244,14 @@
 <script>
 import axios from "axios";
 import { io } from "socket.io-client";
+import RoadmapTimelinePanel from "@/components/RoadmapTimelinePanel.vue";
 
 export default {
   name: "DependencyRoadmap",
+  components: { RoadmapTimelinePanel },
   data() {
     return {
+      displayMode: "canvas",
       roadmapId: null,
       roadmapName: "",
       items: [],
@@ -206,7 +269,10 @@ export default {
         type: "",
         title: "",
         description: "",
-        team_id: null
+        team_id: null,
+        stream: "",
+        timeline_start: "",
+        timeline_end: ""
       },
       sharePassword: "",
       shareLink: "",
@@ -408,6 +474,7 @@ export default {
         this.graph.setCellsResizable(false);
         this.graph.setCellsBendable(false);
       }
+      this.graph.setCellsEditable(false);
 
       // Настраиваем стили
       const style = this.graph.getStylesheet().getDefaultVertexStyle();
@@ -445,6 +512,18 @@ export default {
         if (geometry && cell.vertex && cell.id) {
           this.updateItemPosition(parseInt(cell.id), geometry.x, geometry.y);
         }
+      });
+
+      this.graph.addListener(mxEvent.DOUBLE_CLICK, (sender, evt) => {
+        const cell = evt.getProperty("cell");
+        if (!cell || !cell.vertex || this.isSharedView) return;
+        const rawId = cell.getId();
+        const id = typeof rawId === "string" ? parseInt(rawId, 10) : rawId;
+        if (Number.isNaN(id)) return;
+        const item = this.items.find((i) => i.id === id);
+        if (!item) return;
+        evt.consume();
+        this.openEditItemModal(item);
       });
 
       // Рендерим граф после настройки
@@ -573,6 +652,25 @@ export default {
       };
       return labels[type] || type;
     },
+    buildTimelineMetadata() {
+      const prev = { ...(this.editingItem?.metadata || {}) };
+      if (this.itemForm.stream?.trim()) prev.stream = this.itemForm.stream.trim();
+      else delete prev.stream;
+      if (this.itemForm.timeline_start) prev.start = this.itemForm.timeline_start;
+      else delete prev.start;
+      if (this.itemForm.timeline_end) prev.end = this.itemForm.timeline_end;
+      else delete prev.end;
+      delete prev.timeline_start;
+      delete prev.timeline_end;
+      return prev;
+    },
+    buildTimelineMetadataForCreate() {
+      const m = {};
+      if (this.itemForm.stream?.trim()) m.stream = this.itemForm.stream.trim();
+      if (this.itemForm.timeline_start) m.start = this.itemForm.timeline_start;
+      if (this.itemForm.timeline_end) m.end = this.itemForm.timeline_end;
+      return m;
+    },
     async saveItem() {
       try {
         const token = localStorage.getItem("token");
@@ -589,14 +687,16 @@ export default {
         };
 
         if (this.editingItem) {
+          data.metadata = this.buildTimelineMetadata();
           await axios.put(`/api/roadmap/${this.roadmapId}/item/${this.editingItem.id}`, data, {
             headers: { Authorization: `Bearer ${token}` }
           });
         } else {
-          const response = await axios.post(`/api/roadmap/${this.roadmapId}/item`, data, {
+          const meta = this.buildTimelineMetadataForCreate();
+          if (Object.keys(meta).length) data.metadata = meta;
+          await axios.post(`/api/roadmap/${this.roadmapId}/item`, data, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          this.items.push(response.data);
         }
 
         await this.loadRoadmap();
@@ -609,7 +709,49 @@ export default {
     closeItemModal() {
       this.showItemModal = false;
       this.editingItem = null;
-      this.itemForm = { type: "", title: "", description: "", team_id: null };
+      this.itemForm = {
+        type: "",
+        title: "",
+        description: "",
+        team_id: null,
+        stream: "",
+        timeline_start: "",
+        timeline_end: ""
+      };
+    },
+    openEditItemModal(item) {
+      const md = item.metadata || {};
+      this.editingItem = item;
+      this.itemForm = {
+        type: item.type,
+        title: item.title,
+        description: item.description || "",
+        team_id: item.team_id || null,
+        stream: md.stream || "",
+        timeline_start: md.start || md.timeline_start || "",
+        timeline_end: md.end || md.timeline_end || ""
+      };
+      this.showItemModal = true;
+    },
+    onTimelineSelectItem(id) {
+      if (this.isSharedView) return;
+      const item = this.items.find((i) => i.id === id);
+      if (item) this.openEditItemModal(item);
+    },
+    setDisplayMode(mode) {
+      this.displayMode = mode;
+      if (mode === "canvas") {
+        this.$nextTick(() => {
+          try {
+            if (this.graph && typeof this.graph.sizeDidChange === "function") {
+              this.graph.sizeDidChange();
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+          this.renderGraph();
+        });
+      }
     },
     async updateItemPosition(itemId, x, y) {
       // Обновляем локально для быстрого отклика
@@ -1064,6 +1206,57 @@ export default {
   position: relative;
   padding: 0.65rem;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.roadmap-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.roadmap-pane--canvas {
+  min-height: 360px;
+}
+
+.roadmap-pane--timeline {
+  min-height: 400px;
+}
+
+.toolbar-group--compact {
+  flex: 0 0 auto;
+  min-width: auto;
+}
+
+.roadmap-view-switch {
+  display: inline-flex;
+  border-radius: 10px;
+  border: 1px solid var(--vl-border, #d8e0f0);
+  overflow: hidden;
+  background: var(--vl-surface-soft, #f6f9ff);
+}
+
+.roadmap-view-switch__btn {
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--vl-muted, #5d6b8a);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.roadmap-view-switch__btn:hover {
+  color: var(--vl-text, #0d1733);
+  background: rgba(39, 84, 199, 0.08);
+}
+
+.roadmap-view-switch__btn--active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--vl-primary-start, #142b66), var(--vl-primary-end, #2754c7));
 }
 
 .roadmap-graph-host {
@@ -1252,6 +1445,32 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.modal-section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vl-muted, #5d6b8a);
+}
+
+.modal-section-hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--vl-muted, #5d6b8a);
+}
+
+.input-row-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.input-wrapper--inline {
+  margin: 0;
 }
 
 .input-wrapper {

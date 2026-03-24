@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scoped under #gb-dashboard via tailwind important; base layer only affects descendants */
+#gb-dashboard {
+  font-family: var(--vl-font, Inter, system-ui, sans-serif);
+  color: var(--vl-text, #0d1733);
+}

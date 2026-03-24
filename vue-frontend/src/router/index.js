@@ -23,6 +23,7 @@ const routes = [
   { path: '/new/meeting-design', name: 'NewMeetingDesign', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'meeting-design' }, meta: { requiresAuth: true } },
   { path: '/new/motivation', name: 'NewMotivation', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'motivation' } },
   { path: '/new/project-card', name: 'NewProjectCard', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'project-card' }, meta: { requiresAuth: true } },
+  { path: '/new/project-dashboard', name: 'ProjectDashboardDemo', component: () => import('@/views/ProjectDashboardDemo.vue') },
   /* Канон /new: редиректы со старых URL */
   { path: '/dashboard', redirect: '/new/dashboard' },
   { path: '/survey', redirect: '/new/survey' },

@@ -107,6 +107,7 @@
           </div>
           <div class="area-card__links">
             <router-link to="/roadmap" class="area-link">{{ $t('newHome.links.roadmap') }}</router-link>
+            <router-link to="/new/project-dashboard" class="area-link">{{ $t('newHome.links.projectDashboard') }}</router-link>
             <router-link to="/new/project-card" class="area-link">{{ $t('newHome.links.projectCard') }}</router-link>
             <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noopener noreferrer">{{ $t('newHome.links.planningPoker') }}</a>
           </div>

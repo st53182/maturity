@@ -191,10 +191,16 @@
         <div class="form-group">
           <label>{{ $t('meetingDesign.constraints') }}</label>
           <div class="constraint-labels">
-            <label v-for="(label, key) in constraintLabels" :key="key" class="constraint-label">
-              <input type="checkbox" :value="key" v-model="selectedConstraints" />
-              {{ label }}
-            </label>
+            <div v-for="(label, key) in constraintLabels" :key="key" class="constraint-row">
+              <input
+                :id="'meeting-constraint-' + key"
+                v-model="selectedConstraints"
+                type="checkbox"
+                class="constraint-checkbox"
+                :value="key"
+              />
+              <label :for="'meeting-constraint-' + key" class="constraint-label">{{ label }}</label>
+            </div>
           </div>
           <textarea v-model="newDesign.constraints" class="form-textarea" rows="2" placeholder="Дополнительные ограничения..."></textarea>
         </div>
@@ -999,16 +1005,46 @@ h1 {
   margin-bottom: 10px;
 }
 
-.constraint-label {
+.constraint-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: normal;
-  cursor: pointer;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
 }
 
-.constraint-label input[type="checkbox"] {
-  width: auto;
+.constraint-checkbox {
+  margin: 2px 0 0;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  vertical-align: top;
+}
+
+.constraint-checkbox:focus {
+  outline: none;
+}
+
+.constraint-checkbox:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.45);
+  outline-offset: 2px;
+}
+
+.form-group .constraint-labels .constraint-label {
+  margin-bottom: 0;
+}
+
+.constraint-label {
+  display: block;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #374151;
+  cursor: pointer;
+  margin: 0;
+  user-select: none;
+  text-decoration: none;
 }
 
 .design-info {

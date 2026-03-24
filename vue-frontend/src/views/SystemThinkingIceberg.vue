@@ -191,16 +191,18 @@
             </div>
           </div>
 
-          <div class="input-wrapper textarea-wrapper ai-answer-row">
-            <span class="input-icon" aria-hidden="true">💬</span>
-            <textarea
-              v-model="aiAnswerDraft"
-              rows="2"
-              class="modern-input modern-textarea"
-              :class="{ 'has-value': aiAnswerDraft }"
-              placeholder="Ответ для ИИ (или напишите «не знаю» для вариантов)…"
-            />
-            <label class="floating-label">Отправить ответ ИИ</label>
+          <div class="textarea-wrapper textarea-wrapper--stacked ai-answer-row">
+            <label :for="'iceberg-ai-answer-' + selectedLevel" class="stacked-field-label">Отправить ответ ИИ</label>
+            <div class="textarea-with-icon">
+              <span class="input-icon input-icon--stacked" aria-hidden="true">💬</span>
+              <textarea
+                :id="'iceberg-ai-answer-' + selectedLevel"
+                v-model="aiAnswerDraft"
+                rows="3"
+                class="modern-input modern-textarea modern-textarea--stacked"
+                placeholder="Ответ для ИИ (или напишите «не знаю» для вариантов)…"
+              />
+            </div>
           </div>
           <div class="modal-actions modal-actions--tight">
             <button type="button" class="generate-btn" :disabled="!aiAnswerDraft.trim() || loading" @click="submitAiAnswer">
@@ -936,17 +938,6 @@ h1 {
 .modern-textarea--stacked {
   padding: 14px 16px 14px 52px;
   min-height: 120px;
-}
-
-/* Плавающая подпись + placeholder: подсказка видна только при фокусе, иначе не наезжает на label */
-.ai-answer-row .modern-textarea::placeholder {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.ai-answer-row .modern-textarea:focus::placeholder,
-.ai-answer-row .modern-textarea.has-value::placeholder {
-  opacity: 1;
 }
 
 .modal-close-top {

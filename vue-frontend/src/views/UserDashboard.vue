@@ -347,9 +347,10 @@ export default {
 <style scoped>
 /* 🔹 Основной контейнер */
 .dashboard-container {
-  margin-left: 70px; /* чтобы не пересекаться с sidebar */
+  margin-left: 0;
   padding: 30px;
-  width: calc(100% - 70px);
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   background: #f4f6f9;
 }

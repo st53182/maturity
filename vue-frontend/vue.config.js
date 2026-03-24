@@ -16,6 +16,10 @@ module.exports = defineConfig({
       '/login': {
         target: 'http://localhost:5000',
         changeOrigin: true
+      },
+      '/user_profile': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
       }
     }
   }

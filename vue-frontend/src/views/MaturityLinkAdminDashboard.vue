@@ -36,6 +36,7 @@
                 <th>ID</th>
                 <th>Команда</th>
                 <th>Токен (хвост)</th>
+                <th>Отчёт</th>
                 <th>Создана</th>
                 <th>Завершена</th>
                 <th></th>
@@ -46,6 +47,16 @@
                 <td>{{ s.id }}</td>
                 <td>{{ s.team_name || '—' }}</td>
                 <td class="mono">…{{ s.token_suffix }}</td>
+                <td>
+                  <router-link
+                    v-if="s.completed && s.token"
+                    class="report-link"
+                    :to="`/new/maturity/${s.token}/results`"
+                  >
+                    Открыть
+                  </router-link>
+                  <span v-else class="muted">—</span>
+                </td>
                 <td>{{ formatDt(s.created_at) }}</td>
                 <td>{{ s.completed ? formatDt(s.completed_at) : '—' }}</td>
                 <td>
@@ -208,7 +219,13 @@ export default {
         this.sessions = ov.data.sessions || [];
         this.aggregates = ag.data || {};
       } catch (e) {
-        this.error = e.response?.data?.error || e.message || 'Ошибка загрузки';
+        const st = e.response?.status;
+        if (st === 403) {
+          this.error =
+            'Нет доступа: аккаунт не в списке администраторов. На сервере задайте MATURITY_LINK_ADMIN_EMAILS и добавьте email входа (через запятую), затем перезапустите приложение.';
+        } else {
+          this.error = e.response?.data?.error || e.message || 'Ошибка загрузки';
+        }
       } finally {
         this.loading = false;
       }
@@ -392,5 +409,16 @@ export default {
 
 .mini-chart {
   height: 72px;
+}
+
+.report-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.report-link:hover {
+  text-decoration: underline;
 }
 </style>

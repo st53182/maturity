@@ -419,9 +419,10 @@ export default {
 
 <style scoped>
 .meeting-design-container {
-  margin-left: 70px;
+  margin-left: 0;
   padding: 32px;
-  width: calc(100% - 70px);
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;

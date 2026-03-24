@@ -1,4 +1,5 @@
 # Оценка зрелости по ссылке: создание сессии, прохождение (да/нет/не знаю), результаты для радара и PDF.
+import os
 import uuid
 from datetime import datetime
 
@@ -458,6 +459,7 @@ def maturity_admin_overview():
             {
                 'id': s.id,
                 'team_name': s.team_name,
+                'token': s.access_token,
                 'token_suffix': s.access_token[-8:] if s.access_token else '',
                 'created_at': s.created_at.isoformat() if s.created_at else None,
                 'completed_at': s.completed_at.isoformat() if s.completed_at else None,

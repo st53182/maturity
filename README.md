@@ -32,9 +32,16 @@ cd vue-frontend && npm run build
 - Ответы: **да / нет / не знаю** (`dont_know` в API); на радаре «не знаю» даёт тот же балл, что «нет» (0).
 - Рекомендации ИИ для пунктов «не знаю»: `POST /api/maturity/<token>/recommendations/dont-know` (кнопка на странице результатов).
 
-### Агрегированный дашборд (только для двух email)
+### Агрегированный дашборд (только для allowlist email)
 
-- Страницы: **`/maturity/artdash`** или **`/new/maturity/artdash`** (нужен вход).
-- Доступ: только пользователи с email **`artem@onagile.ru`** или **`artjoms.grinakins@gmail.com`** (проверка и на фронте, и на API).
-- API (с заголовком `Authorization: Bearer <JWT>`): `GET /api/maturity-admin/overview`, `GET /api/maturity-admin/aggregates`, `GET /api/maturity-admin/insights`, `DELETE /api/maturity-admin/session/<id>`.
-- Список email на сервере: `MATURITY_LINK_ADMIN_EMAILS` в [`maturity_link.py`](maturity_link.py); на клиенте — [`vue-frontend/src/config/maturityLinkAdmin.js`](vue-frontend/src/config/maturityLinkAdmin.js) (**держать в sync**).
+- **Канонический URL:** **`https://<хост>/new/maturity/artdash`** (нужен вход). Короткий вариант **`/new/artdash`** редиректит сюда же.
+- Также: **`/maturity/artdash`** (тот же экран).
+- Доступ по умолчанию: **`artem@onagile.ru`**, **`artjoms.grinakins@gmail.com`**. Если вы заходите другим email и вас перебрасывает на обычный дашборд — добавьте свой логин в env (см. ниже).
+- **Render / сервер:** переменная **`MATURITY_LINK_ADMIN_EMAILS`** — список через запятую (к **базовым** двум email строки **добавляются**, не заменяют). Пример: `artem@onagile.ru,artjoms.grinakins@gmail.com,you@company.com`
+- **Сборка фронта (опционально):** `VUE_APP_MATURITY_LINK_ADMIN_EMAILS` — дублирование списка для [`maturityLinkAdmin.js`](vue-frontend/src/config/maturityLinkAdmin.js), если понадобится клиентская логика; **доступ к странице решает только API** (403 при чужом email).
+- API (с заголовком `Authorization: Bearer <JWT>`): `GET /api/maturity-admin/overview` (в сессиях есть полный **`token`** для ссылки на отчёт), `GET /api/maturity-admin/aggregates`, `GET /api/maturity-admin/insights`, `DELETE /api/maturity-admin/session/<id>`.
+- Код: [`maturity_link.py`](maturity_link.py), [`vue-frontend/src/config/maturityLinkAdmin.js`](vue-frontend/src/config/maturityLinkAdmin.js).
+
+### Главная страница
+
+- **`/`** перенаправляет на **`/new`** (лендинг NewHome с входом/регистрацией).

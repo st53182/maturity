@@ -365,19 +365,24 @@ export default {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 96px;
+  width: 132px;
+  box-sizing: border-box;
+  padding: 0 5px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .modern-sidebar .language-switcher {
   flex-shrink: 0;
   padding: 20px 0 15px 0;
+  display: flex;
+  justify-content: center;
 }
 
 .modern-sidebar .sidebar-buttons-container {
@@ -387,9 +392,10 @@ export default {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 15px;
+  align-items: stretch;
+  gap: 12px;
   padding: 0 0 15px 0;
+  box-sizing: border-box;
 }
 
 .modern-sidebar .sidebar-btn.logout {
@@ -480,12 +486,20 @@ export default {
   gap: 4px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-btn small {
-  font-size: 11px;
-  line-height: 1.15;
+  font-size: 10px;
+  line-height: 1.2;
   text-align: center;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .sidebar-btn:hover {
@@ -496,7 +510,7 @@ export default {
   color: #ffcccc;
 }
 .main-content, .results-container {
-  margin-left: 96px;
+  margin-left: 132px;
   padding: 20px;
    flex-grow: 1;
 }

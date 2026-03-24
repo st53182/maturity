@@ -52,7 +52,6 @@ button {
 }
 
 /* Compact / text-only controls (undo capsule sizing where components use plain links) */
-#app button.sidebar-btn,
 #app button.mobile-menu-btn,
 #app button.mobile-hamburger,
 #app button.lang-btn,
@@ -64,6 +63,28 @@ button {
   min-height: unset;
   padding: 0.5rem 0.75rem;
   white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* Sidebar: подписи под иконками — перенос строк, полная ширина колонки */
+#app button.sidebar-btn {
+  min-height: unset;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 5px;
+  white-space: normal;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#app button.sidebar-btn small {
+  white-space: normal;
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   line-height: 1.2;
 }
 

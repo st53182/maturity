@@ -1,15 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import axios from 'axios';
-import UserHome from '../views/UserHome.vue';
 import UserLogin from '../views/UserLogin.vue';
 import UserRegister from '../views/UserRegister.vue';
 import UserSurvey from '../views/UserSurvey.vue';
 import AssessmentResults from '../views/AssessmentResults.vue';
-import { isMaturityLinkAdminEmail } from '@/config/maturityLinkAdmin';
 
 const routes = [
-  { path: '/', component: UserHome },
+  { path: '/', redirect: '/new' },
   { path: '/new', name: 'NewHome', component: () => import('@/views/NewHome.vue') },
+  { path: '/new/artdash', redirect: '/new/maturity/artdash' },
   { path: '/new/maturity', name: 'NewMaturity', component: () => import('@/views/NewMaturity.vue'), meta: { requiresAuth: true } },
   { path: '/new/maturity/artdash', name: 'MaturityLinkAdminNew', component: () => import('@/views/MaturityLinkAdminDashboard.vue'), meta: { requiresAuth: true, maturityLinkAdmin: true } },
   { path: '/new/dashboard', name: 'NewDashboard', component: () => import('@/views/NewDashboard.vue') },
@@ -63,33 +61,13 @@ const router = createRouter({
   routes
 });
 
-// 🔹 Перехват маршрутов: логин и дашборд maturity только для allowlist email
-router.beforeEach(async (to, from, next) => {
+// 🔹 Доступ к maturity admin: только requiresAuth; allowlist проверяется на API (без пересборки фронта).
+router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('token');
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login');
     return;
-  }
-
-  if (to.meta.maturityLinkAdmin) {
-    if (!isAuthenticated) {
-      next('/login');
-      return;
-    }
-    try {
-      const res = await axios.get('/user_profile', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      const email = res.data?.username || '';
-      if (!isMaturityLinkAdminEmail(email)) {
-        next('/new/dashboard');
-        return;
-      }
-    } catch {
-      next('/login');
-      return;
-    }
   }
 
   next();

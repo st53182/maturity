@@ -76,19 +76,23 @@
       </section>
 
       <section class="dash-section">
-        <h2>Доли ответов по вопросам (первые 24)</h2>
-        <p class="muted small">Полная таблица — прокрутка; для каждого индекса — % среди завершённых сессий.</p>
-        <div class="q-grid">
-          <div v-for="q in previewQuestions" :key="q.index" class="q-card">
-            <div class="q-meta">
-              <span class="q-idx">#{{ q.index + 1 }}</span>
-              <span class="q-theme">{{ q.theme }}</span>
+        <h2>Доли ответов по всем вопросам</h2>
+        <p class="muted small">
+          Для каждого вопроса — доли «да» / «нет» / «не знаю» среди завершённых сессий. Блок ниже прокручивается.
+        </p>
+        <div class="q-grid-scroll">
+          <div class="q-grid">
+            <div v-for="q in aggregateQuestions" :key="q.index" class="q-card">
+              <div class="q-meta">
+                <span class="q-idx">#{{ q.index + 1 }}</span>
+                <span class="q-theme">{{ q.theme }}</span>
+              </div>
+              <p class="q-text">{{ q.short_text }}</p>
+              <div v-if="miniChartData(q)" class="mini-chart">
+                <Bar :data="miniChartData(q)" :options="miniChartOptions" />
+              </div>
             </div>
-            <p class="q-text">{{ q.short_text }}</p>
-            <div v-if="miniChartData(q)" class="mini-chart">
-              <Bar :data="miniChartData(q)" :options="miniChartOptions" />
-            </div>
-          </div>
+        </div>
         </div>
       </section>
     </template>
@@ -130,10 +134,10 @@ export default {
     };
   },
   computed: {
-    previewQuestions() {
+    aggregateQuestions() {
       const qs = this.aggregates.questions;
       if (!Array.isArray(qs)) return [];
-      return qs.slice(0, 24);
+      return qs;
     },
     totalsChartData() {
       const qs = this.aggregates.questions;
@@ -368,6 +372,13 @@ export default {
 .mono {
   font-family: ui-monospace, monospace;
   font-size: 0.8rem;
+}
+
+.q-grid-scroll {
+  max-height: min(70vh, 1400px);
+  overflow-y: auto;
+  padding-right: 6px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .q-grid {

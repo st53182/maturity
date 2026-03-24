@@ -53,7 +53,6 @@ const routes = [
   { path: '/maturity/:token/edit', redirect: to => `/new/maturity/${to.params.token}/edit` },
   { path: '/maturity/:token/results', redirect: to => `/new/maturity/${to.params.token}/results` },
   { path: '/maturity/:token', redirect: to => `/new/maturity/${to.params.token}` },
-  { path: '/flow-metrics', name: 'FlowMetricsDashboard', component: () => import('@/views/FlowMetricsDashboard.vue') },
 ];
 
 const router = createRouter({

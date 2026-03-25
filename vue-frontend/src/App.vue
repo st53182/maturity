@@ -60,6 +60,10 @@
           <span>🧊</span>
           <small>{{ $t('newHome.links.systemThinking') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/agile-kata' : '/agile-kata')">
+          <span>🔬</span>
+          <small>{{ $t('nav.agileKata') }}</small>
+        </button>
         <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/surveys' : '/surveys')">
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
@@ -144,6 +148,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/system-thinking' : '/system-thinking')">
             <span>🧊</span>
             <span>{{ $t('newHome.links.systemThinking') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/agile-kata' : '/agile-kata')">
+            <span>🔬</span>
+            <span>{{ $t('nav.agileKata') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/surveys' : '/surveys')">
             <span>📋</span>

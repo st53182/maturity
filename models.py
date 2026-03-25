@@ -385,6 +385,30 @@ class SystemThinkingIceberg(db.Model):
         }
 
 
+class AgileKataCanvas(db.Model):
+    """Интерактивный Agile Kata Canvas (системное улучшение через эксперименты)."""
+    __tablename__ = "agile_kata_canvas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    title = db.Column(db.String(255), nullable=False, default="Agile Kata")
+    canvas_state = db.Column(JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship("User", backref=db.backref("agile_kata_canvases", lazy=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "title": self.title,
+            "canvas_state": self.canvas_state,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class QAUserStorySubmission(db.Model):
     """Пул разработки: пользовательские истории и критерии приёмки (QA задание 5)."""
     __tablename__ = 'qa_user_story_submissions'

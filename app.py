@@ -19,6 +19,7 @@ from maturity_link import maturity_bp
 from backlog_prep import bp_backlog_prep
 from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
 from system_thinking import bp_system_thinking
+from agile_kata import bp_agile_kata
 from testing_types import bp_testing_types
 from usability_report import bp_usability_report
 from qa_user_story import bp_qa_user_story
@@ -83,6 +84,7 @@ app.register_blueprint(maturity_bp)
 app.register_blueprint(bp_backlog_prep)
 app.register_blueprint(bp_roadmap)
 app.register_blueprint(bp_system_thinking)
+app.register_blueprint(bp_agile_kata)
 app.register_blueprint(bp_testing_types)
 app.register_blueprint(bp_usability_report)
 app.register_blueprint(bp_qa_user_story)

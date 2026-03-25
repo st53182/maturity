@@ -30,6 +30,10 @@ const TOOL_MAP = {
     loader: () => import("@/views/SystemThinkingIceberg.vue"),
     titleKey: "newHome.links.systemThinking",
   },
+  "agile-kata": {
+    loader: () => import("@/views/AgileKataCanvas.vue"),
+    titleKey: "nav.agileKata",
+  },
   "meeting-design": {
     loader: () => import("@/views/MeetingDesign.vue"),
     titleKey: "nav.meetingDesign",

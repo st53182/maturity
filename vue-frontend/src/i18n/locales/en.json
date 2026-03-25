@@ -16,7 +16,8 @@
     "maturityLink": "Assessment by link",
     "testingTypes": "Testing Types",
     "profile": "Profile",
-    "surveys": "Surveys"
+    "surveys": "Surveys",
+    "agileKata": "Agile Kata"
   },
   "auth": {
     "login": "Login",
@@ -397,7 +398,98 @@
       "qaPractice": "QA practice",
       "dashboard": "Dashboard",
       "survey": "Assessment survey",
-      "usabilityReport": "Usability report"
+      "usabilityReport": "Usability report",
+      "agileKata": "Agile Kata canvas"
+    }
+  },
+  "agileKata": {
+    "pageTitle": "Agile Kata Canvas",
+    "pageLead": "Scientific thinking for teams: challenge → current → target → small experiments → learning. Not detailed planning — fast cycles and evidence.",
+    "showHelp": "Learning & how-to",
+    "hideHelp": "Hide learning",
+    "selectCanvas": "Select canvas",
+    "newOrSelect": "— choose or create —",
+    "newCanvas": "New canvas",
+    "save": "Save",
+    "saving": "Saving…",
+    "delete": "Delete",
+    "loadExample": "Load example",
+    "canvasName": "Canvas name",
+    "defaultTitle": "Agile Kata",
+    "exampleTitle": "Example: defects after release",
+    "confirmDelete": "Delete this canvas permanently?",
+    "errorLoad": "Could not load canvases",
+    "errorSave": "Could not save",
+    "errorExample": "Could not load example",
+    "errorAi": "AI request failed",
+    "gapTitle": "Gap:",
+    "gapBody": "Target: «{target}». Current: «{current}». Use experiments to close the gap in 1–3 day steps.",
+    "gapNeedCurrent": "You have a target — add measurable current condition (numbers/facts).",
+    "gapNeedTarget": "You have current metrics — define a measurable target outcome.",
+    "challenge": {
+      "title": "Challenge",
+      "hint": "Long-term direction, business context, and one clear metric (avoid vague “improve” or “faster”).",
+      "goal": "Long-term goal",
+      "context": "Business context",
+      "metric": "Measurable result (metric)"
+    },
+    "target": {
+      "title": "Target condition",
+      "hint": "Expected outcome in numbers and conditions that must be true.",
+      "outcome": "Expected outcome (numbers)",
+      "conditions": "Conditions to achieve"
+    },
+    "current": {
+      "title": "Current condition",
+      "hint": "Facts and observable measures — not opinions.",
+      "measurable": "Current measurable state",
+      "facts": "Facts"
+    },
+    "experiments": {
+      "title": "Experiments",
+      "hint": "Small steps (1–3 days): action, hypothesis, result, learning.",
+      "add": "Add experiment",
+      "remove": "Remove experiment",
+      "card": "Experiment",
+      "step": "Step / action",
+      "hypothesis": "Hypothesis (what we expect)",
+      "result": "Result (what happened)",
+      "learning": "Learning (what we learned)",
+      "empty": "No experiments yet — add one when you have a next step."
+    },
+    "obstacles": {
+      "title": "Obstacles",
+      "hint": "List blockers. Select the one you are working on now.",
+      "add": "Add obstacle"
+    },
+    "ai": {
+      "toggle": "AI mentor",
+      "title": "AI assistant & mentor",
+      "lead": "Three modes: sharpen wording and metrics, guided questions, or experiment coaching.",
+      "modeHelper": "Helper",
+      "modeMentor": "Mentor",
+      "modeCoach": "Experiment coach",
+      "descHelper": "Finds vague text, suggests measurable phrasing and concrete edits.",
+      "descMentor": "Asks the next best question in the Mentor–Improver cycle based on your canvas.",
+      "descCoach": "Checks hypotheses, size of experiments, facts vs assumptions, and recorded learning.",
+      "messageLabel": "Your note (optional)",
+      "messagePh": "e.g. “Help me phrase the metric” or answer the mentor…",
+      "run": "Get AI response",
+      "running": "Thinking…",
+      "replyTitle": "Response"
+    },
+    "learn": {
+      "whatTitle": "What is Agile Kata?",
+      "whatP1": "Scientific thinking: form a hypothesis, run a small experiment, compare result to expectation, learn and adjust.",
+      "whatP2": "Progress through experiments, not big upfront plans.",
+      "whatP3": "Continuous learning: each cycle improves how you see the system.",
+      "whatP4": "Unlike classic planning, the focus is on the next safe-to-try step and verifiable learning.",
+      "howTitle": "How to use this tool",
+      "step1": "Define the Challenge (goal, context, metric).",
+      "step2": "Describe Current condition with facts and numbers.",
+      "step3": "Set Target condition (measurable outcome + conditions).",
+      "step4": "Run small experiments; record hypothesis, result, learning.",
+      "step5": "List obstacles, pick the current one, repeat the cycle."
     }
   },
   "newUi": {

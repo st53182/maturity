@@ -1,5 +1,8 @@
-// Автоген: краткие формулировки; при необходимости дополняйте вручную.
-export const agilePracticeCategories = [
+import { agilePracticeExtraDetail } from './agilePracticeDetails.js';
+
+// Автоген: краткие формулировки; подробности — в agilePracticeDetails.js
+
+const agilePracticeCategoriesRaw = [
   {
     "title": "🧠 Management 3.0",
     "practices": [
@@ -299,3 +302,15 @@ export const agilePracticeCategories = [
     ]
   }
 ];
+
+function mergePracticeDetails(categories) {
+  return categories.map((cat) => ({
+    ...cat,
+    practices: cat.practices.map((p) => ({
+      ...p,
+      detail: agilePracticeExtraDetail[p.name] || p.detail || '',
+    })),
+  }));
+}
+
+export const agilePracticeCategories = mergePracticeDetails(agilePracticeCategoriesRaw);

@@ -135,7 +135,7 @@
             <p class="kata-card__hint">{{ $t('agileKata.experiments.hint') }}</p>
             <div
               v-for="(exp, idx) in canvas.experiments"
-              :key="'exp-' + idx"
+              :key="'exp-' + idx + '-' + (exp.verdict || '')"
               class="kata-experiment"
             >
               <div class="kata-experiment__bar">
@@ -255,6 +255,29 @@
 <script>
 import axios from 'axios';
 
+function normalizeExperimentVerdict(raw) {
+  if (raw === true || raw === 'true') {
+    return 'worked';
+  }
+  if (raw === false || raw === 'false') {
+    return 'not_worked';
+  }
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  if (['worked', 'yes', 'ok', 'сработал', 'сработало'].includes(s)) {
+    return 'worked';
+  }
+  if (
+    ['not_worked', 'notworked', 'failed', 'no', 'не сработал', 'не сработало', 'не_сработал'].includes(
+      s
+    )
+  ) {
+    return 'not_worked';
+  }
+  return '';
+}
+
 function emptyCanvas() {
   return {
     challenge: { goal: '', businessContext: '', metric: '' },
@@ -359,7 +382,7 @@ export default {
               result: x.result || '',
               learning: x.learning || '',
               impactedCurrent: !!x.impactedCurrent,
-              verdict: ['worked', 'not_worked'].includes(x.verdict) ? x.verdict : '',
+              verdict: normalizeExperimentVerdict(x.verdict),
             }))
           : [],
         obstacles: Array.isArray(state.obstacles) ? [...state.obstacles] : [],
@@ -510,12 +533,18 @@ export default {
       });
       this.scheduleSave();
     },
+    verdictIsUnset(exp) {
+      const v = exp && exp.verdict;
+      return v !== 'worked' && v !== 'not_worked';
+    },
     setExperimentVerdict(index, value) {
-      const exp = this.canvas.experiments[index];
-      if (!exp) {
+      const list = this.canvas.experiments;
+      const prev = list[index];
+      if (!prev) {
         return;
       }
-      exp.verdict = value;
+      const next = { ...prev, verdict: value };
+      list.splice(index, 1, next);
       this.scheduleSave();
     },
     removeExperiment(i) {

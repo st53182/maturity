@@ -156,6 +156,37 @@ button {
   line-height: 1.35;
 }
 
+/* Kata experiment verdict toggles: beat any leftover #app button rules */
+#app .kata-page button.kata-verdict-btn {
+  background: #fff !important;
+  color: #475569 !important;
+  border: 2px solid #e5e7eb !important;
+}
+
+#app .kata-page button.kata-verdict-btn:hover:not(:disabled) {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+#app .kata-page button.kata-verdict-btn.kata-verdict-btn--active {
+  border-color: #6366f1 !important;
+  background: #eef2ff !important;
+  color: #3730a3 !important;
+}
+
+#app .kata-page button.kata-verdict-btn.kata-verdict-btn--ok.kata-verdict-btn--active {
+  border-color: #22c55e !important;
+  background: #ecfdf5 !important;
+  color: #166534 !important;
+}
+
+#app .kata-page button.kata-verdict-btn.kata-verdict-btn--no.kata-verdict-btn--active {
+  border-color: #f87171 !important;
+  background: #fef2f2 !important;
+  color: #991b1b !important;
+}
+
 #app .cancel-btn,
 #app .close-btn,
 #app .mobile-menu-close,

@@ -511,7 +511,8 @@
     "searchPh": "Practice name, acronym, keyword…",
     "noResults": "No matches — try different words.",
     "summaryLabel": "What it is",
-    "benefitLabel": "What it gives"
+    "benefitLabel": "What it gives",
+    "detailLabel": "In practice"
   },
   "newUi": {
     "dashboardTitle": "Dashboard",

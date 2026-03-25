@@ -48,6 +48,10 @@
               <span class="agile-tools__label">{{ $t('agileTools.benefitLabel') }}</span>
               {{ p.benefit }}
             </p>
+            <p v-if="p.detail" class="agile-tools__block agile-tools__detail">
+              <span class="agile-tools__label">{{ $t('agileTools.detailLabel') }}</span>
+              {{ p.detail }}
+            </p>
           </article>
         </div>
       </section>
@@ -76,7 +80,7 @@ export default {
         .map((cat) => ({
           ...cat,
           practices: cat.practices.filter((p) => {
-            const hay = [p.name, p.subtitle, p.summary, p.benefit].join(' ').toLowerCase();
+            const hay = [p.name, p.subtitle, p.summary, p.benefit, p.detail].join(' ').toLowerCase();
             return hay.includes(q);
           }),
         }))
@@ -237,6 +241,12 @@ export default {
 
 .agile-tools__block:last-child {
   margin-bottom: 0;
+}
+
+.agile-tools__detail {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
 }
 
 .agile-tools__label {

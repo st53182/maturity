@@ -52,6 +52,56 @@
               <span class="agile-tools__label">{{ $t('agileTools.detailLabel') }}</span>
               {{ p.detail }}
             </p>
+            <div class="agile-tools__ai">
+              <div class="agile-tools__ai-row">
+                <button
+                  type="button"
+                  class="agile-tools__ai-btn"
+                  :disabled="aiSession(cat, p).loading"
+                  @click="fetchAiExplanation(cat, p, false)"
+                >
+                  {{
+                    aiSession(cat, p).loading && !aiSession(cat, p).followUpPending
+                      ? $t('agileTools.aiThinking')
+                      : aiSession(cat, p).reply
+                        ? $t('agileTools.askAiAgain')
+                        : $t('agileTools.askAi')
+                  }}
+                </button>
+                <button
+                  v-if="aiSession(cat, p).reply"
+                  type="button"
+                  class="agile-tools__ai-toggle"
+                  @click="toggleAiFollowUp(cat, p)"
+                >
+                  {{ $t('agileTools.aiFollowUp') }}
+                </button>
+              </div>
+              <p class="agile-tools__ai-disclaimer">{{ $t('agileTools.aiDisclaimer') }}</p>
+              <div v-if="aiSession(cat, p).showFollowUp" class="agile-tools__ai-follow">
+                <textarea
+                  v-model="aiSession(cat, p).question"
+                  class="agile-tools__ai-textarea"
+                  rows="2"
+                  :placeholder="$t('agileTools.aiFollowPh')"
+                />
+                <button
+                  type="button"
+                  class="agile-tools__ai-send"
+                  :disabled="aiSession(cat, p).loading || !aiSession(cat, p).question.trim()"
+                  @click="fetchAiExplanation(cat, p, true)"
+                >
+                  {{ aiSession(cat, p).loading && aiSession(cat, p).followUpPending ? $t('agileTools.aiThinking') : $t('agileTools.aiSendQuestion') }}
+                </button>
+              </div>
+              <p v-if="aiSession(cat, p).error" class="agile-tools__ai-error" role="alert">
+                {{ aiSession(cat, p).error }}
+              </p>
+              <div v-if="aiSession(cat, p).reply" class="agile-tools__ai-reply">
+                <span class="agile-tools__label">{{ $t('agileTools.aiReplyTitle') }}</span>
+                <div class="agile-tools__ai-reply-body">{{ aiSession(cat, p).reply }}</div>
+              </div>
+            </div>
           </article>
         </div>
       </section>
@@ -60,6 +110,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import { agilePracticeCategories } from '@/data/agilePractices.js';
 
 export default {
@@ -68,6 +119,7 @@ export default {
     return {
       query: '',
       openCats: [],
+      aiByKey: {},
     };
   },
   computed: {
@@ -99,6 +151,71 @@ export default {
     },
   },
   methods: {
+    practiceAiKey(cat, p) {
+      return `${cat.title}::${p.name}`;
+    },
+    aiSession(cat, p) {
+      const k = this.practiceAiKey(cat, p);
+      if (!this.aiByKey[k]) {
+        this.aiByKey[k] = {
+          loading: false,
+          reply: '',
+          error: '',
+          question: '',
+          showFollowUp: false,
+          followUpPending: false,
+        };
+      }
+      return this.aiByKey[k];
+    },
+    toggleAiFollowUp(cat, p) {
+      const s = this.aiSession(cat, p);
+      s.showFollowUp = !s.showFollowUp;
+    },
+    authHeaders() {
+      const token = localStorage.getItem('token');
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    },
+    async fetchAiExplanation(cat, p, isFollowUp) {
+      const s = this.aiSession(cat, p);
+      if (isFollowUp && !s.question.trim()) {
+        return;
+      }
+      s.loading = true;
+      s.followUpPending = !!isFollowUp;
+      s.error = '';
+      try {
+        const locale = (this.$i18n.locale || 'ru').toString();
+        const { data } = await axios.post(
+          '/api/agile-tools/ask',
+          {
+            locale,
+            categoryTitle: cat.title,
+            name: p.name,
+            subtitle: p.subtitle || '',
+            summary: p.summary || '',
+            benefit: p.benefit || '',
+            detail: p.detail || '',
+            user_question: isFollowUp ? s.question.trim() : '',
+          },
+          { headers: this.authHeaders() }
+        );
+        s.reply = data.reply || '';
+        if (isFollowUp) {
+          s.question = '';
+          s.showFollowUp = false;
+        }
+      } catch (e) {
+        if (e.response?.status === 401) {
+          s.error = this.$t('agileTools.aiNeedAuth');
+        } else {
+          s.error = e.response?.data?.error || this.$t('agileTools.aiErrorGeneric');
+        }
+      } finally {
+        s.loading = false;
+        s.followUpPending = false;
+      }
+    },
     toggleCat(i) {
       const next = [...this.openCats];
       next[i] = !next[i];
@@ -268,5 +385,133 @@ export default {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+
+.agile-tools__ai {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.agile-tools__ai-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.agile-tools__ai-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 2px solid #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #3730a3;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.agile-tools__ai-btn:hover:not(:disabled) {
+  border-color: #4f46e5;
+  background: #e0e7ff;
+}
+
+.agile-tools__ai-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.agile-tools__ai-toggle {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.agile-tools__ai-toggle:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.agile-tools__ai-disclaimer {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+.agile-tools__ai-follow {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agile-tools__ai-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 52px;
+}
+
+.agile-tools__ai-textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.agile-tools__ai-send {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 2px solid #0f172a;
+  background: #0f172a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.agile-tools__ai-send:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.agile-tools__ai-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agile-tools__ai-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.agile-tools__ai-reply {
+  margin-top: 14px;
+}
+
+.agile-tools__ai-reply-body {
+  margin-top: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
 }
 </style>

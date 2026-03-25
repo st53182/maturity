@@ -34,6 +34,10 @@ const TOOL_MAP = {
     loader: () => import("@/views/AgileKataCanvas.vue"),
     titleKey: "nav.agileKata",
   },
+  "agile-tools": {
+    loader: () => import("@/views/AgileTools.vue"),
+    titleKey: "nav.agileTools",
+  },
   "meeting-design": {
     loader: () => import("@/views/MeetingDesign.vue"),
     titleKey: "nav.meetingDesign",

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -33,6 +33,15 @@ def default_canvas_state() -> Dict[str, Any]:
     }
 
 
+def _normalize_experiment_verdict(raw: Any) -> str:
+    s = (str(raw) if raw is not None else "").strip().lower()
+    if s in ("worked", "yes", "ok", "сработал"):
+        return "worked"
+    if s in ("not_worked", "failed", "no", "не_сработал", "notworked", "не сработал"):
+        return "not_worked"
+    return ""
+
+
 def normalize_canvas_state(raw: Any) -> Dict[str, Any]:
     base = default_canvas_state()
     if not isinstance(raw, dict):
@@ -55,16 +64,21 @@ def normalize_canvas_state(raw: Any) -> Dict[str, Any]:
     }
     ex = raw.get("experiments")
     if isinstance(ex, list):
-        clean: List[Dict[str, str]] = []
+        clean: List[Dict[str, Union[str, bool]]] = []
         for item in ex[:30]:
             if not isinstance(item, dict):
                 continue
+            impacted = item.get("impactedCurrent")
+            if impacted is None:
+                impacted = item.get("impacted_current")
             clean.append(
                 {
                     "step": str(item.get("step") or "")[:4000],
                     "hypothesis": str(item.get("hypothesis") or "")[:4000],
                     "result": str(item.get("result") or "")[:4000],
                     "learning": str(item.get("learning") or "")[:4000],
+                    "impactedCurrent": bool(impacted),
+                    "verdict": _normalize_experiment_verdict(item.get("verdict")),
                 }
             )
         base["experiments"] = clean
@@ -107,9 +121,12 @@ def _canvas_summary_for_prompt(canvas: Dict[str, Any]) -> str:
         "=== EXPERIMENTS ===",
     ]
     for i, e in enumerate(ex, 1):
+        imp = "yes" if e.get("impactedCurrent") else "no"
+        ver = e.get("verdict") or "unset"
         lines.append(
             f"{i}. Step: {e.get('step','')}\n   Hypothesis: {e.get('hypothesis','')}\n"
-            f"   Result: {e.get('result','')}\n   Learning: {e.get('learning','')}"
+            f"   Result: {e.get('result','')}\n   Learning: {e.get('learning','')}\n"
+            f"   Impacted current condition: {imp}; Verdict: {ver}"
         )
     lines.append("=== OBSTACLES ===")
     for i, o in enumerate(obs):
@@ -295,6 +312,8 @@ def example_template():
             "hypothesis": "Дефекты в проде снизятся минимум на 30% уже на следующем релизе",
             "result": "Снижение примерно на 20%",
             "learning": "Покрытия недостаточно; часть багов ушла в непокрытые области",
+            "impactedCurrent": True,
+            "verdict": "worked",
         }
     ]
     ex["obstacles"] = [

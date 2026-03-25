@@ -64,6 +64,10 @@
           <span>🔬</span>
           <small>{{ $t('nav.agileKata') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/agile-tools' : '/agile-tools')">
+          <span>📚</span>
+          <small>{{ $t('nav.agileTools') }}</small>
+        </button>
         <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/surveys' : '/surveys')">
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
@@ -152,6 +156,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/agile-kata' : '/agile-kata')">
             <span>🔬</span>
             <span>{{ $t('nav.agileKata') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/agile-tools' : '/agile-tools')">
+            <span>📚</span>
+            <span>{{ $t('nav.agileTools') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/surveys' : '/surveys')">
             <span>📋</span>

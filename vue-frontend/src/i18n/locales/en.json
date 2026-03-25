@@ -17,7 +17,8 @@
     "testingTypes": "Testing Types",
     "profile": "Profile",
     "surveys": "Surveys",
-    "agileKata": "Agile Kata"
+    "agileKata": "Agile Kata",
+    "agileTools": "Agile tools"
   },
   "auth": {
     "login": "Login",
@@ -399,7 +400,8 @@
       "dashboard": "Dashboard",
       "survey": "Assessment survey",
       "usabilityReport": "Usability report",
-      "agileKata": "Agile Kata canvas"
+      "agileKata": "Agile Kata canvas",
+      "agileTools": "Agile tools library"
     }
   },
   "agileKata": {
@@ -408,6 +410,10 @@
     "showHelp": "Learning & how-to",
     "hideHelp": "Hide learning",
     "selectCanvas": "Select canvas",
+    "formsTitle": "Your kata forms",
+    "formsHint": "Each form is a separate canvas (e.g. different challenges or teams). Create several, switch between them, and save each one.",
+    "formsEmpty": "No saved forms yet — create one with «New canvas» or load the example.",
+    "newFormTitle": "Kata form {n}",
     "newOrSelect": "— choose or create —",
     "newCanvas": "New canvas",
     "save": "Save",
@@ -455,7 +461,13 @@
       "hypothesis": "Hypothesis (what we expect)",
       "result": "Result (what happened)",
       "learning": "Learning (what we learned)",
-      "empty": "No experiments yet — add one when you have a next step."
+      "empty": "No experiments yet — add one when you have a next step.",
+      "impactedCurrent": "This experiment affected the current condition",
+      "impactedHint": "Reflect on the outcome: did the step move the measurable current state toward the target?",
+      "verdictLabel": "Outcome",
+      "verdictUnset": "Not set",
+      "verdictWorked": "Worked",
+      "verdictFailed": "Did not work"
     },
     "obstacles": {
       "title": "Obstacles",
@@ -491,6 +503,15 @@
       "step4": "Run small experiments; record hypothesis, result, learning.",
       "step5": "List obstacles, pick the current one, repeat the cycle."
     }
+  },
+  "agileTools": {
+    "title": "Agile tools",
+    "lead": "A compact library of practices: what each is and what it gives your team or product. Search filters names and descriptions.",
+    "search": "Search",
+    "searchPh": "Practice name, acronym, keyword…",
+    "noResults": "No matches — try different words.",
+    "summaryLabel": "What it is",
+    "benefitLabel": "What it gives"
   },
   "newUi": {
     "dashboardTitle": "Dashboard",

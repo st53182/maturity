@@ -31,6 +31,25 @@
       </article>
     </section>
 
+    <section class="kata-forms-panel" aria-labelledby="kata-forms-heading">
+      <h2 id="kata-forms-heading" class="kata-forms-panel__title">{{ $t('agileKata.formsTitle') }}</h2>
+      <p class="kata-forms-panel__hint">{{ $t('agileKata.formsHint') }}</p>
+      <div class="kata-forms-grid">
+        <button
+          v-for="c in canvases"
+          :key="c.id"
+          type="button"
+          class="kata-form-chip"
+          :class="{ 'kata-form-chip--active': String(c.id) === selectedId }"
+          @click="openCanvasForm(c.id)"
+        >
+          <span class="kata-form-chip__title">{{ c.title }}</span>
+          <span class="kata-form-chip__meta">#{{ c.id }} · {{ formatCanvasDate(c.updated_at) }}</span>
+        </button>
+      </div>
+      <p v-if="!canvases.length && !loading" class="kata-muted">{{ $t('agileKata.formsEmpty') }}</p>
+    </section>
+
     <div class="kata-toolbar">
       <div class="kata-toolbar__row">
         <label class="kata-sr-only" for="kata-canvas-select">{{ $t('agileKata.selectCanvas') }}</label>
@@ -38,10 +57,10 @@
           id="kata-canvas-select"
           v-model="selectedId"
           class="kata-select"
-          @change="onSelectCanvas"
+          @change="loadCanvasBySelection"
         >
           <option value="">{{ $t('agileKata.newOrSelect') }}</option>
-          <option v-for="c in canvases" :key="c.id" :value="String(c.id)">
+          <option v-for="c in canvases" :key="'sel-' + c.id" :value="String(c.id)">
             {{ c.title }} · #{{ c.id }}
           </option>
         </select>
@@ -131,6 +150,44 @@
               <textarea v-model="exp.result" class="kata-textarea" rows="2" @input="scheduleSave" />
               <label class="kata-field-label">{{ $t('agileKata.experiments.learning') }}</label>
               <textarea v-model="exp.learning" class="kata-textarea" rows="2" @input="scheduleSave" />
+              <div class="kata-exp-reflect">
+                <label class="kata-check">
+                  <input
+                    v-model="exp.impactedCurrent"
+                    type="checkbox"
+                    @change="scheduleSave"
+                  />
+                  <span>{{ $t('agileKata.experiments.impactedCurrent') }}</span>
+                </label>
+                <p class="kata-exp-reflect__hint">{{ $t('agileKata.experiments.impactedHint') }}</p>
+                <span class="kata-field-label">{{ $t('agileKata.experiments.verdictLabel') }}</span>
+                <div class="kata-verdict-row" role="group" :aria-label="$t('agileKata.experiments.verdictLabel')">
+                  <button
+                    type="button"
+                    class="kata-verdict-btn"
+                    :class="{ 'kata-verdict-btn--active': !exp.verdict }"
+                    @click="setExperimentVerdict(idx, '')"
+                  >
+                    {{ $t('agileKata.experiments.verdictUnset') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="kata-verdict-btn kata-verdict-btn--ok"
+                    :class="{ 'kata-verdict-btn--active': exp.verdict === 'worked' }"
+                    @click="setExperimentVerdict(idx, 'worked')"
+                  >
+                    {{ $t('agileKata.experiments.verdictWorked') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="kata-verdict-btn kata-verdict-btn--no"
+                    :class="{ 'kata-verdict-btn--active': exp.verdict === 'not_worked' }"
+                    @click="setExperimentVerdict(idx, 'not_worked')"
+                  >
+                    {{ $t('agileKata.experiments.verdictFailed') }}
+                  </button>
+                </div>
+              </div>
             </div>
             <p v-if="!canvas.experiments.length" class="kata-muted">{{ $t('agileKata.experiments.empty') }}</p>
           </section>
@@ -301,6 +358,8 @@ export default {
               hypothesis: x.hypothesis || '',
               result: x.result || '',
               learning: x.learning || '',
+              impactedCurrent: !!x.impactedCurrent,
+              verdict: ['worked', 'not_worked'].includes(x.verdict) ? x.verdict : '',
             }))
           : [],
         obstacles: Array.isArray(state.obstacles) ? [...state.obstacles] : [],
@@ -313,10 +372,34 @@ export default {
         this.canvasTitle = title;
       }
     },
-    async onSelectCanvas() {
+    formatCanvasDate(iso) {
+      if (!iso) {
+        return '—';
+      }
+      try {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) {
+          return '—';
+        }
+        return d.toLocaleString(this.$i18n.locale === 'en' ? 'en-GB' : 'ru-RU', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      } catch {
+        return '—';
+      }
+    },
+    openCanvasForm(id) {
+      this.selectedId = String(id);
+      this.loadCanvasBySelection();
+    },
+    async loadCanvasBySelection() {
       if (!this.selectedId) {
         this.applyCanvasState(emptyCanvas());
-        this.canvasTitle = 'Agile Kata';
+        this.canvasTitle = this.$t('agileKata.defaultTitle');
         return;
       }
       this.loading = true;
@@ -336,9 +419,13 @@ export default {
       this.loading = true;
       this.error = '';
       try {
+        const nextNum = (this.canvases && this.canvases.length) ? this.canvases.length + 1 : 1;
         const { data } = await axios.post(
           '/api/agile-kata',
-          { title: this.$t('agileKata.defaultTitle'), canvas_state: emptyCanvas() },
+          {
+            title: this.$t('agileKata.newFormTitle', { n: nextNum }),
+            canvas_state: emptyCanvas(),
+          },
           { headers: this.authHeaders() }
         );
         await this.refreshList();
@@ -418,7 +505,17 @@ export default {
         hypothesis: '',
         result: '',
         learning: '',
+        impactedCurrent: false,
+        verdict: '',
       });
+      this.scheduleSave();
+    },
+    setExperimentVerdict(index, value) {
+      const exp = this.canvas.experiments[index];
+      if (!exp) {
+        return;
+      }
+      exp.verdict = value;
       this.scheduleSave();
     },
     removeExperiment(i) {
@@ -496,6 +593,148 @@ export default {
   max-width: 640px;
   line-height: 1.55;
   font-size: 15px;
+}
+
+.kata-forms-panel {
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.kata-forms-panel__title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.kata-forms-panel__hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.kata-forms-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.kata-form-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  min-width: 160px;
+  max-width: 280px;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kata-form-chip:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+}
+
+.kata-form-chip--active {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
+}
+
+.kata-form-chip__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  overflow-wrap: anywhere;
+}
+
+.kata-form-chip__meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.kata-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.kata-check input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: #6366f1;
+  flex-shrink: 0;
+}
+
+.kata-exp-reflect {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.kata-exp-reflect__hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.kata-verdict-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.kata-verdict-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.kata-verdict-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.kata-verdict-btn--active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.kata-verdict-btn--ok.kata-verdict-btn--active {
+  border-color: #22c55e;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.kata-verdict-btn--no.kata-verdict-btn--active {
+  border-color: #f87171;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 .kata-top__actions {

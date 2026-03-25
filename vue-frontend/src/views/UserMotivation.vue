@@ -554,9 +554,10 @@ button:hover {
 
 .employee-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  align-items: start;
 }
 
 .employee-card {
@@ -659,12 +660,14 @@ button:hover {
 
 .factors {
   display: flex;
-  gap: 12px;
+  flex-direction: row;
+  gap: 16px;
   margin-top: 12px;
 }
 
 .factors .column {
   flex: 1;
+  min-width: 0;
   background: #f9fafb;
   padding: 16px;
   border-radius: 10px;
@@ -1026,6 +1029,12 @@ button:hover {
 
 .employee-card .avatar:hover {
   transform: scale(1.05);
+}
+
+@media (max-width: 900px) {
+  .factors {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 768px) {

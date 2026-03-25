@@ -245,7 +245,10 @@
         </button>
         <div v-if="aiReply" class="kata-ai-reply">
           <h3>{{ $t('agileKata.ai.replyTitle') }}</h3>
-          <div class="kata-ai-reply__body">{{ aiReply }}</div>
+          <div
+            class="kata-ai-reply__body kata-md"
+            v-html="renderAiMarkdown(aiReply)"
+          ></div>
         </div>
       </aside>
     </div>
@@ -254,6 +257,7 @@
 
 <script>
 import axios from 'axios';
+import { renderAiMarkdown } from '@/utils/renderAiMarkdown.js';
 
 function normalizeExperimentVerdict(raw) {
   if (raw === true || raw === 'true') {
@@ -349,6 +353,7 @@ export default {
     }
   },
   methods: {
+    renderAiMarkdown,
     authHeaders() {
       const token = localStorage.getItem('token');
       return { Authorization: `Bearer ${token}` };
@@ -1118,7 +1123,93 @@ export default {
   font-size: 14px;
   line-height: 1.55;
   color: #1e293b;
-  white-space: pre-wrap;
+}
+
+.kata-md :deep(h1),
+.kata-md :deep(h2),
+.kata-md :deep(h3) {
+  margin: 1em 0 0.45em;
+  font-weight: 750;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.kata-md :deep(h1) {
+  font-size: 1.15rem;
+  margin-top: 0;
+}
+
+.kata-md :deep(h2) {
+  font-size: 1.05rem;
+}
+
+.kata-md :deep(h3) {
+  font-size: 1rem;
+}
+
+.kata-md :deep(p) {
+  margin: 0.55em 0;
+}
+
+.kata-md :deep(p:first-child) {
+  margin-top: 0;
+}
+
+.kata-md :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.kata-md :deep(ul),
+.kata-md :deep(ol) {
+  margin: 0.5em 0;
+  padding-left: 1.35rem;
+}
+
+.kata-md :deep(li) {
+  margin: 0.25em 0;
+}
+
+.kata-md :deep(strong) {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.kata-md :deep(code) {
+  font-size: 0.9em;
+  padding: 0.12em 0.35em;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.kata-md :deep(pre) {
+  margin: 0.75em 0;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+.kata-md :deep(pre code) {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.kata-md :deep(blockquote) {
+  margin: 0.65em 0;
+  padding: 8px 12px;
+  border-left: 4px solid #c7d2fe;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.kata-md :deep(a) {
+  color: #4f46e5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .kata-sr-only {

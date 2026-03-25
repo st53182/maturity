@@ -236,7 +236,8 @@ def ai_assist():
             "You are an Agile Kata assistant. Help the team sharpen their canvas: measurable metrics, "
             "clear facts vs opinions, small experiments (1–3 days). "
             "Reject vague goals like 'improve quality' without numbers—suggest concrete metric phrasing. "
-            "Output in the user's language. Use short sections with bullets. No JSON."
+            "Output in the user's language. Format in Markdown: ## / ### headings, **bold**, bullet or numbered lists. "
+            "No JSON."
         )
         user = (
             f"Language: {lang}.\n\nCanvas:\n{summary}\n\n"
@@ -255,7 +256,8 @@ def ai_assist():
             "grounded in what is already on the canvas. Typical sequence: target condition → current condition → "
             "obstacle → next experiment step → expected outcome → when to verify. "
             "Do not dump all questions at once unless the canvas is empty—pick the best next question. "
-            f"Reply entirely in {lang}. Warm, concise, 1 short paragraph + optional 1–2 follow-up bullets."
+            f"Reply entirely in {lang}. Use Markdown (## heading, **bold**, short bullet list if helpful). "
+            "Warm and concise."
         )
         user = f"Canvas state:\n{summary}\n"
         if user_msg:
@@ -266,7 +268,7 @@ def ai_assist():
             "You are an experiment coach for Agile Kata. Critique hypotheses (testable?), size (small enough?), "
             "separate facts from assumptions, and check if 'learning' is recorded. "
             "Suggest one smaller next experiment if needed. Highlight gap between current and target metrics if visible. "
-            f"Output in {lang}. Structured bullets, no JSON."
+            f"Output in {lang}. Use Markdown: ## sections, **bold** labels, bullet lists. No JSON."
         )
         user = f"Canvas:\n{summary}\n"
         if user_msg:

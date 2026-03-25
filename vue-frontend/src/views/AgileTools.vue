@@ -114,14 +114,8 @@
 
 <script>
 import axios from 'axios';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
 import { agilePracticeCategories } from '@/data/agilePractices.js';
-
-marked.use({
-  gfm: true,
-  breaks: true,
-});
+import { renderAiMarkdown } from '@/utils/renderAiMarkdown.js';
 
 export default {
   name: 'AgileTools',
@@ -172,17 +166,7 @@ export default {
     },
   },
   methods: {
-    renderAiMarkdown(text) {
-      if (!text || typeof text !== 'string') {
-        return '';
-      }
-      try {
-        const html = marked.parse(text.trimEnd());
-        return DOMPurify.sanitize(html);
-      } catch {
-        return DOMPurify.sanitize(`<p>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`);
-      }
-    },
+    renderAiMarkdown,
     practiceAiKey(cat, p) {
       return `${cat.title}::${p.name}`;
     },

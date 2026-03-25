@@ -30,7 +30,7 @@
           @click="toggleCat(idx)"
         >
           <span class="agile-tools__cat-title">{{ cat.title }}</span>
-          <span class="agile-tools__cat-chevron" :class="{ 'is-open': openCats[idx] }">▼</span>
+          <span class="agile-tools__cat-chevron" :class="{ 'is-open': openCats[idx] }" aria-hidden="true">▶</span>
         </button>
         <div v-show="openCats[idx]" class="agile-tools__cat-body">
           <article
@@ -99,7 +99,10 @@
               </p>
               <div v-if="aiSession(cat, p).reply" class="agile-tools__ai-reply">
                 <span class="agile-tools__label">{{ $t('agileTools.aiReplyTitle') }}</span>
-                <div class="agile-tools__ai-reply-body">{{ aiSession(cat, p).reply }}</div>
+                <div
+                  class="agile-tools__ai-reply-body agile-tools__md"
+                  v-html="renderAiMarkdown(aiSession(cat, p).reply)"
+                ></div>
               </div>
             </div>
           </article>
@@ -111,7 +114,14 @@
 
 <script>
 import axios from 'axios';
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 import { agilePracticeCategories } from '@/data/agilePractices.js';
+
+marked.use({
+  gfm: true,
+  breaks: true,
+});
 
 export default {
   name: 'AgileTools',
@@ -145,12 +155,34 @@ export default {
   watch: {
     filteredCategories: {
       handler(cats) {
-        this.openCats = cats.map(() => true);
+        const q = (this.query || '').trim();
+        if (this.openCats.length !== cats.length) {
+          this.openCats = cats.map(() => !!q);
+        }
       },
       immediate: true,
     },
+    query(q) {
+      const cats = this.filteredCategories;
+      if ((q || '').trim()) {
+        this.openCats = cats.map(() => true);
+      } else {
+        this.openCats = cats.map(() => false);
+      }
+    },
   },
   methods: {
+    renderAiMarkdown(text) {
+      if (!text || typeof text !== 'string') {
+        return '';
+      }
+      try {
+        const html = marked.parse(text.trimEnd());
+        return DOMPurify.sanitize(html);
+      } catch {
+        return DOMPurify.sanitize(`<p>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`);
+      }
+    },
     practiceAiKey(cat, p) {
       return `${cat.title}::${p.name}`;
     },
@@ -315,7 +347,7 @@ export default {
 }
 
 .agile-tools__cat-chevron.is-open {
-  transform: rotate(-180deg);
+  transform: rotate(90deg);
 }
 
 .agile-tools__cat-body {
@@ -505,13 +537,99 @@ export default {
 
 .agile-tools__ai-reply-body {
   margin-top: 6px;
-  padding: 14px;
+  padding: 14px 16px;
   border-radius: 12px;
   background: #fff;
   border: 1px solid #e5e7eb;
   font-size: 14px;
   line-height: 1.6;
   color: #334155;
-  white-space: pre-wrap;
+}
+
+.agile-tools__md :deep(h1),
+.agile-tools__md :deep(h2),
+.agile-tools__md :deep(h3) {
+  margin: 1em 0 0.45em;
+  font-weight: 750;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.agile-tools__md :deep(h1) {
+  font-size: 1.2rem;
+  margin-top: 0;
+}
+
+.agile-tools__md :deep(h2) {
+  font-size: 1.08rem;
+}
+
+.agile-tools__md :deep(h3) {
+  font-size: 1rem;
+}
+
+.agile-tools__md :deep(p) {
+  margin: 0.55em 0;
+}
+
+.agile-tools__md :deep(p:first-child) {
+  margin-top: 0;
+}
+
+.agile-tools__md :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.agile-tools__md :deep(ul),
+.agile-tools__md :deep(ol) {
+  margin: 0.5em 0;
+  padding-left: 1.35rem;
+}
+
+.agile-tools__md :deep(li) {
+  margin: 0.25em 0;
+}
+
+.agile-tools__md :deep(strong) {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.agile-tools__md :deep(code) {
+  font-size: 0.9em;
+  padding: 0.12em 0.35em;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.agile-tools__md :deep(pre) {
+  margin: 0.75em 0;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+.agile-tools__md :deep(pre code) {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.agile-tools__md :deep(blockquote) {
+  margin: 0.65em 0;
+  padding: 8px 12px;
+  border-left: 4px solid #c7d2fe;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.agile-tools__md :deep(a) {
+  color: #4f46e5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 </style>

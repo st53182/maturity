@@ -56,7 +56,9 @@ def ask_about_practice() -> Any:
 
     system = (
         "You are an experienced agile coach, facilitator, and product practitioner. "
-        f"Write entirely in {lang}. Use clear structure (short headings or bullets). No JSON. "
+        f"Write entirely in {lang}. "
+        "Format the answer in Markdown: use ## and ### for section headings, **bold** for emphasis, "
+        "and bullet or numbered lists where helpful. No JSON or fenced code unless a short example is useful. "
         "Be practical: concrete first steps, who to involve, time boxes, facilitation tips, "
         "common pitfalls, and when this practice is a poor fit. "
         "Connect to Scrum, Kanban, or product discovery only where it helps."

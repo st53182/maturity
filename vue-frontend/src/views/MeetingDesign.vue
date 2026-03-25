@@ -399,7 +399,7 @@ export default {
       topicError: '',
       aiLocale: '',
       topicMeetingType: 'retrospective',
-      viewAiOpen: true,
+      viewAiOpen: false,
       viewAiLocale: '',
       viewAiContext: 'whole',
       viewAiQuestion: '',
@@ -682,7 +682,7 @@ export default {
 
     viewDesign(design) {
       this.currentDesign = JSON.parse(JSON.stringify(design));
-      this.viewAiOpen = true;
+      this.viewAiOpen = false;
       this.viewAiLocale = '';
       this.viewAiContext = 'whole';
       this.viewAiQuestion = '';

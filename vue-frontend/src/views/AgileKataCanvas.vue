@@ -126,72 +126,72 @@
             <label class="kata-field-label">{{ $t('agileKata.current.facts') }}</label>
             <textarea v-model="canvas.current.facts" class="kata-textarea" rows="4" @input="scheduleSave" />
           </section>
-
-          <section class="kata-card kata-card--experiments">
-            <div class="kata-card__head">
-              <h2 class="kata-card__title">{{ $t('agileKata.experiments.title') }}</h2>
-              <button type="button" class="kata-btn kata-btn--small" @click="addExperiment">{{ $t('agileKata.experiments.add') }}</button>
-            </div>
-            <p class="kata-card__hint">{{ $t('agileKata.experiments.hint') }}</p>
-            <div
-              v-for="(exp, idx) in canvas.experiments"
-              :key="'exp-' + idx + '-' + (exp.verdict || '')"
-              class="kata-experiment"
-            >
-              <div class="kata-experiment__bar">
-                <span>{{ $t('agileKata.experiments.card') }} {{ idx + 1 }}</span>
-                <button type="button" class="kata-icon-btn" :aria-label="$t('agileKata.experiments.remove')" @click="removeExperiment(idx)">✕</button>
-              </div>
-              <label class="kata-field-label">{{ $t('agileKata.experiments.step') }}</label>
-              <textarea v-model="exp.step" class="kata-textarea" rows="2" @input="scheduleSave" />
-              <label class="kata-field-label">{{ $t('agileKata.experiments.hypothesis') }}</label>
-              <textarea v-model="exp.hypothesis" class="kata-textarea" rows="2" @input="scheduleSave" />
-              <label class="kata-field-label">{{ $t('agileKata.experiments.result') }}</label>
-              <textarea v-model="exp.result" class="kata-textarea" rows="2" @input="scheduleSave" />
-              <label class="kata-field-label">{{ $t('agileKata.experiments.learning') }}</label>
-              <textarea v-model="exp.learning" class="kata-textarea" rows="2" @input="scheduleSave" />
-              <div class="kata-exp-reflect">
-                <label class="kata-check">
-                  <input
-                    v-model="exp.impactedCurrent"
-                    type="checkbox"
-                    @change="scheduleSave"
-                  />
-                  <span>{{ $t('agileKata.experiments.impactedCurrent') }}</span>
-                </label>
-                <p class="kata-exp-reflect__hint">{{ $t('agileKata.experiments.impactedHint') }}</p>
-                <span class="kata-field-label">{{ $t('agileKata.experiments.verdictLabel') }}</span>
-                <div class="kata-verdict-row" role="group" :aria-label="$t('agileKata.experiments.verdictLabel')">
-                  <button
-                    type="button"
-                    class="kata-verdict-btn"
-                    :class="{ 'kata-verdict-btn--active': !exp.verdict }"
-                    @click="setExperimentVerdict(idx, '')"
-                  >
-                    {{ $t('agileKata.experiments.verdictUnset') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="kata-verdict-btn kata-verdict-btn--ok"
-                    :class="{ 'kata-verdict-btn--active': exp.verdict === 'worked' }"
-                    @click="setExperimentVerdict(idx, 'worked')"
-                  >
-                    {{ $t('agileKata.experiments.verdictWorked') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="kata-verdict-btn kata-verdict-btn--no"
-                    :class="{ 'kata-verdict-btn--active': exp.verdict === 'not_worked' }"
-                    @click="setExperimentVerdict(idx, 'not_worked')"
-                  >
-                    {{ $t('agileKata.experiments.verdictFailed') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-            <p v-if="!canvas.experiments.length" class="kata-muted">{{ $t('agileKata.experiments.empty') }}</p>
-          </section>
         </div>
+
+        <section class="kata-card kata-card--experiments">
+          <div class="kata-card__head">
+            <h2 class="kata-card__title">{{ $t('agileKata.experiments.title') }}</h2>
+            <button type="button" class="kata-btn kata-btn--small" @click="addExperiment">{{ $t('agileKata.experiments.add') }}</button>
+          </div>
+          <p class="kata-card__hint">{{ $t('agileKata.experiments.hint') }}</p>
+          <div
+            v-for="(exp, idx) in canvas.experiments"
+            :key="'exp-' + idx + '-' + (exp.verdict || '')"
+            class="kata-experiment"
+          >
+            <div class="kata-experiment__bar">
+              <span>{{ $t('agileKata.experiments.card') }} {{ idx + 1 }}</span>
+              <button type="button" class="kata-icon-btn" :aria-label="$t('agileKata.experiments.remove')" @click="removeExperiment(idx)">✕</button>
+            </div>
+            <label class="kata-field-label">{{ $t('agileKata.experiments.step') }}</label>
+            <textarea v-model="exp.step" class="kata-textarea" rows="2" @input="scheduleSave" />
+            <label class="kata-field-label">{{ $t('agileKata.experiments.hypothesis') }}</label>
+            <textarea v-model="exp.hypothesis" class="kata-textarea" rows="2" @input="scheduleSave" />
+            <label class="kata-field-label">{{ $t('agileKata.experiments.result') }}</label>
+            <textarea v-model="exp.result" class="kata-textarea" rows="2" @input="scheduleSave" />
+            <label class="kata-field-label">{{ $t('agileKata.experiments.learning') }}</label>
+            <textarea v-model="exp.learning" class="kata-textarea" rows="2" @input="scheduleSave" />
+            <div class="kata-exp-reflect">
+              <label class="kata-check">
+                <input
+                  v-model="exp.impactedCurrent"
+                  type="checkbox"
+                  @change="scheduleSave"
+                />
+                <span>{{ $t('agileKata.experiments.impactedCurrent') }}</span>
+              </label>
+              <p class="kata-exp-reflect__hint">{{ $t('agileKata.experiments.impactedHint') }}</p>
+              <span class="kata-field-label">{{ $t('agileKata.experiments.verdictLabel') }}</span>
+              <div class="kata-verdict-row" role="group" :aria-label="$t('agileKata.experiments.verdictLabel')">
+                <button
+                  type="button"
+                  class="kata-verdict-btn"
+                  :class="{ 'kata-verdict-btn--active': !exp.verdict }"
+                  @click="setExperimentVerdict(idx, '')"
+                >
+                  {{ $t('agileKata.experiments.verdictUnset') }}
+                </button>
+                <button
+                  type="button"
+                  class="kata-verdict-btn kata-verdict-btn--ok"
+                  :class="{ 'kata-verdict-btn--active': exp.verdict === 'worked' }"
+                  @click="setExperimentVerdict(idx, 'worked')"
+                >
+                  {{ $t('agileKata.experiments.verdictWorked') }}
+                </button>
+                <button
+                  type="button"
+                  class="kata-verdict-btn kata-verdict-btn--no"
+                  :class="{ 'kata-verdict-btn--active': exp.verdict === 'not_worked' }"
+                  @click="setExperimentVerdict(idx, 'not_worked')"
+                >
+                  {{ $t('agileKata.experiments.verdictFailed') }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <p v-if="!canvas.experiments.length" class="kata-muted">{{ $t('agileKata.experiments.empty') }}</p>
+        </section>
 
         <section class="kata-card">
           <div class="kata-card__head">

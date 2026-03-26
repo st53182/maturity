@@ -363,8 +363,8 @@ export default {
       return avg != null ? avg.toFixed(1) : '—';
     },
     scoreClass(avg) {
-      if (avg >= 4) return 'score-high';
-      if (avg >= 2) return 'score-mid';
+      if (avg >= 2.5) return 'score-high';
+      if (avg >= 1.75) return 'score-mid';
       return 'score-low';
     },
     async fetchRecommendations() {

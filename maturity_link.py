@@ -111,7 +111,7 @@ def _normalize_stored_answers_row(raw_list):
 
 
 def _results_from_answers(answers):
-    """answers: list of True / False / 'dont_know'. Балл 5 только за True, иначе 0."""
+    """answers: list of True / False / 'dont_know'. Шкала 1..3: True=3, dont_know=2, False=1."""
     if not answers or len(answers) != QUESTIONS_COUNT:
         return {}
     results = {}
@@ -119,7 +119,12 @@ def _results_from_answers(answers):
         results[theme] = {}
         for sub_one_based, q_idx in enumerate(indices[:QUESTIONS_PER_THEME], 1):
             a = answers[q_idx]
-            score = 5.0 if a is True else 0.0
+            if a is True:
+                score = 3.0
+            elif a == 'dont_know':
+                score = 2.0
+            else:
+                score = 1.0
             results[theme][str(sub_one_based)] = score
     return results
 
@@ -455,8 +460,8 @@ def get_maturity_recommendations(token):
     for cat, subs in results.items():
         vals = [float(v) for v in subs.values()]
         avg = sum(vals) / len(vals) if vals else 0
-        yes_count = sum(1 for v in vals if v >= 5)
-        summary_lines.append(f"- {cat}: средний балл {avg:.1f}/5, ответов «да» {yes_count}/{len(vals)}")
+        yes_count = sum(1 for v in vals if v >= 3)
+        summary_lines.append(f"- {cat}: средний балл {avg:.1f}/3, ответов уровня «3» {yes_count}/{len(vals)}")
 
     summary_text = "\n".join(summary_lines)
     from openai import OpenAI
@@ -464,7 +469,7 @@ def get_maturity_recommendations(token):
 
     prompt = f"""Ты опытный Agile-коуч. По результатам оценки зрелости команды (да/нет по темам) дай конкретный план улучшений для команды.
 
-Результаты по категориям (балл 0–5, где 5 = «да»):
+Результаты по категориям (шкала 1–3, где 3 = «да», 2 = «не знаю», 1 = «нет»):
 {summary_text}
 
 Требования:

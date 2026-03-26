@@ -167,7 +167,6 @@
               class="modern-input modern-textarea"
               :class="{ 'has-value': draft[selectedLevel] }"
               :aria-label="'Текст уровня: ' + currentLevelDef.title"
-              placeholder="Введите ответ для уровня (можно написать «не знаю» и нажать «Помощь ИИ»)"
               @input="scheduleSave"
             />
             <label class="floating-label">Ответ для «{{ currentLevelDef.title }}»</label>

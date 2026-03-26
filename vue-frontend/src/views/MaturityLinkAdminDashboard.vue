@@ -19,6 +19,69 @@
           <button type="button" class="dash-btn" :disabled="!selectedGroup || loadingGroupPlan" @click="generateGroupPlan">
             {{ loadingGroupPlan ? 'Генерация…' : 'Сгенерировать план для группы' }}
           </button>
+          <button type="button" class="dash-btn" :disabled="!selectedGroup || savingGroupPlan" @click="saveGroupPlan">
+            {{ savingGroupPlan ? 'Сохранение…' : 'Сохранить изменения плана' }}
+          </button>
+          <button type="button" class="dash-btn" :disabled="!selectedGroup || exportingGroupPlan" @click="exportGroupPlanPdf">
+            {{ exportingGroupPlan ? 'Экспорт…' : 'Скачать план в PDF' }}
+          </button>
+        </div>
+        <p v-if="groupPlanUpdatedAt" class="muted small">Обновлено: {{ formatDt(groupPlanUpdatedAt) }}</p>
+        <div ref="groupPlanExportRoot" class="group-plan-editor" v-if="selectedGroup">
+          <h3>План улучшений стрима: {{ selectedGroup }}</h3>
+          <label class="plan-label">Диагноз (по данным оценки)</label>
+          <textarea v-model="groupPlan.diagnosis" class="plan-input" rows="3" />
+
+          <h4>Инициативы</h4>
+          <article v-for="(item, idx) in groupPlan.initiatives" :key="'init-' + idx" class="initiative-card">
+            <div class="initiative-head">
+              <strong>Инициатива {{ idx + 1 }}</strong>
+              <button type="button" class="dash-btn dash-btn-danger" @click="removeInitiative(idx)">Удалить</button>
+            </div>
+            <label class="plan-label">Название</label>
+            <input v-model="item.title" class="plan-input" />
+            <label class="plan-label">Цель</label>
+            <textarea v-model="item.objective" class="plan-input" rows="2" />
+            <label class="plan-label">Владелец / роль</label>
+            <input v-model="item.owner" class="plan-input" />
+            <label class="plan-label">Метрика успеха</label>
+            <input v-model="item.success_metric" class="plan-input" />
+            <label class="plan-label">Бизнес-эффект</label>
+            <textarea v-model="item.business_impact" class="plan-input" rows="2" />
+            <label class="plan-label">Эффект для заказчиков</label>
+            <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+          </article>
+          <button type="button" class="dash-btn" @click="addInitiative">+ Добавить инициативу</button>
+
+          <h4>Roadmap (визуализация по датам)</h4>
+          <div class="roadmap-grid">
+            <div v-for="(r, idx) in groupPlan.roadmap" :key="'rm-' + idx" class="roadmap-card">
+              <div class="initiative-head">
+                <strong>{{ r.period || `Этап ${idx + 1}` }}</strong>
+                <button type="button" class="dash-btn dash-btn-danger" @click="removeRoadmapItem(idx)">Удалить</button>
+              </div>
+              <label class="plan-label">Период</label>
+              <input v-model="r.period" class="plan-input" placeholder="Недели 1-2" />
+              <div class="roadmap-dates">
+                <div>
+                  <label class="plan-label">Старт</label>
+                  <input v-model="r.start_date" type="date" class="plan-input" />
+                </div>
+                <div>
+                  <label class="plan-label">Финиш</label>
+                  <input v-model="r.end_date" type="date" class="plan-input" />
+                </div>
+              </div>
+              <label class="plan-label">Инициатива</label>
+              <input v-model="r.initiative" class="plan-input" />
+              <label class="plan-label">Ключевая веха</label>
+              <textarea v-model="r.milestone" class="plan-input" rows="2" />
+            </div>
+          </div>
+          <button type="button" class="dash-btn" @click="addRoadmapItem">+ Добавить этап roadmap</button>
+
+          <h4>Риски и меры снижения</h4>
+          <textarea v-model="risksText" class="plan-input" rows="5" placeholder="Каждый риск/мера с новой строки" />
         </div>
         <div v-if="groupPlanHtml" class="insights-html group-plan-html" v-html="groupPlanHtml"></div>
       </section>
@@ -138,6 +201,8 @@
 
 <script>
 import axios from 'axios';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -156,6 +221,43 @@ function authHeaders() {
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
+function emptyGroupPlan() {
+  return {
+    diagnosis: '',
+    initiatives: [],
+    roadmap: [],
+    risks: []
+  };
+}
+
+function normalizeGroupPlan(plan) {
+  const src = plan && typeof plan === 'object' ? plan : {};
+  return {
+    diagnosis: String(src.diagnosis || ''),
+    initiatives: Array.isArray(src.initiatives)
+      ? src.initiatives.map((i) => ({
+        title: String(i?.title || ''),
+        objective: String(i?.objective || ''),
+        owner: String(i?.owner || ''),
+        success_metric: String(i?.success_metric || ''),
+        business_impact: String(i?.business_impact || ''),
+        customer_impact: String(i?.customer_impact || ''),
+        steps: Array.isArray(i?.steps) ? i.steps.map((x) => String(x || '')) : []
+      }))
+      : [],
+    roadmap: Array.isArray(src.roadmap)
+      ? src.roadmap.map((r) => ({
+        period: String(r?.period || ''),
+        start_date: String(r?.start_date || ''),
+        end_date: String(r?.end_date || ''),
+        initiative: String(r?.initiative || ''),
+        milestone: String(r?.milestone || '')
+      }))
+      : [],
+    risks: Array.isArray(src.risks) ? src.risks.map((r) => String(r || '')) : []
+  };
+}
+
 export default {
   name: 'MaturityLinkAdminDashboard',
   components: { Bar },
@@ -172,7 +274,12 @@ export default {
       insightsHtml: '',
       loadingInsights: false,
       groupPlanHtml: '',
-      loadingGroupPlan: false
+      loadingGroupPlan: false,
+      savingGroupPlan: false,
+      exportingGroupPlan: false,
+      groupPlanUpdatedAt: null,
+      groupPlan: emptyGroupPlan(),
+      risksText: ''
     };
   },
   computed: {
@@ -239,6 +346,17 @@ export default {
   mounted() {
     this.refresh();
   },
+  watch: {
+    selectedGroup() {
+      this.groupPlanHtml = '';
+      this.groupPlanUpdatedAt = null;
+      this.groupPlan = emptyGroupPlan();
+      this.risksText = '';
+      if (this.selectedGroup) {
+        this.loadGroupPlan();
+      }
+    }
+  },
   methods: {
     miniChartData(q) {
       return {
@@ -271,6 +389,7 @@ export default {
         this.groups = ov.data.groups || [];
         this.aggregates = ag.data || {};
         this.groupDrafts = Object.fromEntries(this.sessions.map((s) => [s.id, s.group_name || '']));
+        if (this.selectedGroup) await this.loadGroupPlan();
       } catch (e) {
         const st = e.response?.status;
         if (st === 403) {
@@ -340,11 +459,109 @@ export default {
           { group_name: this.selectedGroup },
           { headers: authHeaders() }
         );
+        this.groupPlan = normalizeGroupPlan(res.data.plan);
+        this.risksText = (this.groupPlan.risks || []).join('\n');
         this.groupPlanHtml = res.data.content || '';
+        this.groupPlanUpdatedAt = res.data.updated_at || null;
       } catch (e) {
         this.groupPlanHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
       } finally {
         this.loadingGroupPlan = false;
+      }
+    },
+    async loadGroupPlan() {
+      if (!this.selectedGroup) return;
+      try {
+        const res = await axios.get('/api/maturity-admin/group-plan', {
+          headers: authHeaders(),
+          params: { group_name: this.selectedGroup }
+        });
+        this.groupPlan = normalizeGroupPlan(res.data.plan);
+        this.risksText = (this.groupPlan.risks || []).join('\n');
+        this.groupPlanHtml = res.data.content || '';
+        this.groupPlanUpdatedAt = res.data.updated_at || null;
+      } catch {
+        this.groupPlan = emptyGroupPlan();
+        this.risksText = '';
+      }
+    },
+    addInitiative() {
+      this.groupPlan.initiatives.push({
+        title: '',
+        objective: '',
+        owner: '',
+        success_metric: '',
+        business_impact: '',
+        customer_impact: '',
+        steps: []
+      });
+    },
+    removeInitiative(idx) {
+      this.groupPlan.initiatives.splice(idx, 1);
+    },
+    addRoadmapItem() {
+      this.groupPlan.roadmap.push({
+        period: '',
+        start_date: '',
+        end_date: '',
+        initiative: '',
+        milestone: ''
+      });
+    },
+    removeRoadmapItem(idx) {
+      this.groupPlan.roadmap.splice(idx, 1);
+    },
+    async saveGroupPlan() {
+      if (!this.selectedGroup) return;
+      this.savingGroupPlan = true;
+      try {
+        const plan = normalizeGroupPlan({
+          ...this.groupPlan,
+          risks: this.risksText.split('\n').map((x) => x.trim()).filter(Boolean)
+        });
+        const res = await axios.put('/api/maturity-admin/group-plan', {
+          group_name: this.selectedGroup,
+          plan,
+          content: ''
+        }, { headers: authHeaders() });
+        this.groupPlan = normalizeGroupPlan(res.data.plan);
+        this.groupPlanHtml = res.data.content || '';
+        this.groupPlanUpdatedAt = res.data.updated_at || null;
+        this.risksText = (this.groupPlan.risks || []).join('\n');
+      } catch (e) {
+        alert(e.response?.data?.error || 'Не удалось сохранить план');
+      } finally {
+        this.savingGroupPlan = false;
+      }
+    },
+    async exportGroupPlanPdf() {
+      if (!this.selectedGroup || this.exportingGroupPlan) return;
+      const el = this.$refs.groupPlanExportRoot;
+      if (!el) return;
+      this.exportingGroupPlan = true;
+      try {
+        const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png', 0.92);
+        const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 8;
+        const imgW = pageW - margin * 2;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        let y = margin;
+        let left = imgH;
+        pdf.addImage(imgData, 'PNG', margin, y, imgW, imgH);
+        left -= pageH - margin * 2;
+        while (left > 1) {
+          y = left - imgH + margin;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', margin, y, imgW, imgH);
+          left -= pageH - margin * 2;
+        }
+        const safe = this.selectedGroup.replace(/[^\w\s-]/g, '').trim() || 'stream';
+        pdf.save(`stream-plan-${safe}.pdf`);
+      } finally {
+        this.exportingGroupPlan = false;
       }
     }
   }
@@ -566,5 +783,79 @@ export default {
 
 .group-plan-html {
   margin-top: 12px;
+}
+
+.group-plan-editor {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid #dbe5f3;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.group-plan-editor h3 {
+  margin: 0 0 12px;
+  color: #0f172a;
+}
+
+.group-plan-editor h4 {
+  margin: 16px 0 10px;
+  color: #1e293b;
+}
+
+.plan-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin: 8px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.initiative-card {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.initiative-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.roadmap-card {
+  border: 1px solid #c7d2fe;
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(165deg, #eef2ff 0%, #ffffff 100%);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+}
+
+.roadmap-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 </style>

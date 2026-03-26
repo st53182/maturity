@@ -281,6 +281,16 @@ class MaturityLinkSession(db.Model):
     answers = db.Column(JSON, nullable=True)  # список 205 bool или dict по индексу
 
 
+class MaturityGroupPlan(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    group_name = db.Column(db.String(255), nullable=False, unique=True)
+    plan_json = db.Column(JSON, nullable=False)
+    plan_html = db.Column(db.Text, nullable=True)
+    updated_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # 🔹 Модель дорожной карты зависимостей
 class Roadmap(db.Model):
     id = db.Column(db.Integer, primary_key=True)

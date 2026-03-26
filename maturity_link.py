@@ -9,7 +9,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import inspect, text
 
 from database import db
-from models import MaturityLinkSession, User
+from models import MaturityLinkSession, MaturityGroupPlan, User
 from maturity_questions import (
     MATURITY_QUESTIONS,
     RADAR_GROUPS,
@@ -164,6 +164,89 @@ def _normalize_group_name(value):
     return s[:255] if s else None
 
 
+def _default_group_plan():
+    return {
+        "diagnosis": "",
+        "initiatives": [],
+        "roadmap": [],
+        "risks": [],
+    }
+
+
+def _normalize_group_plan(payload):
+    src = payload if isinstance(payload, dict) else {}
+    plan = _default_group_plan()
+    plan["diagnosis"] = str(src.get("diagnosis") or "").strip()
+
+    initiatives = src.get("initiatives")
+    if isinstance(initiatives, list):
+        for item in initiatives[:12]:
+            if not isinstance(item, dict):
+                continue
+            plan["initiatives"].append({
+                "title": str(item.get("title") or "").strip(),
+                "objective": str(item.get("objective") or "").strip(),
+                "owner": str(item.get("owner") or "").strip(),
+                "success_metric": str(item.get("success_metric") or "").strip(),
+                "business_impact": str(item.get("business_impact") or "").strip(),
+                "customer_impact": str(item.get("customer_impact") or "").strip(),
+                "steps": [str(s).strip() for s in (item.get("steps") or []) if str(s).strip()][:8],
+            })
+
+    roadmap = src.get("roadmap")
+    if isinstance(roadmap, list):
+        for row in roadmap[:20]:
+            if not isinstance(row, dict):
+                continue
+            plan["roadmap"].append({
+                "period": str(row.get("period") or "").strip(),
+                "start_date": str(row.get("start_date") or "").strip(),
+                "end_date": str(row.get("end_date") or "").strip(),
+                "initiative": str(row.get("initiative") or "").strip(),
+                "milestone": str(row.get("milestone") or "").strip(),
+            })
+
+    risks = src.get("risks")
+    if isinstance(risks, list):
+        plan["risks"] = [str(r).strip() for r in risks if str(r).strip()][:12]
+
+    return plan
+
+
+def _group_plan_to_html(group_name, plan):
+    p = _normalize_group_plan(plan)
+    html = [f"<h3>План улучшений стрима: {group_name}</h3>"]
+    if p["diagnosis"]:
+        html.append(f"<p><strong>Диагноз:</strong> {p['diagnosis']}</p>")
+    if p["initiatives"]:
+        html.append("<h4>Инициативы</h4><ul>")
+        for idx, i in enumerate(p["initiatives"], start=1):
+            html.append(
+                f"<li><strong>{idx}. {i['title'] or 'Инициатива'}</strong><br>"
+                f"Цель: {i['objective'] or '—'}<br>"
+                f"Владелец: {i['owner'] or '—'}<br>"
+                f"Метрика успеха: {i['success_metric'] or '—'}<br>"
+                f"Бизнес-эффект: {i['business_impact'] or '—'}<br>"
+                f"Эффект для заказчиков: {i['customer_impact'] or '—'}</li>"
+            )
+        html.append("</ul>")
+    if p["roadmap"]:
+        html.append("<h4>Roadmap (12 недель)</h4><ul>")
+        for r in p["roadmap"]:
+            html.append(
+                f"<li><strong>{r['period'] or 'Период'}</strong> "
+                f"({r['start_date'] or '—'} - {r['end_date'] or '—'}): "
+                f"{r['initiative'] or '—'} — {r['milestone'] or '—'}</li>"
+            )
+        html.append("</ul>")
+    if p["risks"]:
+        html.append("<h4>Риски и меры снижения</h4><ul>")
+        for r in p["risks"]:
+            html.append(f"<li>{r}</li>")
+        html.append("</ul>")
+    return "".join(html)
+
+
 def _ensure_maturity_link_session_columns():
     """
     Лёгкая runtime-миграция: добавляет новые колонки в существующую таблицу,
@@ -175,6 +258,13 @@ def _ensure_maturity_link_session_columns():
         if "group_name" not in columns:
             db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN group_name VARCHAR(255)"))
         db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
+def _ensure_group_plan_table():
+    try:
+        db.create_all()
     except Exception:
         db.session.rollback()
 
@@ -693,15 +783,67 @@ def maturity_admin_insights():
         return jsonify({"error": str(e)}), 500
 
 
+@maturity_bp.route('/api/maturity-admin/group-plan', methods=['GET'])
+@jwt_required()
+def maturity_admin_group_plan_get():
+    user = _get_maturity_admin_user()
+    if not user:
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_group_plan_table()
+    group_name = _normalize_group_name(request.args.get("group_name"))
+    if not group_name:
+        return jsonify({'error': 'Укажите group_name'}), 400
+    row = MaturityGroupPlan.query.filter_by(group_name=group_name).first()
+    if not row:
+        return jsonify({"group_name": group_name, "plan": _default_group_plan(), "content": "", "updated_at": None})
+    return jsonify({
+        "group_name": group_name,
+        "plan": _normalize_group_plan(row.plan_json),
+        "content": row.plan_html or "",
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    })
+
+
+@maturity_bp.route('/api/maturity-admin/group-plan', methods=['PUT'])
+@jwt_required()
+def maturity_admin_group_plan_save():
+    user = _get_maturity_admin_user()
+    if not user:
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_group_plan_table()
+    data = request.get_json() or {}
+    group_name = _normalize_group_name(data.get("group_name"))
+    if not group_name:
+        return jsonify({'error': 'Укажите group_name'}), 400
+    plan = _normalize_group_plan(data.get("plan"))
+    html = str(data.get("content") or "").strip() or _group_plan_to_html(group_name, plan)
+    row = MaturityGroupPlan.query.filter_by(group_name=group_name).first()
+    if not row:
+        row = MaturityGroupPlan(group_name=group_name, plan_json=plan, plan_html=html, updated_by_user_id=user.id)
+        db.session.add(row)
+    else:
+        row.plan_json = plan
+        row.plan_html = html
+        row.updated_by_user_id = user.id
+    db.session.commit()
+    return jsonify({
+        "group_name": group_name,
+        "plan": plan,
+        "content": row.plan_html,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    })
+
+
 @maturity_bp.route('/api/maturity-admin/group-plan', methods=['POST'])
 @jwt_required()
-def maturity_admin_group_plan():
+def maturity_admin_group_plan_generate():
     """Сгенерировать план улучшений для группы команд (стрима)."""
     import os
     user = _get_maturity_admin_user()
     if not user:
         return jsonify({'error': 'Доступ запрещён'}), 403
     _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
     if not os.getenv('OPENAI_API_KEY'):
         return jsonify({'error': 'OPENAI_API_KEY не задан'}), 503
 
@@ -748,15 +890,39 @@ def maturity_admin_group_plan():
 Сводка по темам:
 {summary}
 
-Сформируй план на 1 квартал в формате HTML:
-1) Краткий диагноз (2-4 предложения, только на основе данных выше).
-2) 5 инициатив уровня стрима (каждая: цель, шаги, владелец/роль, метрика успеха).
-3) Порядок запуска инициатив по неделям (вехи на 12 недель).
-4) Риски внедрения и меры снижения.
-
-Пиши только по-русски. Не выдумывай числа вне переданной сводки. Используй теги <h3>, <p>, <ul>, <li>, <strong>.
+Верни ТОЛЬКО JSON без markdown и без пояснений в следующей структуре:
+{{
+  "diagnosis": "2-4 предложения",
+  "initiatives": [
+    {{
+      "title": "...",
+      "objective": "...",
+      "owner": "...",
+      "success_metric": "...",
+      "business_impact": "...",
+      "customer_impact": "...",
+      "steps": ["...", "..."]
+    }}
+  ],
+  "roadmap": [
+    {{
+      "period": "Недели 1-2",
+      "start_date": "YYYY-MM-DD",
+      "end_date": "YYYY-MM-DD",
+      "initiative": "...",
+      "milestone": "..."
+    }}
+  ],
+  "risks": ["..."]
+}}
+Условия:
+- 5 инициатив уровня стрима.
+- 12 недель roadmap.
+- Пиши только по-русски.
+- Не выдумывай числа вне переданной сводки.
 """
     try:
+        import json
         response = client.chat.completions.create(
             model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-4.1"),
             messages=[
@@ -766,12 +932,32 @@ def maturity_admin_group_plan():
             temperature=0.45,
             max_tokens=2600,
         )
-        content = response.choices[0].message.content
+        raw = response.choices[0].message.content or "{}"
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            start = raw.find("{")
+            end = raw.rfind("}")
+            parsed = json.loads(raw[start:end + 1]) if start >= 0 and end > start else {}
+        plan = _normalize_group_plan(parsed)
+        content = _group_plan_to_html(group_name, plan)
+
+        row = MaturityGroupPlan.query.filter_by(group_name=group_name).first()
+        if not row:
+            row = MaturityGroupPlan(group_name=group_name, plan_json=plan, plan_html=content, updated_by_user_id=user.id)
+            db.session.add(row)
+        else:
+            row.plan_json = plan
+            row.plan_html = content
+            row.updated_by_user_id = user.id
+        db.session.commit()
         return jsonify({
             "group_name": group_name,
             "sessions": len(completed),
             "themes": theme_rows,
+            "plan": plan,
             "content": content,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

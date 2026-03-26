@@ -63,8 +63,8 @@
             <span class="ai-assistant-badge__icon" aria-hidden="true">✨</span>
             <span>Подсказки ИИ-ассистента</span>
             <div v-show="showCreateAiPopover" class="ai-popover" role="tooltip">
-              <p>После создания на каждом уровне можно нажать «Вопрос ИИ» — появится наводящий вопрос.</p>
-              <p>Если сложно сформулировать ответ, напишите в поле «не знаю» — ИИ предложит несколько вариантов формулировок.</p>
+              <p>На каждом уровне есть один ответ: введите его в поле ниже.</p>
+              <p>Если сложно сформулировать мысль, напишите в ответе «не знаю» и нажмите «Помощь ИИ».</p>
               <p>Прогресс сохраняется при переключении уровней и при выходе из окна.</p>
             </div>
           </div>
@@ -119,8 +119,8 @@
                 <span class="ai-assistant-inline__icon" aria-hidden="true">✨</span>
                 <span class="sr-only">ИИ-ассистент</span>
                 <div v-show="showWorkAiPopover" class="ai-popover ai-popover--work" role="tooltip">
-                  <p>Кнопка «Вопрос ИИ» подставляет наводящий вопрос для <strong>текущего</strong> уровня.</p>
-                  <p>В ответе можно написать «не знаю» — получите варианты формулировок.</p>
+                  <p>Используйте кнопку «Помощь ИИ», чтобы получить варианты формулировок по <strong>текущему</strong> уровню.</p>
+                  <p>Если не знаете, что написать, введите «не знаю» в поле ответа.</p>
                   <p>Можно переключаться между уровнями в любом порядке; черновик сохраняется автоматически.</p>
                 </div>
               </div>
@@ -167,14 +167,15 @@
               class="modern-input modern-textarea"
               :class="{ 'has-value': draft[selectedLevel] }"
               :aria-label="'Текст уровня: ' + currentLevelDef.title"
+              placeholder="Введите ответ для уровня (можно написать «не знаю» и нажать «Помощь ИИ»)"
               @input="scheduleSave"
             />
             <label class="floating-label">Ответ для «{{ currentLevelDef.title }}»</label>
           </div>
 
           <div class="editor-actions">
-            <button type="button" class="secondary-btn" :disabled="aiQuestionLoading" @click="fetchAiQuestion">
-              {{ aiQuestionLoading ? "Загрузка…" : "Вопрос ИИ" }}
+            <button type="button" class="secondary-btn" :disabled="!draft[selectedLevel].trim() || loading" @click="submitAiAnswer">
+              {{ loading ? "Обработка…" : "Помощь ИИ" }}
             </button>
           </div>
 
@@ -191,24 +192,6 @@
             </div>
           </div>
 
-          <div class="textarea-wrapper textarea-wrapper--stacked ai-answer-row">
-            <label :for="'iceberg-ai-answer-' + selectedLevel" class="stacked-field-label">Отправить ответ ИИ</label>
-            <div class="textarea-with-icon">
-              <span class="input-icon input-icon--stacked" aria-hidden="true">💬</span>
-              <textarea
-                :id="'iceberg-ai-answer-' + selectedLevel"
-                v-model="aiAnswerDraft"
-                rows="3"
-                class="modern-input modern-textarea modern-textarea--stacked"
-                placeholder="Ответ для ИИ (или напишите «не знаю» для вариантов)…"
-              />
-            </div>
-          </div>
-          <div class="modal-actions modal-actions--tight">
-            <button type="button" class="generate-btn" :disabled="!aiAnswerDraft.trim() || loading" @click="submitAiAnswer">
-              {{ loading ? "Обработка…" : "Отправить ИИ" }}
-            </button>
-          </div>
         </div>
 
         <!-- Скрытый блок для PDF / печати -->
@@ -376,10 +359,8 @@ export default {
       saveTimer: null,
       saveStatus: "idle",
       aiQuestionText: "",
-      aiAnswerDraft: "",
       suggestions: [],
       loading: false,
-      aiQuestionLoading: false,
       generatingSolutions: false,
       exportingPdf: false,
       pdfExportDate: ""
@@ -400,7 +381,6 @@ export default {
     selectedLevel() {
       this.aiQuestionText = "";
       this.suggestions = [];
-      this.aiAnswerDraft = "";
       this.scheduleSave();
     }
   },
@@ -426,7 +406,6 @@ export default {
     applySuggestion(text) {
       this.draft[this.selectedLevel] = text;
       this.suggestions = [];
-      this.aiAnswerDraft = "";
       this.scheduleSave();
     },
     selectLevel(id) {
@@ -491,7 +470,6 @@ export default {
         this.showIcebergModal = true;
         this.aiQuestionText = "";
         this.suggestions = [];
-        this.aiAnswerDraft = "";
       } catch (err) {
         console.error(err);
         alert("Ошибка загрузки");
@@ -551,35 +529,16 @@ export default {
       this.currentIceberg = null;
       await this.fetchIcebergs();
     },
-    async fetchAiQuestion() {
-      if (!this.currentIceberg) return;
-      this.aiQuestionLoading = true;
-      this.suggestions = [];
-      try {
-        const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
-          method: "POST",
-          headers: authHeaders(),
-          body: JSON.stringify({ response: "", level: this.selectedLevel })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          this.aiQuestionText = data.question || "";
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        this.aiQuestionLoading = false;
-      }
-    },
     async submitAiAnswer() {
-      if (!this.aiAnswerDraft.trim() || !this.currentIceberg) return;
+      const response = (this.draft[this.selectedLevel] || "").trim();
+      if (!response || !this.currentIceberg) return;
       this.loading = true;
       try {
         const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify({
-            response: this.aiAnswerDraft,
+            response,
             level: this.selectedLevel
           })
         });
@@ -595,7 +554,6 @@ export default {
           this.currentIceberg = data.iceberg;
           this.syncDraftFromIceberg(data.iceberg);
           this.suggestions = [];
-          this.aiAnswerDraft = "";
         }
       } catch (e) {
         console.error(e);

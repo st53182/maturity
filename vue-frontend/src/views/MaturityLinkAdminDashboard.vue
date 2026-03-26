@@ -36,20 +36,30 @@
           <article v-for="(item, idx) in groupPlan.initiatives" :key="'init-' + idx" class="initiative-card">
             <div class="initiative-head">
               <strong>Инициатива {{ idx + 1 }}</strong>
-              <button type="button" class="dash-btn dash-btn-danger" @click="removeInitiative(idx)">Удалить</button>
+              <div class="initiative-actions">
+                <button type="button" class="dash-btn" @click="toggleInitiativeCollapse(idx)">
+                  {{ isInitiativeCollapsed(idx) ? 'Развернуть' : 'Свернуть' }}
+                </button>
+                <button type="button" class="dash-btn dash-btn-danger" @click="removeInitiative(idx)">Удалить</button>
+              </div>
             </div>
-            <label class="plan-label">Название</label>
-            <input v-model="item.title" class="plan-input" />
-            <label class="plan-label">Цель</label>
-            <textarea v-model="item.objective" class="plan-input" rows="2" />
-            <label class="plan-label">Владелец / роль</label>
-            <input v-model="item.owner" class="plan-input" />
-            <label class="plan-label">Метрика успеха</label>
-            <input v-model="item.success_metric" class="plan-input" />
-            <label class="plan-label">Бизнес-эффект</label>
-            <textarea v-model="item.business_impact" class="plan-input" rows="2" />
-            <label class="plan-label">Эффект для заказчиков</label>
-            <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+            <div v-if="!isInitiativeCollapsed(idx)">
+              <label class="plan-label">Название</label>
+              <input v-model="item.title" class="plan-input" />
+              <label class="plan-label">Цель</label>
+              <textarea v-model="item.objective" class="plan-input" rows="2" />
+              <label class="plan-label">Владелец / роль</label>
+              <input v-model="item.owner" class="plan-input" />
+              <label class="plan-label">Метрика успеха</label>
+              <input v-model="item.success_metric" class="plan-input" />
+              <label class="plan-label">Бизнес-эффект</label>
+              <textarea v-model="item.business_impact" class="plan-input" rows="2" />
+              <label class="plan-label">Эффект для заказчиков</label>
+              <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+            </div>
+            <p v-else class="muted small initiative-preview">
+              {{ item.title || 'Без названия' }} · {{ item.owner || 'Владелец не указан' }}
+            </p>
           </article>
           <button type="button" class="dash-btn" @click="addInitiative">+ Добавить инициативу</button>
 
@@ -279,7 +289,8 @@ export default {
       exportingGroupPlan: false,
       groupPlanUpdatedAt: null,
       groupPlan: emptyGroupPlan(),
-      risksText: ''
+      risksText: '',
+      initiativeCollapsed: {}
     };
   },
   computed: {
@@ -352,6 +363,7 @@ export default {
       this.groupPlanUpdatedAt = null;
       this.groupPlan = emptyGroupPlan();
       this.risksText = '';
+      this.initiativeCollapsed = {};
       if (this.selectedGroup) {
         this.loadGroupPlan();
       }
@@ -463,6 +475,7 @@ export default {
         this.risksText = (this.groupPlan.risks || []).join('\n');
         this.groupPlanHtml = res.data.content || '';
         this.groupPlanUpdatedAt = res.data.updated_at || null;
+        this.initiativeCollapsed = {};
       } catch (e) {
         this.groupPlanHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
       } finally {
@@ -480,10 +493,21 @@ export default {
         this.risksText = (this.groupPlan.risks || []).join('\n');
         this.groupPlanHtml = res.data.content || '';
         this.groupPlanUpdatedAt = res.data.updated_at || null;
+        this.initiativeCollapsed = {};
       } catch {
         this.groupPlan = emptyGroupPlan();
         this.risksText = '';
+        this.initiativeCollapsed = {};
       }
+    },
+    isInitiativeCollapsed(idx) {
+      return !!this.initiativeCollapsed[idx];
+    },
+    toggleInitiativeCollapse(idx) {
+      this.initiativeCollapsed = {
+        ...this.initiativeCollapsed,
+        [idx]: !this.initiativeCollapsed[idx]
+      };
     },
     addInitiative() {
       this.groupPlan.initiatives.push({
@@ -498,6 +522,11 @@ export default {
     },
     removeInitiative(idx) {
       this.groupPlan.initiatives.splice(idx, 1);
+      this.initiativeCollapsed = Object.fromEntries(
+        Object.entries(this.initiativeCollapsed)
+          .filter(([k]) => Number(k) !== idx)
+          .map(([k, v]) => [Number(k) > idx ? Number(k) - 1 : Number(k), v])
+      );
     },
     addRoadmapItem() {
       this.groupPlan.roadmap.push({
@@ -864,6 +893,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+}
+
+.initiative-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.initiative-preview {
+  margin-top: 10px;
 }
 
 .roadmap-grid {

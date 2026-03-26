@@ -1,5 +1,5 @@
 <template>
-  <div class="maturity-admin-dash">
+  <div class="maturity-admin-dash dash-page">
     <header class="dash-head">
       <h1>Оценка зрелости по ссылке — сводка</h1>
       <p class="dash-sub">Завершённых опросов (с валидными ответами): {{ aggregates.completed_sessions ?? '—' }}</p>
@@ -570,20 +570,28 @@ export default {
 
 <style scoped>
 .maturity-admin-dash {
-  max-width: 1100px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
 
+.dash-page {
+  background: radial-gradient(1200px 420px at 10% -10%, rgba(37, 99, 235, 0.15), transparent 60%),
+    radial-gradient(1000px 360px at 95% 0%, rgba(14, 165, 233, 0.12), transparent 60%),
+    #f6f9ff;
+  border-radius: 20px;
+}
+
 .dash-head h1 {
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   margin: 0 0 0.35rem 0;
-  color: #0f172a;
+  color: #0d1733;
+  letter-spacing: -0.02em;
 }
 
 .dash-sub {
   margin: 0;
-  color: #64748b;
+  color: #5d6b8a;
   font-size: 0.95rem;
 }
 
@@ -603,12 +611,18 @@ export default {
 
 .dash-section {
   margin-top: 2rem;
+  padding: 18px;
+  border: 1px solid #d8e0f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 255, 0.95));
+  box-shadow: 0 18px 40px rgba(20, 43, 102, 0.08);
+  backdrop-filter: blur(6px);
 }
 
 .dash-section h2 {
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   margin: 0 0 0.75rem 0;
-  color: #1e293b;
+  color: #0d1733;
 }
 
 .dash-filters {
@@ -620,9 +634,11 @@ export default {
 
 .dash-select {
   min-width: 200px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 8px 10px;
+  border: 1px solid #d8e0f0;
+  border-radius: 12px;
+  padding: 9px 11px;
+  background: #f9fbff;
+  color: #0d1733;
 }
 
 .group-cards {
@@ -632,10 +648,11 @@ export default {
 }
 
 .group-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
-  background: #fff;
+  border: 1px solid #dbe5f3;
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(160deg, #ffffff, #f7faff);
+  box-shadow: 0 10px 24px rgba(20, 43, 102, 0.08);
 }
 
 .group-card h3 {
@@ -651,7 +668,11 @@ export default {
 
 .chart-box {
   height: 280px;
-  max-width: 520px;
+  max-width: 620px;
+  background: #ffffff;
+  border: 1px solid #dbe5f3;
+  border-radius: 14px;
+  padding: 12px;
 }
 
 .insights-head {
@@ -663,10 +684,10 @@ export default {
 
 .insights-html {
   margin-top: 12px;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  padding: 18px;
+  background: linear-gradient(165deg, #f8fbff, #ffffff);
+  border-radius: 14px;
+  border: 1px solid #dbe5f3;
   font-size: 0.95rem;
   line-height: 1.5;
 }
@@ -681,8 +702,10 @@ export default {
 
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #dbe5f3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .dash-table {
@@ -699,9 +722,9 @@ export default {
 }
 
 .dash-table th {
-  background: #f8fafc;
+  background: #f2f6ff;
   font-weight: 600;
-  color: #475569;
+  color: #2b3d63;
 }
 
 .group-edit-cell {
@@ -712,9 +735,10 @@ export default {
 
 .group-input {
   min-width: 130px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 6px 8px;
+  border: 1px solid #d8e0f0;
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: #f9fbff;
 }
 
 .mono {
@@ -736,10 +760,11 @@ export default {
 }
 
 .q-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #dbe5f3;
+  border-radius: 14px;
   padding: 12px;
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 8px 20px rgba(20, 43, 102, 0.07);
 }
 
 .q-meta {
@@ -787,10 +812,11 @@ export default {
 
 .group-plan-editor {
   margin-top: 12px;
-  padding: 16px;
-  border: 1px solid #dbe5f3;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: 18px;
+  border: 1px solid #d8e0f0;
+  border-radius: 16px;
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.98), rgba(243, 248, 255, 0.98));
+  box-shadow: 0 18px 36px rgba(20, 43, 102, 0.1);
 }
 
 .group-plan-editor h3 {
@@ -816,20 +842,21 @@ export default {
 .plan-input {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1px solid #d8e0f0;
+  border-radius: 12px;
   padding: 9px 10px;
   font-size: 14px;
   font-family: inherit;
-  background: #fff;
+  background: #f9fbff;
 }
 
 .initiative-card {
   margin: 12px 0;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #ffffff;
+  padding: 14px;
+  border: 1px solid #dbe5f3;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #ffffff, #f7fbff);
+  box-shadow: 0 12px 28px rgba(20, 43, 102, 0.08);
 }
 
 .initiative-head {
@@ -846,16 +873,36 @@ export default {
 }
 
 .roadmap-card {
-  border: 1px solid #c7d2fe;
-  border-radius: 14px;
+  border: 1px solid #bfd3ff;
+  border-radius: 16px;
   padding: 12px;
-  background: linear-gradient(165deg, #eef2ff 0%, #ffffff 100%);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+  background: linear-gradient(155deg, #edf4ff 0%, #ffffff 100%);
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.16);
 }
 
 .roadmap-dates {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.dash-btn {
+  border: 1px solid rgba(20, 43, 102, 0.18);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #142b66, #2754c7);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.58rem 0.95rem;
+  box-shadow: 0 10px 22px rgba(20, 43, 102, 0.22);
+}
+
+.dash-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.dash-btn-danger {
+  background: linear-gradient(145deg, #ef4444, #dc2626);
+  border-color: rgba(220, 38, 38, 0.35);
 }
 </style>

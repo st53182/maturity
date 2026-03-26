@@ -76,82 +76,94 @@
         </button>
       </div>
 
-      <!-- Модальное окно: карточки вопросов и ответов по выбранной теме -->
-      <div v-if="selectedTheme" class="detail-overlay" @click.self="selectedTheme = null">
-        <div class="detail-modal">
-          <div class="detail-header">
-            <h3>{{ selectedTheme }}</h3>
-            <button type="button" class="detail-close" aria-label="Закрыть" @click="selectedTheme = null">×</button>
-          </div>
-          <div class="detail-cards">
-            <div
-              v-for="item in questionsForTheme(selectedTheme)"
-              :key="item.id"
-              class="detail-card"
-            >
-              <p class="detail-question">{{ item.text }}</p>
-              <div class="detail-answer" :class="item.answerClass">
-                {{ item.answerLabel }}
+      <Teleport to="body">
+        <!-- Модальное окно: карточки вопросов и ответов по выбранной теме -->
+        <div v-if="selectedTheme" class="detail-overlay" @click.self="selectedTheme = null">
+          <div class="detail-modal">
+            <div class="detail-header">
+              <h3>{{ selectedTheme }}</h3>
+              <div class="detail-header-actions">
+                <button type="button" class="btn-pdf-modal" :disabled="modalExporting" @click="exportThemePdf">
+                  {{ modalExporting ? 'Экспорт…' : 'Скачать PDF' }}
+                </button>
+                <button type="button" class="detail-close" aria-label="Закрыть" @click="selectedTheme = null">×</button>
               </div>
-              <div v-if="item.why_important" class="detail-why">
-                <strong>Почему это важно:</strong> {{ item.why_important }}
-              </div>
-              <div v-if="item.metrics_impact" class="detail-metrics">
-                <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
-              </div>
-              <div v-if="item.negative_for_business" class="detail-negative">
-                <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
-              </div>
-              <div v-if="item.business_metrics" class="detail-business-metrics">
-                <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
-                <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
-              </div>
-              <div v-if="item.comment" class="detail-comment">
-                <strong>Комментарий:</strong> {{ item.comment }}
+            </div>
+            <div ref="themeModalCards" class="detail-cards">
+              <div
+                v-for="item in questionsForTheme(selectedTheme)"
+                :key="item.id"
+                class="detail-card"
+              >
+                <p class="detail-question">{{ item.text }}</p>
+                <div class="detail-answer" :class="item.answerClass">
+                  {{ item.answerLabel }}
+                </div>
+                <div v-if="item.why_important" class="detail-why">
+                  <strong>Почему это важно:</strong> {{ item.why_important }}
+                </div>
+                <div v-if="item.metrics_impact" class="detail-metrics">
+                  <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
+                </div>
+                <div v-if="item.negative_for_business" class="detail-negative">
+                  <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
+                </div>
+                <div v-if="item.business_metrics" class="detail-business-metrics">
+                  <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
+                  <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
+                </div>
+                <div v-if="item.comment" class="detail-comment">
+                  <strong>Комментарий:</strong> {{ item.comment }}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Модальное окно: все вопросы и ответы -->
-      <div v-if="showAllModal" class="detail-overlay" @click.self="showAllModal = false">
-        <div class="detail-modal detail-modal-full">
-          <div class="detail-header">
-            <h3>Все вопросы и ответы</h3>
-            <button type="button" class="detail-close" aria-label="Закрыть" @click="showAllModal = false">×</button>
-          </div>
-          <div class="detail-cards detail-cards-full">
-            <p v-if="!allQuestionsWithAnswers.length" class="detail-empty">Нет данных о вопросах и ответах.</p>
-            <div
-              v-for="item in allQuestionsWithAnswers"
-              :key="item.id"
-              class="detail-card"
-            >
-              <p class="detail-question"><span class="detail-q-num">{{ item.id + 1 }}.</span> {{ item.text }}</p>
-              <div class="detail-answer" :class="item.answerClass">
-                {{ item.answerLabel }}
+        <!-- Модальное окно: все вопросы и ответы -->
+        <div v-if="showAllModal" class="detail-overlay" @click.self="showAllModal = false">
+          <div class="detail-modal detail-modal-full">
+            <div class="detail-header">
+              <h3>Все вопросы и ответы</h3>
+              <div class="detail-header-actions">
+                <button type="button" class="btn-pdf-modal" :disabled="modalExporting" @click="exportAllQuestionsPdf">
+                  {{ modalExporting ? 'Экспорт…' : 'Скачать PDF' }}
+                </button>
+                <button type="button" class="detail-close" aria-label="Закрыть" @click="showAllModal = false">×</button>
               </div>
-              <div v-if="item.why_important" class="detail-why">
-                <strong>Почему это важно:</strong> {{ item.why_important }}
-              </div>
-              <div v-if="item.metrics_impact" class="detail-metrics">
-                <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
-              </div>
-              <div v-if="item.negative_for_business" class="detail-negative">
-                <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
-              </div>
-              <div v-if="item.business_metrics" class="detail-business-metrics">
-                <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
-                <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
-              </div>
-              <div v-if="item.comment" class="detail-comment">
-                <strong>Комментарий:</strong> {{ item.comment }}
+            </div>
+            <div ref="allModalCards" class="detail-cards detail-cards-full">
+              <p v-if="!allQuestionsWithAnswers.length" class="detail-empty">Нет данных о вопросах и ответах.</p>
+              <div
+                v-for="item in allQuestionsWithAnswers"
+                :key="item.id"
+                class="detail-card"
+              >
+                <p class="detail-question"><span class="detail-q-num">{{ item.id + 1 }}.</span> {{ item.text }}</p>
+                <div class="detail-answer" :class="item.answerClass">
+                  {{ item.answerLabel }}
+                </div>
+                <div v-if="item.why_important" class="detail-why">
+                  <strong>Почему это важно:</strong> {{ item.why_important }}
+                </div>
+                <div v-if="item.metrics_impact" class="detail-metrics">
+                  <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
+                </div>
+                <div v-if="item.negative_for_business" class="detail-negative">
+                  <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
+                </div>
+                <div v-if="item.business_metrics" class="detail-business-metrics">
+                  <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
+                  <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
+                </div>
+                <div v-if="item.comment" class="detail-comment">
+                  <strong>Комментарий:</strong> {{ item.comment }}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -187,6 +199,7 @@ export default {
       loadingRecs: false,
       dontKnowHtml: '',
       loadingDontKnowRecs: false,
+      modalExporting: false,
       businessMetricsDisclaimer: '',
       businessMetricsGlossary: []
     };
@@ -260,7 +273,21 @@ export default {
     this.token = this.$route.params.token;
     await this.loadResults();
   },
+  watch: {
+    selectedTheme() {
+      this.syncBodyScrollLock();
+    },
+    showAllModal() {
+      this.syncBodyScrollLock();
+    }
+  },
+  beforeUnmount() {
+    document.body.style.overflow = '';
+  },
   methods: {
+    syncBodyScrollLock() {
+      document.body.style.overflow = this.selectedTheme || this.showAllModal ? 'hidden' : '';
+    },
     chartDataForGroup(group) {
       if (!group || !group.categories || !this.results) {
         return { labels: [], datasets: [] };
@@ -399,6 +426,42 @@ export default {
       } finally {
         this.exporting = false;
       }
+    },
+    async exportElementToPdf(el, filePrefix) {
+      if (!el) return;
+      this.modalExporting = true;
+      try {
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const w = pdf.internal.pageSize.getWidth();
+        const h = pdf.internal.pageSize.getHeight();
+        const imgW = w;
+        const imgH = (canvas.height * w) / canvas.width;
+        let yOff = 0;
+        while (yOff < imgH) {
+          if (yOff > 0) pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, -yOff, imgW, imgH);
+          yOff += h;
+        }
+        pdf.save(`${filePrefix}-${this.token || 'report'}.pdf`);
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('maturity.pdfError'));
+      } finally {
+        this.modalExporting = false;
+      }
+    },
+    async exportThemePdf() {
+      await this.exportElementToPdf(this.$refs.themeModalCards, `детали-темы-${(this.selectedTheme || 'theme').replace(/[^\w\s-]/g, '').trim()}`);
+    },
+    async exportAllQuestionsPdf() {
+      await this.exportElementToPdf(this.$refs.allModalCards, 'все-вопросы');
     }
   }
 };
@@ -546,6 +609,28 @@ export default {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
+}
+
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-pdf-modal {
+  padding: 0.45rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-pdf-modal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .detail-header h3 {

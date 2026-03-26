@@ -54,12 +54,12 @@ export default {
         },
         scales: {
           r: {
-            beginAtZero: false,
-            min: 1,
-            suggestedMin: 1,
+            beginAtZero: true,
+            min: 0,
+            suggestedMin: 0,
             suggestedMax: 3,
             ticks: {
-              stepSize: 1
+              stepSize: 0.5
             }
           }
         },

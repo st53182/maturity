@@ -246,10 +246,9 @@ export default {
       let total = 0;
       let count = 0;
       for (const cat of Object.values(this.results)) {
-        for (const v of Object.values(cat)) {
-          total += parseFloat(v) || 0;
-          count++;
-        }
+        const vals = Object.values(cat).map((v) => parseFloat(v) || 0);
+        total += vals.reduce((a, b) => a + b, 0); // 0..3 по теме
+        count++;
       }
       return count ? total / count : 0;
     },
@@ -298,9 +297,9 @@ export default {
         const subs = this.results[cat];
         if (!subs) continue;
         const vals = Object.values(subs).map(v => parseFloat(v) || 0);
-        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        const score = vals.reduce((a, b) => a + b, 0); // максимум 3 при трех "Да"
         labels.push(cat);
-        data.push(avg);
+        data.push(score);
       }
       return {
         labels,
@@ -339,8 +338,8 @@ export default {
         .filter(cat => this.results[cat])
         .map(cat => {
           const vals = Object.values(this.results[cat]).map(v => parseFloat(v) || 0);
-          const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-          return { theme: cat, avg };
+          const score = vals.reduce((a, b) => a + b, 0); // 0..3
+          return { theme: cat, avg: score };
         });
     },
     questionsForTheme(theme) {
@@ -364,7 +363,7 @@ export default {
     },
     scoreClass(avg) {
       if (avg >= 2.5) return 'score-high';
-      if (avg >= 1.75) return 'score-mid';
+      if (avg >= 1.5) return 'score-mid';
       return 'score-low';
     },
     async fetchRecommendations() {

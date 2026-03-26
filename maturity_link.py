@@ -2,9 +2,11 @@
 import os
 import uuid
 from datetime import datetime
+from collections import defaultdict
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy import inspect, text
 
 from database import db
 from models import MaturityLinkSession, User
@@ -155,6 +157,28 @@ def _get_maturity_admin_user():
     return user
 
 
+def _normalize_group_name(value):
+    if value is None:
+        return None
+    s = str(value).strip()
+    return s[:255] if s else None
+
+
+def _ensure_maturity_link_session_columns():
+    """
+    Лёгкая runtime-миграция: добавляет новые колонки в существующую таблицу,
+    чтобы локальные SQLite/Postgres базы не падали после деплоя.
+    """
+    try:
+        inspector = inspect(db.engine)
+        columns = {c["name"] for c in inspector.get_columns("maturity_link_session")}
+        if "group_name" not in columns:
+            db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN group_name VARCHAR(255)"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
 def _normalize_comments_list(comments):
     if not isinstance(comments, list):
         return None
@@ -175,17 +199,20 @@ def _normalize_comments_list(comments):
 @jwt_required(optional=True)
 def create_maturity_link():
     """Создать сессию оценки по ссылке. Тело: { "team_name": "опционально" }. Возвращает token и url."""
+    _ensure_maturity_link_session_columns()
     data = request.get_json() or {}
     team_name = data.get('team_name', '').strip() or None
+    group_name = _normalize_group_name(data.get('group_name'))
     token = str(uuid.uuid4())
-    session = MaturityLinkSession(access_token=token, team_name=team_name)
+    session = MaturityLinkSession(access_token=token, team_name=team_name, group_name=group_name)
     db.session.add(session)
     db.session.commit()
     base = request.host_url.rstrip('/')
     return jsonify({
         'token': token,
         'url': f'{base}/new/maturity/{token}',
-        'team_name': session.team_name
+        'team_name': session.team_name,
+        'group_name': session.group_name
     }), 201
 
 
@@ -211,6 +238,7 @@ def get_maturity_survey(token):
     ]
     return jsonify({
         'team_name': session.team_name,
+        'group_name': session.group_name,
         'completed': session.completed_at is not None,
         'questions': questions,
         'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
@@ -467,12 +495,20 @@ def maturity_admin_overview():
     user = _get_maturity_admin_user()
     if not user:
         return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_maturity_link_session_columns()
+    selected_group = _normalize_group_name(request.args.get('group_name'))
     rows = MaturityLinkSession.query.order_by(MaturityLinkSession.created_at.desc()).all()
+    if selected_group:
+        rows = [r for r in rows if _normalize_group_name(getattr(r, "group_name", None)) == selected_group]
+    groups = sorted({(_normalize_group_name(getattr(s, "group_name", None)) or "Без группы") for s in MaturityLinkSession.query.all()})
     return jsonify({
+        'selected_group': selected_group,
+        'groups': groups,
         'sessions': [
             {
                 'id': s.id,
                 'team_name': s.team_name,
+                'group_name': _normalize_group_name(getattr(s, 'group_name', None)),
                 'token': s.access_token,
                 'token_suffix': s.access_token[-8:] if s.access_token else '',
                 'created_at': s.created_at.isoformat() if s.created_at else None,
@@ -481,6 +517,25 @@ def maturity_admin_overview():
             }
             for s in rows
         ]
+    })
+
+
+@maturity_bp.route('/api/maturity-admin/session/<int:session_id>/group', methods=['PUT'])
+@jwt_required()
+def maturity_admin_update_group(session_id):
+    user = _get_maturity_admin_user()
+    if not user:
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_maturity_link_session_columns()
+    s = MaturityLinkSession.query.get(session_id)
+    if not s:
+        return jsonify({'error': 'Сессия не найдена'}), 404
+    data = request.get_json() or {}
+    s.group_name = _normalize_group_name(data.get('group_name'))
+    db.session.commit()
+    return jsonify({
+        'id': s.id,
+        'group_name': s.group_name,
     })
 
 
@@ -504,22 +559,32 @@ def maturity_admin_aggregates():
     user = _get_maturity_admin_user()
     if not user:
         return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_maturity_link_session_columns()
+    selected_group = _normalize_group_name(request.args.get('group_name'))
     completed = MaturityLinkSession.query.filter(MaturityLinkSession.completed_at.isnot(None)).all()
+    if selected_group:
+        completed = [s for s in completed if _normalize_group_name(getattr(s, "group_name", None)) == selected_group]
     counts = [{"yes": 0, "no": 0, "dont_know": 0} for _ in range(QUESTIONS_COUNT)]
     valid_sessions = 0
+    by_group = defaultdict(lambda: {"sessions": 0, "yes": 0, "no": 0, "dont_know": 0})
     for s in completed:
         raw_ans, _ = _extract_answers_and_comments(s.answers)
         row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
         if not row:
             continue
         valid_sessions += 1
+        gname = _normalize_group_name(getattr(s, "group_name", None)) or "Без группы"
+        by_group[gname]["sessions"] += 1
         for i, a in enumerate(row):
             if a is True:
                 counts[i]["yes"] += 1
+                by_group[gname]["yes"] += 1
             elif a is False:
                 counts[i]["no"] += 1
+                by_group[gname]["no"] += 1
             else:
                 counts[i]["dont_know"] += 1
+                by_group[gname]["dont_know"] += 1
 
     questions_out = []
     for i in range(QUESTIONS_COUNT):
@@ -547,7 +612,18 @@ def maturity_admin_aggregates():
             })
 
     return jsonify({
+        "selected_group": selected_group,
         "completed_sessions": valid_sessions,
+        "group_summaries": [
+            {
+                "group_name": g,
+                "sessions": v["sessions"],
+                "yes": v["yes"],
+                "no": v["no"],
+                "dont_know": v["dont_know"],
+            }
+            for g, v in sorted(by_group.items(), key=lambda item: item[0].lower())
+        ],
         "questions": questions_out,
     })
 
@@ -560,10 +636,14 @@ def maturity_admin_insights():
     user = _get_maturity_admin_user()
     if not user:
         return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_maturity_link_session_columns()
+    selected_group = _normalize_group_name(request.args.get('group_name'))
     if not os.getenv('OPENAI_API_KEY'):
         return jsonify({'error': 'OPENAI_API_KEY не задан'}), 503
 
     completed = MaturityLinkSession.query.filter(MaturityLinkSession.completed_at.isnot(None)).all()
+    if selected_group:
+        completed = [s for s in completed if _normalize_group_name(getattr(s, "group_name", None)) == selected_group]
     theme_yes = {}
     theme_n = {}
     for s in completed:
@@ -599,7 +679,7 @@ def maturity_admin_insights():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=os.getenv("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-4.1-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Интерпретируешь только переданные агрегаты."},
                 {"role": "user", "content": prompt},
@@ -609,5 +689,89 @@ def maturity_admin_insights():
         )
         content = response.choices[0].message.content
         return jsonify({"content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@maturity_bp.route('/api/maturity-admin/group-plan', methods=['POST'])
+@jwt_required()
+def maturity_admin_group_plan():
+    """Сгенерировать план улучшений для группы команд (стрима)."""
+    import os
+    user = _get_maturity_admin_user()
+    if not user:
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_maturity_link_session_columns()
+    if not os.getenv('OPENAI_API_KEY'):
+        return jsonify({'error': 'OPENAI_API_KEY не задан'}), 503
+
+    data = request.get_json() or {}
+    group_name = _normalize_group_name(data.get("group_name"))
+    if not group_name:
+        return jsonify({'error': 'Укажите group_name'}), 400
+
+    completed = MaturityLinkSession.query.filter(MaturityLinkSession.completed_at.isnot(None)).all()
+    completed = [s for s in completed if _normalize_group_name(getattr(s, "group_name", None)) == group_name]
+    if not completed:
+        return jsonify({'error': 'Нет завершённых оценок для выбранной группы'}), 400
+
+    theme_yes = {}
+    theme_n = {}
+    for s in completed:
+        raw_ans, _ = _extract_answers_and_comments(s.answers)
+        row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
+        if not row:
+            continue
+        for i, q in enumerate(MATURITY_QUESTIONS):
+            th = q["theme"]
+            theme_n[th] = theme_n.get(th, 0) + 1
+            if row[i] is True:
+                theme_yes[th] = theme_yes.get(th, 0) + 1
+
+    if not theme_n:
+        return jsonify({'error': 'Недостаточно валидных данных по группе'}), 400
+
+    theme_rows = []
+    for th in sorted(theme_n.keys()):
+        n = theme_n[th]
+        y = theme_yes.get(th, 0)
+        pct = round(100.0 * y / n, 1) if n else 0.0
+        theme_rows.append({"theme": th, "yes": y, "total": n, "yes_pct": pct})
+    summary = "\n".join([f"- {r['theme']}: да {r['yes']}/{r['total']} ({r['yes_pct']}%)" for r in theme_rows])
+
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    prompt = f"""Ты Agile transformation lead. Нужно подготовить план улучшений для стрима команд по агрегированной зрелости.
+
+Группа команд: {group_name}
+Завершённых оценок: {len(completed)}
+Сводка по темам:
+{summary}
+
+Сформируй план на 1 квартал в формате HTML:
+1) Краткий диагноз (2-4 предложения, только на основе данных выше).
+2) 5 инициатив уровня стрима (каждая: цель, шаги, владелец/роль, метрика успеха).
+3) Порядок запуска инициатив по неделям (вехи на 12 недель).
+4) Риски внедрения и меры снижения.
+
+Пиши только по-русски. Не выдумывай числа вне переданной сводки. Используй теги <h3>, <p>, <ul>, <li>, <strong>.
+"""
+    try:
+        response = client.chat.completions.create(
+            model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-4.1"),
+            messages=[
+                {"role": "system", "content": "Ты практик Agile-трансформаций в enterprise и банковской среде."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.45,
+            max_tokens=2600,
+        )
+        content = response.choices[0].message.content
+        return jsonify({
+            "group_name": group_name,
+            "sessions": len(completed),
+            "themes": theme_rows,
+            "content": content,
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

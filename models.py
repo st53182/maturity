@@ -275,6 +275,7 @@ class MaturityLinkSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     access_token = db.Column(db.String(36), unique=True, nullable=False)
     team_name = db.Column(db.String(255), nullable=True)
+    group_name = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
     answers = db.Column(JSON, nullable=True)  # список 205 bool или dict по индексу

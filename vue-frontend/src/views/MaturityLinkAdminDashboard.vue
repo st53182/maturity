@@ -10,6 +10,31 @@
 
     <template v-else>
       <section class="dash-section">
+        <div class="dash-filters">
+          <label for="group-filter">Группа команд:</label>
+          <select id="group-filter" v-model="selectedGroup" class="dash-select" @change="refresh">
+            <option value="">Все группы</option>
+            <option v-for="g in groups" :key="g" :value="g">{{ g }}</option>
+          </select>
+          <button type="button" class="dash-btn" :disabled="!selectedGroup || loadingGroupPlan" @click="generateGroupPlan">
+            {{ loadingGroupPlan ? 'Генерация…' : 'Сгенерировать план для группы' }}
+          </button>
+        </div>
+        <div v-if="groupPlanHtml" class="insights-html group-plan-html" v-html="groupPlanHtml"></div>
+      </section>
+
+      <section class="dash-section">
+        <h2>Сводка по группам команд</h2>
+        <div class="group-cards">
+          <article v-for="g in groupSummaries" :key="g.group_name" class="group-card">
+            <h3>{{ g.group_name }}</h3>
+            <p>Сессий: <strong>{{ g.sessions }}</strong></p>
+            <p>Да: {{ g.yes }} · Нет: {{ g.no }} · Не знаю: {{ g.dont_know }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="dash-section">
         <h2>Распределение ответов (все вопросы)</h2>
         <div v-if="totalsChartData" class="chart-box">
           <Bar :data="totalsChartData" :options="totalsChartOptions" />
@@ -35,6 +60,7 @@
               <tr>
                 <th>ID</th>
                 <th>Команда</th>
+                <th>Группа</th>
                 <th>Токен (хвост)</th>
                 <th>Отчёт</th>
                 <th>Создана</th>
@@ -46,6 +72,17 @@
               <tr v-for="s in sessions" :key="s.id">
                 <td>{{ s.id }}</td>
                 <td>{{ s.team_name || '—' }}</td>
+                <td>
+                  <div class="group-edit-cell">
+                    <input
+                      v-model="groupDrafts[s.id]"
+                      type="text"
+                      class="group-input"
+                      placeholder="Без группы"
+                    />
+                    <button type="button" class="dash-btn" @click="saveSessionGroup(s.id)">Сохранить</button>
+                  </div>
+                </td>
                 <td class="mono">…{{ s.token_suffix }}</td>
                 <td>
                   <router-link
@@ -128,9 +165,14 @@ export default {
       error: null,
       sessions: [],
       aggregates: {},
+      groups: [],
+      selectedGroup: '',
+      groupDrafts: {},
       deletingId: null,
       insightsHtml: '',
-      loadingInsights: false
+      loadingInsights: false,
+      groupPlanHtml: '',
+      loadingGroupPlan: false
     };
   },
   computed: {
@@ -138,6 +180,10 @@ export default {
       const qs = this.aggregates.questions;
       if (!Array.isArray(qs)) return [];
       return qs;
+    },
+    groupSummaries() {
+      const rows = this.aggregates.group_summaries;
+      return Array.isArray(rows) ? rows : [];
     },
     totalsChartData() {
       const qs = this.aggregates.questions;
@@ -216,12 +262,15 @@ export default {
       this.loading = true;
       this.error = null;
       try {
+        const params = this.selectedGroup ? { group_name: this.selectedGroup } : undefined;
         const [ov, ag] = await Promise.all([
-          axios.get('/api/maturity-admin/overview', { headers: authHeaders() }),
-          axios.get('/api/maturity-admin/aggregates', { headers: authHeaders() })
+          axios.get('/api/maturity-admin/overview', { headers: authHeaders(), params }),
+          axios.get('/api/maturity-admin/aggregates', { headers: authHeaders(), params })
         ]);
         this.sessions = ov.data.sessions || [];
+        this.groups = ov.data.groups || [];
         this.aggregates = ag.data || {};
+        this.groupDrafts = Object.fromEntries(this.sessions.map((s) => [s.id, s.group_name || '']));
       } catch (e) {
         const st = e.response?.status;
         if (st === 403) {
@@ -238,7 +287,8 @@ export default {
       this.loadingInsights = true;
       this.insightsHtml = '';
       try {
-        const res = await axios.get('/api/maturity-admin/insights', { headers: authHeaders() });
+        const params = this.selectedGroup ? { group_name: this.selectedGroup } : undefined;
+        const res = await axios.get('/api/maturity-admin/insights', { headers: authHeaders(), params });
         this.insightsHtml = res.data.content || '';
       } catch (e) {
         this.insightsHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
@@ -261,10 +311,40 @@ export default {
     },
     async refreshAggregatesOnly() {
       try {
-        const ag = await axios.get('/api/maturity-admin/aggregates', { headers: authHeaders() });
+        const params = this.selectedGroup ? { group_name: this.selectedGroup } : undefined;
+        const ag = await axios.get('/api/maturity-admin/aggregates', { headers: authHeaders(), params });
         this.aggregates = ag.data || {};
       } catch {
         /* ignore */
+      }
+    },
+    async saveSessionGroup(sessionId) {
+      try {
+        await axios.put(
+          `/api/maturity-admin/session/${sessionId}/group`,
+          { group_name: this.groupDrafts[sessionId] || null },
+          { headers: authHeaders() }
+        );
+        await this.refresh();
+      } catch (e) {
+        alert(e.response?.data?.error || 'Не удалось сохранить группу');
+      }
+    },
+    async generateGroupPlan() {
+      if (!this.selectedGroup) return;
+      this.loadingGroupPlan = true;
+      this.groupPlanHtml = '';
+      try {
+        const res = await axios.post(
+          '/api/maturity-admin/group-plan',
+          { group_name: this.selectedGroup },
+          { headers: authHeaders() }
+        );
+        this.groupPlanHtml = res.data.content || '';
+      } catch (e) {
+        this.groupPlanHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
+      } finally {
+        this.loadingGroupPlan = false;
       }
     }
   }
@@ -312,6 +392,44 @@ export default {
   font-size: 1.1rem;
   margin: 0 0 0.75rem 0;
   color: #1e293b;
+}
+
+.dash-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dash-select {
+  min-width: 200px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.group-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.group-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+}
+
+.group-card h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.group-card p {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  color: #334155;
 }
 
 .chart-box {
@@ -367,6 +485,19 @@ export default {
   background: #f8fafc;
   font-weight: 600;
   color: #475569;
+}
+
+.group-edit-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.group-input {
+  min-width: 130px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 8px;
 }
 
 .mono {
@@ -431,5 +562,9 @@ export default {
 
 .report-link:hover {
   text-decoration: underline;
+}
+
+.group-plan-html {
+  margin-top: 12px;
 }
 </style>

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS maturity_link_session (
     id SERIAL PRIMARY KEY,
     access_token VARCHAR(36) UNIQUE NOT NULL,
     team_name VARCHAR(255),
+    group_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
     answers JSONB

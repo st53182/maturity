@@ -4,6 +4,8 @@
     <div v-if="!createdUrl" class="form-block">
       <label>{{ $t('maturity.teamNameOptional') }}</label>
       <input v-model="teamName" type="text" class="team-input" :placeholder="$t('survey.teamName')" />
+      <label>Группа команд (стрим), опционально</label>
+      <input v-model="groupName" type="text" class="team-input" placeholder="Например: Stream A" />
       <button type="button" class="btn-create" :disabled="creating" @click="createLink">
         {{ creating ? '...' : $t('maturity.create') }}
       </button>
@@ -35,6 +37,7 @@ export default {
   data() {
     return {
       teamName: '',
+      groupName: '',
       creating: false,
       token: '',
       createdUrl: ''
@@ -45,7 +48,10 @@ export default {
       if (this.creating) return;
       this.creating = true;
       try {
-        const res = await axios.post('/api/maturity-link', { team_name: this.teamName || null }, {
+        const res = await axios.post('/api/maturity-link', {
+          team_name: this.teamName || null,
+          group_name: this.groupName || null
+        }, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.token = res.data.token;

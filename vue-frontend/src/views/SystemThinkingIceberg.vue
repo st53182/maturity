@@ -173,7 +173,7 @@
           </div>
 
           <div class="editor-actions">
-            <button type="button" class="secondary-btn" :disabled="!draft[selectedLevel].trim() || loading" @click="submitAiAnswer">
+            <button type="button" class="secondary-btn" :disabled="loading" @click="submitAiAnswer">
               {{ loading ? "Обработка…" : "Помощь ИИ" }}
             </button>
           </div>
@@ -529,11 +529,24 @@ export default {
       await this.fetchIcebergs();
     },
     async submitAiAnswer() {
-      const response = (this.draft[this.selectedLevel] || "").trim();
-      if (!response || !this.currentIceberg) return;
+      if (!this.currentIceberg) return;
+      const response = (this.draft[this.selectedLevel] || "").trim() || "не знаю";
       this.loading = true;
       try {
-        const res = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
+        const questionRes = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            response: "",
+            level: this.selectedLevel
+          })
+        });
+        if (questionRes.ok) {
+          const questionData = await questionRes.json();
+          this.aiQuestionText = questionData.question || this.aiQuestionText;
+        }
+
+        const suggestionsRes = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify({
@@ -541,8 +554,8 @@ export default {
             level: this.selectedLevel
           })
         });
-        const data = await res.json();
-        if (!res.ok) {
+        const data = await suggestionsRes.json();
+        if (!suggestionsRes.ok) {
           alert(data.error || "Ошибка");
           return;
         }

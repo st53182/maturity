@@ -106,7 +106,7 @@
     "startAssessment": "Start assessment",
     "getRecommendations": "Get improvement recommendations (AI)",
     "generatingRecs": "Generating recommendations...",
-    "recommendationsTitle": "Improvement recommendations"
+    "recommendationsTitle": "Improvement recommendations and business impact"
   },
   "results": {
     "title": "Assessment Results",

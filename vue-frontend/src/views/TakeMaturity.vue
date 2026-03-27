@@ -10,14 +10,26 @@
       <header class="maturity-header">
         <h1>{{ $t('maturity.title') }}</h1>
         <p v-if="survey.team_name" class="team-name">{{ survey.team_name }}</p>
-        <button v-if="survey.business_metrics_glossary && survey.business_metrics_glossary.length" type="button" class="glossary-toggle" @click="showGlossary = !showGlossary">
-          {{ showGlossary ? 'Скрыть глоссарий метрик' : 'Что значат метрики (глоссарий)' }}
-        </button>
+        <div class="header-tools">
+          <button v-if="survey.business_metrics_glossary && survey.business_metrics_glossary.length" type="button" class="glossary-toggle" @click="showGlossary = !showGlossary">
+            {{ showGlossary ? 'Скрыть глоссарий метрик' : 'Что значат метрики (глоссарий)' }}
+          </button>
+          <button type="button" class="glossary-toggle" @click="showMetricsTree = !showMetricsTree">
+            {{ showMetricsTree ? 'Скрыть древо метрик' : 'Показать древо метрик' }}
+          </button>
+        </div>
         <div v-if="showGlossary && survey.business_metrics_glossary" class="glossary-block">
           <div v-for="m in survey.business_metrics_glossary" :key="m.id" class="glossary-item">
             <strong>{{ m.name }}</strong> — {{ m.description }}
           </div>
         </div>
+        <MetricsTreePanel
+          v-if="showMetricsTree"
+          title="Древо метрик (без выхода из опроса)"
+          :survey-token="token"
+          compact
+          class="survey-metrics-tree"
+        />
       </header>
 
       <div class="progress-bar">
@@ -137,11 +149,13 @@
 
 <script>
 import axios from 'axios';
+import MetricsTreePanel from "@/components/metrics/MetricsTreePanel.vue";
 
 const QUESTIONS_PER_PAGE = 10;
 
 export default {
   name: 'TakeMaturity',
+  components: { MetricsTreePanel },
   props: {
     variant: { type: String, default: 'legacy' },
   },
@@ -159,7 +173,8 @@ export default {
       expandedWhy: {},
       clarifyLoading: null,
       clarifyResult: null,
-      showGlossary: false
+      showGlossary: false,
+      showMetricsTree: false
     };
   },
   computed: {
@@ -298,6 +313,12 @@ export default {
   cursor: pointer;
   text-decoration: underline;
 }
+.header-tools {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .glossary-block {
   margin-top: 0.75rem;
   padding: 1rem;
@@ -307,6 +328,10 @@ export default {
   text-align: left;
   max-height: 200px;
   overflow-y: auto;
+}
+.survey-metrics-tree {
+  margin-top: 0.85rem;
+  text-align: left;
 }
 .glossary-item {
   font-size: 0.8rem;

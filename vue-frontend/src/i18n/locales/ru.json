@@ -18,7 +18,8 @@
     "maturityLink": "Оценка по ссылке",
     "testingTypes": "Типы тестирования",
     "agileKata": "Agile Kata",
-    "agileTools": "Agile инструменты"
+    "agileTools": "Agile инструменты",
+    "metricsTree": "Древо метрик"
   },
   "auth": {
     "login": "Вход",
@@ -433,6 +434,7 @@
       "systemThinking": "Айсберг системного мышления",
       "backlogPrep": "Подготовка бэклога",
       "flowMetrics": "Flow Metrics",
+      "metricsTree": "Древо метрик",
       "roadmap": "Зависимости и дорожная карта",
       "projectDashboard": "Project dashboard (демо)",
       "projectCard": "Карточка проекта",

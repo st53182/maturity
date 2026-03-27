@@ -18,7 +18,8 @@
     "profile": "Profile",
     "surveys": "Surveys",
     "agileKata": "Agile Kata",
-    "agileTools": "Agile tools"
+    "agileTools": "Agile tools",
+    "metricsTree": "Metrics tree"
   },
   "auth": {
     "login": "Login",
@@ -390,6 +391,7 @@
       "systemThinking": "Systems thinking iceberg",
       "backlogPrep": "Backlog prep",
       "flowMetrics": "Flow Metrics",
+      "metricsTree": "Metrics tree",
       "roadmap": "Dependency roadmap",
       "projectDashboard": "Project dashboard (demo)",
       "projectCard": "Project card",

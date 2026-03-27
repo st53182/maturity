@@ -25,7 +25,11 @@
           <button type="button" class="dash-btn" :disabled="!selectedGroup || exportingGroupPlan" @click="exportGroupPlanPdf">
             {{ exportingGroupPlan ? 'Экспорт…' : 'Скачать план в PDF' }}
           </button>
+          <button type="button" class="dash-btn" @click="showMetricsTree = !showMetricsTree">
+            {{ showMetricsTree ? 'Скрыть древо метрик' : 'Показать древо метрик' }}
+          </button>
         </div>
+        <MetricsTreePanel v-if="showMetricsTree" title="Древо метрик (админ)" class="admin-metrics-tree" />
         <p v-if="groupPlanUpdatedAt" class="muted small">Обновлено: {{ formatDt(groupPlanUpdatedAt) }}</p>
         <div ref="groupPlanExportRoot" class="group-plan-editor" v-if="selectedGroup">
           <h3>План улучшений стрима: {{ selectedGroup }}</h3>
@@ -213,6 +217,7 @@
 import axios from 'axios';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import MetricsTreePanel from '@/components/metrics/MetricsTreePanel.vue';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -270,7 +275,7 @@ function normalizeGroupPlan(plan) {
 
 export default {
   name: 'MaturityLinkAdminDashboard',
-  components: { Bar },
+  components: { Bar, MetricsTreePanel },
   data() {
     return {
       loading: true,
@@ -287,6 +292,7 @@ export default {
       loadingGroupPlan: false,
       savingGroupPlan: false,
       exportingGroupPlan: false,
+      showMetricsTree: false,
       groupPlanUpdatedAt: null,
       groupPlan: emptyGroupPlan(),
       risksText: '',
@@ -942,5 +948,9 @@ export default {
 .dash-btn-danger {
   background: linear-gradient(145deg, #ef4444, #dc2626);
   border-color: rgba(220, 38, 38, 0.35);
+}
+
+.admin-metrics-tree {
+  margin-top: 12px;
 }
 </style>

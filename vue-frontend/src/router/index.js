@@ -25,6 +25,7 @@ const routes = [
   { path: '/new/meeting-design', name: 'NewMeetingDesign', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'meeting-design' }, meta: { requiresAuth: true } },
   { path: '/new/motivation', name: 'NewMotivation', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'motivation' } },
   { path: '/new/project-card', name: 'NewProjectCard', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'project-card' }, meta: { requiresAuth: true } },
+  { path: '/new/metrics-tree', name: 'MetricsTreeNew', component: () => import('@/views/MetricsTreeView.vue'), meta: { requiresAuth: true } },
   { path: '/new/project-dashboard', name: 'ProjectDashboardDemo', component: () => import('@/views/ProjectDashboardDemo.vue') },
   /* Канон /new: редиректы со старых URL */
   { path: '/dashboard', redirect: '/new/dashboard' },
@@ -39,6 +40,7 @@ const routes = [
   { path: '/agile-tools', redirect: '/new/agile-tools' },
   { path: '/meeting-design', redirect: '/new/meeting-design' },
   { path: '/project-card', redirect: '/new/project-card' },
+  { path: '/metrics-tree', redirect: '/new/metrics-tree' },
   { path: '/login', component: UserLogin },
   { path: '/register', component: UserRegister },
   { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true },

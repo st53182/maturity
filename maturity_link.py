@@ -5,7 +5,7 @@ from datetime import datetime
 from collections import defaultdict
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy import inspect, text
 
 from database import db
@@ -288,6 +288,20 @@ def _normalize_comments_list(comments):
             continue
         out.append(s[:2000])
     return out
+
+
+def _metrics_tree_access_allowed(survey_token=None):
+    token = (survey_token or "").strip()
+    if token:
+        session = MaturityLinkSession.query.filter_by(access_token=token).first()
+        if session:
+            return True
+    try:
+        verify_jwt_in_request(optional=True)
+        uid = get_jwt_identity()
+        return uid is not None
+    except Exception:
+        return False
 
 
 @maturity_bp.route('/api/maturity-link', methods=['POST'])
@@ -579,6 +593,99 @@ def clarify_question(token):
             ],
             temperature=0.5,
             max_tokens=800,
+        )
+        content = response.choices[0].message.content
+        return jsonify({"content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@maturity_bp.route('/api/metrics-tree/explain', methods=['POST'])
+def metrics_tree_explain():
+    import os
+    if not os.getenv('OPENAI_API_KEY'):
+        return jsonify({'error': 'Сервис разъяснений не настроен (OPENAI_API_KEY)'}), 503
+    data = request.get_json() or {}
+    survey_token = data.get('survey_token')
+    if not _metrics_tree_access_allowed(survey_token=survey_token):
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    metric_key = str(data.get('metric_key') or '').strip()
+    metric_name = str(data.get('metric_name') or '').strip()
+    metric_name_ru = str(data.get('metric_name_ru') or '').strip()
+    if not metric_key and not metric_name:
+        return jsonify({'error': 'Укажите metric_key или metric_name'}), 400
+
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    metric_title = f"{metric_name} ({metric_name_ru})" if metric_name_ru else metric_name
+    prompt = f"""Объясни метрику простым языком для продуктовой команды.
+
+Метрика: {metric_title}
+Ключ: {metric_key or 'n/a'}
+
+Дай структурированный ответ на русском:
+1) Что измеряет;
+2) Почему важна для прибыли/выручки/затрат;
+3) Как обычно измеряют (формула или практичный способ);
+4) Какие действия команды влияют на метрику в ближайшие 2-4 недели.
+Кратко, по делу, без воды."""
+    try:
+        response = client.chat.completions.create(
+            model=os.getenv("METRICS_TREE_MODEL", "gpt-4.1-mini"),
+            messages=[
+                {"role": "system", "content": "Ты Agile/Product консультант. Даешь точные прикладные разъяснения метрик."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.35,
+            max_tokens=900,
+        )
+        content = response.choices[0].message.content
+        return jsonify({"content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@maturity_bp.route('/api/metrics-tree/relationship', methods=['POST'])
+def metrics_tree_relationship():
+    import os
+    if not os.getenv('OPENAI_API_KEY'):
+        return jsonify({'error': 'Сервис разъяснений не настроен (OPENAI_API_KEY)'}), 503
+    data = request.get_json() or {}
+    survey_token = data.get('survey_token')
+    if not _metrics_tree_access_allowed(survey_token=survey_token):
+        return jsonify({'error': 'Доступ запрещён'}), 403
+
+    metric_a_name = str(data.get('metric_a_name') or '').strip()
+    metric_a_name_ru = str(data.get('metric_a_name_ru') or '').strip()
+    metric_b_name = str(data.get('metric_b_name') or '').strip()
+    metric_b_name_ru = str(data.get('metric_b_name_ru') or '').strip()
+    if not metric_a_name or not metric_b_name:
+        return jsonify({'error': 'Укажите metric_a_name и metric_b_name'}), 400
+
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    a_title = f"{metric_a_name} ({metric_a_name_ru})" if metric_a_name_ru else metric_a_name
+    b_title = f"{metric_b_name} ({metric_b_name_ru})" if metric_b_name_ru else metric_b_name
+    prompt = f"""Объясни связь между двумя метриками в продуктовой разработке.
+
+Метрика A: {a_title}
+Метрика B: {b_title}
+
+Ответ на русском:
+1) Тип связи (прямая/обратная/через промежуточные факторы);
+2) Через какие 2-3 операционные метрики проявляется связь;
+3) Пример практического trade-off;
+4) Что мониторить еженедельно, чтобы не ухудшить одну метрику при росте другой.
+Кратко и прикладно."""
+    try:
+        response = client.chat.completions.create(
+            model=os.getenv("METRICS_TREE_MODEL", "gpt-4.1-mini"),
+            messages=[
+                {"role": "system", "content": "Ты Agile/Engineering эксперт по системным метрикам потока и продукта."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.35,
+            max_tokens=1000,
         )
         content = response.choices[0].message.content
         return jsonify({"content": content})

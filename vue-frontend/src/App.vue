@@ -68,6 +68,10 @@
           <span>📚</span>
           <small>{{ $t('nav.agileTools') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/metrics-tree' : '/metrics-tree')">
+          <span>🌲</span>
+          <small>{{ $t('nav.metricsTree') }}</small>
+        </button>
         <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/surveys' : '/surveys')">
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
@@ -160,6 +164,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/agile-tools' : '/agile-tools')">
             <span>📚</span>
             <span>{{ $t('nav.agileTools') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/metrics-tree' : '/metrics-tree')">
+            <span>🌲</span>
+            <span>{{ $t('nav.metricsTree') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/surveys' : '/surveys')">
             <span>📋</span>

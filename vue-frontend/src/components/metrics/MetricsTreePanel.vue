@@ -12,6 +12,12 @@
         type="text"
         placeholder="Поиск метрики (например: Lead Time, MTTR, Velocity)"
       />
+      <div class="mtp-filter-row">
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'all' }" @click="quickFilter = 'all'">All</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'business' }" @click="quickFilter = 'business'">Business</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'delivery' }" @click="quickFilter = 'delivery'">Delivery</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'org' }" @click="quickFilter = 'org'">Org</button>
+      </div>
       <button type="button" class="mtp-btn" @click="expandAll">Развернуть все</button>
       <button type="button" class="mtp-btn" @click="collapseAll">Свернуть все</button>
     </div>
@@ -92,6 +98,19 @@ function cloneWithFilter(node, query) {
   return { ...node, children };
 }
 
+function cloneWithMode(node, mode) {
+  if (mode === "all") return { ...node, children: (node.children || []).map((c) => cloneWithMode(c, mode)) };
+  const id = (node.id || "").toLowerCase();
+  const label = `${node.name || ""} ${node.nameRu || ""}`.toLowerCase();
+  const businessHit = ["revenue", "arpu", "ltv", "cac", "cost", "price", "retention", "engagement", "acquisition", "activation", "вир", "выруч", "затрат"].some((k) => id.includes(k) || label.includes(k));
+  const deliveryHit = ["lead_time", "cycle_time", "deployment", "throughput", "velocity", "wip", "blocked", "flow", "queue", "mttr", "change_failure", "defect", "bug", "release", "достав", "релиз", "дефект", "поток"].some((k) => id.includes(k) || label.includes(k));
+  const orgHit = ["organization", "team_maturity", "engineering_maturity", "process_maturity", "team_health", "delivery_performance", "autonomy", "agile_adoption", "predictability", "burnout", "turnover", "орган", "зрелост", "команд", "процесс"].some((k) => id.includes(k) || label.includes(k));
+  const selfMatch = mode === "business" ? businessHit : mode === "delivery" ? deliveryHit : orgHit;
+  const children = (node.children || []).map((c) => cloneWithMode(c, mode)).filter(Boolean);
+  if (!selfMatch && !children.length) return null;
+  return { ...node, children };
+}
+
 function buildExpandedMap(node, map) {
   map[node.id] = true;
   for (const child of node.children || []) buildExpandedMap(child, map);
@@ -111,6 +130,7 @@ export default {
     return {
       tree: METRICS_TREE,
       searchQuery: "",
+      quickFilter: "all",
       expandedMap: initialExpanded,
       selectedMetricA: "",
       selectedMetricB: "",
@@ -123,7 +143,8 @@ export default {
   computed: {
     filteredTree() {
       const query = (this.searchQuery || "").toLowerCase();
-      return cloneWithFilter(this.tree, query) || this.tree;
+      const modeFiltered = cloneWithMode(this.tree, this.quickFilter) || this.tree;
+      return cloneWithFilter(modeFiltered, query) || modeFiltered;
     },
     metricOptions() {
       return flattenMetricsTree(this.tree).filter((m) => m.level > 0);
@@ -214,6 +235,11 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
+}
+.mtp-filter-row {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .mtp-input {
   border: 1px solid #d7dfef;

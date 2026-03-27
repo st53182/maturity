@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkfrontend"]=self["webpackChunkfrontend"]||[]).push([[595],{6089:function(e,n,t){t.r(n),t.d(n,{default:function(){return d}});var r=t(6436);const c={class:"metrics-tree-view"};function s(e,n,t,s,a,i){const o=(0,r.g2)("MetricsTreePanel");return(0,r.uX)(),(0,r.CE)("div",c,[(0,r.bF)(o,{title:"Древо метрик продукта и поставки"})])}var a=t(7360),i={name:"MetricsTreeView",components:{MetricsTreePanel:a.A}},o=t(5932);const u=(0,o.A)(i,[["render",s],["__scopeId","data-v-18d11175"]]);var d=u}}]);
+//# sourceMappingURL=595.56aec2d2.js.map

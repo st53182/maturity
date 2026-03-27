@@ -664,27 +664,64 @@ def metrics_tree_relationship():
 
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    def _classify_metric(metric_key, metric_name_text):
+        key = (metric_key or "").lower()
+        name_text = (metric_name_text or "").lower()
+        business_tokens = [
+            "profit", "revenue", "cost", "costs", "выруч", "прибыл", "затрат", "retention rate", "sessions per user",
+            "feature adoption", "engagement", "retention", "acquisition", "activation"
+        ]
+        agile_delivery_tokens = [
+            "lead time", "cycle time", "wip", "blocked", "flow efficiency", "queue time",
+            "deployment frequency", "throughput", "velocity", "team maturity", "process maturity",
+            "engineering practices", "code review", "test coverage", "ci/cd", "mttr",
+            "change failure rate", "bug escape", "defect rate", "rework", "tech debt", "time-to-market", "t2m"
+        ]
+        if any(t in key or t in name_text for t in business_tokens):
+            return "business"
+        if any(t in key or t in name_text for t in agile_delivery_tokens):
+            return "agile_delivery"
+        return "unknown"
+
+    class_a = _classify_metric(data.get('metric_a_key'), f"{metric_a_name} {metric_a_name_ru}")
+    class_b = _classify_metric(data.get('metric_b_key'), f"{metric_b_name} {metric_b_name_ru}")
+
     a_title = f"{metric_a_name} ({metric_a_name_ru})" if metric_a_name_ru else metric_a_name
     b_title = f"{metric_b_name} ({metric_b_name_ru})" if metric_b_name_ru else metric_b_name
+
+    # Если пара "agile/delivery" + "business", оставляем только осмысленное направление.
+    if class_a == "agile_delivery" and class_b == "business":
+        direction_rules = f"""В этой паре давай только направление из Agile/Delivery в Business:
+- Обязательно раздел "A -> B" (как {a_title} влияет на {b_title}).
+- Не добавляй раздел "B -> A".
+"""
+    elif class_b == "agile_delivery" and class_a == "business":
+        direction_rules = f"""В этой паре давай только направление из Agile/Delivery в Business:
+- Обязательно раздел "B -> A" (как {b_title} влияет на {a_title}).
+- Не добавляй раздел "A -> B".
+"""
+    else:
+        direction_rules = """Покажи влияние в обе стороны: "A -> B" и "B -> A"."""
+
     prompt = f"""Объясни связь между двумя метриками в продуктовой разработке.
 
 Метрика A: {a_title}
 Метрика B: {b_title}
+Класс A: {class_a}
+Класс B: {class_b}
+
+{direction_rules}
 
 Ответ на русском:
-1) ЯВНО опиши направление A -> B: как изменение метрики A влияет на метрику B (усиливает/ухудшает), почему так происходит;
-2) ЯВНО опиши обратное направление B -> A: как изменение метрики B влияет на метрику A;
-3) Укажи лаг эффекта (быстрый/средний/долгий) для каждого направления;
-4) Через какие 2-3 промежуточные операционные метрики проявляется влияние;
-5) Пример практического trade-off и как его контролировать;
-6) Что мониторить еженедельно, чтобы не ухудшить одну метрику при росте другой.
+1) Для каждого требуемого направления укажи причинно-следственную связь и механизм влияния;
+2) Укажи лаг эффекта (быстрый/средний/долгий) для каждого требуемого направления;
+3) Через какие 2-3 промежуточные операционные метрики проявляется влияние;
+4) Пример практического trade-off и как его контролировать;
+5) Что мониторить еженедельно, чтобы не ухудшить целевую метрику.
 
-Формат ответа строго:
-- "A -> B"
-- "B -> A"
-- "Промежуточные метрики"
-- "Trade-off"
-- "Еженедельный контроль"
+Формат ответа:
+- только обязательные разделы по правилу направлений выше;
+- плюс "Промежуточные метрики", "Trade-off", "Еженедельный контроль".
 Кратко и прикладно, без воды."""
     try:
         response = client.chat.completions.create(

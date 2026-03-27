@@ -226,26 +226,29 @@ export default {
 }
 .mtp-btn {
   all: unset;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #d7dfef;
-  border-radius: 10px;
-  background: #fff;
-  padding: 6px 11px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 13px;
+  border: 1px solid #d7dfef !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  padding: 6px 11px !important;
+  margin: 0 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
   line-height: 1.1;
-  color: #0f172a;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 .mtp-btn-primary {
-  background: linear-gradient(145deg, #1d4ed8, #2563eb);
-  color: #fff;
-  border-color: #1d4ed8;
+  background: linear-gradient(145deg, #1d4ed8, #2563eb) !important;
+  color: #fff !important;
+  border-color: #1d4ed8 !important;
 }
-.mtp-btn:disabled { opacity: 0.6; cursor: wait; }
+.mtp-btn:disabled { opacity: 0.6; cursor: wait !important; }
 .mtp-tree-wrap {
   margin-top: 10px;
   max-height: 360px;

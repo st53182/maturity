@@ -77,19 +77,24 @@ export default {
 
 .mtp-toggle {
   all: unset;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 1px solid #cfdbf2;
-  background: #eef4ff;
-  color: #1e3a8a;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  border-radius: 6px !important;
+  border: 1px solid #cfdbf2 !important;
+  background: #eef4ff !important;
+  color: #1e3a8a !important;
   line-height: 1;
-  cursor: pointer;
-  padding: 0;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .mtp-leaf-dot {
@@ -115,26 +120,31 @@ export default {
 
 .mtp-select-btn {
   all: unset;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  border: 1px solid #c8d3eb;
-  background: #fff;
-  color: #1e3a8a;
-  font-size: 11px;
-  font-weight: 700;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  border-radius: 7px !important;
+  border: 1px solid #c8d3eb !important;
+  background: #fff !important;
+  color: #1e3a8a !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
   line-height: 1;
-  cursor: pointer;
-  padding: 0;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .mtp-select-btn.active {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  color: #fff !important;
 }
 </style>

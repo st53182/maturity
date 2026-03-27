@@ -13,10 +13,10 @@
         placeholder="Поиск метрики (например: Lead Time, MTTR, Velocity)"
       />
       <div class="mtp-filter-row">
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'all' }" @click="quickFilter = 'all'">All</button>
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'business' }" @click="quickFilter = 'business'">Business</button>
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'delivery' }" @click="quickFilter = 'delivery'">Delivery</button>
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'org' }" @click="quickFilter = 'org'">Org</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'all' }" @click="quickFilter = 'all'">Все</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'business' }" @click="quickFilter = 'business'">Бизнес</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'delivery' }" @click="quickFilter = 'delivery'">Поставка</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'org' }" @click="quickFilter = 'org'">Орг</button>
       </div>
       <button type="button" class="mtp-btn" @click="expandAll">Развернуть все</button>
       <button type="button" class="mtp-btn" @click="collapseAll">Свернуть все</button>
@@ -256,9 +256,9 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #d7dfef !important;
+  border: 1px solid #b8c7e9 !important;
   border-radius: 10px !important;
-  background: #fff !important;
+  background: #f8fbff !important;
   padding: 6px 11px !important;
   margin: 0 !important;
   font-weight: 600 !important;
@@ -268,11 +268,14 @@ export default {
   color: #0f172a !important;
   box-shadow: none !important;
   transform: none !important;
+  filter: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .mtp-btn-primary {
   background: linear-gradient(145deg, #1d4ed8, #2563eb) !important;
   color: #fff !important;
   border-color: #1d4ed8 !important;
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.22) !important;
 }
 .mtp-btn:disabled { opacity: 0.6; cursor: wait !important; }
 .mtp-tree-wrap {

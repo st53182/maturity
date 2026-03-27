@@ -247,38 +247,7 @@ export default {
   padding: 8px;
   background: #fff;
 }
-.mtp-tree, .mtp-children { list-style: none; padding-left: 14px; margin: 0; }
-.mtp-node { margin: 2px 0; }
-.mtp-node-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.mtp-toggle {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  width: 18px;
-  color: #1e3a8a;
-}
-.mtp-leaf-dot { width: 18px; text-align: center; color: #94a3b8; }
-.mtp-node-label { font-size: 13px; color: #0f172a; }
-.mtp-select-btn {
-  margin-left: 4px;
-  border: 1px solid #c8d3eb;
-  border-radius: 8px;
-  background: #fff;
-  width: 22px;
-  height: 22px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.mtp-select-btn.active {
-  background: #1d4ed8;
-  color: #fff;
-  border-color: #1d4ed8;
-}
+.mtp-tree { list-style: none; padding-left: 8px; margin: 0; }
 .mtp-ai-grid {
   margin-top: 12px;
   display: grid;

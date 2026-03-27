@@ -7,8 +7,10 @@
       <span v-else class="mtp-leaf-dot">•</span>
       <span class="mtp-node-label">{{ label }}</span>
       <template v-if="selectable">
-        <button type="button" class="mtp-select-btn" :class="{ active: selectedIdA === node.id }" @click="$emit('select-a', node.id)">A</button>
-        <button type="button" class="mtp-select-btn" :class="{ active: selectedIdB === node.id }" @click="$emit('select-b', node.id)">B</button>
+        <span class="mtp-actions">
+          <button type="button" class="mtp-select-btn" :class="{ active: selectedIdA === node.id }" @click="$emit('select-a', node.id)">A</button>
+          <button type="button" class="mtp-select-btn" :class="{ active: selectedIdB === node.id }" @click="$emit('select-b', node.id)">B</button>
+        </span>
       </template>
     </div>
     <ul v-if="hasChildren && isExpanded" class="mtp-children">
@@ -52,3 +54,77 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.mtp-node,
+.mtp-children {
+  list-style: none;
+  margin: 0;
+  padding-left: 12px;
+}
+
+.mtp-node {
+  margin: 3px 0;
+}
+
+.mtp-node-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  flex-wrap: wrap;
+}
+
+.mtp-toggle {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid #cfdbf2;
+  background: #eef4ff;
+  color: #1e3a8a;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mtp-leaf-dot {
+  width: 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.mtp-node-label {
+  font-size: 14px;
+  line-height: 1.35;
+  color: #0f172a;
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.mtp-actions {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.mtp-select-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid #c8d3eb;
+  background: #fff;
+  color: #1e3a8a;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mtp-select-btn.active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+</style>

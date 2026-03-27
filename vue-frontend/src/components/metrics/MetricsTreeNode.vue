@@ -76,6 +76,11 @@ export default {
 }
 
 .mtp-toggle {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
   height: 20px;
   border-radius: 6px;
@@ -109,6 +114,11 @@ export default {
 }
 
 .mtp-select-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 7px;

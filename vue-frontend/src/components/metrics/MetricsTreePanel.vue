@@ -225,12 +225,20 @@ export default {
   background: #fbfdff;
 }
 .mtp-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid #d7dfef;
   border-radius: 10px;
   background: #fff;
-  padding: 7px 12px;
+  padding: 6px 11px;
   font-weight: 600;
   cursor: pointer;
+  font-size: 13px;
+  line-height: 1.1;
+  color: #0f172a;
 }
 .mtp-btn-primary {
   background: linear-gradient(145deg, #1d4ed8, #2563eb);

@@ -926,7 +926,7 @@ export default {
 
 .roadmap-dates {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 

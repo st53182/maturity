@@ -1,6 +1,31 @@
 <template>
-  <div class="meeting-design-container">
+  <div class="meeting-design-container iceberg-tool">
     <h1>{{ $t('meetingDesign.title') }}</h1>
+    <p v-if="aiUsageRemaining !== null" class="ai-usage-line">
+      {{ $t('meetingDesign.aiUsageLeft', { n: aiUsageRemaining }) }}
+    </p>
+
+    <section class="iceberg-intro" aria-labelledby="md-intro-title">
+      <h2 id="md-intro-title" class="iceberg-intro__title">{{ $t('meetingDesign.icebergIntro.title') }}</h2>
+      <p class="iceberg-intro__lead">{{ $t('meetingDesign.icebergIntro.lead') }}</p>
+      <button type="button" class="iceberg-intro__toggle" @click="introExpanded = !introExpanded">
+        {{ introExpanded ? $t('meetingDesign.icebergIntro.collapse') : $t('meetingDesign.icebergIntro.expand') }}
+      </button>
+      <div v-show="introExpanded" class="iceberg-intro__levels">
+        <article class="iceberg-intro__level-card">
+          <h3><span class="iceberg-intro__badge">1</span> {{ $t('meetingDesign.icebergIntro.step1Title') }}</h3>
+          <p>{{ $t('meetingDesign.icebergIntro.step1Body') }}</p>
+        </article>
+        <article class="iceberg-intro__level-card">
+          <h3><span class="iceberg-intro__badge">2</span> {{ $t('meetingDesign.icebergIntro.step2Title') }}</h3>
+          <p>{{ $t('meetingDesign.icebergIntro.step2Body') }}</p>
+        </article>
+        <article class="iceberg-intro__level-card">
+          <h3><span class="iceberg-intro__badge">3</span> {{ $t('meetingDesign.icebergIntro.step3Title') }}</h3>
+          <p>{{ $t('meetingDesign.icebergIntro.step3Body') }}</p>
+        </article>
+      </div>
+    </section>
 
     <div v-if="loading" class="loading">⏳ {{ $t('common.loading') }}</div>
     <div v-else-if="error" class="error">❌ {{ error }}</div>
@@ -121,10 +146,32 @@
       <div class="modal create-modal">
         <button class="close-btn" @click="closeCreateModal" aria-label="Close">✕</button>
         <h2>{{ $t('meetingDesign.createNew') }}</h2>
+
+        <div class="form-assist-iceberg">
+          <p class="form-assist-iceberg__lead">{{ $t('meetingDesign.formAssist.lead') }}</p>
+          <textarea
+            v-model="formAssistBrief"
+            class="form-textarea"
+            rows="2"
+            :placeholder="$t('meetingDesign.formAssist.placeholder')"
+          />
+          <div class="form-assist-iceberg__actions">
+            <button
+              type="button"
+              class="secondary-ice-btn"
+              :disabled="formAssistLoading || !formAssistBrief.trim()"
+              @click="runFormAssist"
+            >
+              {{ formAssistLoading ? '…' : $t('meetingDesign.formAssist.run') }}
+            </button>
+          </div>
+          <p v-if="formAssistError" class="form-assist-iceberg__err">{{ formAssistError }}</p>
+        </div>
         
         <div class="form-group">
           <label>{{ $t('meetingDesign.meetingTitle') }}</label>
           <input v-model="newDesign.title" type="text" class="form-input" />
+          <p class="field-hint">{{ $t('meetingDesign.fieldHints.title') }}</p>
         </div>
 
         <div class="form-group">
@@ -144,6 +191,7 @@
         <div class="form-group">
           <label>{{ $t('meetingDesign.goal') }}</label>
           <textarea v-model="newDesign.goal" class="form-textarea" rows="3"></textarea>
+          <p class="field-hint">{{ $t('meetingDesign.fieldHints.goal') }}</p>
         </div>
 
         <div class="form-group">
@@ -163,6 +211,7 @@
             <option value="480">8 {{ $t('meetingDesign.hours') }}</option>
             <option value="960">16 {{ $t('meetingDesign.hours') }}</option>
           </select>
+          <p class="field-hint">{{ $t('meetingDesign.fieldHints.duration') }}</p>
         </div>
 
         <div class="form-group">
@@ -190,6 +239,7 @@
 
         <div class="form-group">
           <label>{{ $t('meetingDesign.constraints') }}</label>
+          <p class="field-hint">{{ $t('meetingDesign.fieldHints.constraints') }}</p>
           <div class="constraint-labels">
             <div v-for="(label, key) in constraintLabels" :key="key" class="constraint-row">
               <input
@@ -405,7 +455,12 @@ export default {
       viewAiQuestion: '',
       viewAiAnswer: '',
       viewAiLoading: false,
-      viewAiError: ''
+      viewAiError: '',
+      introExpanded: false,
+      formAssistBrief: '',
+      formAssistLoading: false,
+      formAssistError: '',
+      aiUsageRemaining: null
     };
   },
   computed: {
@@ -431,8 +486,59 @@ export default {
     };
     await this.loadDesigns();
     await this.loadTeams();
+    await this.fetchAiUsage();
   },
   methods: {
+    async fetchAiUsage() {
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get('/api/ai-usage', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.aiUsageRemaining = data?.remaining ?? null;
+      } catch {
+        this.aiUsageRemaining = null;
+      }
+    },
+    async runFormAssist() {
+      const brief = (this.formAssistBrief || '').trim();
+      if (!brief) return;
+      this.formAssistLoading = true;
+      this.formAssistError = '';
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.post(
+          '/api/meeting-design/form-assist',
+          {
+            brief_note: brief,
+            meeting_type: this.newDesign.meeting_type,
+            duration_minutes: this.newDesign.duration_minutes,
+            locale: this.effectiveLocale,
+            existing_title: this.newDesign.title,
+            existing_goal: this.newDesign.goal
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (data.title) this.newDesign.title = data.title;
+        if (data.goal) this.newDesign.goal = data.goal;
+        const keys = Array.isArray(data.constraint_keys) ? data.constraint_keys : [];
+        const allowed = new Set(Object.keys(this.constraintLabels));
+        this.selectedConstraints = keys.filter((k) => allowed.has(k));
+        const notes = (data.constraints_notes || '').trim();
+        if (notes) {
+          this.newDesign.constraints = this.newDesign.constraints
+            ? `${this.newDesign.constraints.trim()}\n\n${notes}`
+            : notes;
+        }
+        await this.fetchAiUsage();
+      } catch (error) {
+        this.formAssistError =
+          (error.response && error.response.data && error.response.data.error) ||
+          this.$t('meetingDesign.errorGenerating');
+      } finally {
+        this.formAssistLoading = false;
+      }
+    },
     async loadDesigns() {
       try {
         this.loading = true;
@@ -483,6 +589,7 @@ export default {
 
         this.designs.unshift(response.data);
         this.closeCreateModal();
+        await this.fetchAiUsage();
         this.viewDesign(response.data);
       } catch (error) {
         console.error('Error generating design:', error);
@@ -592,6 +699,8 @@ export default {
 
     openCreateModal() {
       this.topicMeetingType = this.newDesign.meeting_type || 'retrospective';
+      this.formAssistBrief = '';
+      this.formAssistError = '';
       this.showCreateModal = true;
     },
 
@@ -712,6 +821,8 @@ export default {
 
     closeCreateModal() {
       this.showCreateModal = false;
+      this.formAssistBrief = '';
+      this.formAssistError = '';
       this.newDesign = {
         title: '',
         meeting_type: 'retrospective',
@@ -727,14 +838,152 @@ export default {
 </script>
 
 <style scoped>
-.meeting-design-container {
-  margin-left: 0;
+.meeting-design-container.iceberg-tool {
+  margin-left: auto;
+  margin-right: auto;
   padding: 32px;
   width: 100%;
-  max-width: 100%;
+  max-width: 1280px;
   box-sizing: border-box;
   background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #bae6fd;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+}
+
+.ai-usage-line {
+  margin: -16px 0 20px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.iceberg-intro {
+  margin-bottom: 28px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  border-radius: 16px;
+  border: 1px solid #bae6fd;
+}
+
+.iceberg-intro__title {
+  font-size: 1.2rem;
+  margin: 0 0 12px;
+  color: #0c4a6e;
+}
+
+.iceberg-intro__lead {
+  margin: 0 0 16px;
+  line-height: 1.6;
+  color: #334155;
+  font-size: 15px;
+}
+
+.iceberg-intro__toggle {
+  background: #fff;
+  border: 2px solid #0ea5e9;
+  color: #0369a1;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.iceberg-intro__levels {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.iceberg-intro__level-card {
+  background: #fff;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.iceberg-intro__level-card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iceberg-intro__level-card p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.iceberg-intro__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.form-assist-iceberg {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  background: linear-gradient(145deg, #faf5ff 0%, #eef2ff 100%);
+  border-radius: 14px;
+  border: 1px solid #c7d2fe;
+}
+
+.form-assist-iceberg__lead {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #5b21b6;
+  line-height: 1.45;
+}
+
+.form-assist-iceberg__actions {
+  margin-top: 10px;
+}
+
+.form-assist-iceberg__err {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.secondary-ice-btn {
+  border: 2px solid #6366f1;
+  background: #fff;
+  color: #4338ca;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.secondary-ice-btn:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+.secondary-ice-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 h1 {
@@ -750,7 +999,7 @@ h1 {
 }
 
 .create-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
   padding: 14px 28px;
   border: none;
@@ -979,9 +1228,9 @@ h1 {
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
-  background: #fafbff;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12), 0 2px 8px rgba(14, 165, 233, 0.08);
+  background: #f0f9ff;
 }
 
 .form-select {
@@ -1068,7 +1317,7 @@ h1 {
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 16px;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #0ea5e9;
   border: 1px solid #e5e7eb;
   border-left-width: 4px;
   transition: all 0.2s ease;
@@ -1143,14 +1392,14 @@ h1 {
 }
 
 .confirm-btn, .save-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
 }
 
 .confirm-btn:hover:not(:disabled), .save-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.45);
 }
 
 .confirm-btn:disabled, .save-btn:disabled {

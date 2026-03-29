@@ -5,6 +5,7 @@ from database import db
 import os
 import json
 from openai import OpenAI
+from ai_limits import check_and_consume_ai_quota
 
 def get_openai_client():
     return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -201,6 +202,7 @@ def ask_question(iceberg_id):
     )
 
     if is_dont_know and user_response:
+        check_and_consume_ai_quota()
         context_parts = []
         if iceberg.event:
             context_parts.append(f"Событие: {iceberg.event}")

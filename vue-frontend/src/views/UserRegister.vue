@@ -9,6 +9,7 @@
       <form @submit.prevent="register">
         <input type="email" v-model="email" :placeholder="$t('register.email')" required />
         <input type="password" v-model="password" :placeholder="$t('register.password')" required />
+        <input type="text" v-model="inviteCode" placeholder="Invite code / Код приглашения" required />
         <button type="submit">{{ $t('register.registerButton') }}</button>
       </form>
       <p class="login-link">{{ $t('register.hasAccount') }} <router-link to="/login">{{ $t('register.login') }}</router-link></p>
@@ -22,6 +23,7 @@ export default {
     return {
       password: '',
       email: '',
+      inviteCode: '',
 
     };
   },
@@ -35,14 +37,14 @@ export default {
         const response = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: this.email, password: this.password })
+          body: JSON.stringify({ email: this.email, password: this.password, invite_code: this.inviteCode })
         });
         const data = await response.json();
         if (response.ok) {
           alert(this.$t('register.success'));
           this.$router.push('/login');
         } else {
-          alert(data.message);
+          alert(data.error || data.message || 'Registration failed');
         }
       } catch (error) {
         console.error(this.$t('register.error'), error);

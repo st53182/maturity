@@ -4,6 +4,7 @@
       <div class="kata-top__main">
         <h1 class="kata-title">{{ $t('agileKata.pageTitle') }}</h1>
         <p class="kata-lead">{{ $t('agileKata.pageLead') }}</p>
+        <p v-if="aiUsageRemaining !== null" class="kata-usage">AI-запросов осталось: {{ aiUsageRemaining }}</p>
       </div>
       <div class="kata-top__actions">
         <button type="button" class="kata-btn kata-btn--ghost" @click="learnOpen = !learnOpen">
@@ -311,6 +312,7 @@ export default {
       aiUserMessage: '',
       aiReply: '',
       aiLoading: false,
+      aiUsageRemaining: null,
     };
   },
   computed: {
@@ -346,6 +348,7 @@ export default {
   },
   async mounted() {
     await this.refreshList();
+    await this.fetchAiUsage();
   },
   beforeUnmount() {
     if (this.saveTimer) {
@@ -586,10 +589,19 @@ export default {
           { headers: this.authHeaders() }
         );
         this.aiReply = data.reply || '';
+        await this.fetchAiUsage();
       } catch (e) {
         this.error = e.response?.data?.error || this.$t('agileKata.errorAi');
       } finally {
         this.aiLoading = false;
+      }
+    },
+    async fetchAiUsage() {
+      try {
+        const { data } = await axios.get('/api/ai-usage', { headers: this.authHeaders() });
+        this.aiUsageRemaining = data?.remaining ?? null;
+      } catch {
+        this.aiUsageRemaining = null;
       }
     },
   },
@@ -627,6 +639,12 @@ export default {
   max-width: 640px;
   line-height: 1.55;
   font-size: 15px;
+}
+
+.kata-usage {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #475569;
 }
 
 .kata-forms-panel {

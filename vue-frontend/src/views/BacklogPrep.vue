@@ -1,95 +1,155 @@
 <template>
-  <div class="prep-container">
-    <h1>{{ $t('backlogPrep.title') }}</h1>
-    <p class="subtitle">{{ $t('backlogPrep.subtitle') }}</p>
+  <div class="prep-page">
+    <div class="prep-container">
+      <h1>{{ $t('backlogPrep.title') }}</h1>
+      <p class="subtitle">{{ $t('backlogPrep.subtitle') }}</p>
+      <p v-if="aiUsageRemaining !== null" class="ai-usage-line">
+        {{ $t('backlogPrep.aiUsageLeft', { n: aiUsageRemaining }) }}
+      </p>
 
-    <div class="modern-form">
-      <div class="form-grid">
-        <div class="input-wrapper">
-          <span class="input-icon">📋</span>
-          <select 
-            v-model="form.workType" 
-            class="modern-input modern-select"
-            :class="{ 'has-value': form.workType }"
-          >
-            <option value=""></option>
-            <option value="story">{{ $t('backlogPrep.story') }}</option>
-            <option value="epic">{{ $t('backlogPrep.epic') }}</option>
-          </select>
-          <label class="floating-label">{{ $t('backlogPrep.workType') }}</label>
+      <section class="prep-intro" aria-labelledby="bp-intro-title">
+        <h2 id="bp-intro-title" class="prep-intro__title">{{ $t('backlogPrep.introTitle') }}</h2>
+        <p class="prep-intro__lead">{{ $t('backlogPrep.introLead') }}</p>
+        <button type="button" class="prep-intro__toggle" @click="introExpanded = !introExpanded">
+          {{ introExpanded ? $t('backlogPrep.introCollapse') : $t('backlogPrep.introExpand') }}
+        </button>
+        <div v-show="introExpanded" class="prep-intro__body">
+          <article class="prep-intro__card">
+            <h3><span class="prep-intro__badge">1</span> {{ $t('backlogPrep.introStep1Title') }}</h3>
+            <p>{{ $t('backlogPrep.introStep1Body') }}</p>
+          </article>
+          <article class="prep-intro__card">
+            <h3><span class="prep-intro__badge">2</span> {{ $t('backlogPrep.introStep2Title') }}</h3>
+            <p>{{ $t('backlogPrep.introStep2Body') }}</p>
+          </article>
+          <article class="prep-intro__card">
+            <h3><span class="prep-intro__badge">3</span> {{ $t('backlogPrep.introStep3Title') }}</h3>
+            <p>{{ $t('backlogPrep.introStep3Body') }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="ai-assist-card" aria-label="AI">
+        <h2 class="ai-assist-card__title">✨ {{ $t('backlogPrep.assistTitle') }}</h2>
+        <p class="ai-assist-card__hint">{{ $t('backlogPrep.assistHint') }}</p>
+        <div class="input-wrapper textarea-wrapper">
+          <span class="input-icon">💡</span>
+          <textarea
+            v-model="assistHint"
+            rows="3"
+            class="modern-input modern-textarea"
+            :class="{ 'has-value': assistHint }"
+          />
+          <label class="floating-label">{{ $t('backlogPrep.assistHintLabel') }}</label>
+        </div>
+        <div class="ai-assist-card__actions">
+          <button type="button" class="secondary-btn" :disabled="assistLoading" @click="runAssist">
+            {{ assistLoading ? $t('backlogPrep.assistLoading') : $t('backlogPrep.assistRun') }}
+          </button>
+        </div>
+        <p v-if="assistError" class="assist-error">{{ assistError }}</p>
+      </section>
+
+      <div class="modern-form">
+        <div class="form-grid">
+          <div class="field-block">
+            <div class="input-wrapper">
+              <span class="input-icon">📋</span>
+              <select
+                v-model="form.workType"
+                class="modern-input modern-select"
+                :class="{ 'has-value': form.workType }"
+              >
+                <option value=""></option>
+                <option value="story">{{ $t('backlogPrep.story') }}</option>
+                <option value="epic">{{ $t('backlogPrep.epic') }}</option>
+              </select>
+              <label class="floating-label">{{ $t('backlogPrep.workType') }}</label>
+            </div>
+            <p class="field-hint">{{ $t('backlogPrep.hintWorkType') }}</p>
+          </div>
+
+          <div class="field-block">
+            <div class="input-wrapper">
+              <span class="input-icon">🌐</span>
+              <select
+                v-model="form.language"
+                class="modern-input modern-select"
+                :class="{ 'has-value': form.language }"
+              >
+                <option value=""></option>
+                <option value="ru">Русский</option>
+                <option value="en">English</option>
+              </select>
+              <label class="floating-label">{{ $t('backlogPrep.language') }}</label>
+            </div>
+            <p class="field-hint">{{ $t('backlogPrep.hintLanguage') }}</p>
+          </div>
         </div>
 
-        <div class="input-wrapper">
-          <span class="input-icon">🌐</span>
-          <select 
-            v-model="form.language" 
-            class="modern-input modern-select"
-            :class="{ 'has-value': form.language }"
-          >
-            <option value=""></option>
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
-          </select>
-          <label class="floating-label">{{ $t('backlogPrep.language') }}</label>
+        <div class="field-block">
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">📝</span>
+            <textarea
+              v-model="form.text"
+              rows="7"
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.text }"
+            />
+            <label class="floating-label">{{ $t('backlogPrep.description') }}</label>
+          </div>
+          <p class="field-hint">{{ $t('backlogPrep.hintDescription') }}</p>
+        </div>
+
+        <div class="field-block">
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">🎯</span>
+            <textarea
+              v-model="form.context"
+              rows="4"
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.context }"
+            />
+            <label class="floating-label">{{ $t('backlogPrep.context') }}</label>
+          </div>
+          <p class="field-hint">{{ $t('backlogPrep.hintContext') }}</p>
         </div>
       </div>
 
-      <div class="input-wrapper textarea-wrapper">
-        <span class="input-icon">📝</span>
-        <textarea
-          v-model="form.text"
-          rows="7"
-          class="modern-input modern-textarea"
-          :class="{ 'has-value': form.text }"
-        ></textarea>
-        <label class="floating-label">{{ $t('backlogPrep.description') }}</label>
+      <div class="actions">
+        <button class="primary" :disabled="loading" @click="analyze">
+          {{ loading ? $t('common.loading') : $t('backlogPrep.run') }}
+        </button>
+        <span v-if="error" class="error">{{ error }}</span>
       </div>
 
-      <div class="input-wrapper textarea-wrapper">
-        <span class="input-icon">🎯</span>
-        <textarea
-          v-model="form.context"
-          rows="4"
-          class="modern-input modern-textarea"
-          :class="{ 'has-value': form.context }"
-        ></textarea>
-        <label class="floating-label">{{ $t('backlogPrep.context') }}</label>
+      <div v-if="result" class="results">
+        <section v-if="result.missing_fields?.length">
+          <h3>🧩 {{ $t('backlogPrep.missingFields') }}</h3>
+          <ul>
+            <li v-for="item in result.missing_fields" :key="item">{{ item }}</li>
+          </ul>
+        </section>
+
+        <section v-if="result.questions?.length">
+          <h3>❓ {{ $t('backlogPrep.questions') }}</h3>
+          <ul>
+            <li v-for="item in result.questions" :key="item">{{ item }}</li>
+          </ul>
+        </section>
+
+        <section v-if="result.suggestions?.length">
+          <h3>💡 {{ $t('backlogPrep.suggestions') }}</h3>
+          <ul>
+            <li v-for="item in result.suggestions" :key="item">{{ item }}</li>
+          </ul>
+        </section>
+
+        <section v-if="result.improved_example">
+          <h3>📝 {{ $t('backlogPrep.improvedExample') }}</h3>
+          <div class="example">{{ result.improved_example }}</div>
+        </section>
       </div>
-    </div>
-
-    <div class="actions">
-      <button class="primary" @click="analyze" :disabled="loading">
-        {{ loading ? $t('common.loading') : $t('backlogPrep.run') }}
-      </button>
-      <span class="error" v-if="error">{{ error }}</span>
-    </div>
-
-    <div v-if="result" class="results">
-      <section v-if="result.missing_fields?.length">
-        <h3>🧩 {{ $t('backlogPrep.missingFields') }}</h3>
-        <ul>
-          <li v-for="item in result.missing_fields" :key="item">{{ item }}</li>
-        </ul>
-      </section>
-
-      <section v-if="result.questions?.length">
-        <h3>❓ {{ $t('backlogPrep.questions') }}</h3>
-        <ul>
-          <li v-for="item in result.questions" :key="item">{{ item }}</li>
-        </ul>
-      </section>
-
-      <section v-if="result.suggestions?.length">
-        <h3>💡 {{ $t('backlogPrep.suggestions') }}</h3>
-        <ul>
-          <li v-for="item in result.suggestions" :key="item">{{ item }}</li>
-        </ul>
-      </section>
-
-      <section v-if="result.improved_example">
-        <h3>📝 {{ $t('backlogPrep.improvedExample') }}</h3>
-        <div class="example">{{ result.improved_example }}</div>
-      </section>
     </div>
   </div>
 </template>
@@ -104,6 +164,11 @@ export default {
       loading: false,
       error: "",
       result: null,
+      introExpanded: false,
+      assistHint: "",
+      assistLoading: false,
+      assistError: "",
+      aiUsageRemaining: null,
       form: {
         text: "",
         context: "",
@@ -112,7 +177,52 @@ export default {
       },
     };
   },
+  mounted() {
+    this.fetchAiUsage();
+  },
   methods: {
+    authHeaders() {
+      const token = localStorage.getItem("token");
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    },
+    async fetchAiUsage() {
+      try {
+        const { data } = await axios.get("/api/ai-usage", { headers: this.authHeaders() });
+        this.aiUsageRemaining = data?.remaining ?? null;
+      } catch {
+        this.aiUsageRemaining = null;
+      }
+    },
+    async runAssist() {
+      this.assistError = "";
+      const hint = (this.assistHint || "").trim();
+      if (!hint && !(this.form.text || "").trim()) {
+        this.assistError = this.$t("backlogPrep.assistNeedHint");
+        return;
+      }
+      this.assistLoading = true;
+      try {
+        const { data } = await axios.post(
+          "/api/backlog/prep/assist",
+          {
+            hint,
+            work_type: this.form.workType,
+            language: this.form.language,
+            existing_text: this.form.text,
+            existing_context: this.form.context,
+          },
+          { headers: { ...this.authHeaders(), "Content-Type": "application/json" } }
+        );
+        if (data.suggested_text) this.form.text = data.suggested_text;
+        if (data.suggested_context) this.form.context = data.suggested_context;
+        await this.fetchAiUsage();
+      } catch (err) {
+        this.assistError =
+          err?.response?.data?.error || err?.message || this.$t("common.error");
+      } finally {
+        this.assistLoading = false;
+      }
+    },
     async analyze() {
       this.error = "";
       this.result = null;
@@ -138,6 +248,7 @@ export default {
             : undefined
         );
         this.result = data;
+        await this.fetchAiUsage();
       } catch (err) {
         this.error =
           err?.response?.data?.error ||
@@ -152,14 +263,21 @@ export default {
 </script>
 
 <style scoped>
+.prep-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
 .prep-container {
   max-width: 1000px;
-  margin: 40px auto;
+  margin: 0 auto;
   padding: 32px;
   background: #ffffff;
   border-radius: 20px;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
+  border: 1px solid #bae6fd;
 }
 
 h1 {
@@ -172,9 +290,156 @@ h1 {
 
 .subtitle {
   color: #6b7280;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   font-size: 16px;
   line-height: 1.6;
+}
+
+.ai-usage-line {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.prep-intro {
+  margin-bottom: 28px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  border-radius: 16px;
+  border: 1px solid #bae6fd;
+}
+
+.prep-intro__title {
+  font-size: 1.2rem;
+  margin: 0 0 12px;
+  color: #0c4a6e;
+}
+
+.prep-intro__lead {
+  margin: 0 0 16px;
+  line-height: 1.6;
+  color: #334155;
+  font-size: 15px;
+}
+
+.prep-intro__toggle {
+  background: #fff;
+  border: 2px solid #0ea5e9;
+  color: #0369a1;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.prep-intro__body {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.prep-intro__card {
+  background: #fff;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.prep-intro__card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prep-intro__card p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.prep-intro__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-assist-card {
+  margin-bottom: 28px;
+  padding: 20px 22px;
+  background: linear-gradient(145deg, #faf5ff 0%, #eef2ff 100%);
+  border-radius: 16px;
+  border: 1px solid #c7d2fe;
+}
+
+.ai-assist-card__title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: #312e81;
+}
+
+.ai-assist-card__hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #5b21b6;
+  line-height: 1.45;
+}
+
+.ai-assist-card__actions {
+  margin-top: 12px;
+}
+
+.secondary-btn {
+  border: 2px solid #6366f1;
+  background: #fff;
+  color: #4338ca;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+.secondary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.assist-error {
+  margin-top: 10px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+  padding-left: 4px;
 }
 
 .form-grid {
@@ -184,16 +449,9 @@ h1 {
   margin-bottom: 24px;
 }
 
-/* Modern Form Styles with Floating Labels */
 .modern-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
 }
 
@@ -276,10 +534,9 @@ h1 {
 .modern-input.has-value {
   padding-top: 20px;
   padding-bottom: 8px;
-  border-color: #3b82f6;
-  background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+  border-color: #0ea5e9;
+  background: linear-gradient(to bottom, #ffffff 0%, #f0f9ff 100%);
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
 }
 
 .modern-input:focus + .floating-label,
@@ -287,7 +544,7 @@ h1 {
   top: 12px;
   left: 52px;
   font-size: 12px;
-  color: #3b82f6;
+  color: #0284c7;
   font-weight: 600;
   transform: none;
 }
@@ -298,28 +555,8 @@ h1 {
   left: 52px;
 }
 
-.modern-input:hover:not(:focus) {
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
 .modern-input:focus {
   outline: none;
-}
-
-.modern-input:focus ~ .input-icon {
-  transform: translateY(-50%) scale(1.1);
-  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
-}
-
-.textarea-wrapper .modern-input:focus ~ .input-icon {
-  transform: scale(1.1);
-  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
-}
-
-.block {
-  margin-bottom: 24px;
 }
 
 .actions {
@@ -330,7 +567,7 @@ h1 {
 }
 
 .primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: #fff;
   border: none;
   padding: 14px 28px;
@@ -340,18 +577,16 @@ h1 {
   font-size: 15px;
   transition: all 0.2s ease;
   font-family: inherit;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
 }
 
 .primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 .error {
@@ -371,7 +606,7 @@ section {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 24px;
-  transition: all 0.2s ease;
+  border-left: 4px solid #0ea5e9;
 }
 
 section:hover {
@@ -383,7 +618,6 @@ h3 {
   font-size: 18px;
   font-weight: 600;
   color: #111827;
-  letter-spacing: -0.3px;
 }
 
 ul {
@@ -393,42 +627,36 @@ ul {
   line-height: 1.8;
 }
 
-ul li {
-  margin-bottom: 8px;
-}
-
 .example {
   white-space: pre-wrap;
   color: #374151;
   line-height: 1.7;
-  background: #f9fafb;
+  background: #f0f9ff;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #bae6fd;
   font-size: 14px;
   margin-top: 12px;
 }
 
 @media (max-width: 768px) {
   .prep-container {
-    margin: 20px 10px !important;
-    padding: 24px 20px !important;
+    padding: 24px 20px;
   }
-  
+
   h1 {
     font-size: 24px;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
   }
-  
+
   .actions {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .primary {
     width: 100%;
   }

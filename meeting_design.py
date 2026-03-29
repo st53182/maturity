@@ -93,6 +93,19 @@ TOPIC_SUGGESTIONS_SCHEMA = {
     },
 }
 
+ALLOWED_FORM_CONSTRAINT_KEYS = frozenset(
+    {
+        "remote",
+        "inPerson",
+        "hybrid",
+        "largeGroup",
+        "smallGroup",
+        "timeboxed",
+        "interactive",
+        "presentation",
+    }
+)
+
 
 def generate_meeting_prompt(meeting_type, goal, duration, constraints, locale="ru"):
     lang_name = locale_language_name(locale)
@@ -199,6 +212,79 @@ Return JSON only with key "topics" (array of strings).
     except Exception as e:
         print(f"ai_conversation_topics: {e}")
         return jsonify({"error": "Не удалось получить темы"}), 500
+
+
+@bp_meeting_design.route("/api/meeting-design/form-assist", methods=["POST"])
+@jwt_required()
+def form_assist():
+    """Черновик названия, цели, ограничений по короткой заметке (до генерации повестки)."""
+    try:
+        data = request.get_json() or {}
+        brief = (data.get("brief_note") or "").strip()
+        if not brief:
+            return jsonify({"error": "Кратко опишите встречу (brief_note)"}), 400
+        meeting_type = (data.get("meeting_type") or "retrospective").strip()
+        try:
+            duration = int(data.get("duration_minutes") or 60)
+        except (TypeError, ValueError):
+            duration = 60
+        locale = (data.get("locale") or "ru").strip()[:12]
+        lang_name = locale_language_name(locale)
+        existing_title = (data.get("existing_title") or "").strip()
+        existing_goal = (data.get("existing_goal") or "").strip()
+
+        client = get_openai_client()
+        if not client:
+            return jsonify({"error": "OpenAI API не настроен"}), 500
+
+        allowed_list = ", ".join(sorted(ALLOWED_FORM_CONSTRAINT_KEYS))
+        prompt = f"""
+You help facilitators fill a meeting planning form. All human-readable strings must be in {lang_name}.
+
+Meeting type: {meeting_type}
+Duration (minutes): {duration}
+
+User brief (what they want):
+{brief}
+
+Current draft (improve/merge; keep useful specifics):
+- title: {existing_title or "(empty)"}
+- goal: {existing_goal or "(empty)"}
+
+Return ONLY valid JSON with exactly these keys:
+"title" (string), "goal" (string), "constraints_notes" (string, extra constraints as text),
+"constraint_keys" (array of strings).
+
+constraint_keys must contain ONLY values from this set (subset allowed, can be empty): {allowed_list}
+"""
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You output only valid JSON. No markdown.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.4,
+        )
+        out = json.loads(response.choices[0].message.content)
+        raw_keys = out.get("constraint_keys") or []
+        if not isinstance(raw_keys, list):
+            raw_keys = []
+        keys = [k for k in raw_keys if isinstance(k, str) and k in ALLOWED_FORM_CONSTRAINT_KEYS]
+        return jsonify(
+            {
+                "title": (out.get("title") or "").strip(),
+                "goal": (out.get("goal") or "").strip(),
+                "constraints_notes": (out.get("constraints_notes") or "").strip(),
+                "constraint_keys": keys,
+            }
+        ), 200
+    except Exception as e:
+        print(f"form_assist: {e}")
+        return jsonify({"error": "Не удалось заполнить черновик"}), 500
 
 
 @bp_meeting_design.route("/api/meeting-design/ai-facilitator-help", methods=["POST"])

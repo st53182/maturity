@@ -1,6 +1,6 @@
 from database import db
 from flask_bcrypt import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.dialects.postgresql import JSON
 
 
@@ -20,6 +20,32 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+
+class UserInvite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    inviter_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    invitee_email = db.Column(db.String(255), nullable=True)
+    used_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    status = db.Column(db.String(30), nullable=False, default="active")
+    expires_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(days=7))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    used_at = db.Column(db.DateTime, nullable=True)
+
+    inviter = db.relationship('User', foreign_keys=[inviter_user_id], backref=db.backref('sent_invites', lazy=True))
+    used_by = db.relationship('User', foreign_keys=[used_by_user_id], backref=db.backref('accepted_invites', lazy=True))
+
+
+class AiUsageCounter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    scope_key = db.Column(db.String(255), nullable=False, index=True)
+    period_start = db.Column(db.DateTime, nullable=False, index=True)
+    count = db.Column(db.Integer, nullable=False, default=0)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('scope_key', 'period_start', name='uq_ai_usage_scope_period'),)
 
 # 🔹 Модель команды
 class Team(db.Model):

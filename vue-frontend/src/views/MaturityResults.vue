@@ -12,6 +12,7 @@
         <p class="average-line">
           {{ $t('maturity.overallScore') }}: <strong>{{ averageScore.toFixed(2) }}</strong>
         </p>
+        <p v-if="aiUsageRemaining !== null" class="ai-usage-line">AI-запросов осталось: {{ aiUsageRemaining }}</p>
 
         <div
           v-for="group in radarGroups"
@@ -201,7 +202,8 @@ export default {
       loadingDontKnowRecs: false,
       modalExporting: false,
       businessMetricsDisclaimer: '',
-      businessMetricsGlossary: []
+      businessMetricsGlossary: [],
+      aiUsageRemaining: null
     };
   },
   computed: {
@@ -271,6 +273,7 @@ export default {
   async mounted() {
     this.token = this.$route.params.token;
     await this.loadResults();
+    await this.fetchAiUsage();
   },
   watch: {
     selectedTheme() {
@@ -373,6 +376,7 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/recommendations`);
         this.recommendationsHtml = res.data.content || '';
+        await this.fetchAiUsage();
       } catch (e) {
         this.recommendationsHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка загрузки рекомендаций') + '</p>';
       } finally {
@@ -386,6 +390,7 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/recommendations/dont-know`);
         this.dontKnowHtml = res.data.content || '';
+        await this.fetchAiUsage();
       } catch (e) {
         this.dontKnowHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка') + '</p>';
       } finally {
@@ -461,6 +466,14 @@ export default {
     },
     async exportAllQuestionsPdf() {
       await this.exportElementToPdf(this.$refs.allModalCards, 'все-вопросы');
+    },
+    async fetchAiUsage() {
+      try {
+        const { data } = await axios.get('/api/ai-usage', { params: { survey_token: this.token } });
+        this.aiUsageRemaining = data?.remaining ?? null;
+      } catch {
+        this.aiUsageRemaining = null;
+      }
     }
   }
 };
@@ -505,6 +518,12 @@ export default {
 .average-line {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
+}
+
+.ai-usage-line {
+  margin: -0.5rem 0 1.2rem;
+  color: #475569;
+  font-size: 0.92rem;
 }
 
 .group-block {

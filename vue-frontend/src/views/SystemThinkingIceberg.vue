@@ -1,6 +1,7 @@
 <template>
   <div class="iceberg-container">
     <h1>Айсберг системного мышления</h1>
+    <p v-if="aiUsageRemaining !== null" class="ai-usage-line">AI-запросов осталось: {{ aiUsageRemaining }}</p>
 
     <!-- Введение до начала работы -->
     <section class="iceberg-intro" aria-labelledby="iceberg-intro-title">
@@ -362,7 +363,8 @@ export default {
       loading: false,
       generatingSolutions: false,
       exportingPdf: false,
-      pdfExportDate: ""
+      pdfExportDate: "",
+      aiUsageRemaining: null
     };
   },
   computed: {
@@ -385,6 +387,7 @@ export default {
   },
   mounted() {
     this.fetchIcebergs();
+    this.fetchAiUsage();
     window.addEventListener("beforeunload", this.onBeforeUnload);
   },
   beforeUnmount() {
@@ -419,6 +422,16 @@ export default {
       try {
         const res = await fetch("/api/system-thinking", { headers: authHeaders() });
         if (res.ok) this.icebergs = await res.json();
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    async fetchAiUsage() {
+      try {
+        const res = await fetch("/api/ai-usage", { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        this.aiUsageRemaining = data.remaining;
       } catch (err) {
         console.error(err);
       }
@@ -567,6 +580,7 @@ export default {
           this.syncDraftFromIceberg(data.iceberg);
           this.suggestions = [];
         }
+        await this.fetchAiUsage();
       } catch (e) {
         console.error(e);
         alert("Ошибка соединения");
@@ -590,6 +604,7 @@ export default {
         }
         this.currentIceberg = data.iceberg || this.currentIceberg;
         if (data.solutions) this.currentIceberg.solutions = data.solutions;
+        await this.fetchAiUsage();
       } catch (e) {
         console.error(e);
         alert("Ошибка соединения");
@@ -680,6 +695,12 @@ h1 {
   font-weight: 700;
   margin-bottom: 24px;
   color: #1a1a1a;
+}
+
+.ai-usage-line {
+  margin: -10px 0 20px;
+  color: #475569;
+  font-size: 14px;
 }
 
 .iceberg-intro {

@@ -38,6 +38,22 @@
       <button type="submit" class="modern-button purple">{{ $t('profile.saveChanges') }}</button>
     </form>
 
+    <div class="form-section invite-section">
+      <h2>Пригласить пользователя</h2>
+      <label>Email приглашённого (необязательно)</label>
+      <input v-model="inviteeEmail" type="email" placeholder="name@company.com" />
+      <button type="button" class="modern-button purple" :disabled="inviteLoading" @click="createInvite">
+        {{ inviteLoading ? 'Создание…' : 'Создать инвайт' }}
+      </button>
+      <p v-if="newInviteCode" class="invite-code"><strong>Код:</strong> {{ newInviteCode }}</p>
+      <div v-if="myInvites.length" class="invite-list">
+        <div v-for="inv in myInvites" :key="inv.id" class="invite-item">
+          <div><strong>{{ inv.code }}</strong></div>
+          <div class="muted">{{ inv.invitee_email || 'любой email' }} · {{ inv.status }}</div>
+        </div>
+      </div>
+    </div>
+
     <div class="disc-section">
       <h2>{{ $t('profile.discSection') }}</h2>
       <p>{{ $t('profile.discDescription') }}</p>
@@ -104,7 +120,11 @@ export default {
       newPassword: "",
       assessmentHistory: [],
       latestAssessment: null,
-      expandedAssessments: []
+      expandedAssessments: [],
+      inviteeEmail: '',
+      newInviteCode: '',
+      myInvites: [],
+      inviteLoading: false
     };
   },
   async mounted() {
@@ -114,6 +134,7 @@ export default {
       });
       this.profile = res.data;
       await this.fetchAssessmentHistory();
+      await this.fetchMyInvites();
     } catch (e) {
       console.error("Ошибка загрузки профиля:", e);
       alert(this.$t('profile.loadError'));
@@ -152,6 +173,35 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching assessment history:', error);
+      }
+    },
+    async fetchMyInvites() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('/api/invites/my', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.myInvites = response.data?.invites || [];
+      } catch (error) {
+        console.error('Error fetching invites:', error);
+      }
+    },
+    async createInvite() {
+      this.inviteLoading = true;
+      this.newInviteCode = '';
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/invites', {
+          invitee_email: this.inviteeEmail || null
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.newInviteCode = response.data?.code || '';
+        await this.fetchMyInvites();
+      } catch (error) {
+        alert(error.response?.data?.error || 'Не удалось создать инвайт');
+      } finally {
+        this.inviteLoading = false;
       }
     },
 
@@ -550,5 +600,23 @@ hr {
   font-size: 0.75rem;
   color: #9ca3af;
   font-weight: normal;
+}
+.invite-section .modern-button {
+  margin-top: 8px;
+}
+.invite-code {
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+.invite-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+.invite-item {
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
 }
 </style>

@@ -25,6 +25,7 @@ from testing_types import bp_testing_types
 from usability_report import bp_usability_report
 from qa_user_story import bp_qa_user_story
 from flask_socketio import SocketIO
+from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 
 app = Flask(__name__, static_folder="static")
 CORS(app, supports_credentials=True)
@@ -67,6 +68,8 @@ register_socketio_handlers(socketio)
 with app.app_context():
     db.create_all()
 
+register_ai_limit_hooks(app)
+
 # Blueprints
 app.register_blueprint(bp_auth)
 app.register_blueprint(bp_survey)
@@ -90,6 +93,12 @@ app.register_blueprint(bp_agile_tools_ai)
 app.register_blueprint(bp_testing_types)
 app.register_blueprint(bp_usability_report)
 app.register_blueprint(bp_qa_user_story)
+app.register_blueprint(bp_ai_limits)
+
+
+@app.errorhandler(AiLimitExceeded)
+def handle_ai_limit_exceeded(e):
+    return {"error": e.message}, 429
 
 
 # 🎯 Отдача Vue SPA

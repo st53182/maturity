@@ -3,6 +3,7 @@
     <header class="dash-head">
       <h1>Оценка зрелости по ссылке — сводка</h1>
       <p class="dash-sub">Завершённых опросов (с валидными ответами): {{ aggregates.completed_sessions ?? '—' }}</p>
+      <p v-if="aiUsageRemaining !== null" class="dash-sub">AI-запросов осталось: {{ aiUsageRemaining }}</p>
     </header>
 
     <div v-if="error" class="dash-error">{{ error }}</div>
@@ -296,7 +297,8 @@ export default {
       groupPlanUpdatedAt: null,
       groupPlan: emptyGroupPlan(),
       risksText: '',
-      initiativeCollapsed: {}
+      initiativeCollapsed: {},
+      aiUsageRemaining: null
     };
   },
   computed: {
@@ -362,6 +364,7 @@ export default {
   },
   mounted() {
     this.refresh();
+    this.fetchAiUsage();
   },
   watch: {
     selectedGroup() {
@@ -427,6 +430,7 @@ export default {
         const params = this.selectedGroup ? { group_name: this.selectedGroup } : undefined;
         const res = await axios.get('/api/maturity-admin/insights', { headers: authHeaders(), params });
         this.insightsHtml = res.data.content || '';
+        await this.fetchAiUsage();
       } catch (e) {
         this.insightsHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
       } finally {
@@ -482,6 +486,7 @@ export default {
         this.groupPlanHtml = res.data.content || '';
         this.groupPlanUpdatedAt = res.data.updated_at || null;
         this.initiativeCollapsed = {};
+        await this.fetchAiUsage();
       } catch (e) {
         this.groupPlanHtml = `<p class="err">${e.response?.data?.error || 'Ошибка'}</p>`;
       } finally {
@@ -597,6 +602,14 @@ export default {
         pdf.save(`stream-plan-${safe}.pdf`);
       } finally {
         this.exportingGroupPlan = false;
+      }
+    },
+    async fetchAiUsage() {
+      try {
+        const res = await axios.get('/api/ai-usage', { headers: authHeaders() });
+        this.aiUsageRemaining = res.data?.remaining ?? null;
+      } catch {
+        this.aiUsageRemaining = null;
       }
     }
   }

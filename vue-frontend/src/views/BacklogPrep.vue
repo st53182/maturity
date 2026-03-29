@@ -44,7 +44,12 @@
           <p class="section-lead">{{ $t('backlogPrep.specLead') }}</p>
         <div class="spec-row">
           <label class="file-label">
-            <input type="file" accept=".txt,.md,.markdown,.csv" class="file-input" @change="onSpecFile" />
+            <input
+              type="file"
+              accept=".txt,.md,.markdown,.csv,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              class="file-input"
+              @change="onSpecFile"
+            />
             <span class="file-btn">{{ $t('backlogPrep.specChooseFile') }}</span>
           </label>
           <span v-if="specFileName" class="file-name">{{ specFileName }}</span>

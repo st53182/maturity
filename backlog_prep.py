@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from io import BytesIO
 from typing import Any, List, Optional
 
 from flask import Blueprint, jsonify, request
@@ -121,15 +122,48 @@ def _normalize_spec_text(raw: str) -> str:
     return text
 
 
+def _docx_bytes_to_text(data: bytes) -> str:
+    """Извлечь обычный текст из Word .docx (параграфы и простые таблицы)."""
+    try:
+        from docx import Document
+    except ImportError as e:  # pragma: no cover
+        raise RuntimeError("python-docx не установлен") from e
+    doc = Document(BytesIO(data))
+    parts: List[str] = []
+    for para in doc.paragraphs:
+        t = (para.text or "").strip()
+        if t:
+            parts.append(t)
+    for table in doc.tables:
+        for row in table.rows:
+            cells = [(c.text or "").strip() for c in row.cells]
+            cells = [c for c in cells if c]
+            if cells:
+                parts.append(" | ".join(cells))
+    return "\n".join(parts)
+
+
 def _read_uploaded_text(file_storage) -> tuple[Optional[str], Optional[str]]:
     if not file_storage or not file_storage.filename:
         return None, None
     name = (file_storage.filename or "").lower()
-    if not name.endswith((".txt", ".md", ".markdown", ".csv")):
-        return None, "Поддерживаются файлы .txt, .md, .markdown, .csv (или вставьте текст в поле)"
+    allowed_plain = (".txt", ".md", ".markdown", ".csv")
+    if not (name.endswith(allowed_plain) or name.endswith(".docx")):
+        return (
+            None,
+            "Поддерживаются файлы .txt, .md, .markdown, .csv, .docx (или вставьте текст в поле)",
+        )
     data = file_storage.read()
     if len(data) > MAX_UPLOAD_BYTES:
         return None, f"Файл слишком большой (макс. {MAX_UPLOAD_BYTES // 1000} KB)"
+    if name.endswith(".docx"):
+        try:
+            text = _docx_bytes_to_text(data)
+        except Exception as exc:  # noqa: BLE001
+            return None, f"Не удалось прочитать .docx: {exc}"
+        if not (text or "").strip():
+            return None, "В документе Word не найдено текста"
+        return text, None
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
@@ -252,7 +286,9 @@ def spec_decompose():
 
     spec_text = _normalize_spec_text(spec_text)
     if len(spec_text) < 80:
-        return jsonify({"error": "Добавьте текст спецификации (от 80 символов) или загрузите .txt/.md"}), 400
+        return jsonify(
+            {"error": "Добавьте текст спецификации (от 80 символов) или загрузите .txt / .md / .csv / .docx"}
+        ), 400
 
     language = "ru"
     if request.content_type and "multipart/form-data" in request.content_type:

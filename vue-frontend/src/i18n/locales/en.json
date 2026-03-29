@@ -746,7 +746,7 @@
     "copyJiraPlain": "Copy (plain text)",
     "deleteConfirm": "Delete this item? Deleting an epic also removes its child stories.",
     "specTitle": "Business specification",
-    "specLead": "Upload .txt / .md / .csv or paste text (80+ chars). AI proposes an epic and story decomposition.",
+    "specLead": "Upload .txt / .md / .csv / .docx or paste text (80+ chars). AI proposes an epic and story decomposition.",
     "specChooseFile": "Choose file",
     "specPasteLabel": "Specification text (if no file)",
     "specLoading": "Analyzing specification…",

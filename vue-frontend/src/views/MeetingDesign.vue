@@ -258,12 +258,6 @@
           <textarea v-model="newDesign.constraints" class="form-textarea" rows="2" placeholder="Дополнительные ограничения..."></textarea>
         </div>
 
-        <p class="create-modal__ai-row">
-          <button type="button" class="create-modal__ai-link" @click="openTopicPanelFromCreate">
-            <span aria-hidden="true">✨</span> {{ $t('meetingDesign.ai.fabTitle') }}
-          </button>
-        </p>
-
         <div class="modal-buttons">
           <button class="confirm-btn" @click="generateDesign" :disabled="generating">
             {{ generating ? $t('meetingDesign.creating') : $t('meetingDesign.generate') }}
@@ -1159,28 +1153,6 @@ h1 {
 
 .create-modal {
   width: 600px;
-}
-
-.create-modal__ai-row {
-  margin: 0 0 16px;
-  text-align: center;
-}
-
-.create-modal__ai-link {
-  background: none;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #6366f1;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  font-family: inherit;
-}
-
-.create-modal__ai-link:hover {
-  color: #4f46e5;
 }
 
 .view-modal {

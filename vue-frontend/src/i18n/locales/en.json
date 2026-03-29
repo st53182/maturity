@@ -782,7 +782,16 @@
     "blockComposeTitle": "Story or epic draft",
     "blockComposeLead": "Fill fields manually or with AI assist, save to your library, and optionally link a story to an epic.",
     "blockReviewTitle": "Review & recommendations",
-    "blockReviewLead": "After “Check description”, a structured report appears here: gaps, questions, ideas, and an example wording.",
-    "blockReviewEmpty": "Run “Check description” to analyze your draft. Results will show in this panel."
+    "blockReviewLead": "After “Check description”, you get gaps, questions, ideas, and a structured improved draft (description, context, 10+ acceptance criteria, NFR). Epics can be decomposed into stories.",
+    "blockReviewEmpty": "Run “Check description” to analyze your draft. Results will show in this panel.",
+    "improvedDescription": "Description",
+    "improvedContext": "Context & goal",
+    "improvedAcHeading": "Acceptance criteria (10+)",
+    "improvedNfrHeading": "Non-functional requirements",
+    "applyImprovedToForm": "Apply improved draft to form",
+    "appliedImprovedToForm": "Form updated from the improved draft",
+    "decomposeEpic": "Decompose epic into stories",
+    "decomposeStoriesTitle": "Suggested stories",
+    "applyStoryToForm": "Use as story in form"
   }
 }

@@ -332,17 +332,76 @@
                   <li v-for="item in result.suggestions" :key="'s-' + item">{{ item }}</li>
                 </ul>
               </div>
-              <div v-if="result.improved_example" class="review-card review-card--example">
+
+              <div v-if="improvedStructured" class="review-card review-card--improved">
+                <div class="improved-card__head">
+                  <h3 class="review-card__title">📝 {{ $t('backlogPrep.improvedExample') }}</h3>
+                  <span
+                    class="improved-type-pill"
+                    :class="improvedStructured.item_type === 'epic' ? 'improved-type-pill--epic' : 'improved-type-pill--story'"
+                  >
+                    {{ improvedStructured.item_type === 'epic' ? $t('backlogPrep.epic') : $t('backlogPrep.story') }}
+                  </span>
+                </div>
+                <div class="improved-sections">
+                  <section class="improved-block">
+                    <h4 class="improved-block__label">{{ $t('backlogPrep.improvedDescription') }}</h4>
+                    <p class="improved-block__text">{{ improvedStructured.description }}</p>
+                  </section>
+                  <section v-if="improvedStructured.context_goal" class="improved-block">
+                    <h4 class="improved-block__label">{{ $t('backlogPrep.improvedContext') }}</h4>
+                    <p class="improved-block__text">{{ improvedStructured.context_goal }}</p>
+                  </section>
+                  <section v-if="improvedStructured.acceptance_criteria?.length" class="improved-block">
+                    <h4 class="improved-block__label">{{ $t('backlogPrep.improvedAcHeading') }}</h4>
+                    <ol class="improved-ac-list">
+                      <li v-for="(ac, idx) in improvedStructured.acceptance_criteria" :key="'ac-' + idx">{{ ac }}</li>
+                    </ol>
+                  </section>
+                  <section v-if="improvedStructured.non_functional_requirements?.length" class="improved-block">
+                    <h4 class="improved-block__label">{{ $t('backlogPrep.improvedNfrHeading') }}</h4>
+                    <ul class="improved-nfr-list">
+                      <li v-for="(n, idx) in improvedStructured.non_functional_requirements" :key="'nfr-' + idx">{{ n }}</li>
+                    </ul>
+                  </section>
+                </div>
+                <div class="improved-card__actions">
+                  <button type="button" class="secondary-btn" @click="applyImprovedToForm">
+                    {{ $t('backlogPrep.applyImprovedToForm') }}
+                  </button>
+                  <button
+                    v-if="improvedStructured.item_type === 'epic'"
+                    type="button"
+                    class="primary small"
+                    :disabled="decomposeEpicLoading"
+                    @click="runEpicDecompose"
+                  >
+                    {{ decomposeEpicLoading ? $t('common.loading') : $t('backlogPrep.decomposeEpic') }}
+                  </button>
+                </div>
+                <p v-if="decomposeEpicError" class="assist-error">{{ decomposeEpicError }}</p>
+                <div v-if="result.epic_decompose_stories?.length" class="decompose-stories">
+                  <h4 class="decompose-stories__title">{{ $t('backlogPrep.decomposeStoriesTitle') }}</h4>
+                  <ul class="decompose-stories__list">
+                    <li v-for="(st, idx) in result.epic_decompose_stories" :key="'ds-' + idx" class="decompose-story">
+                      <div class="decompose-story__body">
+                        <strong>{{ st.title }}</strong>
+                        <p>{{ st.summary }}</p>
+                        <p v-if="st.acceptance_hint" class="decompose-story__hint">{{ st.acceptance_hint }}</p>
+                      </div>
+                      <button type="button" class="linkish" @click="applyDecomposedStory(st)">
+                        {{ $t('backlogPrep.applyStoryToForm') }}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div v-else-if="legacyImprovedText" class="review-card review-card--example">
                 <h3 class="review-card__title">📝 {{ $t('backlogPrep.improvedExample') }}</h3>
-                <div class="review-card__example">{{ result.improved_example }}</div>
+                <pre class="review-card__pre">{{ legacyImprovedText }}</pre>
               </div>
               <p
-                v-if="
-                  !result.missing_fields?.length &&
-                  !result.questions?.length &&
-                  !result.suggestions?.length &&
-                  !result.improved_example
-                "
+                v-if="reviewReportIsEmpty"
                 class="review-shell__empty"
               >
                 {{ $t('backlogPrep.blockReviewEmpty') }}
@@ -382,6 +441,8 @@ export default {
       specResult: null,
       copiedFeedback: "",
       copyTimer: null,
+      decomposeEpicLoading: false,
+      decomposeEpicError: "",
       form: {
         title: "",
         text: "",
@@ -398,6 +459,32 @@ export default {
     epicSelectOptions() {
       return (this.libraryItems || []).filter((r) => r.item_type === "epic");
     },
+    improvedStructured() {
+      const r = this.result;
+      if (!r) return null;
+      if (r.improved && typeof r.improved === "object" && (r.improved.description || (r.improved.acceptance_criteria && r.improved.acceptance_criteria.length))) {
+        return this.normalizeImproved(r.improved);
+      }
+      return this.parseLegacyImprovedExample(r);
+    },
+    legacyImprovedText() {
+      const r = this.result;
+      if (!r || this.improvedStructured) return "";
+      const ex = r.improved_example;
+      if (ex == null || ex === "") return "";
+      return typeof ex === "string" ? ex : String(ex);
+    },
+    reviewReportIsEmpty() {
+      const r = this.result;
+      if (!r) return false;
+      const hasLists =
+        (r.missing_fields && r.missing_fields.length) ||
+        (r.questions && r.questions.length) ||
+        (r.suggestions && r.suggestions.length);
+      const hasImp = !!this.improvedStructured || !!this.legacyImprovedText;
+      const hasDec = r.epic_decompose_stories && r.epic_decompose_stories.length;
+      return !hasLists && !hasImp && !hasDec;
+    },
   },
   mounted() {
     this.fetchAiUsage();
@@ -407,6 +494,89 @@ export default {
     authHeaders() {
       const token = localStorage.getItem("token");
       return token ? { Authorization: `Bearer ${token}` } : {};
+    },
+    normalizeImproved(im) {
+      const ac = Array.isArray(im.acceptance_criteria) ? im.acceptance_criteria : [];
+      const nfr = Array.isArray(im.non_functional_requirements) ? im.non_functional_requirements : [];
+      return {
+        item_type: im.item_type === "epic" ? "epic" : "story",
+        description: (im.description || "").trim(),
+        context_goal: (im.context_goal || "").trim(),
+        acceptance_criteria: ac.map((x) => String(x).trim()).filter(Boolean),
+        non_functional_requirements: nfr.map((x) => String(x).trim()).filter(Boolean),
+      };
+    },
+    parseLegacyImprovedExample(r) {
+      const ex = r.improved_example;
+      if (ex == null || typeof ex !== "string") return null;
+      const s = ex.trim();
+      if (!s.startsWith("{")) return null;
+      try {
+        const o = JSON.parse(s);
+        const ac = o.acceptance_criteria;
+        const nfr = o.non_functional_requirements;
+        return {
+          item_type: o.type === "epic" || o.item_type === "epic" ? "epic" : "story",
+          description: (o.description || "").trim(),
+          context_goal: (o.context_goal || o.context || "").trim(),
+          acceptance_criteria: Array.isArray(ac) ? ac.map((x) => String(x).trim()).filter(Boolean) : [],
+          non_functional_requirements: Array.isArray(nfr) ? nfr.map((x) => String(x).trim()).filter(Boolean) : [],
+        };
+      } catch {
+        return null;
+      }
+    },
+    applyImprovedToForm() {
+      const imp = this.improvedStructured;
+      if (!imp) return;
+      this.form.workType = imp.item_type;
+      this.form.text = imp.description;
+      this.form.context = imp.context_goal;
+      this.form.acceptance_criteria = imp.acceptance_criteria.join("\n");
+      this.form.nfr = imp.non_functional_requirements.join("\n");
+      this.flashCopied(this.$t("backlogPrep.appliedImprovedToForm"));
+    },
+    applyDecomposedStory(st) {
+      if (!st) return;
+      this.form.workType = "story";
+      this.form.title = (st.title || "").trim();
+      this.form.text = (st.summary || "").trim();
+      this.form.acceptance_criteria = (st.acceptance_hint || "").trim();
+      this.form.parentEpicId = "";
+      this.flashCopied(this.$t("backlogPrep.appliedToForm"));
+      window.scrollTo({ top: 320, behavior: "smooth" });
+    },
+    async runEpicDecompose() {
+      this.decomposeEpicError = "";
+      const imp = this.improvedStructured;
+      const text = ((imp && imp.description) || this.form.text || "").trim();
+      if (!text) {
+        this.decomposeEpicError = this.$t("backlogPrep.validation");
+        return;
+      }
+      this.decomposeEpicLoading = true;
+      try {
+        const { data } = await axios.post(
+          "/api/backlog/prep/decompose-epic",
+          {
+            text,
+            context: (imp && imp.context_goal) || this.form.context,
+            nfr: this.form.nfr,
+            language: this.form.language,
+          },
+          { headers: { ...this.authHeaders(), "Content-Type": "application/json" } }
+        );
+        this.result = {
+          ...this.result,
+          epic_decompose_stories: data.suggested_stories || [],
+        };
+        await this.fetchAiUsage();
+      } catch (e) {
+        this.decomposeEpicError =
+          e?.response?.data?.error || e?.response?.data?.details || e?.message || this.$t("common.error");
+      } finally {
+        this.decomposeEpicLoading = false;
+      }
     },
     truncate(s, n) {
       if (!s) return "";
@@ -716,6 +886,7 @@ export default {
     async analyze() {
       this.error = "";
       this.result = null;
+      this.decomposeEpicError = "";
 
       if (!this.form.text.trim()) {
         this.error = this.$t("backlogPrep.validation");
@@ -1031,6 +1202,161 @@ h1 {
   background: #fff;
   border-radius: 10px;
   border: 1px solid #e0f2fe;
+}
+
+.review-card__pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #334155;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.review-card--improved {
+  border-color: #93c5fd;
+  background: linear-gradient(to bottom, #fff 0%, #f8fafc 100%);
+}
+
+.improved-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.improved-card__head .review-card__title {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.improved-type-pill {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.improved-type-pill--story {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.improved-type-pill--epic {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.improved-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.improved-block__label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.improved-block__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+.improved-ac-list {
+  margin: 0;
+  padding-left: 22px;
+  color: #334155;
+  line-height: 1.65;
+  font-size: 14px;
+}
+
+.improved-ac-list li {
+  margin-bottom: 8px;
+}
+
+.improved-nfr-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #334155;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.improved-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.decompose-stories {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.decompose-stories__title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.decompose-stories__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.decompose-story {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.decompose-story__body {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.decompose-story__body p {
+  margin: 8px 0 0;
+}
+
+.decompose-story__hint {
+  font-size: 13px;
+  color: #64748b;
+  white-space: pre-wrap;
 }
 
 .spec-card__subtitle {

@@ -74,6 +74,82 @@ SPEC_DECOMPOSE_SCHEMA = {
     },
 }
 
+BACKLOG_PREP_ANALYSIS_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "backlog_prep_analysis",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "missing_fields": {"type": "array", "items": {"type": "string"}},
+                "questions": {"type": "array", "items": {"type": "string"}},
+                "suggestions": {"type": "array", "items": {"type": "string"}},
+                "improved": {
+                    "type": "object",
+                    "properties": {
+                        "item_type": {"type": "string", "enum": ["story", "epic"]},
+                        "description": {"type": "string", "minLength": 1},
+                        "context_goal": {"type": "string"},
+                        "acceptance_criteria": {
+                            "type": "array",
+                            "items": {"type": "string", "minLength": 10, "maxLength": 400},
+                            "minItems": 10,
+                            "maxItems": 16,
+                        },
+                        "non_functional_requirements": {
+                            "type": "array",
+                            "items": {"type": "string", "minLength": 5, "maxLength": 300},
+                            "minItems": 3,
+                            "maxItems": 10,
+                        },
+                    },
+                    "required": [
+                        "item_type",
+                        "description",
+                        "context_goal",
+                        "acceptance_criteria",
+                        "non_functional_requirements",
+                    ],
+                    "additionalProperties": False,
+                },
+            },
+            "required": ["missing_fields", "questions", "suggestions", "improved"],
+            "additionalProperties": False,
+        },
+    },
+}
+
+EPIC_TEXT_DECOMPOSE_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "epic_text_decompose",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "suggested_stories": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string", "minLength": 1, "maxLength": 220},
+                            "summary": {"type": "string", "minLength": 1},
+                            "acceptance_hint": {"type": "string"},
+                        },
+                        "required": ["title", "summary", "acceptance_hint"],
+                        "additionalProperties": False,
+                    },
+                    "minItems": 3,
+                    "maxItems": 15,
+                },
+            },
+            "required": ["suggested_stories"],
+            "additionalProperties": False,
+        },
+    },
+}
+
 
 def _get_openai_client() -> Optional[OpenAI]:
     api_key = os.getenv("OPENAI_API_KEY")
@@ -86,7 +162,7 @@ def _current_user_id() -> int:
     return int(get_jwt_identity())
 
 
-def _build_prompt(
+def _build_prep_analysis_messages(
     text: str,
     work_type: str,
     context: Optional[str],
@@ -94,20 +170,27 @@ def _build_prompt(
     acceptance_criteria: Optional[str],
     nfr: Optional[str],
 ) -> List[dict]:
+    lang_note = "Russian" if str(language).startswith("ru") else "English"
     system = (
-        "Ты опытный Agile-коуч и бизнес-аналитик. Помогай уточнять user story или epic "
-        "по канонам INVEST, проверяй и дополняй критерии приёмки и нефункциональные требования, "
-        "и обязательно возвращай JSON с ключами missing_fields, questions, "
-        "suggestions, improved_example. Используй тот же язык ответа, что указал пользователь."
+        "You are an experienced Agile coach and BA. Review backlog items (story or epic) for INVEST clarity. "
+        f"All human-readable strings in the JSON must be in {lang_note} (locale hint: {language}). "
+        "Output must match the JSON schema exactly.\n"
+        "Rules for improved.acceptance_criteria: provide EXACTLY between 10 and 16 separate criteria. "
+        "Each must be concrete and testable (prefer Given/When/Then or unambiguous bullet). "
+        "No merging several checks into one line; split UI, data, errors, security, edge cases into distinct criteria.\n"
+        "Rules for improved.non_functional_requirements: 3–10 items (performance, security, availability, compliance, etc.).\n"
+        f"improved.item_type must be either \"story\" or \"epic\" and MUST match the user's work type: \"{work_type}\".\n"
+        "improved.description: polished user-facing formulation (epic narrative or story).\n"
+        "improved.context_goal: business goal, risks, dependencies in one coherent text.\n"
+        "missing_fields, questions, suggestions: arrays of short strings (can be empty arrays)."
     )
     user = (
-        f"Тип: {work_type}\n"
-        f"Язык ответа: {language}\n"
-        f"Описание:\n{text}\n"
-        f"Контекст/цель:\n{context or 'не указано'}\n"
-        f"Критерии приёмки (если есть):\n{acceptance_criteria or 'не указано'}\n"
-        f"Нефункциональные требования (если есть):\n{nfr or 'не указано'}\n"
-        "Верни только JSON без markdown."
+        f"work_type: {work_type}\n"
+        f"language: {language}\n"
+        f"description:\n{text}\n"
+        f"context_goal (input):\n{context or 'not specified'}\n"
+        f"acceptance_criteria (input):\n{acceptance_criteria or 'not specified'}\n"
+        f"non_functional (input):\n{nfr or 'not specified'}\n"
     )
     return [
         {"role": "system", "content": system},
@@ -192,19 +275,73 @@ def prepare_backlog_item():
     try:
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=_build_prompt(description, work_type, context, language, acceptance_criteria, nfr),
-            response_format={"type": "json_object"},
+            messages=_build_prep_analysis_messages(
+                description, work_type, context, language, acceptance_criteria, nfr
+            ),
+            response_format=BACKLOG_PREP_ANALYSIS_SCHEMA,
             temperature=0.3,
         )
         content = completion.choices[0].message.content
         payload = json.loads(content)
+        improved = payload.get("improved") or {}
+        if improved.get("item_type") not in ("story", "epic"):
+            improved["item_type"] = work_type if work_type in ("story", "epic") else "story"
         result = {
-            "missing_fields": payload.get("missing_fields", []),
-            "questions": payload.get("questions") or payload.get("clarifying_questions", []),
-            "suggestions": payload.get("suggestions", []),
-            "improved_example": payload.get("improved_example", ""),
+            "missing_fields": payload.get("missing_fields") or [],
+            "questions": payload.get("questions") or [],
+            "suggestions": payload.get("suggestions") or [],
+            "improved": improved,
         }
         return jsonify(result)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": "AI_generation_failed", "details": str(exc)}), 500
+
+
+@bp_backlog_prep.route("/prep/decompose-epic", methods=["POST"])
+@jwt_required()
+def decompose_epic_text():
+    """Декомпозиция текста эпика на предлагаемые user story (без сохранения в БД)."""
+    data = request.get_json() or {}
+    epic_text = (data.get("text") or "").strip()
+    context = (data.get("context") or "").strip()
+    nfr = (data.get("nfr") or "").strip()
+    language = (data.get("language") or "ru").strip() or "ru"
+    if not epic_text:
+        return jsonify({"error": "Укажите описание эпика (text)"}), 400
+
+    client = _get_openai_client()
+    if not client:
+        return jsonify({"error": "OPENAI_API_KEY не задан"}), 500
+
+    lang_name = "Russian" if str(language).startswith("ru") else "English"
+    prompt = f"""
+You are a product owner. The following is an EPIC (large body of work). Propose 3–15 user stories that decompose it.
+Each story: title (short), summary (As a / I want / so that style in {lang_name}), acceptance_hint (2–4 draft AC lines as plain text).
+
+Epic description:
+---
+{epic_text}
+---
+Context / goal:
+{context or '(none)'}
+Non-functional hints:
+{nfr or '(none)'}
+"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You output only JSON matching the schema. Stories must be independently valuable and ordered logically.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            response_format=EPIC_TEXT_DECOMPOSE_SCHEMA,
+            temperature=0.35,
+        )
+        out = json.loads(response.choices[0].message.content)
+        return jsonify({"suggested_stories": out.get("suggested_stories") or []})
     except Exception as exc:  # noqa: BLE001
         return jsonify({"error": "AI_generation_failed", "details": str(exc)}), 500
 

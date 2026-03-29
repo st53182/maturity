@@ -122,6 +122,7 @@ AI_LIMITED_POST_PATHS = {
     "/api/backlog/prep",
     "/api/backlog/prep/assist",
     "/api/backlog/spec-decompose",
+    "/api/backlog/prep/decompose-epic",
     "/api/meeting-design/form-assist",
     "/api/conflict/resolve",
     "/api/api/conflict/resolve",

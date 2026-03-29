@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify, send_from_directory
 from flask_jwt_extended import JWTManager
 from database import db
 from survey import bp_survey
@@ -98,7 +98,7 @@ app.register_blueprint(bp_ai_limits)
 
 @app.errorhandler(AiLimitExceeded)
 def handle_ai_limit_exceeded(e):
-    return {"error": e.message}, 429
+    return jsonify({"error": e.message}), 429
 
 
 # 🎯 Отдача Vue SPA

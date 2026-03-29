@@ -37,9 +37,10 @@
       class="ai-fab"
       :title="$t('meetingDesign.ai.fabTitle')"
       :aria-label="$t('meetingDesign.ai.fabTitle')"
-      @click="topicPanelOpen = true"
+      @click="openTopicPanel"
     >
       <span class="ai-fab__glyph" aria-hidden="true">✨</span>
+      <span class="ai-fab__label">{{ $t('meetingDesign.ai.fabTitle') }}</span>
     </button>
 
     <div
@@ -104,6 +105,8 @@
           </button>
         </div>
 
+        <p v-if="topicError" class="topic-panel__error" role="alert">{{ topicError }}</p>
+
         <p v-if="topicLoading" class="topic-panel__status">{{ $t('meetingDesign.ai.topicsLoading') }}</p>
 
         <ul v-if="topicTopics.length" class="topic-list">
@@ -112,7 +115,7 @@
             <button type="button" class="topic-list__apply" @click="applyTopicToGoal(t)">{{ $t('meetingDesign.ai.applyToGoal') }}</button>
           </li>
         </ul>
-        <p v-else-if="!topicLoading && topicRequestedOnce" class="topic-panel__empty">{{ $t('meetingDesign.ai.noTopics') }}</p>
+        <p v-else-if="!topicLoading && topicRequestedOnce && !topicError && !topicTopics.length" class="topic-panel__empty">{{ $t('meetingDesign.ai.noTopics') }}</p>
       </div>
     </div>
 
@@ -704,6 +707,10 @@ export default {
       this.showCreateModal = true;
     },
 
+    openTopicPanel() {
+      this.topicPanelOpen = true;
+    },
+
     minimizeTopicPanel() {
       this.topicPanelOpen = false;
     },
@@ -713,11 +720,15 @@ export default {
       if (!theme) {
         return;
       }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        this.topicError = this.$t('meetingDesign.ai.loginRequired');
+        return;
+      }
       this.topicLoading = true;
       this.topicRequestedOnce = true;
       this.topicError = '';
       try {
-        const token = localStorage.getItem('token');
         const { data } = await axios.post(
           '/api/meeting-design/ai-conversation-topics',
           {
@@ -731,9 +742,19 @@ export default {
       } catch (error) {
         console.error('ai-conversation-topics:', error);
         this.topicTopics = [];
-        const msg =
-          (error.response && error.response.data && error.response.data.error) ||
-          this.$t('meetingDesign.errorGenerating');
+        const status = error.response && error.response.status;
+        const d = error.response && error.response.data;
+        const fromBody =
+          typeof d === 'string'
+            ? d
+            : d && (d.error || d.msg || d.message);
+        let msg = fromBody;
+        if (!msg && status === 401) {
+          msg = this.$t('meetingDesign.ai.loginRequired');
+        }
+        if (!msg) {
+          msg = this.$t('meetingDesign.errorGenerating');
+        }
         this.topicError = msg;
       } finally {
         this.topicLoading = false;
@@ -1507,28 +1528,42 @@ h1 {
   right: 24px;
   bottom: 24px;
   z-index: 1005;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  width: auto;
+  min-height: 52px;
+  height: auto;
+  padding: 12px 18px;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  gap: 10px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-width: min(calc(100vw - 32px), 340px);
+  text-align: left;
 }
 
 .ai-fab:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.5);
+  transform: scale(1.02);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.48);
 }
 
 .ai-fab__glyph {
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.ai-fab__label {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .topic-panel-overlay {

@@ -362,7 +362,8 @@
       "getHelp": "Get answer",
       "helpLoading": "Processing…",
       "quickHelp": "Quick hint",
-      "noTopics": "Topics will appear here after you request them."
+      "noTopics": "Topics will appear here after you request them.",
+      "loginRequired": "Sign in to use AI (session expired or missing token)."
     }
   },
   "home": {

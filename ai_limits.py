@@ -9,8 +9,11 @@ from flask_jwt_extended import get_jwt_identity, jwt_required, verify_jwt_in_req
 from database import db
 from models import AiUsageCounter
 
-AI_LIMIT_PER_PERIOD = 10
-AI_LIMIT_ERROR = "Достигнут лимит AI-запросов (10 за месяц). Обратитесь к администратору или дождитесь нового периода."
+AI_LIMIT_PER_PERIOD = 50
+AI_LIMIT_ERROR = (
+    f"Достигнут лимит AI-запросов ({AI_LIMIT_PER_PERIOD} за месяц). "
+    "Обратитесь к администратору или дождитесь нового периода."
+)
 
 bp_ai_limits = Blueprint("ai_limits", __name__)
 

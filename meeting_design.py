@@ -82,9 +82,9 @@ TOPIC_SUGGESTIONS_SCHEMA = {
             "properties": {
                 "topics": {
                     "type": "array",
-                    "items": {"type": "string", "minLength": 5, "maxLength": 180},
-                    "minItems": 6,
-                    "maxItems": 8,
+                    "items": {"type": "string", "minLength": 3, "maxLength": 200},
+                    "minItems": 4,
+                    "maxItems": 10,
                 }
             },
             "required": ["topics"],
@@ -191,7 +191,7 @@ def ai_conversation_topics():
 You help facilitators prepare discussion. Meeting type (hint): {meeting_type}.
 Focus / theme: {theme}
 
-Generate exactly 6 to 8 SHORT lines. Each line is ONE concise conversation theme or angle (max ~120 characters).
+Generate 4 to 10 SHORT lines. Each line is ONE concise conversation theme or angle (max ~180 characters).
 Language: {lang_name}. No numbering in strings. Practical and specific.
 Return JSON only with key "topics" (array of strings).
 """

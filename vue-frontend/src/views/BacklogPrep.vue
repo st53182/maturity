@@ -6,6 +6,7 @@
       <p v-if="aiUsageRemaining !== null" class="ai-usage-line">
         {{ $t('backlogPrep.aiUsageLeft', { n: aiUsageRemaining }) }}
       </p>
+      <p v-if="copiedFeedback" class="copy-feedback" role="status">{{ copiedFeedback }}</p>
 
       <section class="prep-intro" aria-labelledby="bp-intro-title">
         <h2 id="bp-intro-title" class="prep-intro__title">{{ $t('backlogPrep.introTitle') }}</h2>
@@ -26,6 +27,84 @@
             <h3><span class="prep-intro__badge">3</span> {{ $t('backlogPrep.introStep3Title') }}</h3>
             <p>{{ $t('backlogPrep.introStep3Body') }}</p>
           </article>
+        </div>
+      </section>
+
+      <section class="library-card" aria-labelledby="lib-title">
+        <h2 id="lib-title" class="section-title">{{ $t('backlogPrep.libraryTitle') }}</h2>
+        <p class="section-lead">{{ $t('backlogPrep.libraryLead') }}</p>
+        <p v-if="libraryLoading" class="muted">{{ $t('common.loading') }}</p>
+        <p v-else-if="!libraryItems.length" class="muted">{{ $t('backlogPrep.libraryEmpty') }}</p>
+        <div v-else class="library-list">
+          <article v-for="root in libraryItems" :key="root.id" class="library-epic">
+            <div class="library-epic__head">
+              <span class="badge badge-epic">Epic</span>
+              <strong>{{ root.title }}</strong>
+              <div class="library-epic__actions">
+                <button type="button" class="linkish" @click="editLibraryItem(root)">{{ $t('backlogPrep.edit') }}</button>
+                <button type="button" class="linkish" @click="copyJira(root, 'wiki')">{{ $t('backlogPrep.copyJiraWiki') }}</button>
+                <button type="button" class="linkish" @click="copyJira(root, 'plain')">{{ $t('backlogPrep.copyJiraPlain') }}</button>
+                <button type="button" class="linkish danger" @click="deleteLibraryItem(root)">{{ $t('backlogPrep.delete') }}</button>
+              </div>
+            </div>
+            <p v-if="root.description" class="library-preview">{{ truncate(root.description, 160) }}</p>
+            <ul v-if="root.children && root.children.length" class="library-stories">
+              <li v-for="ch in root.children" :key="ch.id" class="library-story">
+                <span class="badge badge-story">Story</span>
+                <span class="library-story__title">{{ ch.title }}</span>
+                <div class="library-story__actions">
+                  <button type="button" class="linkish" @click="editLibraryItem(ch)">{{ $t('backlogPrep.edit') }}</button>
+                  <button type="button" class="linkish" @click="copyJira(ch, 'wiki')">{{ $t('backlogPrep.copyJiraWiki') }}</button>
+                  <button type="button" class="linkish" @click="copyJira(ch, 'plain')">{{ $t('backlogPrep.copyJiraPlain') }}</button>
+                  <button type="button" class="linkish danger" @click="deleteLibraryItem(ch)">{{ $t('backlogPrep.delete') }}</button>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="spec-card" aria-labelledby="spec-title">
+        <h2 id="spec-title" class="section-title">{{ $t('backlogPrep.specTitle') }}</h2>
+        <p class="section-lead">{{ $t('backlogPrep.specLead') }}</p>
+        <div class="spec-row">
+          <label class="file-label">
+            <input type="file" accept=".txt,.md,.markdown,.csv" class="file-input" @change="onSpecFile" />
+            <span class="file-btn">{{ $t('backlogPrep.specChooseFile') }}</span>
+          </label>
+          <span v-if="specFileName" class="file-name">{{ specFileName }}</span>
+        </div>
+        <div class="field-block">
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">📄</span>
+            <textarea
+              v-model="specPaste"
+              rows="5"
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': specPaste }"
+            />
+            <label class="floating-label">{{ $t('backlogPrep.specPasteLabel') }}</label>
+          </div>
+        </div>
+        <button type="button" class="secondary-btn" :disabled="specLoading" @click="runSpecDecompose">
+          {{ specLoading ? $t('backlogPrep.specLoading') : $t('backlogPrep.specRun') }}
+        </button>
+        <p v-if="specError" class="assist-error">{{ specError }}</p>
+        <div v-if="specResult" class="spec-result">
+          <h3 class="spec-result__title">{{ specResult.epic_title }}</h3>
+          <p class="spec-result__body">{{ specResult.epic_description }}</p>
+          <p v-if="specResult.epic_context" class="spec-result__ctx"><strong>{{ $t('backlogPrep.context') }}:</strong> {{ specResult.epic_context }}</p>
+          <h4 class="spec-result__sub">{{ $t('backlogPrep.suggestedStories') }}</h4>
+          <ol class="spec-stories">
+            <li v-for="(s, idx) in specResult.suggested_stories" :key="idx">
+              <strong>{{ s.title }}</strong> — {{ s.summary }}
+              <div v-if="s.acceptance_hint" class="spec-ac-hint">{{ s.acceptance_hint }}</div>
+            </li>
+          </ol>
+          <div class="spec-result__actions">
+            <button type="button" class="primary small" @click="applySpecToForm">{{ $t('backlogPrep.applyEpicToForm') }}</button>
+            <button type="button" class="primary small ghost" @click="saveSpecBundle">{{ $t('backlogPrep.saveEpicBundle') }}</button>
+          </div>
         </div>
       </section>
 
@@ -51,6 +130,25 @@
       </section>
 
       <div class="modern-form">
+        <p v-if="editingLibraryId" class="edit-banner">
+          {{ $t('backlogPrep.editingItem', { id: editingLibraryId }) }}
+          <button type="button" class="linkish" @click="clearLibraryEdit">{{ $t('backlogPrep.cancelEdit') }}</button>
+        </p>
+
+        <div class="field-block">
+          <div class="input-wrapper">
+            <span class="input-icon">🏷️</span>
+            <input
+              v-model="form.title"
+              type="text"
+              class="modern-input"
+              :class="{ 'has-value': form.title }"
+            />
+            <label class="floating-label">{{ $t('backlogPrep.itemTitle') }}</label>
+          </div>
+          <p class="field-hint">{{ $t('backlogPrep.hintTitle') }}</p>
+        </div>
+
         <div class="form-grid">
           <div class="field-block">
             <div class="input-wrapper">
@@ -87,6 +185,22 @@
           </div>
         </div>
 
+        <div v-if="form.workType === 'story'" class="field-block">
+          <div class="input-wrapper">
+            <span class="input-icon">🔗</span>
+            <select
+              v-model="form.parentEpicId"
+              class="modern-input modern-select"
+              :class="{ 'has-value': form.parentEpicId !== null && form.parentEpicId !== '' }"
+            >
+              <option :value="''">{{ $t('backlogPrep.noParentEpic') }}</option>
+              <option v-for="e in epicSelectOptions" :key="e.id" :value="e.id">{{ e.title }}</option>
+            </select>
+            <label class="floating-label">{{ $t('backlogPrep.parentEpic') }}</label>
+          </div>
+          <p class="field-hint">{{ $t('backlogPrep.hintParentEpic') }}</p>
+        </div>
+
         <div class="field-block">
           <div class="input-wrapper textarea-wrapper">
             <span class="input-icon">📝</span>
@@ -99,6 +213,34 @@
             <label class="floating-label">{{ $t('backlogPrep.description') }}</label>
           </div>
           <p class="field-hint">{{ $t('backlogPrep.hintDescription') }}</p>
+        </div>
+
+        <div class="field-block">
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">✅</span>
+            <textarea
+              v-model="form.acceptance_criteria"
+              rows="4"
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.acceptance_criteria }"
+            />
+            <label class="floating-label">{{ $t('backlogPrep.acceptanceCriteria') }}</label>
+          </div>
+          <p class="field-hint">{{ $t('backlogPrep.hintAc') }}</p>
+        </div>
+
+        <div class="field-block">
+          <div class="input-wrapper textarea-wrapper">
+            <span class="input-icon">⚙️</span>
+            <textarea
+              v-model="form.nfr"
+              rows="3"
+              class="modern-input modern-textarea"
+              :class="{ 'has-value': form.nfr }"
+            />
+            <label class="floating-label">{{ $t('backlogPrep.nfr') }}</label>
+          </div>
+          <p class="field-hint">{{ $t('backlogPrep.hintNfr') }}</p>
         </div>
 
         <div class="field-block">
@@ -116,10 +258,16 @@
         </div>
       </div>
 
-      <div class="actions">
+      <div class="actions actions--wrap">
         <button class="primary" :disabled="loading" @click="analyze">
           {{ loading ? $t('common.loading') : $t('backlogPrep.run') }}
         </button>
+        <button type="button" class="primary ghost" :disabled="saveLibraryLoading" @click="saveToLibrary">
+          {{ saveLibraryLoading ? $t('common.loading') : $t('backlogPrep.saveLibrary') }}
+        </button>
+        <button type="button" class="secondary-btn" @click="copyCurrentJira('wiki')">{{ $t('backlogPrep.copyFormWiki') }}</button>
+        <button type="button" class="secondary-btn" @click="copyCurrentJira('plain')">{{ $t('backlogPrep.copyFormPlain') }}</button>
+        <button type="button" class="secondary-btn" @click="copyCurrentSummary">{{ $t('backlogPrep.copySummary') }}</button>
         <span v-if="error" class="error">{{ error }}</span>
       </div>
 
@@ -169,21 +317,172 @@ export default {
       assistLoading: false,
       assistError: "",
       aiUsageRemaining: null,
+      libraryItems: [],
+      libraryLoading: false,
+      saveLibraryLoading: false,
+      editingLibraryId: null,
+      specPaste: "",
+      specFile: null,
+      specFileName: "",
+      specLoading: false,
+      specError: "",
+      specResult: null,
+      copiedFeedback: "",
+      copyTimer: null,
       form: {
+        title: "",
         text: "",
         context: "",
+        acceptance_criteria: "",
+        nfr: "",
         workType: "story",
         language: "ru",
+        parentEpicId: "",
       },
     };
   },
+  computed: {
+    epicSelectOptions() {
+      return (this.libraryItems || []).filter((r) => r.item_type === "epic");
+    },
+  },
   mounted() {
     this.fetchAiUsage();
+    this.loadLibrary();
   },
   methods: {
     authHeaders() {
       const token = localStorage.getItem("token");
       return token ? { Authorization: `Bearer ${token}` } : {};
+    },
+    truncate(s, n) {
+      if (!s) return "";
+      return s.length <= n ? s : `${s.slice(0, n)}…`;
+    },
+    deriveTitle(text) {
+      const line = (text || "")
+        .split("\n")
+        .map((x) => x.trim())
+        .find(Boolean);
+      if (!line) return this.$t("backlogPrep.untitled");
+      return line.length > 120 ? `${line.slice(0, 117)}…` : line;
+    },
+    flashCopied(msg) {
+      this.copiedFeedback = msg;
+      if (this.copyTimer) clearTimeout(this.copyTimer);
+      this.copyTimer = setTimeout(() => {
+        this.copiedFeedback = "";
+      }, 2200);
+    },
+    async copyText(text, msgKey) {
+      try {
+        await navigator.clipboard.writeText(text);
+        this.flashCopied(this.$t(msgKey));
+      } catch {
+        this.flashCopied(this.$t("backlogPrep.copyFailed"));
+      }
+    },
+    buildExportPayload(item) {
+      return {
+        title: (item.title || "").trim() || this.deriveTitle(item.description),
+        description: item.description || "",
+        acceptance_criteria: item.acceptance_criteria || "",
+        nfr: item.nfr || "",
+        context: item.context || "",
+      };
+    },
+    formatJiraWiki(p) {
+      const lines = [];
+      lines.push(`*${p.title}*`);
+      lines.push("");
+      lines.push("h2. Description");
+      lines.push(p.description || "—");
+      if (p.context) {
+        lines.push("");
+        lines.push("h3. Context");
+        lines.push(p.context);
+      }
+      if (p.acceptance_criteria) {
+        lines.push("");
+        lines.push("h3. Acceptance criteria");
+        p.acceptance_criteria
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .forEach((l) => {
+            const t = l.replace(/^[-*•]\s*/, "");
+            lines.push(`* ${t}`);
+          });
+      }
+      if (p.nfr) {
+        lines.push("");
+        lines.push("h3. Non-functional requirements");
+        p.nfr
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .forEach((l) => {
+            const t = l.replace(/^[-*•]\s*/, "");
+            lines.push(`* ${t}`);
+          });
+      }
+      return lines.join("\n");
+    },
+    formatJiraPlain(p) {
+      const sep = "────────────────────────";
+      const lines = [];
+      lines.push(`SUMMARY: ${p.title}`);
+      lines.push(sep);
+      lines.push("DESCRIPTION");
+      lines.push(p.description || "—");
+      if (p.context) {
+        lines.push("");
+        lines.push("CONTEXT");
+        lines.push(p.context);
+      }
+      if (p.acceptance_criteria) {
+        lines.push("");
+        lines.push("ACCEPTANCE CRITERIA");
+        p.acceptance_criteria
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .forEach((l) => {
+            lines.push(`- ${l.replace(/^[-*•]\s*/, "")}`);
+          });
+      }
+      if (p.nfr) {
+        lines.push("");
+        lines.push("NON-FUNCTIONAL");
+        p.nfr
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .forEach((l) => {
+            lines.push(`- ${l.replace(/^[-*•]\s*/, "")}`);
+          });
+      }
+      return lines.join("\n");
+    },
+    copyJira(item, mode) {
+      const p = this.buildExportPayload(item);
+      const text = mode === "wiki" ? this.formatJiraWiki(p) : this.formatJiraPlain(p);
+      this.copyText(text, "backlogPrep.copied");
+    },
+    copyCurrentJira(mode) {
+      const p = this.buildExportPayload({
+        title: this.form.title,
+        description: this.form.text,
+        acceptance_criteria: this.form.acceptance_criteria,
+        nfr: this.form.nfr,
+        context: this.form.context,
+      });
+      const text = mode === "wiki" ? this.formatJiraWiki(p) : this.formatJiraPlain(p);
+      this.copyText(text, "backlogPrep.copied");
+    },
+    copyCurrentSummary() {
+      const t = (this.form.title || "").trim() || this.deriveTitle(this.form.text);
+      this.copyText(t, "backlogPrep.copiedSummary");
     },
     async fetchAiUsage() {
       try {
@@ -191,6 +490,141 @@ export default {
         this.aiUsageRemaining = data?.remaining ?? null;
       } catch {
         this.aiUsageRemaining = null;
+      }
+    },
+    async loadLibrary() {
+      this.libraryLoading = true;
+      try {
+        const { data } = await axios.get("/api/backlog/items", { headers: this.authHeaders() });
+        this.libraryItems = data.items || [];
+      } catch {
+        this.libraryItems = [];
+      } finally {
+        this.libraryLoading = false;
+      }
+    },
+    clearLibraryEdit() {
+      this.editingLibraryId = null;
+    },
+    editLibraryItem(item) {
+      this.editingLibraryId = item.id;
+      this.form.workType = item.item_type || "story";
+      this.form.title = item.title || "";
+      this.form.text = item.description || "";
+      this.form.context = item.context || "";
+      this.form.acceptance_criteria = item.acceptance_criteria || "";
+      this.form.nfr = item.nfr || "";
+      this.form.parentEpicId = item.parent_id != null ? String(item.parent_id) : "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    async deleteLibraryItem(item) {
+      if (!window.confirm(this.$t("backlogPrep.deleteConfirm"))) return;
+      try {
+        await axios.delete(`/api/backlog/items/${item.id}`, { headers: this.authHeaders() });
+        await this.loadLibrary();
+      } catch (e) {
+        this.error = e?.response?.data?.error || this.$t("common.error");
+      }
+    },
+    async saveToLibrary() {
+      this.error = "";
+      const title = (this.form.title || "").trim() || this.deriveTitle(this.form.text);
+      if (!(this.form.text || "").trim()) {
+        this.error = this.$t("backlogPrep.validation");
+        return;
+      }
+      const payload = {
+        item_type: this.form.workType || "story",
+        title,
+        description: (this.form.text || "").trim(),
+        acceptance_criteria: (this.form.acceptance_criteria || "").trim(),
+        nfr: (this.form.nfr || "").trim(),
+        context: (this.form.context || "").trim(),
+      };
+      if (this.form.workType === "story") {
+        if (this.form.parentEpicId) {
+          const pid = parseInt(String(this.form.parentEpicId), 10);
+          payload.parent_id = Number.isNaN(pid) ? null : pid;
+        } else {
+          payload.parent_id = null;
+        }
+      }
+      this.saveLibraryLoading = true;
+      try {
+        if (this.editingLibraryId) {
+          await axios.put(`/api/backlog/items/${this.editingLibraryId}`, payload, {
+            headers: { ...this.authHeaders(), "Content-Type": "application/json" },
+          });
+        } else {
+          await axios.post("/api/backlog/items", payload, {
+            headers: { ...this.authHeaders(), "Content-Type": "application/json" },
+          });
+        }
+        this.editingLibraryId = null;
+        await this.loadLibrary();
+        this.flashCopied(this.$t("backlogPrep.savedLibrary"));
+      } catch (e) {
+        this.error = e?.response?.data?.error || this.$t("common.error");
+      } finally {
+        this.saveLibraryLoading = false;
+      }
+    },
+    onSpecFile(ev) {
+      const f = ev.target.files && ev.target.files[0];
+      this.specFile = f || null;
+      this.specFileName = f ? f.name : "";
+    },
+    async runSpecDecompose() {
+      this.specError = "";
+      this.specResult = null;
+      const hasText = (this.specPaste || "").trim().length >= 80;
+      if (!this.specFile && !hasText) {
+        this.specError = this.$t("backlogPrep.specTooShort");
+        return;
+      }
+      this.specLoading = true;
+      try {
+        const fd = new FormData();
+        if (this.specFile) fd.append("file", this.specFile);
+        if ((this.specPaste || "").trim()) fd.append("text", (this.specPaste || "").trim());
+        fd.append("language", this.form.language || "ru");
+        const { data } = await axios.post("/api/backlog/spec-decompose", fd, {
+          headers: { ...this.authHeaders() },
+        });
+        this.specResult = data;
+        await this.fetchAiUsage();
+      } catch (e) {
+        this.specError =
+          e?.response?.data?.error || e?.response?.data?.details || e?.message || this.$t("common.error");
+      } finally {
+        this.specLoading = false;
+      }
+    },
+    applySpecToForm() {
+      if (!this.specResult) return;
+      this.form.workType = "epic";
+      this.form.title = this.specResult.epic_title || "";
+      this.form.text = this.specResult.epic_description || "";
+      this.form.context = this.specResult.epic_context || "";
+      this.form.acceptance_criteria = "";
+      this.form.nfr = "";
+      this.form.parentEpicId = "";
+      this.flashCopied(this.$t("backlogPrep.appliedToForm"));
+    },
+    async saveSpecBundle() {
+      if (!this.specResult) return;
+      try {
+        await axios.post("/api/backlog/items/from-spec", this.specResult, {
+          headers: { ...this.authHeaders(), "Content-Type": "application/json" },
+        });
+        this.specResult = null;
+        this.specPaste = "";
+        this.specFile = null;
+        this.specFileName = "";
+        await this.loadLibrary();
+        this.flashCopied(this.$t("backlogPrep.bundleSaved"));
+      } catch (e) {
+        this.specError = e?.response?.data?.error || this.$t("common.error");
       }
     },
     async runAssist() {
@@ -210,15 +644,18 @@ export default {
             language: this.form.language,
             existing_text: this.form.text,
             existing_context: this.form.context,
+            existing_acceptance_criteria: this.form.acceptance_criteria,
+            existing_nfr: this.form.nfr,
           },
           { headers: { ...this.authHeaders(), "Content-Type": "application/json" } }
         );
         if (data.suggested_text) this.form.text = data.suggested_text;
         if (data.suggested_context) this.form.context = data.suggested_context;
+        if (data.suggested_acceptance_criteria != null) this.form.acceptance_criteria = data.suggested_acceptance_criteria;
+        if (data.suggested_nfr != null) this.form.nfr = data.suggested_nfr;
         await this.fetchAiUsage();
       } catch (err) {
-        this.assistError =
-          err?.response?.data?.error || err?.message || this.$t("common.error");
+        this.assistError = err?.response?.data?.error || err?.message || this.$t("common.error");
       } finally {
         this.assistLoading = false;
       }
@@ -234,26 +671,22 @@ export default {
 
       this.loading = true;
       try {
-        const token = localStorage.getItem("token");
         const { data } = await axios.post(
           "/api/backlog/prep",
           {
             text: this.form.text,
             context: this.form.context,
+            acceptance_criteria: this.form.acceptance_criteria,
+            nfr: this.form.nfr,
             work_type: this.form.workType,
             language: this.form.language,
           },
-          token
-            ? { headers: { Authorization: `Bearer ${token}` } }
-            : undefined
+          { headers: { ...this.authHeaders(), "Content-Type": "application/json" } }
         );
         this.result = data;
         await this.fetchAiUsage();
       } catch (err) {
-        this.error =
-          err?.response?.data?.error ||
-          err?.message ||
-          this.$t("common.error");
+        this.error = err?.response?.data?.error || err?.message || this.$t("common.error");
       } finally {
         this.loading = false;
       }
@@ -299,6 +732,13 @@ h1 {
   margin: 0 0 20px;
   font-size: 14px;
   color: #475569;
+}
+
+.copy-feedback {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #059669;
+  font-weight: 600;
 }
 
 .prep-intro {
@@ -374,6 +814,240 @@ h1 {
   color: #fff;
   font-size: 13px;
   font-weight: 700;
+}
+
+.section-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  color: #0c4a6e;
+}
+
+.section-lead {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.library-card,
+.spec-card {
+  margin-bottom: 28px;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.library-epic {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.library-epic__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.library-epic__head strong {
+  flex: 1 1 200px;
+  color: #111827;
+}
+
+.library-epic__actions,
+.library-story__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.library-preview {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.library-stories {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.library-story {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+}
+
+.library-story__title {
+  flex: 1 1 180px;
+  color: #374151;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.badge-epic {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.badge-story {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.linkish {
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.linkish.danger {
+  color: #dc2626;
+}
+
+.spec-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.file-label {
+  cursor: pointer;
+}
+
+.file-btn {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #fff;
+  border: 2px solid #0ea5e9;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #0369a1;
+}
+
+.file-name {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.spec-result {
+  margin-top: 18px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #bae6fd;
+}
+
+.spec-result__title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.spec-result__body {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #374151;
+}
+
+.spec-result__ctx {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0 0 12px;
+}
+
+.spec-result__sub {
+  margin: 16px 0 8px;
+  font-size: 15px;
+  color: #111827;
+}
+
+.spec-stories {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.spec-ac-hint {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6b7280;
+  white-space: pre-wrap;
+}
+
+.spec-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.primary.small {
+  padding: 10px 18px;
+  font-size: 14px;
+}
+
+.primary.ghost {
+  background: #fff;
+  color: #0284c7;
+  border: 2px solid #0ea5e9;
+  box-shadow: none;
+}
+
+.edit-banner {
+  padding: 10px 14px;
+  background: #fef3c7;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .ai-assist-card {
@@ -566,6 +1240,10 @@ h1 {
   margin: 24px 0 32px;
 }
 
+.actions--wrap {
+  flex-wrap: wrap;
+}
+
 .primary {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: #fff;
@@ -601,7 +1279,7 @@ h1 {
   margin-top: 32px;
 }
 
-section {
+.results section {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -609,18 +1287,18 @@ section {
   border-left: 4px solid #0ea5e9;
 }
 
-section:hover {
+.results section:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-h3 {
+.results h3 {
   margin: 0 0 16px;
   font-size: 18px;
   font-weight: 600;
   color: #111827;
 }
 
-ul {
+.results ul {
   margin: 0;
   padding-left: 24px;
   color: #4b5563;

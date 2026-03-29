@@ -456,3 +456,50 @@ class QAUserStorySubmission(db.Model):
     acceptance_criteria = db.Column(db.Text, nullable=False, default='[]')  # JSON array of strings
     score = db.Column(db.Integer, nullable=True)
     ac_count = db.Column(db.Integer, nullable=True)
+
+
+class BacklogWorkItem(db.Model):
+    """Эпики и истории подготовки бэклога (PO): хранение, декомпозиция, экспорт в Jira."""
+
+    __tablename__ = "backlog_work_item"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("backlog_work_item.id"), nullable=True, index=True)
+    item_type = db.Column(db.String(20), nullable=False)  # epic | story
+
+    title = db.Column(db.String(500), nullable=False, default="")
+    description = db.Column(db.Text, nullable=False, default="")
+    acceptance_criteria = db.Column(db.Text, nullable=True)
+    nfr = db.Column(db.Text, nullable=True)
+    context = db.Column(db.Text, nullable=True)
+    decomposition_suggestions = db.Column(JSON, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship("User", backref=db.backref("backlog_work_items", lazy=True))
+    children = db.relationship(
+        "BacklogWorkItem",
+        backref=db.backref("parent", remote_side=[id]),
+    )
+
+    def to_dict(self, include_children: bool = False):
+        out = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "parent_id": self.parent_id,
+            "item_type": self.item_type,
+            "title": self.title or "",
+            "description": self.description or "",
+            "acceptance_criteria": self.acceptance_criteria or "",
+            "nfr": self.nfr or "",
+            "context": self.context or "",
+            "decomposition_suggestions": self.decomposition_suggestions,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_children:
+            ch = sorted(self.children, key=lambda c: c.id)
+            out["children"] = [c.to_dict(include_children=False) for c in ch]
+        return out

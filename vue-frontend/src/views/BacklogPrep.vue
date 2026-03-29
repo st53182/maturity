@@ -30,43 +30,18 @@
         </div>
       </section>
 
-      <section class="library-card" aria-labelledby="lib-title">
-        <h2 id="lib-title" class="section-title">{{ $t('backlogPrep.libraryTitle') }}</h2>
-        <p class="section-lead">{{ $t('backlogPrep.libraryLead') }}</p>
-        <p v-if="libraryLoading" class="muted">{{ $t('common.loading') }}</p>
-        <p v-else-if="!libraryItems.length" class="muted">{{ $t('backlogPrep.libraryEmpty') }}</p>
-        <div v-else class="library-list">
-          <article v-for="root in libraryItems" :key="root.id" class="library-epic">
-            <div class="library-epic__head">
-              <span class="badge badge-epic">Epic</span>
-              <strong>{{ root.title }}</strong>
-              <div class="library-epic__actions">
-                <button type="button" class="linkish" @click="editLibraryItem(root)">{{ $t('backlogPrep.edit') }}</button>
-                <button type="button" class="linkish" @click="copyJira(root, 'wiki')">{{ $t('backlogPrep.copyJiraWiki') }}</button>
-                <button type="button" class="linkish" @click="copyJira(root, 'plain')">{{ $t('backlogPrep.copyJiraPlain') }}</button>
-                <button type="button" class="linkish danger" @click="deleteLibraryItem(root)">{{ $t('backlogPrep.delete') }}</button>
-              </div>
-            </div>
-            <p v-if="root.description" class="library-preview">{{ truncate(root.description, 160) }}</p>
-            <ul v-if="root.children && root.children.length" class="library-stories">
-              <li v-for="ch in root.children" :key="ch.id" class="library-story">
-                <span class="badge badge-story">Story</span>
-                <span class="library-story__title">{{ ch.title }}</span>
-                <div class="library-story__actions">
-                  <button type="button" class="linkish" @click="editLibraryItem(ch)">{{ $t('backlogPrep.edit') }}</button>
-                  <button type="button" class="linkish" @click="copyJira(ch, 'wiki')">{{ $t('backlogPrep.copyJiraWiki') }}</button>
-                  <button type="button" class="linkish" @click="copyJira(ch, 'plain')">{{ $t('backlogPrep.copyJiraPlain') }}</button>
-                  <button type="button" class="linkish danger" @click="deleteLibraryItem(ch)">{{ $t('backlogPrep.delete') }}</button>
-                </div>
-              </li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section class="spec-card" aria-labelledby="spec-title">
-        <h2 id="spec-title" class="section-title">{{ $t('backlogPrep.specTitle') }}</h2>
-        <p class="section-lead">{{ $t('backlogPrep.specLead') }}</p>
+      <!-- Блок 1: декомпозиция и файл -->
+      <section class="prep-block prep-block--decompose" aria-labelledby="block-decompose-title">
+        <header class="prep-block__header">
+          <span class="prep-block__badge" aria-hidden="true">1</span>
+          <div class="prep-block__head-text">
+            <h2 id="block-decompose-title" class="prep-block__title">{{ $t('backlogPrep.blockDecomposeTitle') }}</h2>
+            <p class="prep-block__lead">{{ $t('backlogPrep.blockDecomposeLead') }}</p>
+          </div>
+        </header>
+        <div class="prep-block__body spec-card spec-card--nested">
+          <h3 id="spec-title" class="spec-card__subtitle">{{ $t('backlogPrep.specTitle') }}</h3>
+          <p class="section-lead">{{ $t('backlogPrep.specLead') }}</p>
         <div class="spec-row">
           <label class="file-label">
             <input type="file" accept=".txt,.md,.markdown,.csv" class="file-input" @change="onSpecFile" />
@@ -106,8 +81,19 @@
             <button type="button" class="primary small ghost" @click="saveSpecBundle">{{ $t('backlogPrep.saveEpicBundle') }}</button>
           </div>
         </div>
+        </div>
       </section>
 
+      <!-- Блок 2: черновик истории / эпика -->
+      <section class="prep-block prep-block--compose" aria-labelledby="block-compose-title">
+        <header class="prep-block__header">
+          <span class="prep-block__badge" aria-hidden="true">2</span>
+          <div class="prep-block__head-text">
+            <h2 id="block-compose-title" class="prep-block__title">{{ $t('backlogPrep.blockComposeTitle') }}</h2>
+            <p class="prep-block__lead">{{ $t('backlogPrep.blockComposeLead') }}</p>
+          </div>
+        </header>
+        <div class="prep-block__body">
       <section class="ai-assist-card" aria-label="AI">
         <h2 class="ai-assist-card__title">✨ {{ $t('backlogPrep.assistTitle') }}</h2>
         <p class="ai-assist-card__hint">{{ $t('backlogPrep.assistHint') }}</p>
@@ -185,18 +171,18 @@
           </div>
         </div>
 
-        <div v-if="form.workType === 'story'" class="field-block">
-          <div class="input-wrapper">
-            <span class="input-icon">🔗</span>
+        <div v-if="form.workType === 'story'" class="field-block field-block--plain-select">
+          <label class="plain-field-label" for="backlog-parent-epic">{{ $t('backlogPrep.parentEpic') }}</label>
+          <div class="input-wrapper input-wrapper--plain-select">
+            <span class="input-icon" aria-hidden="true">🔗</span>
             <select
+              id="backlog-parent-epic"
               v-model="form.parentEpicId"
-              class="modern-input modern-select"
-              :class="{ 'has-value': form.parentEpicId !== null && form.parentEpicId !== '' }"
+              class="modern-input modern-select modern-select--plain"
             >
               <option :value="''">{{ $t('backlogPrep.noParentEpic') }}</option>
-              <option v-for="e in epicSelectOptions" :key="e.id" :value="e.id">{{ e.title }}</option>
+              <option v-for="e in epicSelectOptions" :key="e.id" :value="String(e.id)">{{ e.title }}</option>
             </select>
-            <label class="floating-label">{{ $t('backlogPrep.parentEpic') }}</label>
           </div>
           <p class="field-hint">{{ $t('backlogPrep.hintParentEpic') }}</p>
         </div>
@@ -271,33 +257,95 @@
         <span v-if="error" class="error">{{ error }}</span>
       </div>
 
-      <div v-if="result" class="results">
-        <section v-if="result.missing_fields?.length">
-          <h3>🧩 {{ $t('backlogPrep.missingFields') }}</h3>
-          <ul>
-            <li v-for="item in result.missing_fields" :key="item">{{ item }}</li>
-          </ul>
-        </section>
+      <section class="library-card library-card--nested" aria-labelledby="lib-title">
+        <h2 id="lib-title" class="library-card__title">{{ $t('backlogPrep.libraryTitle') }}</h2>
+        <p class="section-lead">{{ $t('backlogPrep.libraryLead') }}</p>
+        <p v-if="libraryLoading" class="muted">{{ $t('common.loading') }}</p>
+        <p v-else-if="!libraryItems.length" class="muted">{{ $t('backlogPrep.libraryEmpty') }}</p>
+        <div v-else class="library-list">
+          <article v-for="root in libraryItems" :key="root.id" class="library-epic">
+            <div class="library-epic__head">
+              <span class="badge badge-epic">Epic</span>
+              <strong>{{ root.title }}</strong>
+              <div class="library-epic__actions">
+                <button type="button" class="linkish" @click="editLibraryItem(root)">{{ $t('backlogPrep.edit') }}</button>
+                <button type="button" class="linkish" @click="copyJira(root, 'wiki')">{{ $t('backlogPrep.copyJiraWiki') }}</button>
+                <button type="button" class="linkish" @click="copyJira(root, 'plain')">{{ $t('backlogPrep.copyJiraPlain') }}</button>
+                <button type="button" class="linkish danger" @click="deleteLibraryItem(root)">{{ $t('backlogPrep.delete') }}</button>
+              </div>
+            </div>
+            <p v-if="root.description" class="library-preview">{{ truncate(root.description, 160) }}</p>
+            <ul v-if="root.children && root.children.length" class="library-stories">
+              <li v-for="ch in root.children" :key="ch.id" class="library-story">
+                <span class="badge badge-story">Story</span>
+                <span class="library-story__title">{{ ch.title }}</span>
+                <div class="library-story__actions">
+                  <button type="button" class="linkish" @click="editLibraryItem(ch)">{{ $t('backlogPrep.edit') }}</button>
+                  <button type="button" class="linkish" @click="copyJira(ch, 'wiki')">{{ $t('backlogPrep.copyJiraWiki') }}</button>
+                  <button type="button" class="linkish" @click="copyJira(ch, 'plain')">{{ $t('backlogPrep.copyJiraPlain') }}</button>
+                  <button type="button" class="linkish danger" @click="deleteLibraryItem(ch)">{{ $t('backlogPrep.delete') }}</button>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
 
-        <section v-if="result.questions?.length">
-          <h3>❓ {{ $t('backlogPrep.questions') }}</h3>
-          <ul>
-            <li v-for="item in result.questions" :key="item">{{ item }}</li>
-          </ul>
-        </section>
+        </div>
+      </section>
 
-        <section v-if="result.suggestions?.length">
-          <h3>💡 {{ $t('backlogPrep.suggestions') }}</h3>
-          <ul>
-            <li v-for="item in result.suggestions" :key="item">{{ item }}</li>
-          </ul>
-        </section>
-
-        <section v-if="result.improved_example">
-          <h3>📝 {{ $t('backlogPrep.improvedExample') }}</h3>
-          <div class="example">{{ result.improved_example }}</div>
-        </section>
-      </div>
+      <!-- Блок 3: проверка и рекомендации -->
+      <section class="prep-block prep-block--review" aria-labelledby="block-review-title">
+        <header class="prep-block__header">
+          <span class="prep-block__badge" aria-hidden="true">3</span>
+          <div class="prep-block__head-text">
+            <h2 id="block-review-title" class="prep-block__title">{{ $t('backlogPrep.blockReviewTitle') }}</h2>
+            <p class="prep-block__lead">{{ $t('backlogPrep.blockReviewLead') }}</p>
+          </div>
+        </header>
+        <div class="review-shell">
+          <div v-if="!result" class="review-shell__empty">
+            {{ $t('backlogPrep.blockReviewEmpty') }}
+          </div>
+          <div v-else class="review-shell__filled">
+            <div class="review-report">
+              <div v-if="result.missing_fields?.length" class="review-card">
+                <h3 class="review-card__title">🧩 {{ $t('backlogPrep.missingFields') }}</h3>
+                <ul class="review-card__list">
+                  <li v-for="item in result.missing_fields" :key="'m-' + item">{{ item }}</li>
+                </ul>
+              </div>
+              <div v-if="result.questions?.length" class="review-card">
+                <h3 class="review-card__title">❓ {{ $t('backlogPrep.questions') }}</h3>
+                <ul class="review-card__list">
+                  <li v-for="item in result.questions" :key="'q-' + item">{{ item }}</li>
+                </ul>
+              </div>
+              <div v-if="result.suggestions?.length" class="review-card">
+                <h3 class="review-card__title">💡 {{ $t('backlogPrep.suggestions') }}</h3>
+                <ul class="review-card__list">
+                  <li v-for="item in result.suggestions" :key="'s-' + item">{{ item }}</li>
+                </ul>
+              </div>
+              <div v-if="result.improved_example" class="review-card review-card--example">
+                <h3 class="review-card__title">📝 {{ $t('backlogPrep.improvedExample') }}</h3>
+                <div class="review-card__example">{{ result.improved_example }}</div>
+              </div>
+              <p
+                v-if="
+                  !result.missing_fields?.length &&
+                  !result.questions?.length &&
+                  !result.suggestions?.length &&
+                  !result.improved_example
+                "
+                class="review-shell__empty"
+              >
+                {{ $t('backlogPrep.blockReviewEmpty') }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -816,6 +864,186 @@ h1 {
   font-weight: 700;
 }
 
+.prep-block {
+  margin-bottom: 32px;
+  border-radius: 18px;
+  border: 2px solid #bae6fd;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(14, 165, 233, 0.08);
+}
+
+.prep-block--decompose {
+  border-color: #7dd3fc;
+}
+
+.prep-block--compose {
+  border-color: #c7d2fe;
+}
+
+.prep-block--review {
+  border-color: #5eead4;
+}
+
+.prep-block__header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 22px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prep-block--compose .prep-block__header {
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+}
+
+.prep-block--review .prep-block__header {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ecfeff 100%);
+}
+
+.prep-block__badge {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prep-block--compose .prep-block__badge {
+  background: #6366f1;
+}
+
+.prep-block--review .prep-block__badge {
+  background: #0d9488;
+}
+
+.prep-block__head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.prep-block__title {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.prep-block__lead {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.prep-block__body {
+  padding: 20px 22px 24px;
+}
+
+.plain-field-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.input-wrapper--plain-select .modern-select--plain {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  min-height: 52px;
+  line-height: 1.45;
+}
+
+.input-wrapper--plain-select .modern-select--plain:focus,
+.input-wrapper--plain-select .modern-select--plain.has-value {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.review-shell {
+  padding: 20px 22px 24px;
+}
+
+.review-shell__empty {
+  margin: 0;
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 15px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  line-height: 1.55;
+}
+
+.review-report {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.review-card__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.review-card__list {
+  margin: 0;
+  padding-left: 22px;
+  color: #374151;
+  line-height: 1.65;
+}
+
+.review-card--example {
+  border-color: #bae6fd;
+  background: linear-gradient(to bottom, #fff 0%, #f0f9ff 100%);
+}
+
+.review-card__example {
+  white-space: pre-wrap;
+  color: #1e293b;
+  line-height: 1.65;
+  font-size: 14px;
+  padding: 14px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e0f2fe;
+}
+
+.spec-card__subtitle {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: #0c4a6e;
+}
+
+.library-card__title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: #312e81;
+}
+
+.library-card--nested {
+  margin-top: 8px;
+}
+
 .section-title {
   margin: 0 0 8px;
   font-size: 1.15rem;
@@ -829,13 +1057,31 @@ h1 {
   line-height: 1.5;
 }
 
-.library-card,
 .spec-card {
   margin-bottom: 28px;
   padding: 22px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   background: #fafafa;
+}
+
+.spec-card--nested {
+  margin-bottom: 0;
+  background: #f8fafc;
+}
+
+.library-card {
+  margin-bottom: 28px;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.library-card--nested {
+  margin-bottom: 0;
+  background: #f8fafc;
+  border-style: dashed;
 }
 
 .muted {
@@ -1271,50 +1517,6 @@ h1 {
   color: #ef4444;
   font-size: 14px;
   font-weight: 500;
-}
-
-.results {
-  display: grid;
-  gap: 24px;
-  margin-top: 32px;
-}
-
-.results section {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 24px;
-  border-left: 4px solid #0ea5e9;
-}
-
-.results section:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.results h3 {
-  margin: 0 0 16px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.results ul {
-  margin: 0;
-  padding-left: 24px;
-  color: #4b5563;
-  line-height: 1.8;
-}
-
-.example {
-  white-space: pre-wrap;
-  color: #374151;
-  line-height: 1.7;
-  background: #f0f9ff;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #bae6fd;
-  font-size: 14px;
-  margin-top: 12px;
 }
 
 @media (max-width: 768px) {

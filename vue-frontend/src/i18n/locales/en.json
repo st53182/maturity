@@ -771,11 +771,18 @@
     "savedLibrary": "Saved to library",
     "bundleSaved": "Epic and stories saved",
     "appliedToForm": "Applied to the form",
-    "editingItem": "Editing #{id}",
+    "editingItem": "Editing item #{id}",
     "cancelEdit": "Cancel",
     "noParentEpic": "No parent epic",
     "parentEpic": "Parent epic",
     "hintParentEpic": "Link a story to a saved epic when creating or updating.",
-    "untitled": "Untitled"
+    "untitled": "Untitled",
+    "blockDecomposeTitle": "Decomposition & specification",
+    "blockDecomposeLead": "Upload or paste a business spec — the AI suggests an epic and candidate user stories.",
+    "blockComposeTitle": "Story or epic draft",
+    "blockComposeLead": "Fill fields manually or with AI assist, save to your library, and optionally link a story to an epic.",
+    "blockReviewTitle": "Review & recommendations",
+    "blockReviewLead": "After “Check description”, a structured report appears here: gaps, questions, ideas, and an example wording.",
+    "blockReviewEmpty": "Run “Check description” to analyze your draft. Results will show in this panel."
   }
 }

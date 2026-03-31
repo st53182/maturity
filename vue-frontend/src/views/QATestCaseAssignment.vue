@@ -78,7 +78,6 @@
         <h3>{{ $t('qa.tcSteps') }}</h3>
         <div class="steps-actions">
           <button type="button" class="doc-btn small" @click="addRow">{{ $t('qa.tcAddRow') }}</button>
-          <button type="button" class="doc-btn small" :disabled="form.steps.length <= 1" @click="removeLastRow">{{ $t('qa.tcRemoveLastRow') }}</button>
           <span class="steps-count">{{ $t('qa.tcRowsCount') }}: {{ form.steps.length }}</span>
         </div>
         <div class="steps-table-wrap">
@@ -389,11 +388,6 @@ export default {
     },
     addRow() {
       this.form.steps.push(makeStepByIndex(this.form.steps.length));
-      this.normalizeStepIds();
-    },
-    removeLastRow() {
-      if (this.form.steps.length <= 1) return;
-      this.form.steps.pop();
       this.normalizeStepIds();
     },
     removeRow(index) {

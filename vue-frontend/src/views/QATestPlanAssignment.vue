@@ -23,6 +23,18 @@
         </select>
       </div>
       <p v-if="error" class="doc-error">{{ error }}</p>
+      <div v-if="fieldSuggestion.open" class="field-suggest-box">
+        <div class="field-suggest-head">
+          <strong>{{ $t('qa.docFieldSuggestionsTitle') }}: {{ fieldSuggestion.label }}</strong>
+          <button type="button" class="doc-btn small" @click="fieldSuggestion.open = false">{{ $t('qa.docKeepAsIs') }}</button>
+        </div>
+        <div class="field-suggest-list">
+          <div v-for="(opt, i) in fieldSuggestion.options" :key="i" class="field-suggest-item">
+            <p>{{ opt }}</p>
+            <button type="button" class="doc-btn small" @click="applyFieldSuggestion(opt)">{{ $t('qa.docUseOption') }} {{ i + 1 }}</button>
+          </div>
+        </div>
+      </div>
       <div v-if="qualityScore !== null" class="doc-quality">
         <strong>{{ $t('qa.docQualityScore') }}: {{ qualityScore }}/10</strong>
         <p>{{ qualityFeedback }}</p>
@@ -35,55 +47,55 @@
 
     <div ref="pdfContent" class="doc-form-wrap">
       <section class="doc-section">
-        <h3>{{ $t('qa.tpIdentifier') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpIdentifier') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='test_plan_identifier'" @click="askAiForField('test_plan_identifier', $t('qa.tpIdentifier'))">{{ aiFieldLoading==='test_plan_identifier' ? '…' : $t('qa.docAiField') }}</button></div>
         <input v-model="form.test_plan_identifier" type="text" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpIntroduction') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpIntroduction') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='introduction'" @click="askAiForField('introduction', $t('qa.tpIntroduction'))">{{ aiFieldLoading==='introduction' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.introduction" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpTestItems') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpTestItems') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='test_items'" @click="askAiForField('test_items', $t('qa.tpTestItems'))">{{ aiFieldLoading==='test_items' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.test_items" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpTestableFeatures') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpTestableFeatures') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='testable_features'" @click="askAiForField('testable_features', $t('qa.tpTestableFeatures'))">{{ aiFieldLoading==='testable_features' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.testable_features" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpNonTestableFeatures') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpNonTestableFeatures') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='non_testable_features'" @click="askAiForField('non_testable_features', $t('qa.tpNonTestableFeatures'))">{{ aiFieldLoading==='non_testable_features' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.non_testable_features" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpApproach') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpApproach') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='approach'" @click="askAiForField('approach', $t('qa.tpApproach'))">{{ aiFieldLoading==='approach' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.approach" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpPassFail') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpPassFail') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='pass_fail_criteria'" @click="askAiForField('pass_fail_criteria', $t('qa.tpPassFail'))">{{ aiFieldLoading==='pass_fail_criteria' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.pass_fail_criteria" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpDeliverables') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpDeliverables') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='test_deliverables'" @click="askAiForField('test_deliverables', $t('qa.tpDeliverables'))">{{ aiFieldLoading==='test_deliverables' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.test_deliverables" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpTasks') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpTasks') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='testing_tasks'" @click="askAiForField('testing_tasks', $t('qa.tpTasks'))">{{ aiFieldLoading==='testing_tasks' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.testing_tasks" rows="6" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpEnvironment') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpEnvironment') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='environmental_needs'" @click="askAiForField('environmental_needs', $t('qa.tpEnvironment'))">{{ aiFieldLoading==='environmental_needs' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.environmental_needs" rows="4" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpResponsibilities') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpResponsibilities') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='responsibilities'" @click="askAiForField('responsibilities', $t('qa.tpResponsibilities'))">{{ aiFieldLoading==='responsibilities' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.responsibilities" rows="3" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpDefects') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpDefects') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='known_defects'" @click="askAiForField('known_defects', $t('qa.tpDefects'))">{{ aiFieldLoading==='known_defects' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.known_defects" rows="5" />
       </section>
       <section class="doc-section">
-        <h3>{{ $t('qa.tpApprovals') }}</h3>
+        <div class="field-head"><h3>{{ $t('qa.tpApprovals') }}</h3><button type="button" class="field-ai-btn" :disabled="aiFieldLoading==='approvals'" @click="askAiForField('approvals', $t('qa.tpApprovals'))">{{ aiFieldLoading==='approvals' ? '…' : $t('qa.docAiField') }}</button></div>
         <textarea v-model="form.approvals" rows="3" />
       </section>
     </div>
@@ -165,6 +177,8 @@ export default {
       qualityScore: null,
       qualityFeedback: '',
       selectedSavedId: null,
+      aiFieldLoading: '',
+      fieldSuggestion: { open: false, path: '', label: '', options: [] },
     };
   },
   mounted() {
@@ -194,6 +208,29 @@ export default {
       } finally {
         this.aiLoading = false;
       }
+    },
+    async askAiForField(fieldKey, label) {
+      this.aiFieldLoading = fieldKey;
+      this.error = '';
+      try {
+        const { data } = await axios.post('/api/qa-test-docs/plan/ai-help', {
+          section: fieldKey,
+          prompt: `Сформулируй качественный текст для поля "${label}"`,
+          form: this.form,
+        }, this.authConfig());
+        const options = Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean) : (data.suggested_text ? [data.suggested_text] : []);
+        this.fieldSuggestion = { open: !!options.length, path: fieldKey, label, options };
+      } catch (e) {
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка AI-запроса';
+      } finally {
+        this.aiFieldLoading = '';
+      }
+    },
+    applyFieldSuggestion(text) {
+      if (!this.fieldSuggestion.path) return;
+      this.form[this.fieldSuggestion.path] = text;
+      this.fieldSuggestion.open = false;
     },
     loadExample() {
       this.editingId = null;
@@ -332,9 +369,16 @@ export default {
 .doc-btn.small { padding: 6px 10px; font-size: 12px; }
 .doc-error { color: #dc2626; margin-top: 10px; }
 .doc-quality, .doc-ai-box { margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+.field-suggest-box { margin-top: 10px; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px; }
+.field-suggest-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.field-suggest-list { display: grid; gap: 8px; }
+.field-suggest-item { border: 1px solid #dbeafe; border-radius: 8px; background: #fff; padding: 8px; }
+.field-suggest-item p { margin: 0 0 8px; white-space: pre-wrap; }
 .doc-form-wrap { display: grid; gap: 10px; }
 .doc-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #fff; }
 .doc-section h3 { margin: 0 0 8px; font-size: 15px; }
+.field-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.field-ai-btn { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .doc-section input, .doc-section textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; }
 .doc-list { margin-top: 24px; }
 .doc-list-grid { display: grid; gap: 10px; }

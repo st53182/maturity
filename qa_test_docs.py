@@ -92,6 +92,7 @@ def plan_ai_help():
 Верни строго JSON:
 {{
   "suggested_text": "готовый текст на русском для выбранного раздела",
+  "suggestions": ["вариант 1", "вариант 2", "вариант 3"],
   "tips": ["короткий совет 1", "короткий совет 2"]
 }}"""
     try:
@@ -106,8 +107,13 @@ def plan_ai_help():
             max_tokens=700,
         )
         out = _json_from_model_output(resp.choices[0].message.content or "")
+        suggestions = out.get("suggestions", [])
+        if (not isinstance(suggestions, list)) or (not suggestions):
+            fallback = out.get("suggested_text", "")
+            suggestions = [fallback] if fallback else []
         return jsonify({
             "suggested_text": out.get("suggested_text", ""),
+            "suggestions": suggestions,
             "tips": out.get("tips", []),
         })
     except Exception as e:
@@ -225,11 +231,31 @@ def plan_delete(item_id: int):
 def case_ai_help():
     data = request.json or {}
     ask = (data.get("prompt") or "").strip()
+    target_field = (data.get("target_field") or "").strip()
+    target_label = (data.get("target_label") or "").strip()
+    current_value = (data.get("current_value") or "").strip()
     form = data.get("form") if isinstance(data.get("form"), dict) else {}
     if not ask and not form:
         return jsonify({"error": "Передайте prompt или form"}), 400
 
-    prompt = f"""Ты QA инженер. Помоги составить русский Test Case для GrowBoard.
+    if target_field:
+        prompt = f"""Ты QA инженер. Сгенерируй варианты текста только для одного поля Test Case на русском языке.
+
+Поле: {target_label or target_field}
+Технический путь поля: {target_field}
+Текущее значение:
+{current_value or "(пусто)"}
+
+Запрос: {ask or "Предложи улучшенный текст для поля"}
+Текущий документ:
+{json.dumps(form, ensure_ascii=False)}
+
+Верни строго JSON:
+{{
+  "suggestions": ["вариант 1", "вариант 2", "вариант 3"]
+}}"""
+    else:
+        prompt = f"""Ты QA инженер. Помоги составить русский Test Case для GrowBoard.
 Используй формат: шаг, ожидаемый результат, фактический, pass/fail, заметки.
 
 Запрос: {ask or "Предложи полный тест-кейс"}
@@ -256,6 +282,16 @@ def case_ai_help():
             max_tokens=900,
         )
         out = _json_from_model_output(resp.choices[0].message.content or "")
+        if target_field:
+            suggestions = out.get("suggestions", [])
+            if (not isinstance(suggestions, list)) or (not suggestions):
+                fallback = out.get("suggested_text", "")
+                suggestions = [fallback] if fallback else []
+            return jsonify({
+                "suggested_text": suggestions[0] if suggestions else "",
+                "suggestions": suggestions,
+                "target_field": target_field,
+            })
         return jsonify({
             "test_description": out.get("test_description", ""),
             "steps": out.get("steps", []),

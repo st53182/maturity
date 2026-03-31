@@ -9,7 +9,17 @@
         <button type="button" class="doc-btn" :disabled="aiLoading" @click="askAi">{{ aiLoading ? '…' : $t('qa.docAiHelp') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
         <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
+        <button type="button" class="doc-btn" @click="resetForm">{{ $t('qa.docNewTemplate') }}</button>
+        <button type="button" class="doc-btn" :disabled="!items.length" @click="openSelectedSaved">{{ $t('qa.docOpenFilledTemplate') }}</button>
         <button type="button" class="doc-btn secondary" :disabled="exporting" @click="exportPdf">{{ exporting ? '…' : $t('qa.docExportPdf') }}</button>
+      </div>
+      <div v-if="items.length" class="doc-open-row">
+        <select v-model="selectedSavedId" class="doc-select">
+          <option :value="null">{{ $t('qa.docSelectSavedTemplate') }}</option>
+          <option v-for="it in items" :key="it.id" :value="it.id">
+            #{{ it.id }} — {{ it.payload?.test_title || '—' }}
+          </option>
+        </select>
       </div>
       <p v-if="error" class="doc-error">{{ error }}</p>
       <div v-if="qualityScore !== null" class="doc-quality">
@@ -50,7 +60,20 @@
       </section>
       <section class="doc-section">
         <h3>{{ $t('qa.tcSteps') }}</h3>
+        <div class="steps-actions">
+          <button type="button" class="doc-btn small" @click="addRow">{{ $t('qa.tcAddRow') }}</button>
+          <button type="button" class="doc-btn small" :disabled="form.steps.length <= 1" @click="removeLastRow">{{ $t('qa.tcRemoveLastRow') }}</button>
+          <span class="steps-count">{{ $t('qa.tcRowsCount') }}: {{ form.steps.length }}</span>
+        </div>
         <table class="steps-table">
+          <colgroup>
+            <col class="col-id">
+            <col class="col-desc">
+            <col class="col-expected">
+            <col class="col-actual">
+            <col class="col-passfail">
+            <col class="col-notes">
+          </colgroup>
           <thead>
             <tr>
               <th>ID</th><th>{{ $t('qa.tcStepDescription') }}</th><th>{{ $t('qa.tcExpected') }}</th><th>{{ $t('qa.tcActual') }}</th><th>{{ $t('qa.tcPassFail') }}</th><th>{{ $t('qa.tcNotes') }}</th>
@@ -59,9 +82,9 @@
           <tbody>
             <tr v-for="(s, i) in form.steps" :key="i">
               <td><input v-model="s.step_id" /></td>
-              <td><input v-model="s.step_description" /></td>
-              <td><input v-model="s.expected_results" /></td>
-              <td><input v-model="s.actual_results" /></td>
+              <td><textarea v-model="s.step_description" rows="2" /></td>
+              <td><textarea v-model="s.expected_results" rows="2" /></td>
+              <td><textarea v-model="s.actual_results" rows="2" /></td>
               <td><input v-model="s.pass_fail" /></td>
               <td><input v-model="s.additional_notes" /></td>
             </tr>
@@ -105,6 +128,17 @@ function makeSteps() {
   }));
 }
 
+function makeStepByIndex(index) {
+  return {
+    step_id: `${index + 1}.0`,
+    step_description: '',
+    expected_results: '',
+    actual_results: '',
+    pass_fail: '',
+    additional_notes: '',
+  };
+}
+
 function defaultForm() {
   return {
     test_title: '',
@@ -139,12 +173,20 @@ export default {
       aiTips: [],
       qualityScore: null,
       qualityFeedback: '',
+      selectedSavedId: null,
     };
   },
   mounted() {
     this.loadItems();
   },
   methods: {
+    getAuthToken() {
+      return localStorage.getItem('token') || localStorage.getItem('access_token') || '';
+    },
+    authConfig() {
+      const token = this.getAuthToken();
+      return { headers: token ? { Authorization: `Bearer ${token}` } : {} };
+    },
     async askAi() {
       this.aiLoading = true;
       this.error = '';
@@ -152,14 +194,15 @@ export default {
         const { data } = await axios.post('/api/qa-test-docs/case/ai-help', {
           prompt: 'Помоги сформировать шаги тест-кейса для GrowBoard',
           form: this.form,
-        });
+        }, this.authConfig());
         this.aiTips = data.tips || [];
         if (data.test_description && !this.form.test_description) this.form.test_description = data.test_description;
         if (Array.isArray(data.steps) && data.steps.length) {
           this.form.steps = makeSteps().map((s, idx) => ({ ...s, ...(data.steps[idx] || {}) }));
         }
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка AI-запроса';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка AI-запроса';
       } finally {
         this.aiLoading = false;
       }
@@ -168,11 +211,12 @@ export default {
       this.evaluateLoading = true;
       this.error = '';
       try {
-        const { data } = await axios.post('/api/qa-test-docs/case/evaluate', { payload: this.form });
+        const { data } = await axios.post('/api/qa-test-docs/case/evaluate', { payload: this.form }, this.authConfig());
         this.qualityScore = Number(data.score || 0);
         this.qualityFeedback = data.feedback || '';
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка оценки';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка оценки';
       } finally {
         this.evaluateLoading = false;
       }
@@ -187,11 +231,12 @@ export default {
           quality_score: this.qualityScore,
           quality_feedback: this.qualityFeedback,
         };
-        if (this.editingId) await axios.put(`/api/qa-test-docs/case/submissions/${this.editingId}`, payload);
-        else await axios.post('/api/qa-test-docs/case/submit', payload);
+        if (this.editingId) await axios.put(`/api/qa-test-docs/case/submissions/${this.editingId}`, payload, this.authConfig());
+        else await axios.post('/api/qa-test-docs/case/submit', payload, this.authConfig());
         await this.loadItems();
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка сохранения';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка сохранения';
       } finally {
         this.saveLoading = false;
       }
@@ -199,9 +244,11 @@ export default {
     async loadItems() {
       this.loadingList = true;
       try {
-        const { data } = await axios.get('/api/qa-test-docs/case/submissions');
+        const { data } = await axios.get('/api/qa-test-docs/case/submissions', this.authConfig());
         this.items = data.items || [];
-      } catch {
+        if (!this.selectedSavedId && this.items.length) this.selectedSavedId = this.items[0].id;
+      } catch (e) {
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
         this.items = [];
       } finally {
         this.loadingList = false;
@@ -217,12 +264,31 @@ export default {
       }
       this.qualityScore = item.quality_score ?? null;
       this.qualityFeedback = item.quality_feedback || '';
+      this.selectedSavedId = item.id;
+    },
+    openSelectedSaved() {
+      const found = this.items.find((x) => x.id === this.selectedSavedId);
+      if (found) this.loadItem(found);
+    },
+    resetForm() {
+      this.editingId = null;
+      this.form = defaultForm();
+      this.qualityScore = null;
+      this.qualityFeedback = '';
+      this.aiTips = [];
+    },
+    addRow() {
+      this.form.steps.push(makeStepByIndex(this.form.steps.length));
+    },
+    removeLastRow() {
+      if (this.form.steps.length <= 1) return;
+      this.form.steps.pop();
     },
     async removeItem(item) {
       if (!confirm(this.$t('qa.userStoryDeleteConfirm'))) return;
       this.error = '';
       try {
-        await axios.delete(`/api/qa-test-docs/case/submissions/${item.id}`);
+        await axios.delete(`/api/qa-test-docs/case/submissions/${item.id}`, this.authConfig());
         if (this.editingId === item.id) {
           this.editingId = null;
           this.form = defaultForm();
@@ -231,7 +297,8 @@ export default {
         }
         await this.loadItems();
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка удаления';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка удаления';
       }
     },
     formatDate(iso) {
@@ -265,6 +332,8 @@ export default {
 <style scoped>
 .qa-doc-page { max-width: 1080px; margin: 0 auto; padding: 24px 16px; }
 .doc-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.doc-open-row { margin-top: 10px; }
+.doc-select { min-width: 280px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 10px; }
 .doc-btn { border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
 .doc-btn.success { background: #059669; border-color: #059669; color: #fff; }
 .doc-btn.secondary { background: #334155; border-color: #334155; color: #fff; }
@@ -276,8 +345,16 @@ export default {
 .doc-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #fff; }
 .doc-section input, .doc-section textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; }
 .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.steps-actions { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.steps-count { color: #64748b; font-size: 12px; margin-left: auto; }
 .steps-table { width: 100%; border-collapse: collapse; }
 .steps-table th, .steps-table td { border: 1px solid #e5e7eb; padding: 6px; vertical-align: top; }
+.steps-table .col-id { width: 70px; }
+.steps-table .col-desc { width: 26%; }
+.steps-table .col-expected { width: 26%; }
+.steps-table .col-actual { width: 26%; }
+.steps-table .col-passfail { width: 90px; }
+.steps-table .col-notes { width: 16%; }
 .doc-list { margin-top: 24px; }
 .doc-list-grid { display: grid; gap: 10px; }
 .doc-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; display: grid; gap: 6px; }

@@ -759,6 +759,10 @@
     "docLoading": "Загрузка...",
     "docEmpty": "Пока нет сохранённых документов.",
     "docOpen": "Открыть",
+    "docNewTemplate": "Новый шаблон",
+    "docOpenFilledTemplate": "Открыть заполненный шаблон",
+    "docSelectSavedTemplate": "Выберите сохранённый шаблон",
+    "docAuthRequired": "Сессия истекла или не найден токен. Войдите в систему снова.",
     "tpIdentifier": "Test Plan Identifier",
     "tpIntroduction": "Introduction",
     "tpTestItems": "Test Items",
@@ -793,6 +797,10 @@
     "tcActual": "ACTUAL RESULTS",
     "tcPassFail": "PASS / FAIL",
     "tcNotes": "ADDITIONAL NOTES"
+    ,
+    "tcAddRow": "Добавить строку",
+    "tcRemoveLastRow": "Удалить последнюю",
+    "tcRowsCount": "Строк"
   },
   "backlogPrep": {
     "title": "Подготовка бэклога",

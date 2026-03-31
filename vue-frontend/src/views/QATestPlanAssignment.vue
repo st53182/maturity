@@ -9,7 +9,17 @@
         <button type="button" class="doc-btn" :disabled="aiLoading" @click="askAi">{{ aiLoading ? '…' : $t('qa.docAiHelp') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
         <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
+        <button type="button" class="doc-btn" @click="resetForm">{{ $t('qa.docNewTemplate') }}</button>
+        <button type="button" class="doc-btn" :disabled="!items.length" @click="openSelectedSaved">{{ $t('qa.docOpenFilledTemplate') }}</button>
         <button type="button" class="doc-btn secondary" :disabled="exporting" @click="exportPdf">{{ exporting ? '…' : $t('qa.docExportPdf') }}</button>
+      </div>
+      <div v-if="items.length" class="doc-open-row">
+        <select v-model="selectedSavedId" class="doc-select">
+          <option :value="null">{{ $t('qa.docSelectSavedTemplate') }}</option>
+          <option v-for="it in items" :key="it.id" :value="it.id">
+            #{{ it.id }} — {{ it.payload?.test_plan_identifier || '—' }}
+          </option>
+        </select>
       </div>
       <p v-if="error" class="doc-error">{{ error }}</p>
       <div v-if="qualityScore !== null" class="doc-quality">
@@ -135,12 +145,20 @@ export default {
       aiText: '',
       qualityScore: null,
       qualityFeedback: '',
+      selectedSavedId: null,
     };
   },
   mounted() {
     this.loadItems();
   },
   methods: {
+    getAuthToken() {
+      return localStorage.getItem('token') || localStorage.getItem('access_token') || '';
+    },
+    authConfig() {
+      const token = this.getAuthToken();
+      return { headers: token ? { Authorization: `Bearer ${token}` } : {} };
+    },
     async askAi() {
       this.aiLoading = true;
       this.error = '';
@@ -149,10 +167,11 @@ export default {
           section: 'general',
           prompt: 'Помоги улучшить текущий Test Plan',
           form: this.form,
-        });
+        }, this.authConfig());
         this.aiText = data.suggested_text || '';
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка AI-запроса';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка AI-запроса';
       } finally {
         this.aiLoading = false;
       }
@@ -161,11 +180,12 @@ export default {
       this.evaluateLoading = true;
       this.error = '';
       try {
-        const { data } = await axios.post('/api/qa-test-docs/plan/evaluate', { payload: this.form });
+        const { data } = await axios.post('/api/qa-test-docs/plan/evaluate', { payload: this.form }, this.authConfig());
         this.qualityScore = Number(data.score || 0);
         this.qualityFeedback = data.feedback || '';
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка оценки';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка оценки';
       } finally {
         this.evaluateLoading = false;
       }
@@ -180,11 +200,12 @@ export default {
           quality_score: this.qualityScore,
           quality_feedback: this.qualityFeedback,
         };
-        if (this.editingId) await axios.put(`/api/qa-test-docs/plan/submissions/${this.editingId}`, payload);
-        else await axios.post('/api/qa-test-docs/plan/submit', payload);
+        if (this.editingId) await axios.put(`/api/qa-test-docs/plan/submissions/${this.editingId}`, payload, this.authConfig());
+        else await axios.post('/api/qa-test-docs/plan/submit', payload, this.authConfig());
         await this.loadItems();
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка сохранения';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка сохранения';
       } finally {
         this.saveLoading = false;
       }
@@ -192,9 +213,11 @@ export default {
     async loadItems() {
       this.loadingList = true;
       try {
-        const { data } = await axios.get('/api/qa-test-docs/plan/submissions');
+        const { data } = await axios.get('/api/qa-test-docs/plan/submissions', this.authConfig());
         this.items = data.items || [];
-      } catch {
+        if (!this.selectedSavedId && this.items.length) this.selectedSavedId = this.items[0].id;
+      } catch (e) {
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
         this.items = [];
       } finally {
         this.loadingList = false;
@@ -205,12 +228,24 @@ export default {
       this.form = { ...defaultForm(), ...(item.payload || {}) };
       this.qualityScore = item.quality_score ?? null;
       this.qualityFeedback = item.quality_feedback || '';
+      this.selectedSavedId = item.id;
+    },
+    openSelectedSaved() {
+      const found = this.items.find((x) => x.id === this.selectedSavedId);
+      if (found) this.loadItem(found);
+    },
+    resetForm() {
+      this.editingId = null;
+      this.form = defaultForm();
+      this.qualityScore = null;
+      this.qualityFeedback = '';
+      this.aiText = '';
     },
     async removeItem(item) {
       if (!confirm(this.$t('qa.userStoryDeleteConfirm'))) return;
       this.error = '';
       try {
-        await axios.delete(`/api/qa-test-docs/plan/submissions/${item.id}`);
+        await axios.delete(`/api/qa-test-docs/plan/submissions/${item.id}`, this.authConfig());
         if (this.editingId === item.id) {
           this.editingId = null;
           this.form = defaultForm();
@@ -219,7 +254,8 @@ export default {
         }
         await this.loadItems();
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка удаления';
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка удаления';
       }
     },
     formatDate(iso) {
@@ -255,6 +291,8 @@ export default {
 .doc-back { margin-bottom: 16px; }
 .doc-header { margin-bottom: 16px; }
 .doc-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.doc-open-row { margin-top: 10px; }
+.doc-select { min-width: 280px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 10px; }
 .doc-btn { border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
 .doc-btn.success { background: #059669; border-color: #059669; color: #fff; }
 .doc-btn.secondary { background: #334155; border-color: #334155; color: #fff; }

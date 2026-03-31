@@ -5,9 +5,12 @@
     <header class="doc-header">
       <h1>{{ $t('qa.testPlanTaskTitle') }}</h1>
       <p class="doc-intro">{{ $t('qa.testPlanTaskIntro') }}</p>
+      <div class="doc-info-box">
+        <strong>{{ $t('qa.whatIsTestPlanTitle') }}</strong>
+        <p>{{ $t('qa.whatIsTestPlanBody') }}</p>
+      </div>
       <div class="doc-toolbar">
         <button type="button" class="doc-btn" @click="loadExample">{{ $t('qa.docLoadExample') }}</button>
-        <button type="button" class="doc-btn" :disabled="aiLoading" @click="askAi">{{ aiLoading ? '…' : $t('qa.docAiHelp') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
         <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
         <button type="button" class="doc-btn" @click="resetForm">{{ $t('qa.docNewTemplate') }}</button>
@@ -369,6 +372,8 @@ export default {
 .doc-btn.small { padding: 6px 10px; font-size: 12px; }
 .doc-error { color: #dc2626; margin-top: 10px; }
 .doc-quality, .doc-ai-box { margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+.doc-info-box { margin-top: 10px; padding: 10px; border: 1px solid #dbeafe; border-radius: 10px; background: #eff6ff; color: #1e3a8a; }
+.doc-info-box p { margin: 6px 0 0; color: #1e3a8a; }
 .field-suggest-box { margin-top: 10px; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px; }
 .field-suggest-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 .field-suggest-list { display: grid; gap: 8px; }

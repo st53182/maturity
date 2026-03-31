@@ -754,6 +754,10 @@
     "docFieldSuggestionsTitle": "Варианты улучшения",
     "docUseOption": "Вставить вариант",
     "docKeepAsIs": "Оставить как есть",
+    "whatIsTestPlanTitle": "Что такое Test Plan",
+    "whatIsTestPlanBody": "Test Plan — это документ стратегии тестирования: что проверяем, как проверяем, в каком окружении, какие критерии успешности и какие артефакты выдаём по итогам.",
+    "whatIsTestCaseTitle": "Что такое Test Case",
+    "whatIsTestCaseBody": "Test Case — это пошаговый сценарий проверки конкретной функции: действия, ожидаемый результат и фактический результат. Он нужен для повторяемой и понятной проверки.",
     "docEvaluate": "Оценить качество",
     "docSave": "Сохранить",
     "docExportPdf": "Выгрузить PDF",
@@ -801,11 +805,12 @@
     "tcExpected": "EXPECTED RESULTS",
     "tcActual": "ACTUAL RESULTS",
     "tcPassFail": "PASS / FAIL",
-    "tcNotes": "ADDITIONAL NOTES"
-    ,
+    "tcNotes": "ADDITIONAL NOTES",
     "tcAddRow": "Добавить строку",
     "tcRemoveLastRow": "Удалить последнюю",
-    "tcRowsCount": "Строк"
+    "tcRowsCount": "Строк",
+    "tcActions": "Действия",
+    "tcDeleteRow": "Удалить"
   },
   "backlogPrep": {
     "title": "Подготовка бэклога",

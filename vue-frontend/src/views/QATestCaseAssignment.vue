@@ -5,9 +5,12 @@
     <header class="doc-header">
       <h1>{{ $t('qa.testCaseTaskTitle') }}</h1>
       <p class="doc-intro">{{ $t('qa.testCaseTaskIntro') }}</p>
+      <div class="doc-info-box">
+        <strong>{{ $t('qa.whatIsTestCaseTitle') }}</strong>
+        <p>{{ $t('qa.whatIsTestCaseBody') }}</p>
+      </div>
       <div class="doc-toolbar">
         <button type="button" class="doc-btn" @click="loadExample">{{ $t('qa.docLoadExample') }}</button>
-        <button type="button" class="doc-btn" :disabled="aiLoading" @click="askAi">{{ aiLoading ? '…' : $t('qa.docAiHelp') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
         <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
         <button type="button" class="doc-btn" @click="resetForm">{{ $t('qa.docNewTemplate') }}</button>
@@ -51,10 +54,10 @@
         <div class="grid-two">
           <div class="field-with-ai"><input v-model="form.test_title" :placeholder="$t('qa.tcTestTitle')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_title'" @click="askAiForField('test_title', $t('qa.tcTestTitle'))">{{ aiFieldLoading==='test_title' ? '…' : 'AI' }}</button></div>
           <div class="field-with-ai"><input v-model="form.priority" :placeholder="$t('qa.tcPriority')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='priority'" @click="askAiForField('priority', $t('qa.tcPriority'))">{{ aiFieldLoading==='priority' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.test_case_id" :placeholder="$t('qa.tcCaseId')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_case_id'" @click="askAiForField('test_case_id', $t('qa.tcCaseId'))">{{ aiFieldLoading==='test_case_id' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.test_number" :placeholder="$t('qa.tcTestNumber')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_number'" @click="askAiForField('test_number', $t('qa.tcTestNumber'))">{{ aiFieldLoading==='test_number' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.test_date" :placeholder="$t('qa.tcTestDate')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_date'" @click="askAiForField('test_date', $t('qa.tcTestDate'))">{{ aiFieldLoading==='test_date' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.priority_key" :placeholder="$t('qa.tcPriorityKey')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='priority_key'" @click="askAiForField('priority_key', $t('qa.tcPriorityKey'))">{{ aiFieldLoading==='priority_key' ? '…' : 'AI' }}</button></div>
+          <input v-model="form.test_case_id" :placeholder="$t('qa.tcCaseId')" />
+          <input v-model="form.test_number" :placeholder="$t('qa.tcTestNumber')" />
+          <input v-model="form.test_date" :placeholder="$t('qa.tcTestDate')" />
+          <input v-model="form.priority_key" :placeholder="$t('qa.tcPriorityKey')" />
         </div>
       </section>
       <section class="doc-section">
@@ -87,20 +90,22 @@
               <col class="col-actual">
               <col class="col-passfail">
               <col class="col-notes">
+            <col class="col-actions">
             </colgroup>
             <thead>
               <tr>
-                <th>ID</th><th>{{ $t('qa.tcStepDescription') }}</th><th>{{ $t('qa.tcExpected') }}</th><th>{{ $t('qa.tcActual') }}</th><th>{{ $t('qa.tcPassFail') }}</th><th>{{ $t('qa.tcNotes') }}</th>
+              <th>ID</th><th>{{ $t('qa.tcStepDescription') }}</th><th>{{ $t('qa.tcExpected') }}</th><th>{{ $t('qa.tcActual') }}</th><th>{{ $t('qa.tcPassFail') }}</th><th>{{ $t('qa.tcNotes') }}</th><th>{{ $t('qa.tcActions') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(s, i) in form.steps" :key="i">
-                <td><div class="cell-with-ai"><input v-model="s.step_id" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.step_id`" @click="askAiForField(`steps.${i}.step_id`, 'Step ID')">AI</button></div></td>
+                <td><input v-model="s.step_id" /></td>
                 <td><div class="cell-with-ai"><textarea v-model="s.step_description" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.step_description`" @click="askAiForField(`steps.${i}.step_description`, $t('qa.tcStepDescription'))">AI</button></div></td>
                 <td><div class="cell-with-ai"><textarea v-model="s.expected_results" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.expected_results`" @click="askAiForField(`steps.${i}.expected_results`, $t('qa.tcExpected'))">AI</button></div></td>
-                <td><div class="cell-with-ai"><textarea v-model="s.actual_results" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.actual_results`" @click="askAiForField(`steps.${i}.actual_results`, $t('qa.tcActual'))">AI</button></div></td>
-                <td><div class="cell-with-ai"><input v-model="s.pass_fail" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.pass_fail`" @click="askAiForField(`steps.${i}.pass_fail`, $t('qa.tcPassFail'))">AI</button></div></td>
-                <td><div class="cell-with-ai"><input v-model="s.additional_notes" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.additional_notes`" @click="askAiForField(`steps.${i}.additional_notes`, $t('qa.tcNotes'))">AI</button></div></td>
+                <td><textarea v-model="s.actual_results" rows="2" /></td>
+                <td><input v-model="s.pass_fail" /></td>
+                <td><input v-model="s.additional_notes" /></td>
+                <td><button type="button" class="row-del-btn" @click="removeRow(i)">{{ $t('qa.tcDeleteRow') }}</button></td>
               </tr>
             </tbody>
           </table>
@@ -387,6 +392,10 @@ export default {
       if (this.form.steps.length <= 1) return;
       this.form.steps.pop();
     },
+    removeRow(index) {
+      if (this.form.steps.length <= 1) return;
+      this.form.steps.splice(index, 1);
+    },
     async removeItem(item) {
       if (!confirm(this.$t('qa.userStoryDeleteConfirm'))) return;
       this.error = '';
@@ -444,6 +453,8 @@ export default {
 .doc-btn.small { padding: 6px 10px; font-size: 12px; }
 .doc-error { color: #dc2626; margin-top: 10px; }
 .doc-quality, .doc-ai-box { margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+.doc-info-box { margin-top: 10px; padding: 10px; border: 1px solid #dbeafe; border-radius: 10px; background: #eff6ff; color: #1e3a8a; }
+.doc-info-box p { margin: 6px 0 0; color: #1e3a8a; }
 .field-suggest-box { margin-top: 10px; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px; }
 .field-suggest-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 .field-suggest-list { display: grid; gap: 8px; }
@@ -467,10 +478,12 @@ export default {
 .steps-table .col-actual { width: 25%; }
 .steps-table .col-passfail { width: 80px; }
 .steps-table .col-notes { width: 140px; }
+.steps-table .col-actions { width: 90px; }
 .steps-table textarea { min-height: 64px; resize: vertical; line-height: 1.35; }
 .steps-table input { min-height: 36px; }
 .cell-with-ai { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
 .cell-ai-btn { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 8px; min-width: 34px; height: 34px; cursor: pointer; font-size: 11px; }
+.row-del-btn { border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; border-radius: 8px; padding: 6px 8px; cursor: pointer; font-size: 12px; }
 .steps-table tbody tr:nth-child(even) td { background: #fcfcfd; }
 .doc-list { margin-top: 24px; }
 .doc-list-grid { display: grid; gap: 10px; }

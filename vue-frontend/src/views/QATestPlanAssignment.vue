@@ -219,6 +219,7 @@ export default {
         const { data } = await axios.post('/api/qa-test-docs/plan/ai-help', {
           section: fieldKey,
           prompt: `Сформулируй качественный текст для поля "${label}"`,
+          current_value: this.form[fieldKey] || '',
           form: this.form,
         }, this.authConfig());
         const options = Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean) : (data.suggested_text ? [data.suggested_text] : []);

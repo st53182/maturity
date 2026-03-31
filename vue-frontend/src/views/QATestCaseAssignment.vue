@@ -105,7 +105,7 @@
                 <td><textarea v-model="s.actual_results" rows="2" /></td>
                 <td><input v-model="s.pass_fail" /></td>
                 <td><input v-model="s.additional_notes" /></td>
-                <td><button type="button" class="row-del-btn" @click="removeRow(i)">{{ $t('qa.tcDeleteRow') }}</button></td>
+                <td><button type="button" class="row-del-btn" :title="$t('qa.tcDeleteRow')" @click="removeRow(i)">✕</button></td>
               </tr>
             </tbody>
           </table>
@@ -305,6 +305,7 @@ export default {
     loadExample() {
       this.editingId = null;
       this.form = exampleForm();
+      this.normalizeStepIds();
       this.qualityScore = null;
       this.qualityFeedback = '';
       this.aiTips = [];
@@ -370,6 +371,7 @@ export default {
         const extra = makeSteps().slice(this.form.steps.length);
         this.form.steps = [...this.form.steps, ...extra];
       }
+      this.normalizeStepIds();
       this.qualityScore = item.quality_score ?? null;
       this.qualityFeedback = item.quality_feedback || '';
       this.selectedSavedId = item.id;
@@ -387,14 +389,23 @@ export default {
     },
     addRow() {
       this.form.steps.push(makeStepByIndex(this.form.steps.length));
+      this.normalizeStepIds();
     },
     removeLastRow() {
       if (this.form.steps.length <= 1) return;
       this.form.steps.pop();
+      this.normalizeStepIds();
     },
     removeRow(index) {
       if (this.form.steps.length <= 1) return;
       this.form.steps.splice(index, 1);
+      this.normalizeStepIds();
+    },
+    normalizeStepIds() {
+      this.form.steps = this.form.steps.map((row, idx) => ({
+        ...row,
+        step_id: `${idx + 1}.0`,
+      }));
     },
     async removeItem(item) {
       if (!confirm(this.$t('qa.userStoryDeleteConfirm'))) return;
@@ -483,7 +494,7 @@ export default {
 .steps-table input { min-height: 36px; }
 .cell-with-ai { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
 .cell-ai-btn { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 8px; min-width: 34px; height: 34px; cursor: pointer; font-size: 11px; }
-.row-del-btn { border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; border-radius: 8px; padding: 6px 8px; cursor: pointer; font-size: 12px; }
+.row-del-btn { border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 16px; line-height: 1; padding: 0; font-weight: 700; }
 .steps-table tbody tr:nth-child(even) td { background: #fcfcfd; }
 .doc-list { margin-top: 24px; }
 .doc-list-grid { display: grid; gap: 10px; }

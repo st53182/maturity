@@ -76,6 +76,7 @@ def plan_ai_help():
     data = request.json or {}
     section = (data.get("section") or "").strip()
     ask = (data.get("prompt") or "").strip()
+    current_value = (data.get("current_value") or "").strip()
     form = data.get("form") if isinstance(data.get("form"), dict) else {}
 
     if not section and not ask:
@@ -84,6 +85,8 @@ def plan_ai_help():
     prompt = f"""Ты опытный QA Lead. Помоги заполнить русский Test Plan для GrowBoard.
 
 Раздел: {section or "общий"}
+Текущий текст в этом поле:
+{current_value or "(пусто)"}
 Запрос пользователя: {ask or "Предложи улучшение раздела"}
 
 Текущие данные формы:
@@ -92,7 +95,7 @@ def plan_ai_help():
 Верни строго JSON:
 {{
   "suggested_text": "готовый текст на русском для выбранного раздела",
-  "suggestions": ["вариант 1", "вариант 2", "вариант 3"],
+  "suggestions": ["вариант 1 улучшения текущего текста", "вариант 2 улучшения текущего текста", "вариант 3 улучшения текущего текста"],
   "tips": ["короткий совет 1", "короткий совет 2"]
 }}"""
     try:
@@ -239,7 +242,10 @@ def case_ai_help():
         return jsonify({"error": "Передайте prompt или form"}), 400
 
     if target_field:
-        prompt = f"""Ты QA инженер. Сгенерируй варианты текста только для одного поля Test Case на русском языке.
+        prompt = f"""Ты QA инженер. Сгенерируй варианты УЛУЧШЕНИЯ текста только для одного поля Test Case на русском языке.
+Если поле уже заполнено — сохрани исходный смысл и структуру, улучши ясность, проверяемость и качество формулировки.
+Не придумывай другой сценарий и не заменяй смысл.
+Если поле пустое — предложи стартовый вариант.
 
 Поле: {target_label or target_field}
 Технический путь поля: {target_field}

@@ -484,6 +484,7 @@ class QATestCaseSubmission(db.Model):
     payload_json = db.Column(JSON, nullable=False)
     quality_score = db.Column(db.Integer, nullable=True)
     quality_feedback = db.Column(db.Text, nullable=True)
+    share_token = db.Column(db.String(64), nullable=True, unique=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

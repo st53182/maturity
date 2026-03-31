@@ -9,15 +9,35 @@
         <strong>{{ $t('qa.whatIsTestCaseTitle') }}</strong>
         <p>{{ $t('qa.whatIsTestCaseBody') }}</p>
       </div>
+      <div v-if="shareMode" class="doc-share-banner">
+        <p>{{ $t('qa.tcShareModeHint') }}</p>
+      </div>
+      <div v-else-if="!isLoggedIn" class="doc-info-box doc-login-hint">
+        <p>{{ $t('qa.tcLoginToSaveHint') }}</p>
+      </div>
       <div class="doc-toolbar">
         <button type="button" class="doc-btn" @click="loadExample">{{ $t('qa.docLoadExample') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
-        <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
+        <button type="button" class="doc-btn success" :disabled="saveLoading || !canSave" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
         <button type="button" class="doc-btn" @click="resetForm">{{ $t('qa.docNewTemplate') }}</button>
         <button type="button" class="doc-btn" :disabled="!items.length" @click="openSelectedSaved">{{ $t('qa.docOpenFilledTemplate') }}</button>
         <button type="button" class="doc-btn secondary" :disabled="exporting" @click="exportPdf">{{ exporting ? '…' : $t('qa.docExportPdf') }}</button>
+        <button
+          v-if="isLoggedIn && !shareMode && editingId"
+          type="button"
+          class="doc-btn"
+          :disabled="shareLinkBusy"
+          @click="copyShareLink"
+        >{{ shareLinkCopied ? $t('qa.tcShareLinkCopied') : $t('qa.tcCopyShareLink') }}</button>
+        <button
+          v-if="isLoggedIn && !shareMode && editingId && hasShare"
+          type="button"
+          class="doc-btn danger"
+          :disabled="shareLinkBusy"
+          @click="revokeShare"
+        >{{ $t('qa.tcRevokeShare') }}</button>
       </div>
-      <div v-if="items.length" class="doc-open-row">
+      <div v-if="items.length && isLoggedIn && !shareMode" class="doc-open-row">
         <select v-model="selectedSavedId" class="doc-select">
           <option :value="null">{{ $t('qa.docSelectSavedTemplate') }}</option>
           <option v-for="it in items" :key="it.id" :value="it.id">
@@ -126,7 +146,7 @@
       </section>
     </div>
 
-    <section class="doc-list">
+    <section v-if="isLoggedIn && !shareMode" class="doc-list">
       <h2>{{ $t('qa.docMySaved') }}</h2>
       <p v-if="loadingList">{{ $t('qa.docLoading') }}</p>
       <p v-else-if="!items.length">{{ $t('qa.docEmpty') }}</p>
@@ -150,8 +170,10 @@ import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
+const MIN_STEPS = 5;
+
 function makeSteps() {
-  return Array.from({ length: 18 }).map((_, i) => ({
+  return Array.from({ length: MIN_STEPS }).map((_, i) => ({
     step_id: `${i + 1}.0`,
     step_description: '',
     expected_results: '',
@@ -239,12 +261,35 @@ export default {
       selectedSavedId: null,
       aiFieldLoading: '',
       fieldSuggestion: { open: false, path: '', label: '', options: [], explanation: '', whatToWrite: [], exampleText: '', mode: 'explain_only' },
+      shareToken: '',
+      shareMode: false,
+      hasShare: false,
+      shareLinkCopied: false,
+      shareLinkBusy: false,
     };
   },
-  mounted() {
+  computed: {
+    isLoggedIn() {
+      return !!this.getAuthToken();
+    },
+    canSave() {
+      return this.shareMode || this.isLoggedIn;
+    },
+  },
+  async mounted() {
+    const share = this.$route.query.share;
+    if (share) {
+      await this.loadFromShareToken(String(share));
+    }
     this.loadItems();
   },
   methods: {
+    shareExtra() {
+      if (this.shareMode && this.shareToken) {
+        return { share_token: this.shareToken };
+      }
+      return {};
+    },
     getByPath(path) {
       const parts = String(path || '').split('.');
       let cur = this.form;
@@ -270,6 +315,70 @@ export default {
       const token = this.getAuthToken();
       return { headers: token ? { Authorization: `Bearer ${token}` } : {} };
     },
+    applyLoadedPayload(item) {
+      this.form = { ...defaultForm(), ...(item.payload || {}) };
+      if (!Array.isArray(this.form.steps)) this.form.steps = makeSteps();
+      while (this.form.steps.length < MIN_STEPS) {
+        this.form.steps.push(makeStepByIndex(this.form.steps.length));
+      }
+      this.normalizeStepIds();
+      this.qualityScore = item.quality_score ?? null;
+      this.qualityFeedback = item.quality_feedback || '';
+    },
+    async loadFromShareToken(token) {
+      this.shareToken = token;
+      this.shareMode = true;
+      this.hasShare = true;
+      this.error = '';
+      try {
+        const { data } = await axios.get(`/api/qa-test-docs/case/by-share/${encodeURIComponent(token)}`);
+        this.editingId = data.id;
+        this.applyLoadedPayload(data);
+      } catch (e) {
+        this.error = e.response?.data?.error || this.$t('qa.tcShareInvalid');
+        this.shareMode = false;
+        this.shareToken = '';
+        this.hasShare = false;
+        this.editingId = null;
+        this.form = defaultForm();
+      }
+    },
+    async copyShareLink() {
+      if (!this.editingId || this.shareMode) return;
+      this.shareLinkBusy = true;
+      this.error = '';
+      try {
+        const { data } = await axios.post(`/api/qa-test-docs/case/submissions/${this.editingId}/share`, {}, this.authConfig());
+        const path = data.share_path || `/qa/test-case?share=${data.share_token}`;
+        const url = `${window.location.origin}${path}`;
+        await navigator.clipboard.writeText(url);
+        this.shareLinkCopied = true;
+        setTimeout(() => { this.shareLinkCopied = false; }, 2500);
+        this.hasShare = true;
+        await this.loadItems();
+      } catch (e) {
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка';
+      } finally {
+        this.shareLinkBusy = false;
+      }
+    },
+    async revokeShare() {
+      if (!this.editingId || this.shareMode || !this.hasShare) return;
+      if (!confirm(this.$t('qa.tcRevokeShareConfirm'))) return;
+      this.shareLinkBusy = true;
+      this.error = '';
+      try {
+        await axios.delete(`/api/qa-test-docs/case/submissions/${this.editingId}/share`, this.authConfig());
+        this.hasShare = false;
+        await this.loadItems();
+      } catch (e) {
+        if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
+        else this.error = e.response?.data?.error || 'Ошибка';
+      } finally {
+        this.shareLinkBusy = false;
+      }
+    },
     async askAi() {
       this.aiLoading = true;
       this.error = '';
@@ -277,6 +386,7 @@ export default {
         const { data } = await axios.post('/api/qa-test-docs/case/ai-help', {
           prompt: 'Помоги сформировать шаги тест-кейса для GrowBoard',
           form: this.form,
+          ...this.shareExtra(),
         }, this.authConfig());
         this.aiTips = data.tips || [];
         if (data.test_description && !this.form.test_description) this.form.test_description = data.test_description;
@@ -303,6 +413,7 @@ export default {
             ? `Улучши формулировку для поля "${label}" на основе текущего текста`
             : `Объясни поле "${label}" и подскажи, что туда писать`,
           form: this.form,
+          ...this.shareExtra(),
         }, this.authConfig());
         const options = mode === 'improve'
           ? (Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean) : (data.suggested_text ? [data.suggested_text] : []))
@@ -331,7 +442,7 @@ export default {
       this.fieldSuggestion.open = false;
     },
     loadExample() {
-      this.editingId = null;
+      if (!this.shareMode) this.editingId = null;
       this.form = exampleForm();
       this.normalizeStepIds();
       this.qualityScore = null;
@@ -342,7 +453,7 @@ export default {
       this.evaluateLoading = true;
       this.error = '';
       try {
-        const { data } = await axios.post('/api/qa-test-docs/case/evaluate', { payload: this.form }, this.authConfig());
+        const { data } = await axios.post('/api/qa-test-docs/case/evaluate', { payload: this.form, ...this.shareExtra() }, this.authConfig());
         this.qualityScore = Number(data.score || 0);
         this.qualityFeedback = data.feedback || '';
       } catch (e) {
@@ -362,9 +473,14 @@ export default {
           quality_score: this.qualityScore,
           quality_feedback: this.qualityFeedback,
         };
-        if (this.editingId) await axios.put(`/api/qa-test-docs/case/submissions/${this.editingId}`, payload, this.authConfig());
-        else await axios.post('/api/qa-test-docs/case/submit', payload, this.authConfig());
-        await this.loadItems();
+        if (this.shareMode && this.shareToken) {
+          await axios.put(`/api/qa-test-docs/case/by-share/${encodeURIComponent(this.shareToken)}`, payload);
+        } else if (this.editingId) {
+          await axios.put(`/api/qa-test-docs/case/submissions/${this.editingId}`, payload, this.authConfig());
+        } else {
+          await axios.post('/api/qa-test-docs/case/submit', payload, this.authConfig());
+        }
+        if (this.isLoggedIn) await this.loadItems();
       } catch (e) {
         if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
         else this.error = e.response?.data?.error || 'Ошибка сохранения';
@@ -393,15 +509,10 @@ export default {
     },
     loadItem(item) {
       this.editingId = item.id;
-      this.form = { ...defaultForm(), ...(item.payload || {}) };
-      if (!Array.isArray(this.form.steps)) this.form.steps = makeSteps();
-      if (this.form.steps.length < 18) {
-        const extra = makeSteps().slice(this.form.steps.length);
-        this.form.steps = [...this.form.steps, ...extra];
-      }
-      this.normalizeStepIds();
-      this.qualityScore = item.quality_score ?? null;
-      this.qualityFeedback = item.quality_feedback || '';
+      this.shareMode = false;
+      this.shareToken = '';
+      this.hasShare = !!item.has_share;
+      this.applyLoadedPayload(item);
       this.selectedSavedId = item.id;
     },
     openSelectedSaved() {
@@ -414,6 +525,12 @@ export default {
       this.qualityScore = null;
       this.qualityFeedback = '';
       this.aiTips = [];
+      this.shareToken = '';
+      this.shareMode = false;
+      this.hasShare = false;
+      if (this.$route.query.share) {
+        this.$router.replace({ path: '/qa/test-case', query: {} });
+      }
     },
     addRow() {
       this.form.steps.push(makeStepByIndex(this.form.steps.length));
@@ -489,6 +606,9 @@ export default {
 .doc-quality, .doc-ai-box { margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
 .doc-info-box { margin-top: 10px; padding: 10px; border: 1px solid #dbeafe; border-radius: 10px; background: #eff6ff; color: #1e3a8a; }
 .doc-info-box p { margin: 6px 0 0; color: #1e3a8a; }
+.doc-login-hint { margin-top: 10px; }
+.doc-share-banner { margin-top: 10px; padding: 10px 12px; border: 1px solid #86efac; border-radius: 10px; background: #f0fdf4; color: #166534; }
+.doc-share-banner p { margin: 0; line-height: 1.45; }
 .field-suggest-box { margin-top: 10px; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px; }
 .field-suggest-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 .field-info-block { border: 1px solid #dbeafe; border-radius: 8px; background: #fff; padding: 8px; margin-bottom: 8px; }

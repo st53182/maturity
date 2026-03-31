@@ -68,6 +68,25 @@ register_socketio_handlers(socketio)
 
 with app.app_context():
     db.create_all()
+    # Добавление колонки для существующих БД (create_all не меняет таблицы)
+    from sqlalchemy import text
+    try:
+        db.session.execute(
+            text("ALTER TABLE qa_test_case_submissions ADD COLUMN share_token VARCHAR(64)")
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+    try:
+        db.session.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_qa_test_case_submissions_share_token "
+                "ON qa_test_case_submissions (share_token)"
+            )
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 register_ai_limit_hooks(app)
 

@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
@@ -65,9 +66,24 @@ def _serialize_case(item: QATestCaseSubmission) -> dict:
         "payload": item.payload_json or {},
         "quality_score": item.quality_score,
         "quality_feedback": item.quality_feedback or "",
+        "has_share": bool(getattr(item, "share_token", None)),
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
     }
+
+
+def _case_access_share_or_jwt(data: dict):
+    """Доступ к AI/оценке: валидный share_token или JWT."""
+    share_token = (data.get("share_token") or "").strip()
+    if share_token:
+        item = QATestCaseSubmission.query.filter_by(share_token=share_token).first()
+        if not item:
+            return False, (jsonify({"error": "Нет доступа"}), 403)
+        return True, None
+    uid = get_jwt_identity()
+    if not uid:
+        return False, (jsonify({"error": "Требуется авторизация"}), 401)
+    return True, None
 
 
 @bp_qa_test_docs.route("/plan/ai-help", methods=["POST"])
@@ -239,9 +255,12 @@ def plan_delete(item_id: int):
 
 
 @bp_qa_test_docs.route("/case/ai-help", methods=["POST"])
-@jwt_required()
+@jwt_required(optional=True)
 def case_ai_help():
     data = request.json or {}
+    ok, err = _case_access_share_or_jwt(data)
+    if not ok:
+        return err[0], err[1]
     ask = (data.get("prompt") or "").strip()
     target_field = (data.get("target_field") or "").strip()
     target_label = (data.get("target_label") or "").strip()
@@ -347,9 +366,12 @@ def case_ai_help():
 
 
 @bp_qa_test_docs.route("/case/evaluate", methods=["POST"])
-@jwt_required()
+@jwt_required(optional=True)
 def case_evaluate():
     data = request.json or {}
+    ok, err = _case_access_share_or_jwt(data)
+    if not ok:
+        return err[0], err[1]
     payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
     if not payload:
         return jsonify({"error": "Пустой payload"}), 400
@@ -448,5 +470,69 @@ def case_delete(item_id: int):
     if item.owner_user_id != _uid():
         return jsonify({"error": "Нет доступа"}), 403
     db.session.delete(item)
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+@bp_qa_test_docs.route("/case/submissions/<int:item_id>/share", methods=["POST"])
+@jwt_required()
+def case_create_share(item_id: int):
+    item = QATestCaseSubmission.query.get(item_id)
+    if not item:
+        return jsonify({"error": "Запись не найдена"}), 404
+    if item.owner_user_id != _uid():
+        return jsonify({"error": "Нет доступа"}), 403
+    if not item.share_token:
+        item.share_token = secrets.token_urlsafe(32)
+        item.updated_at = datetime.utcnow()
+        db.session.commit()
+    return jsonify({
+        "share_token": item.share_token,
+        "share_path": f"/qa/test-case?share={item.share_token}",
+    })
+
+
+@bp_qa_test_docs.route("/case/submissions/<int:item_id>/share", methods=["DELETE"])
+@jwt_required()
+def case_revoke_share(item_id: int):
+    item = QATestCaseSubmission.query.get(item_id)
+    if not item:
+        return jsonify({"error": "Запись не найдена"}), 404
+    if item.owner_user_id != _uid():
+        return jsonify({"error": "Нет доступа"}), 403
+    item.share_token = None
+    item.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+@bp_qa_test_docs.route("/case/by-share/<token>", methods=["GET"])
+def case_get_by_share(token: str):
+    token = (token or "").strip()
+    if not token:
+        return jsonify({"error": "Нет доступа"}), 403
+    item = QATestCaseSubmission.query.filter_by(share_token=token).first()
+    if not item:
+        return jsonify({"error": "Не найдено"}), 404
+    return jsonify(_serialize_case(item))
+
+
+@bp_qa_test_docs.route("/case/by-share/<token>", methods=["PUT"])
+def case_put_by_share(token: str):
+    token = (token or "").strip()
+    item = QATestCaseSubmission.query.filter_by(share_token=token).first()
+    if not item:
+        return jsonify({"error": "Не найдено"}), 404
+
+    data = request.json or {}
+    if "team_name" in data:
+        item.team_name = (data.get("team_name") or "").strip() or None
+    if "payload" in data and isinstance(data.get("payload"), dict):
+        item.payload_json = data.get("payload")
+    if "quality_score" in data and data.get("quality_score") is not None:
+        item.quality_score = _safe_score(data.get("quality_score"))
+    if "quality_feedback" in data:
+        item.quality_feedback = (data.get("quality_feedback") or "").strip() or None
+    item.updated_at = datetime.utcnow()
     db.session.commit()
     return jsonify({"success": True})

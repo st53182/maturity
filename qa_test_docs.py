@@ -246,12 +246,32 @@ def case_ai_help():
     target_field = (data.get("target_field") or "").strip()
     target_label = (data.get("target_label") or "").strip()
     current_value = (data.get("current_value") or "").strip()
+    target_mode = (data.get("target_mode") or "").strip().lower()
     form = data.get("form") if isinstance(data.get("form"), dict) else {}
     if not ask and not form:
         return jsonify({"error": "Передайте prompt или form"}), 400
 
     if target_field:
-        prompt = f"""Ты QA инженер. Сгенерируй варианты УЛУЧШЕНИЯ текста только для одного поля Test Case на русском языке.
+        if target_mode == "explain_only":
+            prompt = f"""Ты QA наставник. Объясни одно поле Test Case простым языком.
+
+Поле: {target_label or target_field}
+Технический путь поля: {target_field}
+Текущее значение:
+{current_value or "(пусто)"}
+
+Запрос: {ask or "Объясни что это поле означает и что в него писать"}
+Текущий документ:
+{json.dumps(form, ensure_ascii=False)}
+
+Верни строго JSON:
+{{
+  "field_explanation": "что означает поле (2-4 предложения)",
+  "what_to_write": ["что писать, пункт 1", "пункт 2", "пункт 3"],
+  "example_text": "короткий пример для этого поля"
+}}"""
+        else:
+            prompt = f"""Ты QA инженер. Сгенерируй варианты УЛУЧШЕНИЯ текста только для одного поля Test Case на русском языке.
 Если поле уже заполнено — сохрани исходный смысл и структуру, улучши ясность, проверяемость и качество формулировки.
 Не придумывай другой сценарий и не заменяй смысл.
 Если поле пустое — предложи стартовый вариант.
@@ -298,6 +318,16 @@ def case_ai_help():
         )
         out = _json_from_model_output(resp.choices[0].message.content or "")
         if target_field:
+            if target_mode == "explain_only":
+                what_to_write = out.get("what_to_write", [])
+                if not isinstance(what_to_write, list):
+                    what_to_write = []
+                return jsonify({
+                    "target_field": target_field,
+                    "field_explanation": out.get("field_explanation", ""),
+                    "what_to_write": [str(x).strip() for x in what_to_write if str(x).strip()][:5],
+                    "example_text": out.get("example_text", ""),
+                })
             suggestions = out.get("suggestions", [])
             if (not isinstance(suggestions, list)) or (not suggestions):
                 fallback = out.get("suggested_text", "")

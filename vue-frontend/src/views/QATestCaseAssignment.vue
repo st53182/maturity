@@ -31,7 +31,21 @@
           <strong>{{ $t('qa.docFieldSuggestionsTitle') }}: {{ fieldSuggestion.label }}</strong>
           <button type="button" class="doc-btn small" @click="fieldSuggestion.open = false">{{ $t('qa.docKeepAsIs') }}</button>
         </div>
-        <div class="field-suggest-list">
+        <div v-if="fieldSuggestion.explanation" class="field-info-block">
+          <strong>{{ $t('qa.docFieldMeaning') }}</strong>
+          <p>{{ fieldSuggestion.explanation }}</p>
+        </div>
+        <div v-if="fieldSuggestion.whatToWrite && fieldSuggestion.whatToWrite.length" class="field-info-block">
+          <strong>{{ $t('qa.docWhatToWrite') }}</strong>
+          <ul>
+            <li v-for="(w, i) in fieldSuggestion.whatToWrite" :key="'w'+i">{{ w }}</li>
+          </ul>
+        </div>
+        <div v-if="fieldSuggestion.exampleText" class="field-info-block">
+          <strong>{{ $t('qa.docFieldExample') }}</strong>
+          <p>{{ fieldSuggestion.exampleText }}</p>
+        </div>
+        <div v-if="fieldSuggestion.options && fieldSuggestion.options.length" class="field-suggest-list">
           <div v-for="(opt, i) in fieldSuggestion.options" :key="i" class="field-suggest-item">
             <p>{{ opt }}</p>
             <button type="button" class="doc-btn small" @click="applyFieldSuggestion(opt)">{{ $t('qa.docUseOption') }} {{ i + 1 }}</button>
@@ -52,8 +66,8 @@
       <section class="doc-section">
         <h3>{{ $t('qa.tcHeader') }}</h3>
         <div class="grid-two">
-          <div class="field-with-ai"><input v-model="form.test_title" :placeholder="$t('qa.tcTestTitle')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_title'" @click="askAiForField('test_title', $t('qa.tcTestTitle'))">{{ aiFieldLoading==='test_title' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.priority" :placeholder="$t('qa.tcPriority')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='priority'" @click="askAiForField('priority', $t('qa.tcPriority'))">{{ aiFieldLoading==='priority' ? '…' : 'AI' }}</button></div>
+          <div class="field-with-ai"><input v-model="form.test_title" :placeholder="$t('qa.tcTestTitle')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_title'" @click="askAiForField('test_title', $t('qa.tcTestTitle'), 'explain_only')">{{ aiFieldLoading==='test_title' ? '…' : 'AI' }}</button></div>
+          <div class="field-with-ai"><input v-model="form.priority" :placeholder="$t('qa.tcPriority')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='priority'" @click="askAiForField('priority', $t('qa.tcPriority'), 'explain_only')">{{ aiFieldLoading==='priority' ? '…' : 'AI' }}</button></div>
           <input v-model="form.test_case_id" :placeholder="$t('qa.tcCaseId')" />
           <input v-model="form.test_number" :placeholder="$t('qa.tcTestNumber')" />
           <input v-model="form.test_date" :placeholder="$t('qa.tcTestDate')" />
@@ -63,16 +77,16 @@
       <section class="doc-section">
         <h3>{{ $t('qa.tcDetails') }}</h3>
         <div class="grid-two">
-          <div class="field-with-ai"><input v-model="form.test_description" :placeholder="$t('qa.tcDescription')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_description'" @click="askAiForField('test_description', $t('qa.tcDescription'))">{{ aiFieldLoading==='test_description' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.test_designed_by" :placeholder="$t('qa.tcDesignedBy')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_designed_by'" @click="askAiForField('test_designed_by', $t('qa.tcDesignedBy'))">{{ aiFieldLoading==='test_designed_by' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.test_executed_by" :placeholder="$t('qa.tcExecutedBy')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_executed_by'" @click="askAiForField('test_executed_by', $t('qa.tcExecutedBy'))">{{ aiFieldLoading==='test_executed_by' ? '…' : 'AI' }}</button></div>
-          <div class="field-with-ai"><input v-model="form.execution_date" :placeholder="$t('qa.tcExecutionDate')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='execution_date'" @click="askAiForField('execution_date', $t('qa.tcExecutionDate'))">{{ aiFieldLoading==='execution_date' ? '…' : 'AI' }}</button></div>
+          <div class="field-with-ai"><input v-model="form.test_description" :placeholder="$t('qa.tcDescription')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_description'" @click="askAiForField('test_description', $t('qa.tcDescription'), 'explain_only')">{{ aiFieldLoading==='test_description' ? '…' : 'AI' }}</button></div>
+          <div class="field-with-ai"><input v-model="form.test_designed_by" :placeholder="$t('qa.tcDesignedBy')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_designed_by'" @click="askAiForField('test_designed_by', $t('qa.tcDesignedBy'), 'explain_only')">{{ aiFieldLoading==='test_designed_by' ? '…' : 'AI' }}</button></div>
+          <div class="field-with-ai"><input v-model="form.test_executed_by" :placeholder="$t('qa.tcExecutedBy')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_executed_by'" @click="askAiForField('test_executed_by', $t('qa.tcExecutedBy'), 'explain_only')">{{ aiFieldLoading==='test_executed_by' ? '…' : 'AI' }}</button></div>
+          <div class="field-with-ai"><input v-model="form.execution_date" :placeholder="$t('qa.tcExecutionDate')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='execution_date'" @click="askAiForField('execution_date', $t('qa.tcExecutionDate'), 'explain_only')">{{ aiFieldLoading==='execution_date' ? '…' : 'AI' }}</button></div>
         </div>
       </section>
       <section class="doc-section">
         <h3>{{ $t('qa.tcConditions') }}</h3>
-        <div class="field-with-ai"><textarea v-model="form.test_dependencies" rows="3" :placeholder="$t('qa.tcDependencies')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_dependencies'" @click="askAiForField('test_dependencies', $t('qa.tcDependencies'))">{{ aiFieldLoading==='test_dependencies' ? '…' : 'AI' }}</button></div>
-        <div class="field-with-ai"><textarea v-model="form.test_conditions" rows="3" :placeholder="$t('qa.tcTestConditions')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_conditions'" @click="askAiForField('test_conditions', $t('qa.tcTestConditions'))">{{ aiFieldLoading==='test_conditions' ? '…' : 'AI' }}</button></div>
+        <div class="field-with-ai"><textarea v-model="form.test_dependencies" rows="3" :placeholder="$t('qa.tcDependencies')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_dependencies'" @click="askAiForField('test_dependencies', $t('qa.tcDependencies'), 'explain_only')">{{ aiFieldLoading==='test_dependencies' ? '…' : 'AI' }}</button></div>
+        <div class="field-with-ai"><textarea v-model="form.test_conditions" rows="3" :placeholder="$t('qa.tcTestConditions')" /><button type="button" class="mini-ai-btn" :disabled="aiFieldLoading==='test_conditions'" @click="askAiForField('test_conditions', $t('qa.tcTestConditions'), 'explain_only')">{{ aiFieldLoading==='test_conditions' ? '…' : 'AI' }}</button></div>
       </section>
       <section class="doc-section">
         <h3>{{ $t('qa.tcSteps') }}</h3>
@@ -99,8 +113,8 @@
             <tbody>
               <tr v-for="(s, i) in form.steps" :key="i">
                 <td><input v-model="s.step_id" /></td>
-                <td><div class="cell-with-ai"><textarea v-model="s.step_description" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.step_description`" @click="askAiForField(`steps.${i}.step_description`, $t('qa.tcStepDescription'))">AI</button></div></td>
-                <td><div class="cell-with-ai"><textarea v-model="s.expected_results" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.expected_results`" @click="askAiForField(`steps.${i}.expected_results`, $t('qa.tcExpected'))">AI</button></div></td>
+                <td><div class="cell-with-ai"><textarea v-model="s.step_description" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.step_description`" @click="askAiForField(`steps.${i}.step_description`, $t('qa.tcStepDescription'), 'improve')">AI</button></div></td>
+                <td><div class="cell-with-ai"><textarea v-model="s.expected_results" rows="2" /><button type="button" class="cell-ai-btn" :disabled="aiFieldLoading===`steps.${i}.expected_results`" @click="askAiForField(`steps.${i}.expected_results`, $t('qa.tcExpected'), 'improve')">AI</button></div></td>
                 <td><textarea v-model="s.actual_results" rows="2" /></td>
                 <td><input v-model="s.pass_fail" /></td>
                 <td><input v-model="s.additional_notes" /></td>
@@ -224,7 +238,7 @@ export default {
       qualityFeedback: '',
       selectedSavedId: null,
       aiFieldLoading: '',
-      fieldSuggestion: { open: false, path: '', label: '', options: [] },
+      fieldSuggestion: { open: false, path: '', label: '', options: [], explanation: '', whatToWrite: [], exampleText: '', mode: 'explain_only' },
     };
   },
   mounted() {
@@ -276,19 +290,34 @@ export default {
         this.aiLoading = false;
       }
     },
-    async askAiForField(fieldPath, label) {
+    async askAiForField(fieldPath, label, mode = 'explain_only') {
       this.aiFieldLoading = fieldPath;
       this.error = '';
       try {
         const { data } = await axios.post('/api/qa-test-docs/case/ai-help', {
           target_field: fieldPath,
           target_label: label,
+          target_mode: mode,
           current_value: this.getByPath(fieldPath),
-          prompt: `Сформулируй качественный текст для поля "${label}"`,
+          prompt: mode === 'improve'
+            ? `Улучши формулировку для поля "${label}" на основе текущего текста`
+            : `Объясни поле "${label}" и подскажи, что туда писать`,
           form: this.form,
         }, this.authConfig());
-        const options = Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean) : (data.suggested_text ? [data.suggested_text] : []);
-        this.fieldSuggestion = { open: !!options.length, path: fieldPath, label, options };
+        const options = mode === 'improve'
+          ? (Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean) : (data.suggested_text ? [data.suggested_text] : []))
+          : [];
+        const whatToWrite = Array.isArray(data.what_to_write) ? data.what_to_write.filter(Boolean) : [];
+        this.fieldSuggestion = {
+          open: !!(options.length || data.field_explanation || whatToWrite.length || data.example_text),
+          path: fieldPath,
+          label,
+          options,
+          explanation: data.field_explanation || '',
+          whatToWrite,
+          exampleText: data.example_text || '',
+          mode,
+        };
       } catch (e) {
         if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
         else this.error = e.response?.data?.error || 'Ошибка AI-запроса';
@@ -462,6 +491,9 @@ export default {
 .doc-info-box p { margin: 6px 0 0; color: #1e3a8a; }
 .field-suggest-box { margin-top: 10px; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px; }
 .field-suggest-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.field-info-block { border: 1px solid #dbeafe; border-radius: 8px; background: #fff; padding: 8px; margin-bottom: 8px; }
+.field-info-block p { margin: 6px 0 0; white-space: pre-wrap; }
+.field-info-block ul { margin: 6px 0 0 18px; }
 .field-suggest-list { display: grid; gap: 8px; }
 .field-suggest-item { border: 1px solid #dbeafe; border-radius: 8px; background: #fff; padding: 8px; }
 .field-suggest-item p { margin: 0 0 8px; white-space: pre-wrap; }

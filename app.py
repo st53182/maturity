@@ -24,6 +24,7 @@ from agile_tools_ai import bp_agile_tools_ai
 from testing_types import bp_testing_types
 from usability_report import bp_usability_report
 from qa_user_story import bp_qa_user_story
+from qa_test_docs import bp_qa_test_docs
 from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 
@@ -93,6 +94,7 @@ app.register_blueprint(bp_agile_tools_ai)
 app.register_blueprint(bp_testing_types)
 app.register_blueprint(bp_usability_report)
 app.register_blueprint(bp_qa_user_story)
+app.register_blueprint(bp_qa_test_docs)
 app.register_blueprint(bp_ai_limits)
 
 

@@ -38,6 +38,18 @@
         <p>{{ $t('qa.puzzleUserStoryDesc') }}</p>
         <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
       </div>
+      <div class="puzzle-card" @click="$router.push('/qa/test-plan')">
+        <span class="puzzle-icon">📘</span>
+        <h2>{{ $t('qa.puzzleTestPlanTitle') }}</h2>
+        <p>{{ $t('qa.puzzleTestPlanDesc') }}</p>
+        <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
+      </div>
+      <div class="puzzle-card" @click="$router.push('/qa/test-case')">
+        <span class="puzzle-icon">🧾</span>
+        <h2>{{ $t('qa.puzzleTestCaseTitle') }}</h2>
+        <p>{{ $t('qa.puzzleTestCaseDesc') }}</p>
+        <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
+      </div>
     </div>
 
     <!-- Кнопка назад -->

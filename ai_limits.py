@@ -129,6 +129,10 @@ AI_LIMITED_POST_PATHS = {
     "/api/metrics-tree/explain",
     "/api/metrics-tree/relationship",
     "/api/maturity-admin/group-plan",
+    "/api/qa-test-docs/plan/ai-help",
+    "/api/qa-test-docs/plan/evaluate",
+    "/api/qa-test-docs/case/ai-help",
+    "/api/qa-test-docs/case/evaluate",
 }
 
 

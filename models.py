@@ -458,6 +458,38 @@ class QAUserStorySubmission(db.Model):
     ac_count = db.Column(db.Integer, nullable=True)
 
 
+class QATestPlanSubmission(db.Model):
+    """QA задание 6: сохраненные test plan документы пользователя."""
+    __tablename__ = "qa_test_plan_submissions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    owner_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    team_name = db.Column(db.String(255), nullable=True)
+    payload_json = db.Column(JSON, nullable=False)
+    quality_score = db.Column(db.Integer, nullable=True)
+    quality_feedback = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = db.relationship("User", backref=db.backref("qa_test_plan_submissions", lazy=True))
+
+
+class QATestCaseSubmission(db.Model):
+    """QA задание 7: сохраненные test case документы пользователя."""
+    __tablename__ = "qa_test_case_submissions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    owner_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    team_name = db.Column(db.String(255), nullable=True)
+    payload_json = db.Column(JSON, nullable=False)
+    quality_score = db.Column(db.Integer, nullable=True)
+    quality_feedback = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = db.relationship("User", backref=db.backref("qa_test_case_submissions", lazy=True))
+
+
 class BacklogWorkItem(db.Model):
     """Эпики и истории подготовки бэклога (PO): хранение, декомпозиция, экспорт в Jira."""
 

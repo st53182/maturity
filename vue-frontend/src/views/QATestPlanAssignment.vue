@@ -31,6 +31,20 @@
           <strong>{{ $t('qa.docFieldSuggestionsTitle') }}: {{ fieldSuggestion.label }}</strong>
           <button type="button" class="doc-btn small" @click="fieldSuggestion.open = false">{{ $t('qa.docKeepAsIs') }}</button>
         </div>
+        <div v-if="fieldSuggestion.explanation" class="field-info-block">
+          <strong>{{ $t('qa.docFieldMeaning') }}</strong>
+          <p>{{ fieldSuggestion.explanation }}</p>
+        </div>
+        <div v-if="fieldSuggestion.whatToWrite && fieldSuggestion.whatToWrite.length" class="field-info-block">
+          <strong>{{ $t('qa.docWhatToWrite') }}</strong>
+          <ul>
+            <li v-for="(w, i) in fieldSuggestion.whatToWrite" :key="'w'+i">{{ w }}</li>
+          </ul>
+        </div>
+        <div v-if="fieldSuggestion.exampleText" class="field-info-block">
+          <strong>{{ $t('qa.docFieldExample') }}</strong>
+          <p>{{ fieldSuggestion.exampleText }}</p>
+        </div>
         <div class="field-suggest-list">
           <div v-for="(opt, i) in fieldSuggestion.options" :key="i" class="field-suggest-item">
             <p>{{ opt }}</p>
@@ -181,7 +195,7 @@ export default {
       qualityFeedback: '',
       selectedSavedId: null,
       aiFieldLoading: '',
-      fieldSuggestion: { open: false, path: '', label: '', options: [] },
+      fieldSuggestion: { open: false, path: '', label: '', options: [], explanation: '', whatToWrite: [], exampleText: '' },
     };
   },
   mounted() {
@@ -223,7 +237,15 @@ export default {
           form: this.form,
         }, this.authConfig());
         const options = Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean) : (data.suggested_text ? [data.suggested_text] : []);
-        this.fieldSuggestion = { open: !!options.length, path: fieldKey, label, options };
+        this.fieldSuggestion = {
+          open: !!(options.length || data.field_explanation || (data.what_to_write || []).length || data.example_text),
+          path: fieldKey,
+          label,
+          options,
+          explanation: data.field_explanation || '',
+          whatToWrite: Array.isArray(data.what_to_write) ? data.what_to_write : [],
+          exampleText: data.example_text || '',
+        };
       } catch (e) {
         if (e.response?.status === 401) this.error = this.$t('qa.docAuthRequired');
         else this.error = e.response?.data?.error || 'Ошибка AI-запроса';
@@ -380,6 +402,9 @@ export default {
 .field-suggest-list { display: grid; gap: 8px; }
 .field-suggest-item { border: 1px solid #dbeafe; border-radius: 8px; background: #fff; padding: 8px; }
 .field-suggest-item p { margin: 0 0 8px; white-space: pre-wrap; }
+.field-info-block { border: 1px solid #dbeafe; border-radius: 8px; background: #fff; padding: 8px; margin-bottom: 8px; }
+.field-info-block p { margin: 6px 0 0; white-space: pre-wrap; }
+.field-info-block ul { margin: 6px 0 0; padding-left: 20px; }
 .doc-form-wrap { display: grid; gap: 10px; }
 .doc-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #fff; }
 .doc-section h3 { margin: 0 0 8px; font-size: 15px; }

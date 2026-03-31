@@ -82,7 +82,7 @@ def plan_ai_help():
     if not section and not ask:
         return jsonify({"error": "Передайте section или prompt"}), 400
 
-    prompt = f"""Ты опытный QA Lead. Помоги заполнить русский Test Plan для GrowBoard.
+    prompt = f"""Ты опытный QA Lead и наставник по тест-документации. Помоги заполнить русский Test Plan для GrowBoard.
 
 Раздел: {section or "общий"}
 Текущий текст в этом поле:
@@ -94,7 +94,10 @@ def plan_ai_help():
 
 Верни строго JSON:
 {{
-  "suggested_text": "готовый текст на русском для выбранного раздела",
+  "field_explanation": "что означает это поле простыми словами (2-4 предложения)",
+  "what_to_write": ["что включить в поле, пункт 1", "пункт 2", "пункт 3"],
+  "example_text": "короткий пример заполнения этого поля для GrowBoard",
+  "suggested_text": "улучшенный вариант на основе текущего текста (если поле пустое — стартовый черновик)",
   "suggestions": ["вариант 1 улучшения текущего текста", "вариант 2 улучшения текущего текста", "вариант 3 улучшения текущего текста"],
   "tips": ["короткий совет 1", "короткий совет 2"]
 }}"""
@@ -114,7 +117,13 @@ def plan_ai_help():
         if (not isinstance(suggestions, list)) or (not suggestions):
             fallback = out.get("suggested_text", "")
             suggestions = [fallback] if fallback else []
+        what_to_write = out.get("what_to_write", [])
+        if not isinstance(what_to_write, list):
+            what_to_write = []
         return jsonify({
+            "field_explanation": out.get("field_explanation", ""),
+            "what_to_write": [str(x).strip() for x in what_to_write if str(x).strip()][:5],
+            "example_text": out.get("example_text", ""),
             "suggested_text": out.get("suggested_text", ""),
             "suggestions": suggestions,
             "tips": out.get("tips", []),

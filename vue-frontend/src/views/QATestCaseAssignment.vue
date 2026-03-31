@@ -6,6 +6,7 @@
       <h1>{{ $t('qa.testCaseTaskTitle') }}</h1>
       <p class="doc-intro">{{ $t('qa.testCaseTaskIntro') }}</p>
       <div class="doc-toolbar">
+        <button type="button" class="doc-btn" @click="loadExample">{{ $t('qa.docLoadExample') }}</button>
         <button type="button" class="doc-btn" :disabled="aiLoading" @click="askAi">{{ aiLoading ? '…' : $t('qa.docAiHelp') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
         <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
@@ -157,6 +158,36 @@ function defaultForm() {
   };
 }
 
+function exampleForm() {
+  const steps = makeSteps();
+  steps[0].step_description = 'Открыть страницу входа GrowBoard';
+  steps[0].expected_results = 'Страница входа отображается без ошибок';
+  steps[1].step_description = 'Ввести валидные учетные данные и нажать «Войти»';
+  steps[1].expected_results = 'Пользователь авторизуется и попадает на дашборд';
+  steps[2].step_description = 'Перейти в скрытый раздел /qa и открыть задание 7';
+  steps[2].expected_results = 'Страница Test Case загружается, форма доступна';
+  steps[3].step_description = 'Нажать «Помощь AI»';
+  steps[3].expected_results = 'Появляются подсказки и/или предложенные шаги';
+  steps[4].step_description = 'Нажать «Оценить качество»';
+  steps[4].expected_results = 'Отображается оценка 1-10 и комментарий';
+
+  return {
+    test_title: 'Проверка заполнения и AI-помощи Test Case',
+    priority: 'HIGH',
+    test_case_id: 'GB-TC-001',
+    test_number: '1',
+    test_date: new Date().toLocaleDateString('ru-RU'),
+    priority_key: 'HIGH',
+    test_description: 'Проверить создание тест-кейса, AI-помощь, оценку качества и сохранение.',
+    test_designed_by: 'QA Engineer',
+    test_executed_by: '',
+    execution_date: '',
+    test_dependencies: 'Активный тестовый аккаунт и доступ к /qa/test-case',
+    test_conditions: 'Пользователь авторизован; API доступно',
+    steps,
+  };
+}
+
 export default {
   name: 'QATestCaseAssignment',
   data() {
@@ -207,6 +238,13 @@ export default {
         this.aiLoading = false;
       }
     },
+    loadExample() {
+      this.editingId = null;
+      this.form = exampleForm();
+      this.qualityScore = null;
+      this.qualityFeedback = '';
+      this.aiTips = [];
+    },
     async evaluate() {
       this.evaluateLoading = true;
       this.error = '';
@@ -243,6 +281,12 @@ export default {
     },
     async loadItems() {
       this.loadingList = true;
+      const token = this.getAuthToken();
+      if (!token) {
+        this.items = [];
+        this.loadingList = false;
+        return;
+      }
       try {
         const { data } = await axios.get('/api/qa-test-docs/case/submissions', this.authConfig());
         this.items = data.items || [];

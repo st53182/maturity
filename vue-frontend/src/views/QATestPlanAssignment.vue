@@ -6,6 +6,7 @@
       <h1>{{ $t('qa.testPlanTaskTitle') }}</h1>
       <p class="doc-intro">{{ $t('qa.testPlanTaskIntro') }}</p>
       <div class="doc-toolbar">
+        <button type="button" class="doc-btn" @click="loadExample">{{ $t('qa.docLoadExample') }}</button>
         <button type="button" class="doc-btn" :disabled="aiLoading" @click="askAi">{{ aiLoading ? '…' : $t('qa.docAiHelp') }}</button>
         <button type="button" class="doc-btn" :disabled="evaluateLoading" @click="evaluate">{{ evaluateLoading ? '…' : $t('qa.docEvaluate') }}</button>
         <button type="button" class="doc-btn success" :disabled="saveLoading" @click="save">{{ saveLoading ? '…' : $t('qa.docSave') }}</button>
@@ -129,6 +130,24 @@ function defaultForm() {
   };
 }
 
+function exampleForm() {
+  return {
+    test_plan_identifier: 'GB-QA-TP-2026-001',
+    introduction: 'Цель тестирования — убедиться, что ключевые пользовательские сценарии GrowBoard стабильны и соответствуют ожиданиям пользователя.',
+    test_items: 'Веб-интерфейс, авторизация, форма оценки, отчеты, раздел QA.',
+    testable_features: 'Логин, навигация по модулям, сохранение форм, AI-помощь, выгрузка PDF.',
+    non_testable_features: 'Нагрузочные тесты инфраструктуры и кросс-девайс тесты в рамках этого цикла не проводятся.',
+    approach: 'Black-box + exploratory + сценарное тестирование пользовательских потоков.',
+    pass_fail_criteria: 'Pass: критических дефектов нет, major <= 2. Fail: есть критические дефекты или major > 2.',
+    test_deliverables: 'Отчет о тестировании, список дефектов, рекомендации к релизу.',
+    testing_tasks: 'US-1 Логин пользователя; US-2 Прохождение оценки; US-3 Генерация рекомендаций AI; US-4 Выгрузка PDF.',
+    environmental_needs: 'Staging окружение, Chrome/Edge, тестовые аккаунты.',
+    responsibilities: 'QA инженер: тесты и отчет. Разработчик: исправление дефектов. PM: приоритизация.',
+    known_defects: 'На момент подготовки плана: нет подтвержденных дефектов.',
+    approvals: 'QA Lead / Product Owner',
+  };
+}
+
 export default {
   name: 'QATestPlanAssignment',
   data() {
@@ -176,6 +195,13 @@ export default {
         this.aiLoading = false;
       }
     },
+    loadExample() {
+      this.editingId = null;
+      this.form = exampleForm();
+      this.qualityScore = null;
+      this.qualityFeedback = '';
+      this.aiText = '';
+    },
     async evaluate() {
       this.evaluateLoading = true;
       this.error = '';
@@ -212,6 +238,12 @@ export default {
     },
     async loadItems() {
       this.loadingList = true;
+      const token = this.getAuthToken();
+      if (!token) {
+        this.items = [];
+        this.loadingList = false;
+        return;
+      }
       try {
         const { data } = await axios.get('/api/qa-test-docs/plan/submissions', this.authConfig());
         this.items = data.items || [];

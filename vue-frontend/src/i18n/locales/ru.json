@@ -763,6 +763,7 @@
     "docOpenFilledTemplate": "Открыть заполненный шаблон",
     "docSelectSavedTemplate": "Выберите сохранённый шаблон",
     "docAuthRequired": "Сессия истекла или не найден токен. Войдите в систему снова.",
+    "docLoadExample": "Загрузить пример",
     "tpIdentifier": "Test Plan Identifier",
     "tpIntroduction": "Introduction",
     "tpTestItems": "Test Items",

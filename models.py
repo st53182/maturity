@@ -307,6 +307,8 @@ class MaturityLinkSession(db.Model):
     answers = db.Column(JSON, nullable=True)  # список 205 bool или dict по индексу
     recommendations_html = db.Column(db.Text, nullable=True)
     dont_know_recommendations_html = db.Column(db.Text, nullable=True)
+    recommendations_plan_json = db.Column(JSON, nullable=True)
+    dont_know_recommendations_plan_json = db.Column(JSON, nullable=True)
 
 
 class MaturityGroupPlan(db.Model):

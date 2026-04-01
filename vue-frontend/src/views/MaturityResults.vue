@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <div v-if="recommendationsHtml" class="recommendations-block">
+        <div v-if="recommendationsHtml || recommendationsPlan.initiatives.length" class="recommendations-block">
           <h2 class="rec-title">{{ $t('maturity.recommendationsTitle') }}</h2>
           <div class="rec-actions">
             <button type="button" class="btn-rec" @click="editingRecommendations = !editingRecommendations">
@@ -47,12 +47,38 @@
               {{ savingRecommendations ? 'Сохранение…' : 'Сохранить' }}
             </button>
           </div>
-          <textarea
-            v-if="editingRecommendations"
-            v-model="recommendationsHtml"
-            class="rec-editor"
-            rows="10"
-          />
+          <div v-if="editingRecommendations" class="group-plan-editor">
+            <label class="plan-label">Диагноз</label>
+            <textarea v-model="recommendationsPlan.diagnosis" class="plan-input" rows="3" />
+
+            <h4>Инициативы</h4>
+            <article v-for="(item, idx) in recommendationsPlan.initiatives" :key="'team-init-' + idx" class="initiative-card">
+              <div class="initiative-head">
+                <strong>Инициатива {{ idx + 1 }}</strong>
+                <div class="initiative-actions">
+                  <button type="button" class="btn-rec" @click="toggleTeamInitiativeCollapse(idx)">
+                    {{ isTeamInitiativeCollapsed(idx) ? 'Развернуть' : 'Свернуть' }}
+                  </button>
+                  <button type="button" class="btn-rec" @click="removeTeamInitiative(idx)">Удалить</button>
+                </div>
+              </div>
+              <div v-if="!isTeamInitiativeCollapsed(idx)">
+                <label class="plan-label">Название</label>
+                <input v-model="item.title" class="plan-input" />
+                <label class="plan-label">Цель</label>
+                <textarea v-model="item.objective" class="plan-input" rows="2" />
+                <label class="plan-label">Владелец / роль</label>
+                <input v-model="item.owner" class="plan-input" />
+                <label class="plan-label">Метрика успеха</label>
+                <input v-model="item.success_metric" class="plan-input" />
+                <label class="plan-label">Бизнес-эффект</label>
+                <textarea v-model="item.business_impact" class="plan-input" rows="2" />
+                <label class="plan-label">Эффект для заказчиков</label>
+                <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+              </div>
+            </article>
+            <button type="button" class="btn-rec" @click="addTeamInitiative">+ Добавить инициативу</button>
+          </div>
           <div v-html="recommendationsHtml" class="rec-html"></div>
         </div>
 
@@ -203,6 +229,30 @@ import RadarChart from '@/components/RadarChart.vue';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
+function emptyTeamPlan() {
+  return { diagnosis: '', initiatives: [], roadmap: [], risks: [] };
+}
+
+function normalizeTeamPlan(plan) {
+  const src = plan && typeof plan === 'object' ? plan : {};
+  return {
+    diagnosis: String(src.diagnosis || ''),
+    initiatives: Array.isArray(src.initiatives)
+      ? src.initiatives.map((i) => ({
+        title: String(i?.title || ''),
+        objective: String(i?.objective || ''),
+        owner: String(i?.owner || ''),
+        success_metric: String(i?.success_metric || ''),
+        business_impact: String(i?.business_impact || ''),
+        customer_impact: String(i?.customer_impact || ''),
+        steps: Array.isArray(i?.steps) ? i.steps.map((x) => String(x || '')) : []
+      }))
+      : [],
+    roadmap: Array.isArray(src.roadmap) ? src.roadmap : [],
+    risks: Array.isArray(src.risks) ? src.risks : []
+  };
+}
+
 export default {
   name: 'MaturityResults',
   components: { RadarChart },
@@ -230,6 +280,8 @@ export default {
       loadingDontKnowRecs: false,
       editingRecommendations: false,
       savingRecommendations: false,
+      recommendationsPlan: emptyTeamPlan(),
+      teamInitiativeCollapsed: {},
       editingDontKnow: false,
       savingDontKnow: false,
       modalExporting: false,
@@ -362,6 +414,7 @@ export default {
         this.businessMetricsDisclaimer = res.data.business_metrics_disclaimer || '';
         this.businessMetricsGlossary = res.data.business_metrics_glossary || [];
         this.recommendationsHtml = res.data.recommendations_html || '';
+        this.recommendationsPlan = normalizeTeamPlan(res.data.recommendations_plan);
         this.dontKnowHtml = res.data.dont_know_recommendations_html || '';
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки результатов';
@@ -410,6 +463,7 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/recommendations`);
         this.recommendationsHtml = res.data.content || '';
+        this.recommendationsPlan = normalizeTeamPlan(res.data.plan);
         this.editingRecommendations = false;
         await this.fetchAiUsage();
       } catch (e) {
@@ -437,13 +491,45 @@ export default {
       if (this.savingRecommendations) return;
       this.savingRecommendations = true;
       try {
-        await axios.put(`/api/maturity/${this.token}/recommendations`, { content: this.recommendationsHtml || '' });
+        const payload = {
+          plan: normalizeTeamPlan(this.recommendationsPlan),
+          content: this.recommendationsHtml || ''
+        };
+        const res = await axios.put(`/api/maturity/${this.token}/recommendations`, payload);
+        this.recommendationsHtml = res.data?.content || this.recommendationsHtml;
+        this.recommendationsPlan = normalizeTeamPlan(res.data?.plan);
         this.editingRecommendations = false;
       } catch (e) {
         alert(e.response?.data?.error || 'Ошибка сохранения рекомендаций');
       } finally {
         this.savingRecommendations = false;
       }
+    },
+    isTeamInitiativeCollapsed(idx) {
+      return !!this.teamInitiativeCollapsed[idx];
+    },
+    toggleTeamInitiativeCollapse(idx) {
+      this.teamInitiativeCollapsed = {
+        ...this.teamInitiativeCollapsed,
+        [idx]: !this.teamInitiativeCollapsed[idx]
+      };
+    },
+    addTeamInitiative() {
+      this.recommendationsPlan.initiatives.push({
+        title: '',
+        objective: '',
+        owner: '',
+        success_metric: '',
+        business_impact: '',
+        customer_impact: '',
+        steps: []
+      });
+    },
+    removeTeamInitiative(idx) {
+      this.recommendationsPlan.initiatives.splice(idx, 1);
+      this.teamInitiativeCollapsed = Object.fromEntries(
+        Object.entries(this.teamInitiativeCollapsed).filter(([k]) => Number(k) !== idx)
+      );
     },
     async saveDontKnowRecommendations() {
       if (this.savingDontKnow) return;
@@ -853,6 +939,46 @@ export default {
   margin-bottom: 10px;
   box-sizing: border-box;
   font-family: inherit;
+}
+.group-plan-editor {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+}
+.plan-label {
+  display: block;
+  margin: 8px 0 6px;
+  font-size: 12px;
+  color: #374151;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.plan-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.initiative-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.initiative-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.initiative-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .rec-title {

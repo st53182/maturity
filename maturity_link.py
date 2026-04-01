@@ -1,5 +1,6 @@
 # Оценка зрелости по ссылке: создание сессии, прохождение (да/нет/не знаю), результаты для радара и PDF.
 import os
+import json
 import uuid
 from datetime import datetime
 from collections import defaultdict
@@ -467,7 +468,9 @@ def get_maturity_results(token):
         'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
         'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,
         'recommendations_html': session.recommendations_html or '',
+        'recommendations_plan': _normalize_group_plan(session.recommendations_plan_json),
         'dont_know_recommendations_html': session.dont_know_recommendations_html or '',
+        'dont_know_recommendations_plan': _normalize_group_plan(session.dont_know_recommendations_plan_json),
     })
 
 
@@ -476,7 +479,10 @@ def get_saved_maturity_recommendations(token):
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
-    return jsonify({"content": session.recommendations_html or ''})
+    return jsonify({
+        "content": session.recommendations_html or '',
+        "plan": _normalize_group_plan(session.recommendations_plan_json),
+    })
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations', methods=['PUT'])
@@ -485,9 +491,16 @@ def save_maturity_recommendations(token):
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
     data = request.get_json() or {}
-    session.recommendations_html = str(data.get('content') or '').strip()
+    plan = _normalize_group_plan(data.get("plan"))
+    html = str(data.get("content") or "").strip() or _group_plan_to_html(session.team_name or "Команда", plan)
+    session.recommendations_plan_json = plan
+    session.recommendations_html = html
     db.session.commit()
-    return jsonify({"success": True, "content": session.recommendations_html or ''})
+    return jsonify({
+        "success": True,
+        "content": session.recommendations_html or '',
+        "plan": _normalize_group_plan(session.recommendations_plan_json),
+    })
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations', methods=['POST'])
@@ -542,8 +555,32 @@ def get_maturity_recommendations(token):
 - Добавь отдельный подзаголовок «Инструменты GrowBoard», где дашь 1-3 релевантных инструмента и ссылки в формате HTML:
   <a href="/new/agile-tools">Название инструмента (поиск в Agile Tools)</a>.
   Можно использовать только инструменты из списка: {tools_hint}.
-- Используй короткие параграфы и при необходимости списки. Можно использовать HTML: <p>, <ul>, <li>, <strong>.
-- Ответ только на русском."""
+- Ответ верни ТОЛЬКО JSON (без markdown) в структуре:
+{{
+  "diagnosis": "2-4 предложения",
+  "initiatives": [
+    {{
+      "title": "...",
+      "objective": "...",
+      "owner": "...",
+      "success_metric": "...",
+      "business_impact": "...",
+      "customer_impact": "...",
+      "steps": ["...", "..."]
+    }}
+  ],
+  "roadmap": [
+    {{
+      "period": "Недели 1-2",
+      "start_date": "YYYY-MM-DD",
+      "end_date": "YYYY-MM-DD",
+      "initiative": "...",
+      "milestone": "..."
+    }}
+  ],
+  "risks": ["..."]
+}}
+- Пиши только на русском."""
 
     try:
         response = client.chat.completions.create(
@@ -555,10 +592,19 @@ def get_maturity_recommendations(token):
             temperature=0.6,
             max_tokens=2000,
         )
-        content = response.choices[0].message.content
+        raw = response.choices[0].message.content or "{}"
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            start = raw.find("{")
+            end = raw.rfind("}")
+            parsed = json.loads(raw[start:end + 1]) if start >= 0 and end > start else {}
+        plan = _normalize_group_plan(parsed)
+        content = _group_plan_to_html(session.team_name or "Команда", plan)
+        session.recommendations_plan_json = plan
         session.recommendations_html = content or ''
         db.session.commit()
-        return jsonify({"content": content})
+        return jsonify({"content": content, "plan": plan})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

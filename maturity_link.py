@@ -147,55 +147,98 @@ def _results_from_answers(answers):
     return results
 
 
+def _repair_truncated_json(text: str) -> str:
+    """Close unclosed brackets/braces in truncated JSON from the LLM."""
+    open_braces = 0
+    open_brackets = 0
+    in_string = False
+    escape = False
+    for ch in text:
+        if escape:
+            escape = False
+            continue
+        if ch == '\\' and in_string:
+            escape = True
+            continue
+        if ch == '"' and not escape:
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == '{':
+            open_braces += 1
+        elif ch == '}':
+            open_braces -= 1
+        elif ch == '[':
+            open_brackets += 1
+        elif ch == ']':
+            open_brackets -= 1
+
+    if in_string:
+        text = text.rstrip()
+        if text.endswith('\\'):
+            text = text[:-1]
+        text += '"'
+
+    tail = ""
+    for _ in range(max(open_brackets, 0)):
+        tail += "]"
+    for _ in range(max(open_braces, 0)):
+        tail += "}"
+    return text + tail
+
+
 def _safe_json_object(raw_text: str):
     """Best-effort JSON object parser for LLM output."""
     text = (raw_text or "").strip()
     if not text:
         return {}
-    # Remove markdown fences and normalize smart quotes.
-    text = text.replace("```json", "").replace("```", "").strip()
-    text = text.replace("“", "\"").replace("”", "\"").replace("’", "'")
-    try:
-        parsed = json.loads(text)
-        if isinstance(parsed, dict):
-            return parsed
-        # Sometimes model returns a JSON object as a quoted string.
-        if isinstance(parsed, str):
-            try:
-                parsed2 = json.loads(parsed)
-                return parsed2 if isinstance(parsed2, dict) else {}
-            except Exception:
-                pass
-        return {}
-    except Exception:
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```\s*$", "", text)
+    text = text.strip()
+    text = text.replace("\u201c", '"').replace("\u201d", '"').replace("\u2018", "'")
+
+    def _try_parse(s):
         try:
-            parsed = json.loads(text, strict=False)
-            if isinstance(parsed, dict):
-                return parsed
-            if isinstance(parsed, str):
-                try:
-                    parsed2 = json.loads(parsed)
-                    return parsed2 if isinstance(parsed2, dict) else {}
-                except Exception:
-                    pass
-            return {}
+            obj = json.loads(s)
         except Exception:
-            start = text.find("{")
-            end = text.rfind("}")
-            if start < 0 or end <= start:
-                return {}
-            candidate = text[start:end + 1]
-            # Common LLM JSON issue: trailing commas before } or ]
-            candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
             try:
-                parsed = json.loads(candidate)
-                return parsed if isinstance(parsed, dict) else {}
+                obj = json.loads(s, strict=False)
             except Exception:
-                try:
-                    parsed = json.loads(candidate, strict=False)
-                    return parsed if isinstance(parsed, dict) else {}
-                except Exception:
-                    return {}
+                return None
+        if isinstance(obj, dict):
+            return obj
+        if isinstance(obj, str):
+            try:
+                obj2 = json.loads(obj)
+                return obj2 if isinstance(obj2, dict) else None
+            except Exception:
+                return None
+        return None
+
+    result = _try_parse(text)
+    if result is not None:
+        return result
+
+    start = text.find("{")
+    if start < 0:
+        return {}
+    candidate = text[start:]
+
+    candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+    result = _try_parse(candidate)
+    if result is not None:
+        return result
+
+    repaired = _repair_truncated_json(candidate)
+    repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+    result = _try_parse(repaired)
+    if result is not None:
+        return result
+
+    return {}
+
+
 
 
 def _extract_answers_and_comments(raw_answers):
@@ -642,7 +685,8 @@ def get_maturity_recommendations(token):
                 {"role": "user", "content": prompt},
             ],
             temperature=0.6,
-            max_tokens=2000,
+            max_tokens=3500,
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or "{}"
         parsed = _safe_json_object(raw)
@@ -776,7 +820,8 @@ def get_maturity_recommendations_dont_know(token):
                 {"role": "user", "content": prompt},
             ],
             temperature=0.55,
-            max_tokens=2000,
+            max_tokens=3500,
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or "{}"
         parsed = _safe_json_object(raw)
@@ -1353,7 +1398,8 @@ def maturity_admin_group_plan_generate():
                 {"role": "user", "content": prompt},
             ],
             temperature=0.45,
-            max_tokens=2600,
+            max_tokens=3500,
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or "{}"
         parsed = _safe_json_object(raw)

@@ -146,6 +146,26 @@ def _results_from_answers(answers):
     return results
 
 
+def _safe_json_object(raw_text: str):
+    """Best-effort JSON object parser for LLM output."""
+    text = (raw_text or "").strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start < 0 or end <= start:
+            return {}
+        try:
+            parsed = json.loads(text[start:end + 1])
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+
+
 def _extract_answers_and_comments(raw_answers):
     """
     Backward-compatible storage:
@@ -593,12 +613,7 @@ def get_maturity_recommendations(token):
             max_tokens=2000,
         )
         raw = response.choices[0].message.content or "{}"
-        try:
-            parsed = json.loads(raw)
-        except Exception:
-            start = raw.find("{")
-            end = raw.rfind("}")
-            parsed = json.loads(raw[start:end + 1]) if start >= 0 and end > start else {}
+        parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
         content = _group_plan_to_html(session.team_name or "Команда", plan)
         session.recommendations_plan_json = plan
@@ -719,12 +734,7 @@ def get_maturity_recommendations_dont_know(token):
             max_tokens=2000,
         )
         raw = response.choices[0].message.content or "{}"
-        try:
-            parsed = json.loads(raw)
-        except Exception:
-            start = raw.find("{")
-            end = raw.rfind("}")
-            parsed = json.loads(raw[start:end + 1]) if start >= 0 and end > start else {}
+        parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
         content = _group_plan_to_html(f"{session.team_name or 'Команда'} — ответы «Не знаю»", plan)
         session.dont_know_recommendations_plan_json = plan
@@ -1288,12 +1298,7 @@ def maturity_admin_group_plan_generate():
             max_tokens=2600,
         )
         raw = response.choices[0].message.content or "{}"
-        try:
-            parsed = json.loads(raw)
-        except Exception:
-            start = raw.find("{")
-            end = raw.rfind("}")
-            parsed = json.loads(raw[start:end + 1]) if start >= 0 and end > start else {}
+        parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
         content = _group_plan_to_html(group_name, plan)
 

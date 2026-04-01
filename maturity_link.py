@@ -615,11 +615,24 @@ def get_maturity_recommendations(token):
         raw = response.choices[0].message.content or "{}"
         parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
-        content = _group_plan_to_html(session.team_name or "Команда", plan)
-        session.recommendations_plan_json = plan
+        plan_is_empty = (
+            not plan.get("diagnosis")
+            and not plan.get("initiatives")
+            and not plan.get("roadmap")
+            and not plan.get("risks")
+        )
+        if plan_is_empty:
+            fallback = (raw or "").strip()
+            content = fallback if fallback.startswith("<") else f"<p>{fallback}</p>"
+        else:
+            content = _group_plan_to_html(session.team_name or "Команда", plan)
+            session.recommendations_plan_json = plan
         session.recommendations_html = content or ''
         db.session.commit()
-        return jsonify({"content": content, "plan": plan})
+        return jsonify({
+            "content": content,
+            "plan": _normalize_group_plan(session.recommendations_plan_json),
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -736,11 +749,24 @@ def get_maturity_recommendations_dont_know(token):
         raw = response.choices[0].message.content or "{}"
         parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
-        content = _group_plan_to_html(f"{session.team_name or 'Команда'} — ответы «Не знаю»", plan)
-        session.dont_know_recommendations_plan_json = plan
+        plan_is_empty = (
+            not plan.get("diagnosis")
+            and not plan.get("initiatives")
+            and not plan.get("roadmap")
+            and not plan.get("risks")
+        )
+        if plan_is_empty:
+            fallback = (raw or "").strip()
+            content = fallback if fallback.startswith("<") else f"<p>{fallback}</p>"
+        else:
+            content = _group_plan_to_html(f"{session.team_name or 'Команда'} — ответы «Не знаю»", plan)
+            session.dont_know_recommendations_plan_json = plan
         session.dont_know_recommendations_html = content or ''
         db.session.commit()
-        return jsonify({"content": content, "plan": plan})
+        return jsonify({
+            "content": content,
+            "plan": _normalize_group_plan(session.dont_know_recommendations_plan_json),
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

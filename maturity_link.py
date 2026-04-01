@@ -127,7 +127,7 @@ def _normalize_stored_answers_row(raw_list):
 
 
 def _results_from_answers(answers):
-    """answers: list of True / False / 'dont_know'. За вопрос: True=1, dont_know=0.5, False=0."""
+    """answers: list of True / False / 'dont_know'. За вопрос: True=1, dont_know=0, False=0."""
     if not answers or len(answers) != QUESTIONS_COUNT:
         return {}
     results = {}
@@ -138,7 +138,7 @@ def _results_from_answers(answers):
             if a is True:
                 score = 1.0
             elif a == 'dont_know':
-                score = 0.5
+                score = 0.0
             else:
                 score = 0.0
             results[theme][str(sub_one_based)] = score
@@ -500,7 +500,7 @@ def get_maturity_recommendations(token):
     tools_hint = ", ".join(AGILE_TOOLS_LINKS)
     prompt = f"""Ты опытный Agile-коуч. По результатам оценки зрелости команды (да/нет по темам) дай конкретный план улучшений для команды.
 
-Результаты по категориям (3 вопроса на тему; за вопрос: «да»=1, «не знаю»=0.5, «нет»=0; максимум по теме = 3):
+Результаты по категориям (3 вопроса на тему; за вопрос: «да»=1, «не знаю»=0, «нет»=0; максимум по теме = 3):
 {summary_text}
 
 Требования:

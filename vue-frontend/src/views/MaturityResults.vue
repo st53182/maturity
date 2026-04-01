@@ -101,12 +101,38 @@
               {{ savingDontKnow ? 'Сохранение…' : 'Сохранить' }}
             </button>
           </div>
-          <textarea
-            v-if="editingDontKnow"
-            v-model="dontKnowHtml"
-            class="rec-editor"
-            rows="8"
-          />
+          <div v-if="editingDontKnow" class="group-plan-editor">
+            <label class="plan-label">Диагноз</label>
+            <textarea v-model="dontKnowPlan.diagnosis" class="plan-input" rows="3" />
+
+            <h4>Инициативы</h4>
+            <article v-for="(item, idx) in dontKnowPlan.initiatives" :key="'dk-init-' + idx" class="initiative-card">
+              <div class="initiative-head">
+                <strong>Инициатива {{ idx + 1 }}</strong>
+                <div class="initiative-actions">
+                  <button type="button" class="btn-rec" @click="toggleDontKnowInitiativeCollapse(idx)">
+                    {{ isDontKnowInitiativeCollapsed(idx) ? 'Развернуть' : 'Свернуть' }}
+                  </button>
+                  <button type="button" class="btn-rec" @click="removeDontKnowInitiative(idx)">Удалить</button>
+                </div>
+              </div>
+              <div v-if="!isDontKnowInitiativeCollapsed(idx)">
+                <label class="plan-label">Название</label>
+                <input v-model="item.title" class="plan-input" />
+                <label class="plan-label">Цель</label>
+                <textarea v-model="item.objective" class="plan-input" rows="2" />
+                <label class="plan-label">Владелец / роль</label>
+                <input v-model="item.owner" class="plan-input" />
+                <label class="plan-label">Метрика успеха</label>
+                <input v-model="item.success_metric" class="plan-input" />
+                <label class="plan-label">Бизнес-эффект</label>
+                <textarea v-model="item.business_impact" class="plan-input" rows="2" />
+                <label class="plan-label">Эффект для заказчиков</label>
+                <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+              </div>
+            </article>
+            <button type="button" class="btn-rec" @click="addDontKnowInitiative">+ Добавить инициативу</button>
+          </div>
           <div v-if="dontKnowHtml" v-html="dontKnowHtml" class="rec-html"></div>
         </div>
       </div>
@@ -284,6 +310,8 @@ export default {
       teamInitiativeCollapsed: {},
       editingDontKnow: false,
       savingDontKnow: false,
+      dontKnowPlan: emptyTeamPlan(),
+      dontKnowInitiativeCollapsed: {},
       modalExporting: false,
       businessMetricsDisclaimer: '',
       businessMetricsGlossary: [],
@@ -416,6 +444,7 @@ export default {
         this.recommendationsHtml = res.data.recommendations_html || '';
         this.recommendationsPlan = normalizeTeamPlan(res.data.recommendations_plan);
         this.dontKnowHtml = res.data.dont_know_recommendations_html || '';
+        this.dontKnowPlan = normalizeTeamPlan(res.data.dont_know_recommendations_plan);
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки результатов';
       } finally {
@@ -479,6 +508,7 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/recommendations/dont-know`);
         this.dontKnowHtml = res.data.content || '';
+        this.dontKnowPlan = normalizeTeamPlan(res.data.plan);
         this.editingDontKnow = false;
         await this.fetchAiUsage();
       } catch (e) {
@@ -535,13 +565,45 @@ export default {
       if (this.savingDontKnow) return;
       this.savingDontKnow = true;
       try {
-        await axios.put(`/api/maturity/${this.token}/recommendations/dont-know`, { content: this.dontKnowHtml || '' });
+        const payload = {
+          plan: normalizeTeamPlan(this.dontKnowPlan),
+          content: this.dontKnowHtml || ''
+        };
+        const res = await axios.put(`/api/maturity/${this.token}/recommendations/dont-know`, payload);
+        this.dontKnowHtml = res.data?.content || this.dontKnowHtml;
+        this.dontKnowPlan = normalizeTeamPlan(res.data?.plan);
         this.editingDontKnow = false;
       } catch (e) {
         alert(e.response?.data?.error || 'Ошибка сохранения рекомендаций');
       } finally {
         this.savingDontKnow = false;
       }
+    },
+    isDontKnowInitiativeCollapsed(idx) {
+      return !!this.dontKnowInitiativeCollapsed[idx];
+    },
+    toggleDontKnowInitiativeCollapse(idx) {
+      this.dontKnowInitiativeCollapsed = {
+        ...this.dontKnowInitiativeCollapsed,
+        [idx]: !this.dontKnowInitiativeCollapsed[idx]
+      };
+    },
+    addDontKnowInitiative() {
+      this.dontKnowPlan.initiatives.push({
+        title: '',
+        objective: '',
+        owner: '',
+        success_metric: '',
+        business_impact: '',
+        customer_impact: '',
+        steps: []
+      });
+    },
+    removeDontKnowInitiative(idx) {
+      this.dontKnowPlan.initiatives.splice(idx, 1);
+      this.dontKnowInitiativeCollapsed = Object.fromEntries(
+        Object.entries(this.dontKnowInitiativeCollapsed).filter(([k]) => Number(k) !== idx)
+      );
     },
     async exportPdf() {
       if (this.exporting) return;

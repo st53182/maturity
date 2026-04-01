@@ -614,7 +614,10 @@ def get_saved_maturity_recommendations_dont_know(token):
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
-    return jsonify({"content": session.dont_know_recommendations_html or ''})
+    return jsonify({
+        "content": session.dont_know_recommendations_html or '',
+        "plan": _normalize_group_plan(session.dont_know_recommendations_plan_json),
+    })
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations/dont-know', methods=['PUT'])
@@ -623,9 +626,19 @@ def save_maturity_recommendations_dont_know(token):
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
     data = request.get_json() or {}
-    session.dont_know_recommendations_html = str(data.get('content') or '').strip()
+    plan = _normalize_group_plan(data.get("plan"))
+    html = str(data.get("content") or "").strip() or _group_plan_to_html(
+        f"{session.team_name or 'Команда'} — ответы «Не знаю»",
+        plan,
+    )
+    session.dont_know_recommendations_plan_json = plan
+    session.dont_know_recommendations_html = html
     db.session.commit()
-    return jsonify({"success": True, "content": session.dont_know_recommendations_html or ''})
+    return jsonify({
+        "success": True,
+        "content": session.dont_know_recommendations_html or '',
+        "plan": _normalize_group_plan(session.dont_know_recommendations_plan_json),
+    })
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations/dont-know', methods=['POST'])
@@ -668,7 +681,32 @@ def get_maturity_recommendations_dont_know(token):
 Дай ровно 5 рекомендаций (не больше и не меньше), каждая рекомендация — отдельный пункт с конкретным действием и ожидаемым сигналом проверки.
 Упор только на прикладные изменения в процессах и командных практиках, без абстрактных блоков про мировоззрение/ценности.
 Не предлагай ротацию ролей PO/DPO и любые перестановки PO/DPO.
-Структура: HTML (<p>, <ul>, <li>, <strong>). Только русский язык."""
+Верни ТОЛЬКО JSON (без markdown) в структуре:
+{{
+  "diagnosis": "2-4 предложения",
+  "initiatives": [
+    {{
+      "title": "...",
+      "objective": "...",
+      "owner": "...",
+      "success_metric": "...",
+      "business_impact": "...",
+      "customer_impact": "...",
+      "steps": ["...", "..."]
+    }}
+  ],
+  "roadmap": [
+    {{
+      "period": "Недели 1-2",
+      "start_date": "YYYY-MM-DD",
+      "end_date": "YYYY-MM-DD",
+      "initiative": "...",
+      "milestone": "..."
+    }}
+  ],
+  "risks": ["..."]
+}}
+Только русский язык."""
 
     try:
         response = client.chat.completions.create(
@@ -680,10 +718,19 @@ def get_maturity_recommendations_dont_know(token):
             temperature=0.55,
             max_tokens=2000,
         )
-        content = response.choices[0].message.content
+        raw = response.choices[0].message.content or "{}"
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            start = raw.find("{")
+            end = raw.rfind("}")
+            parsed = json.loads(raw[start:end + 1]) if start >= 0 and end > start else {}
+        plan = _normalize_group_plan(parsed)
+        content = _group_plan_to_html(f"{session.team_name or 'Команда'} — ответы «Не знаю»", plan)
+        session.dont_know_recommendations_plan_json = plan
         session.dont_know_recommendations_html = content or ''
         db.session.commit()
-        return jsonify({"content": content})
+        return jsonify({"content": content, "plan": plan})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -157,11 +157,28 @@ def _safe_json_object(raw_text: str):
     text = text.replace("“", "\"").replace("”", "\"").replace("’", "'")
     try:
         parsed = json.loads(text)
-        return parsed if isinstance(parsed, dict) else {}
+        if isinstance(parsed, dict):
+            return parsed
+        # Sometimes model returns a JSON object as a quoted string.
+        if isinstance(parsed, str):
+            try:
+                parsed2 = json.loads(parsed)
+                return parsed2 if isinstance(parsed2, dict) else {}
+            except Exception:
+                pass
+        return {}
     except Exception:
         try:
             parsed = json.loads(text, strict=False)
-            return parsed if isinstance(parsed, dict) else {}
+            if isinstance(parsed, dict):
+                return parsed
+            if isinstance(parsed, str):
+                try:
+                    parsed2 = json.loads(parsed)
+                    return parsed2 if isinstance(parsed2, dict) else {}
+                except Exception:
+                    pass
+            return {}
         except Exception:
             start = text.find("{")
             end = text.rfind("}")

@@ -1,6 +1,7 @@
 # Оценка зрелости по ссылке: создание сессии, прохождение (да/нет/не знаю), результаты для радара и PDF.
 import os
 import json
+import re
 import uuid
 from datetime import datetime
 from collections import defaultdict
@@ -151,19 +152,33 @@ def _safe_json_object(raw_text: str):
     text = (raw_text or "").strip()
     if not text:
         return {}
+    # Remove markdown fences and normalize smart quotes.
+    text = text.replace("```json", "").replace("```", "").strip()
+    text = text.replace("“", "\"").replace("”", "\"").replace("’", "'")
     try:
         parsed = json.loads(text)
         return parsed if isinstance(parsed, dict) else {}
     except Exception:
-        start = text.find("{")
-        end = text.rfind("}")
-        if start < 0 or end <= start:
-            return {}
         try:
-            parsed = json.loads(text[start:end + 1])
+            parsed = json.loads(text, strict=False)
             return parsed if isinstance(parsed, dict) else {}
         except Exception:
-            return {}
+            start = text.find("{")
+            end = text.rfind("}")
+            if start < 0 or end <= start:
+                return {}
+            candidate = text[start:end + 1]
+            # Common LLM JSON issue: trailing commas before } or ]
+            candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+            try:
+                parsed = json.loads(candidate)
+                return parsed if isinstance(parsed, dict) else {}
+            except Exception:
+                try:
+                    parsed = json.loads(candidate, strict=False)
+                    return parsed if isinstance(parsed, dict) else {}
+                except Exception:
+                    return {}
 
 
 def _extract_answers_and_comments(raw_answers):

@@ -87,6 +87,20 @@ with app.app_context():
         db.session.commit()
     except Exception:
         db.session.rollback()
+    try:
+        db.session.execute(
+            text("ALTER TABLE maturity_link_session ADD COLUMN recommendations_html TEXT")
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+    try:
+        db.session.execute(
+            text("ALTER TABLE maturity_link_session ADD COLUMN dont_know_recommendations_html TEXT")
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 register_ai_limit_hooks(app)
 

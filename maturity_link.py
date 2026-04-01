@@ -466,7 +466,28 @@ def get_maturity_results(token):
         'questions': questions,
         'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
         'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,
+        'recommendations_html': session.recommendations_html or '',
+        'dont_know_recommendations_html': session.dont_know_recommendations_html or '',
     })
+
+
+@maturity_bp.route('/api/maturity/<token>/recommendations', methods=['GET'])
+def get_saved_maturity_recommendations(token):
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    return jsonify({"content": session.recommendations_html or ''})
+
+
+@maturity_bp.route('/api/maturity/<token>/recommendations', methods=['PUT'])
+def save_maturity_recommendations(token):
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    data = request.get_json() or {}
+    session.recommendations_html = str(data.get('content') or '').strip()
+    db.session.commit()
+    return jsonify({"success": True, "content": session.recommendations_html or ''})
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations', methods=['POST'])
@@ -535,9 +556,30 @@ def get_maturity_recommendations(token):
             max_tokens=2000,
         )
         content = response.choices[0].message.content
+        session.recommendations_html = content or ''
+        db.session.commit()
         return jsonify({"content": content})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@maturity_bp.route('/api/maturity/<token>/recommendations/dont-know', methods=['GET'])
+def get_saved_maturity_recommendations_dont_know(token):
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    return jsonify({"content": session.dont_know_recommendations_html or ''})
+
+
+@maturity_bp.route('/api/maturity/<token>/recommendations/dont-know', methods=['PUT'])
+def save_maturity_recommendations_dont_know(token):
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    data = request.get_json() or {}
+    session.dont_know_recommendations_html = str(data.get('content') or '').strip()
+    db.session.commit()
+    return jsonify({"success": True, "content": session.dont_know_recommendations_html or ''})
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations/dont-know', methods=['POST'])
@@ -563,7 +605,10 @@ def get_maturity_recommendations_dont_know(token):
             lines.append(f"- Вопрос {i + 1} ({q.get('theme', '')}): {q.get('text', '')}")
 
     if not lines:
-        return jsonify({'content': '<p>Нет ответов «не знаю» — блок не требуется.</p>'})
+        content = '<p>Нет ответов «не знаю» — блок не требуется.</p>'
+        session.dont_know_recommendations_html = content
+        db.session.commit()
+        return jsonify({'content': content})
 
     topics = "\n".join(lines)
     from openai import OpenAI
@@ -590,6 +635,8 @@ def get_maturity_recommendations_dont_know(token):
             max_tokens=2000,
         )
         content = response.choices[0].message.content
+        session.dont_know_recommendations_html = content or ''
+        db.session.commit()
         return jsonify({"content": content})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

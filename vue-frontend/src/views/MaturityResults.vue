@@ -39,6 +39,20 @@
 
         <div v-if="recommendationsHtml" class="recommendations-block">
           <h2 class="rec-title">{{ $t('maturity.recommendationsTitle') }}</h2>
+          <div class="rec-actions">
+            <button type="button" class="btn-rec" @click="editingRecommendations = !editingRecommendations">
+              {{ editingRecommendations ? 'Отменить редактирование' : 'Редактировать' }}
+            </button>
+            <button type="button" class="btn-rec" :disabled="savingRecommendations" @click="saveRecommendations">
+              {{ savingRecommendations ? 'Сохранение…' : 'Сохранить' }}
+            </button>
+          </div>
+          <textarea
+            v-if="editingRecommendations"
+            v-model="recommendationsHtml"
+            class="rec-editor"
+            rows="10"
+          />
           <div v-html="recommendationsHtml" class="rec-html"></div>
         </div>
 
@@ -53,6 +67,20 @@
           >
             {{ loadingDontKnowRecs ? 'Генерация…' : 'Получить рекомендации по «Не знаю»' }}
           </button>
+          <div v-if="dontKnowHtml" class="rec-actions">
+            <button type="button" class="btn-rec" @click="editingDontKnow = !editingDontKnow">
+              {{ editingDontKnow ? 'Отменить редактирование' : 'Редактировать' }}
+            </button>
+            <button type="button" class="btn-rec" :disabled="savingDontKnow" @click="saveDontKnowRecommendations">
+              {{ savingDontKnow ? 'Сохранение…' : 'Сохранить' }}
+            </button>
+          </div>
+          <textarea
+            v-if="editingDontKnow"
+            v-model="dontKnowHtml"
+            class="rec-editor"
+            rows="8"
+          />
           <div v-if="dontKnowHtml" v-html="dontKnowHtml" class="rec-html"></div>
         </div>
       </div>
@@ -200,6 +228,10 @@ export default {
       loadingRecs: false,
       dontKnowHtml: '',
       loadingDontKnowRecs: false,
+      editingRecommendations: false,
+      savingRecommendations: false,
+      editingDontKnow: false,
+      savingDontKnow: false,
       modalExporting: false,
       businessMetricsDisclaimer: '',
       businessMetricsGlossary: [],
@@ -329,6 +361,8 @@ export default {
         this.questions = res.data.questions || [];
         this.businessMetricsDisclaimer = res.data.business_metrics_disclaimer || '';
         this.businessMetricsGlossary = res.data.business_metrics_glossary || [];
+        this.recommendationsHtml = res.data.recommendations_html || '';
+        this.dontKnowHtml = res.data.dont_know_recommendations_html || '';
       } catch (e) {
         this.error = e.response?.data?.error || 'Ошибка загрузки результатов';
       } finally {
@@ -376,6 +410,7 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/recommendations`);
         this.recommendationsHtml = res.data.content || '';
+        this.editingRecommendations = false;
         await this.fetchAiUsage();
       } catch (e) {
         this.recommendationsHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка загрузки рекомендаций') + '</p>';
@@ -390,11 +425,36 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/recommendations/dont-know`);
         this.dontKnowHtml = res.data.content || '';
+        this.editingDontKnow = false;
         await this.fetchAiUsage();
       } catch (e) {
         this.dontKnowHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка') + '</p>';
       } finally {
         this.loadingDontKnowRecs = false;
+      }
+    },
+    async saveRecommendations() {
+      if (this.savingRecommendations) return;
+      this.savingRecommendations = true;
+      try {
+        await axios.put(`/api/maturity/${this.token}/recommendations`, { content: this.recommendationsHtml || '' });
+        this.editingRecommendations = false;
+      } catch (e) {
+        alert(e.response?.data?.error || 'Ошибка сохранения рекомендаций');
+      } finally {
+        this.savingRecommendations = false;
+      }
+    },
+    async saveDontKnowRecommendations() {
+      if (this.savingDontKnow) return;
+      this.savingDontKnow = true;
+      try {
+        await axios.put(`/api/maturity/${this.token}/recommendations/dont-know`, { content: this.dontKnowHtml || '' });
+        this.editingDontKnow = false;
+      } catch (e) {
+        alert(e.response?.data?.error || 'Ошибка сохранения рекомендаций');
+      } finally {
+        this.savingDontKnow = false;
       }
     },
     async exportPdf() {
@@ -778,6 +838,21 @@ export default {
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e7eb;
+}
+.rec-actions {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.rec-editor {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .rec-title {

@@ -305,6 +305,8 @@ class MaturityLinkSession(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
     answers = db.Column(JSON, nullable=True)  # список 205 bool или dict по индексу
+    recommendations_html = db.Column(db.Text, nullable=True)
+    dont_know_recommendations_html = db.Column(db.Text, nullable=True)
 
 
 class MaturityGroupPlan(db.Model):

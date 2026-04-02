@@ -52,15 +52,18 @@
           
           <div v-if="currentQuestion.type === 'scale'" class="scale-options">
             <div class="scale-labels">
-              <span>1 (Низко)</span>
-              <span>5 (Высоко)</span>
+              <span>{{ scaleEdgeLow(currentQuestion) }}</span>
+              <span>{{ scaleEdgeHigh(currentQuestion) }}</span>
             </div>
             <div class="scale-buttons">
-              <button v-for="value in currentQuestion.scale" 
-                      :key="value"
-                      :class="{ active: answers[currentQuestion.id] == value }"
-                      @click="answers[currentQuestion.id] = value"
-                      class="scale-btn">
+              <button
+                v-for="value in scaleValues(currentQuestion)"
+                :key="value"
+                type="button"
+                :class="{ active: answers[currentQuestion.id] == value }"
+                @click="answers[currentQuestion.id] = value"
+                class="scale-btn"
+              >
                 {{ value }}
               </button>
             </div>
@@ -181,6 +184,33 @@ export default {
   methods: {
     matrixRowKey(row) {
       return typeof row === 'object' && row !== null ? row.value : row
+    },
+
+    scaleValues(question) {
+      if (!question || question.type !== 'scale') return []
+      if (Array.isArray(question.scale) && question.scale.length) {
+        return question.scale.map((v) => Number(v)).filter((n) => !Number.isNaN(n))
+      }
+      const mn = question.min != null ? Number(question.min) : 1
+      const mx = question.max != null ? Number(question.max) : 5
+      if (Number.isNaN(mn) || Number.isNaN(mx) || mn > mx) {
+        return [1, 2, 3, 4, 5]
+      }
+      const out = []
+      for (let i = mn; i <= mx; i++) out.push(i)
+      return out
+    },
+
+    scaleEdgeLow(question) {
+      const vals = this.scaleValues(question)
+      if (!vals.length) return '1 (Низко)'
+      return `${vals[0]} (Низко)`
+    },
+
+    scaleEdgeHigh(question) {
+      const vals = this.scaleValues(question)
+      if (!vals.length) return '5 (Высоко)'
+      return `${vals[vals.length - 1]} (Высоко)`
     },
 
     async loadSurvey() {
@@ -385,13 +415,16 @@ export default {
 
 .scale-buttons {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: center;
+  align-items: center;
 }
 
 .scale-btn {
-  width: 50px;
-  height: 50px;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
   border: 2px solid #ddd;
   border-radius: 50%;
   background: white;

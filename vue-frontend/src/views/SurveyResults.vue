@@ -67,7 +67,7 @@
           <div v-for="(data, competency) in analytics.competency_averages" :key="competency" 
                class="competency-item">
             <div class="competency-header">
-              <span class="competency-name">{{ competency }}</span>
+              <span class="competency-name">{{ competencyLabel(competency) }}</span>
               <span class="competency-score">{{ data.average.toFixed(2) }}</span>
             </div>
             
@@ -105,7 +105,7 @@
                 <div v-if="typeof answer === 'object'" class="matrix-answer">
                   <div v-for="(rating, competency) in answer" :key="competency" 
                        class="matrix-item">
-                    {{ competency }}: {{ rating }}
+                    {{ competencyLabel(competency) }}: {{ rating }}
                   </div>
                 </div>
                 <div v-else class="text-answer">{{ answer }}</div>
@@ -165,6 +165,10 @@ export default {
     },
     
     getQuestionText(questionId) {
+      const q = (this.survey?.questions || []).find(
+        (x) => String(x.id) === String(questionId)
+      )
+      if (q && q.question) return q.question
       const questionMap = {
         '1': 'Имя',
         '2': 'Ключевые таланты',
@@ -174,6 +178,20 @@ export default {
         '6': 'Оценки компетенций'
       }
       return questionMap[questionId] || `Вопрос ${questionId}`
+    },
+
+    competencyLabel(key) {
+      const questions = this.survey?.questions || []
+      const matrix = questions.find((q) => q && q.type === 'matrix')
+      const rows = matrix?.rows || []
+      for (const row of rows) {
+        if (typeof row === 'object' && row !== null) {
+          if (row.value === key || String(row.value) === String(key)) return row.text || key
+        } else if (String(row) === String(key)) {
+          return row
+        }
+      }
+      return key
     },
     
     getTextQuestionTitle(questionKey) {

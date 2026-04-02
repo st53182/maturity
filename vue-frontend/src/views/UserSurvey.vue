@@ -42,36 +42,40 @@
         {{ $t('newSurvey.disclaimer') }}
 </p>
 
-      <!-- 🔹 Прогресс-бар -->
+      <div class="tracker-strip" aria-hidden="false">
+        <p class="tracker-label">{{ $t('newSurvey.progressHint') }}</p>
+        <div class="question-tracker" role="tablist" :aria-label="$t('survey.question')">
+          <button
+            type="button"
+            v-for="(q, index) in questions"
+            :key="q.id"
+            class="tracker-dot"
+            :aria-label="`${$t('survey.question')} ${index + 1}`"
+            :aria-selected="currentQuestionIndex === index"
+            :class="{
+              answered: answers[q.id],
+              active: currentQuestionIndex === index
+            }"
+            @click="currentQuestionIndex = index"
+          ></button>
+        </div>
+      </div>
 
-      <div class="question-tracker">
-  <button
-    type="button"
-    v-for="(q, index) in questions"
-    :key="q.id"
-    class="tracker-dot"
-    :aria-label="`${$t('survey.question')} ${index + 1}`"
-    :class="{
-      answered: answers[q.id],
-      active: currentQuestionIndex === index
-    }"
-    @click="currentQuestionIndex = index"
-  ></button>
-</div>
-
-      <!-- 🔹 Вопрос -->
       <div v-if="currentQuestion" class="question-card">
-        <button v-if="currentQuestionIndex > 0" class="back-btn" :aria-label="$t('maturity.prev')" @click="prevQuestion">⬅</button>
-        <h2 class="question-text"> {{ currentQuestion.question }}</h2>
+        <button v-if="currentQuestionIndex > 0" type="button" class="back-btn" :aria-label="$t('maturity.prev')" @click="prevQuestion">⬅</button>
+        <h2 class="question-text">{{ currentQuestion.question }}</h2>
 
         <div class="answer-options">
           <button
             v-for="(desc, level) in currentQuestion.levels"
             :key="level"
+            type="button"
+            class="level-option"
             :class="{ selected: answers[currentQuestion.id] === level }"
             @click="answerQuestion(level)"
           >
-            {{ desc }}
+            <span class="level-option__badge">{{ level }}</span>
+            <span class="level-option__text">{{ desc }}</span>
           </button>
         </div>
       </div>
@@ -537,20 +541,38 @@ h1 {
   text-align: left;
 }
 
-.answer-options button {
+.survey-container:not(.survey--new) .answer-options button {
   transition: 0.3s;
 }
-.answer-options button:nth-child(1) { background-color: rgba(231, 104, 124, 0.6); }
-.answer-options button:nth-child(2) { background-color: rgba(231, 211, 104, 0.6); }
-.answer-options button:nth-child(3) { background-color: rgba(104, 124, 231, 0.6); }
-.answer-options button:nth-child(4) { background-color: rgba(104, 188, 231, 0.6); }
-.answer-options button:nth-child(5) { background-color: rgba(124, 231, 104, 0.6); }
+.survey-container:not(.survey--new) .answer-options button:nth-child(1) { background-color: rgba(231, 104, 124, 0.6); }
+.survey-container:not(.survey--new) .answer-options button:nth-child(2) { background-color: rgba(231, 211, 104, 0.6); }
+.survey-container:not(.survey--new) .answer-options button:nth-child(3) { background-color: rgba(104, 124, 231, 0.6); }
+.survey-container:not(.survey--new) .answer-options button:nth-child(4) { background-color: rgba(104, 188, 231, 0.6); }
+.survey-container:not(.survey--new) .answer-options button:nth-child(5) { background-color: rgba(124, 231, 104, 0.6); }
+
+.tracker-strip {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(10, 20, 45, 0.04);
+  border: 1px solid rgba(10, 20, 45, 0.07);
+}
+
+.tracker-label {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(10, 20, 45, 0.55);
+  text-align: left;
+}
 
 .question-tracker {
   display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 18px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  max-height: none;
 }
 
 .tracker-dot {
@@ -559,9 +581,10 @@ h1 {
   border-radius: 50%;
   background: #ccc;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   border: none;
   padding: 0;
+  flex-shrink: 0;
 }
 .tracker-dot.answered {
   background: #2ecc71;
@@ -632,72 +655,117 @@ h1 {
   position: relative;
   padding: 22px 18px 26px;
   border-radius: 18px;
-  border: 1px solid rgba(10, 20, 45, 0.09);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 249, 255, 0.9));
-  box-shadow: 0 18px 48px rgba(10, 20, 45, 0.08);
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(10, 20, 45, 0.06);
+  animation: cardRise 380ms ease-out;
 }
 
 .survey--new .question-text {
   color: rgba(10, 20, 45, 0.9);
+  padding-right: 44px;
 }
 
-.survey--new .answer-options button {
-  border-radius: 13px;
-  border: 1px solid rgba(10, 20, 45, 0.14);
-  font-weight: 560;
-  text-align: left;
-  line-height: 1.38;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.94);
-  color: rgba(16, 28, 58, 0.92);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 20px rgba(10, 20, 45, 0.06);
-  animation: optionIn 340ms ease-out;
+.survey--new .tracker-strip {
+  background: rgba(248, 250, 255, 0.95);
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  box-shadow: none;
 }
 
-.survey--new .answer-options button:hover {
-  transform: translateY(-1px) scale(1.004);
-  box-shadow: 0 12px 26px rgba(32, 90, 255, 0.16);
-  border-color: rgba(32, 90, 255, 0.35);
-  filter: none;
-}
-
-.survey--new .answer-options button.selected {
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.75)) !important;
-  color: #fff !important;
-  border-color: rgba(32, 90, 255, 0.45);
-  font-weight: 700;
-  box-shadow: 0 16px 34px rgba(32, 90, 255, 0.24);
-}
-
-.survey--new .answer-options button:nth-child(1) {
-  background: linear-gradient(180deg, rgba(255, 239, 243, 0.96), rgba(255, 247, 249, 0.94));
-}
-.survey--new .answer-options button:nth-child(2) {
-  background: linear-gradient(180deg, rgba(255, 248, 225, 0.96), rgba(255, 251, 236, 0.94));
-}
-.survey--new .answer-options button:nth-child(3) {
-  background: linear-gradient(180deg, rgba(239, 244, 255, 0.96), rgba(246, 249, 255, 0.94));
-}
-.survey--new .answer-options button:nth-child(4) {
-  background: linear-gradient(180deg, rgba(232, 246, 255, 0.96), rgba(241, 251, 255, 0.94));
-}
-.survey--new .answer-options button:nth-child(5) {
-  background: linear-gradient(180deg, rgba(234, 252, 237, 0.96), rgba(241, 255, 244, 0.94));
-}
-
-.survey--new .tracker-dot.answered {
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.85), rgba(0, 194, 255, 0.7));
-}
-
-.survey--new .tracker-dot.active {
-  border: 2px solid rgba(32, 90, 255, 0.65);
-  box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.15);
+.survey--new .tracker-label {
+  color: rgba(10, 20, 45, 0.5);
+  font-weight: 600;
 }
 
 .survey--new .tracker-dot {
-  width: 10px;
-  height: 10px;
-  background: rgba(10, 20, 45, 0.2);
+  width: 11px;
+  height: 11px;
+  border-radius: 4px;
+  background: rgba(10, 20, 45, 0.12);
+}
+
+.survey--new .tracker-dot.answered {
+  background: rgba(34, 197, 94, 0.85);
+}
+
+.survey--new .tracker-dot.active {
+  background: #fff;
+  border: 2px solid rgba(32, 90, 255, 0.75);
+  box-shadow: 0 0 0 1px rgba(32, 90, 255, 0.2);
+  transform: scale(1.15);
+}
+
+.survey--new .answer-options {
+  gap: 10px;
+}
+
+.survey--new .level-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  font-weight: 500;
+  text-align: left;
+  line-height: 1.45;
+  padding: 12px 14px;
+  background: #fafbfc;
+  color: rgba(16, 28, 58, 0.92);
+  box-shadow: 0 1px 2px rgba(10, 20, 45, 0.04);
+  animation: optionIn 280ms ease-out;
+  cursor: pointer;
+}
+
+.survey--new .level-option__badge {
+  flex: 0 0 auto;
+  min-width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  background: rgba(10, 20, 45, 0.07);
+  color: rgba(10, 20, 45, 0.88);
+}
+
+.survey--new .level-option__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.survey--new .level-option:hover {
+  transform: translateY(-1px);
+  border-color: rgba(32, 90, 255, 0.28);
+  box-shadow: 0 6px 16px rgba(10, 20, 45, 0.07);
+}
+
+.survey--new .level-option:nth-child(1) .level-option__badge { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+.survey--new .level-option:nth-child(2) .level-option__badge { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+.survey--new .level-option:nth-child(3) .level-option__badge { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+.survey--new .level-option:nth-child(4) .level-option__badge { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
+.survey--new .level-option:nth-child(5) .level-option__badge { background: rgba(34, 197, 94, 0.14); color: #15803d; }
+
+.survey--new .level-option.selected {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.95), rgba(37, 99, 235, 0.88)) !important;
+  color: #fff !important;
+  border-color: rgba(32, 90, 255, 0.5) !important;
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(32, 90, 255, 0.22);
+}
+
+.survey--new .level-option.selected .level-option__badge {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #fff !important;
+}
+
+.survey--new .level-option.selected::after {
+  display: none;
 }
 
 .survey--new .team-btn {
@@ -742,24 +810,20 @@ h1 {
 .survey--new::before {
   content: "";
   position: absolute;
-  inset: -40% -30% auto auto;
-  width: 420px;
-  height: 420px;
+  inset: -35% -25% auto auto;
+  width: 360px;
+  height: 360px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(120, 119, 255, 0.18), rgba(0, 194, 255, 0));
+  background: radial-gradient(circle, rgba(120, 119, 255, 0.07), rgba(0, 194, 255, 0));
   pointer-events: none;
-  animation: premiumFloat 12s ease-in-out infinite;
-}
-
-.survey--new .question-card {
-  animation: cardRise 380ms ease-out;
 }
 
 .survey--new .team-btn,
 .survey--new .modern-button.purple,
 .survey--new .confirm-btn,
 .survey--new .cancel-btn,
-.survey--new .back-btn {
+.survey--new .back-btn,
+.survey--new .level-option {
   position: relative;
   overflow: hidden;
 }
@@ -768,7 +832,8 @@ h1 {
 .survey--new .modern-button.purple::after,
 .survey--new .confirm-btn::after,
 .survey--new .cancel-btn::after,
-.survey--new .back-btn::after {
+.survey--new .back-btn::after,
+.survey--new .level-option::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -781,7 +846,8 @@ h1 {
 .survey--new .modern-button.purple:hover::after,
 .survey--new .confirm-btn:hover::after,
 .survey--new .cancel-btn:hover::after,
-.survey--new .back-btn:hover::after {
+.survey--new .back-btn:hover::after,
+.survey--new .level-option:hover::after {
   transform: translateX(130%);
 }
 
@@ -815,6 +881,7 @@ h1 {
 }
 
 .survey--new .team-btn:focus-visible,
+.survey--new .level-option:focus-visible,
 .survey--new .answer-options button:focus-visible,
 .survey--new .modern-button:focus-visible,
 .survey--new .back-btn:focus-visible,

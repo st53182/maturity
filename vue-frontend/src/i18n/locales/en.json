@@ -78,7 +78,8 @@
     "notAuthorized": "You are not authorized",
     "teamCreateError": "Failed to create team",
     "resultsSaved": "Results saved",
-    "submitError": "Failed to submit results"
+    "submitError": "Failed to submit results",
+    "progressHint": "Question progress — click a step to go back"
   },
   "maturity": {
     "title": "Maturity Assessment by Link",

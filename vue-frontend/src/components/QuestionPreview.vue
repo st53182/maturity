@@ -56,9 +56,13 @@
           <div class="footer-info">
             <span>{{ $t('surveys.preview.totalQuestions', { count: questions.length }) }}</span>
           </div>
-          <div class="modal-buttons">
-            <button type="button" @click="editQuestions" class="edit-btn">✏️ {{ $t('surveys.preview.editBtn') }}</button>
-            <button type="button" @click="confirmCreate" class="confirm-btn">✅ {{ $t('surveys.preview.confirmBtn') }}</button>
+          <div class="modal-buttons qp-actions">
+            <button type="button" class="qp-action-btn qp-action-btn--secondary" @click="editQuestions">
+              ✏️ {{ $t('surveys.preview.editBtn') }}
+            </button>
+            <button type="button" class="qp-action-btn qp-action-btn--primary" @click="confirmCreate">
+              ✅ {{ $t('surveys.preview.confirmBtn') }}
+            </button>
           </div>
         </div>
       </div>
@@ -364,57 +368,53 @@ export default {
   font-weight: 500;
 }
 
-.modal-buttons {
+.modal-buttons.qp-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: 12px;
 }
 
-.edit-btn, .confirm-btn, .cancel-btn {
-  padding: 12px 24px;
+.qp-action-btn {
+  flex: 1 1 220px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px 20px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
   font-family: inherit;
-  min-width: 140px;
+  cursor: pointer;
+  line-height: 1.35;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: normal;
 }
 
-.edit-btn {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+.qp-action-btn--secondary {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(71, 85, 105, 0.35);
 }
 
-.edit-btn:hover {
+.qp-action-btn--secondary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.45);
 }
 
-.confirm-btn {
+.qp-action-btn--primary {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  color: #fff;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.confirm-btn:hover {
+.qp-action-btn--primary:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-}
-
-.cancel-btn {
-  background: #ffffff;
-  color: #374151;
-  border: 2px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.cancel-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -431,7 +431,8 @@ export default {
     width: 100%;
   }
   
-  .edit-btn, .confirm-btn, .cancel-btn {
+  .qp-action-btn {
+    flex: 1 1 100%;
     width: 100%;
   }
   

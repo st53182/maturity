@@ -66,24 +66,38 @@
             <div class="yes-no">
               <button
                 type="button"
-                :class="['btn-answer', 'btn-yes', { active: answers[q.id] === true }]"
-                @click="setAnswer(q.id, true)"
+                :class="['btn-answer', 'btn-no', { active: answers[q.id] === 'no' }]"
+                @click="setAnswer(q.id, 'no')"
               >
-                {{ $t('maturity.yes') }}
+                {{ $t('maturity.no') }}
               </button>
               <button
                 type="button"
-                :class="['btn-answer', 'btn-no', { active: answers[q.id] === false }]"
-                @click="setAnswer(q.id, false)"
+                :class="['btn-answer', 'btn-rather-no', { active: answers[q.id] === 'rather_no' }]"
+                @click="setAnswer(q.id, 'rather_no')"
               >
-                {{ $t('maturity.no') }}
+                {{ $t('maturity.ratherNo') }}
               </button>
               <button
                 type="button"
                 :class="['btn-answer', 'btn-dont-know', { active: answers[q.id] === 'dont_know' }]"
                 @click="setAnswer(q.id, 'dont_know')"
               >
-                Не знаю
+                {{ $t('maturity.dontKnow') }}
+              </button>
+              <button
+                type="button"
+                :class="['btn-answer', 'btn-rather-yes', { active: answers[q.id] === 'rather_yes' }]"
+                @click="setAnswer(q.id, 'rather_yes')"
+              >
+                {{ $t('maturity.ratherYes') }}
+              </button>
+              <button
+                type="button"
+                :class="['btn-answer', 'btn-yes', { active: answers[q.id] === 'yes' }]"
+                @click="setAnswer(q.id, 'yes')"
+              >
+                {{ $t('maturity.yes') }}
               </button>
             </div>
 
@@ -256,11 +270,10 @@ export default {
         const total = this.survey.questions.length;
         const arr = [];
         const commentsArr = [];
+        const allowed = new Set(['no', 'rather_no', 'dont_know', 'rather_yes', 'yes']);
         for (let i = 0; i < total; i++) {
           const a = this.answers[i];
-          if (a === true) arr.push(true);
-          else if (a === false) arr.push(false);
-          else arr.push('dont_know');
+          arr.push(allowed.has(a) ? a : 'no');
           const c = (this.comments[i] || '').toString().trim();
           commentsArr.push(c ? c : null);
         }
@@ -574,6 +587,8 @@ export default {
 
 .btn-yes.active { background: #10b981; border-color: #10b981; color: #fff; }
 .btn-no.active { background: #ef4444; border-color: #ef4444; color: #fff; }
+.btn-rather-no.active { background: #ea580c; border-color: #ea580c; color: #fff; }
+.btn-rather-yes.active { background: #65a30d; border-color: #65a30d; color: #fff; }
 .btn-dont-know.active { background: #64748b; border-color: #64748b; color: #fff; }
 
 .btn-answer:hover:not(.active) { border-color: #9ca3af; background: #f3f4f6; }
@@ -718,6 +733,16 @@ export default {
 .take-maturity--new .btn-dont-know.active {
   background: linear-gradient(135deg, rgba(100, 116, 139, 0.95), rgba(71, 85, 105, 0.88));
   border-color: rgba(100, 116, 139, 0.6);
+}
+
+.take-maturity--new .btn-rather-no.active {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.95), rgba(249, 115, 22, 0.88));
+  border-color: rgba(234, 88, 12, 0.6);
+}
+
+.take-maturity--new .btn-rather-yes.active {
+  background: linear-gradient(135deg, rgba(101, 163, 13, 0.95), rgba(132, 204, 22, 0.88));
+  border-color: rgba(101, 163, 13, 0.6);
 }
 
 .take-maturity--new .btn-nav.prev {

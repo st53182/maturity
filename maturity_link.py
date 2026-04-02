@@ -1,4 +1,4 @@
-# Оценка зрелости по ссылке: создание сессии, прохождение (да/нет/не знаю), результаты для радара и PDF.
+# Оценка зрелости по ссылке: пять вариантов ответа, баллы за вопрос, результаты для радара и PDF.
 import os
 import json
 import re
@@ -21,6 +21,16 @@ from maturity_questions import (
 )
 
 maturity_bp = Blueprint('maturity_link', __name__)
+
+# Значения ответа в JSON (строки). Устаревшие: true → yes, false → no.
+MATURITY_ANSWER_KEYS = frozenset({'no', 'rather_no', 'dont_know', 'rather_yes', 'yes'})
+MATURITY_ANSWER_SCORE = {
+    'no': 0.0,
+    'rather_no': 0.0,
+    'dont_know': 0.0,
+    'rather_yes': 0.5,
+    'yes': 1.0,
+}
 
 QUESTIONS_COUNT = len(MATURITY_QUESTIONS)
 QUESTIONS_PER_THEME = 3
@@ -82,17 +92,23 @@ DEFAULT_BUSINESS_METRICS = (
 )
 
 
-def _parse_submitted_answer(a):
-    """Один элемент ответа из JSON: True / False / 'dont_know'."""
+def _canonical_maturity_answer_key(a):
+    """Привести значение к одному из MATURITY_ANSWER_KEYS или None."""
     if a is True:
-        return True
+        return 'yes'
     if a is False:
-        return False
-    if isinstance(a, str):
-        key = a.strip().lower().replace(' ', '_')
-        if key == 'dont_know':
-            return 'dont_know'
+        return 'no'
+    if not isinstance(a, str):
+        return None
+    key = a.strip().lower().replace(' ', '_').replace('-', '_')
+    if key in MATURITY_ANSWER_KEYS:
+        return key
     return None
+
+
+def _parse_submitted_answer(a):
+    """Один элемент ответа: строка из MATURITY_ANSWER_KEYS или устаревшие true/false."""
+    return _canonical_maturity_answer_key(a)
 
 
 def _validate_answers_list(answers):
@@ -108,18 +124,13 @@ def _validate_answers_list(answers):
 
 
 def _normalize_stored_answer_cell(a):
-    """Привести значение из БД к True / False / 'dont_know'."""
-    if a is True:
-        return True
-    if a is False:
-        return False
-    if isinstance(a, str):
-        key = a.strip().lower().replace(' ', '_')
-        if key == 'dont_know':
-            return 'dont_know'
+    """Привести значение из БД к каноническому ключу ответа (строка)."""
+    c = _canonical_maturity_answer_key(a)
+    if c is not None:
+        return c
     if isinstance(a, bool):
-        return a
-    return False
+        return 'yes' if a else 'no'
+    return 'no'
 
 
 def _normalize_stored_answers_row(raw_list):
@@ -129,7 +140,7 @@ def _normalize_stored_answers_row(raw_list):
 
 
 def _results_from_answers(answers):
-    """answers: list of True / False / 'dont_know'. За вопрос: True=1, dont_know=0, False=0."""
+    """answers: список канонических ключей. Баллы: нет/скорее нет/не знаю=0, скорее да=0.5, да=1."""
     if not answers or len(answers) != QUESTIONS_COUNT:
         return {}
     results = {}
@@ -137,12 +148,7 @@ def _results_from_answers(answers):
         results[theme] = {}
         for sub_one_based, q_idx in enumerate(indices[:QUESTIONS_PER_THEME], 1):
             a = answers[q_idx]
-            if a is True:
-                score = 1.0
-            elif a == 'dont_know':
-                score = 0.0
-            else:
-                score = 0.0
+            score = float(MATURITY_ANSWER_SCORE.get(a, 0.0))
             results[theme][str(sub_one_based)] = score
     return results
 
@@ -469,7 +475,7 @@ def get_maturity_survey(token):
 
 @maturity_bp.route('/api/maturity/<token>/submit', methods=['POST'])
 def submit_maturity_answers(token):
-    """Публично: отправить ответы. Тело: answers — N элементов: true | false | \"dont_know\"."""
+    """Публично: отправить ответы. Тело: answers — N строк: no | rather_no | dont_know | rather_yes | yes (допустимы устаревшие true/false)."""
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
@@ -480,7 +486,13 @@ def submit_maturity_answers(token):
     comments = data.get('comments')
     normalized, err = _validate_answers_list(answers)
     if err:
-        return jsonify({'error': f'Нужен массив из {QUESTIONS_COUNT} ответов: true, false или \"dont_know\"'}), 400
+        return jsonify({
+            'error': (
+                f'Нужен массив из {QUESTIONS_COUNT} ответов: '
+                '"no", "rather_no", "dont_know", "rather_yes", "yes" '
+                '(или устаревшие true/false)'
+            ),
+        }), 400
     if comments is not None:
         if not isinstance(comments, list) or len(comments) != QUESTIONS_COUNT:
             return jsonify({'error': f'Поле comments должно быть массивом из {QUESTIONS_COUNT} элементов (или отсутствовать)'}), 400
@@ -506,7 +518,13 @@ def update_maturity_answers(token):
     comments = data.get('comments')
     normalized, err = _validate_answers_list(answers)
     if err:
-        return jsonify({'error': f'Нужен массив из {QUESTIONS_COUNT} ответов: true, false или \"dont_know\"'}), 400
+        return jsonify({
+            'error': (
+                f'Нужен массив из {QUESTIONS_COUNT} ответов: '
+                '"no", "rather_no", "dont_know", "rather_yes", "yes" '
+                '(или устаревшие true/false)'
+            ),
+        }), 400
     if comments is not None and (not isinstance(comments, list) or len(comments) != QUESTIONS_COUNT):
         return jsonify({'error': f'Поле comments должно быть массивом из {QUESTIONS_COUNT} элементов (или отсутствовать)'}), 400
 
@@ -528,7 +546,7 @@ def update_maturity_answers(token):
 
 @maturity_bp.route('/api/maturity/<token>/results', methods=['GET'])
 def get_maturity_results(token):
-    """Публично: результаты для радара и PDF. answers: true / false / \"dont_know\"."""
+    """Публично: результаты для радара и PDF. answers: канонические строки ответов."""
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
@@ -620,7 +638,10 @@ def get_maturity_recommendations(token):
         vals = [float(v) for v in subs.values()]
         total_score = sum(vals)
         yes_count = sum(1 for v in vals if v >= 1)
-        summary_lines.append(f"- {cat}: суммарный балл {total_score:.1f}/3, ответов «да» {yes_count}/{len(vals)}")
+        half_count = sum(1 for v in vals if abs(v - 0.5) < 1e-9)
+        summary_lines.append(
+            f"- {cat}: сумма баллов {total_score:.1f}/3, «да»={yes_count}/3, «скорее да»={half_count}/3"
+        )
 
     summary_text = "\n".join(summary_lines)
     from openai import OpenAI
@@ -629,7 +650,7 @@ def get_maturity_recommendations(token):
     tools_hint = ", ".join(AGILE_TOOLS_LINKS)
     prompt = f"""Ты опытный Agile-коуч. По результатам оценки зрелости команды (да/нет по темам) дай конкретный план улучшений для команды.
 
-Результаты по категориям (3 вопроса на тему; за вопрос: «да»=1, «не знаю»=0, «нет»=0; максимум по теме = 3):
+Результаты по категориям (3 вопроса на тему; за вопрос: нет/скорее нет/не знаю=0, скорее да=0.5, да=1; максимум по теме = 3):
 {summary_text}
 
 Требования:
@@ -1101,9 +1122,14 @@ def maturity_admin_aggregates():
     completed = MaturityLinkSession.query.filter(MaturityLinkSession.completed_at.isnot(None)).all()
     if selected_group:
         completed = [s for s in completed if _normalize_group_name(getattr(s, "group_name", None)) == selected_group]
-    counts = [{"yes": 0, "no": 0, "dont_know": 0} for _ in range(QUESTIONS_COUNT)]
+    _agg_keys = ("yes", "rather_yes", "no", "rather_no", "dont_know")
+
+    def _empty_counts():
+        return {k: 0 for k in _agg_keys}
+
+    counts = [_empty_counts() for _ in range(QUESTIONS_COUNT)]
     valid_sessions = 0
-    by_group = defaultdict(lambda: {"sessions": 0, "yes": 0, "no": 0, "dont_know": 0})
+    by_group = defaultdict(lambda: {"sessions": 0, **_empty_counts()})
     for s in completed:
         raw_ans, _ = _extract_answers_and_comments(s.answers)
         row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
@@ -1113,12 +1139,18 @@ def maturity_admin_aggregates():
         gname = _normalize_group_name(getattr(s, "group_name", None)) or "Без группы"
         by_group[gname]["sessions"] += 1
         for i, a in enumerate(row):
-            if a is True:
+            if a == "yes":
                 counts[i]["yes"] += 1
                 by_group[gname]["yes"] += 1
-            elif a is False:
+            elif a == "rather_yes":
+                counts[i]["rather_yes"] += 1
+                by_group[gname]["rather_yes"] += 1
+            elif a == "no":
                 counts[i]["no"] += 1
                 by_group[gname]["no"] += 1
+            elif a == "rather_no":
+                counts[i]["rather_no"] += 1
+                by_group[gname]["rather_no"] += 1
             else:
                 counts[i]["dont_know"] += 1
                 by_group[gname]["dont_know"] += 1
@@ -1126,26 +1158,30 @@ def maturity_admin_aggregates():
     questions_out = []
     for i in range(QUESTIONS_COUNT):
         c = counts[i]
-        t = c["yes"] + c["no"] + c["dont_know"]
+        t = sum(c[k] for k in _agg_keys)
+        base = {
+            "index": i,
+            "theme": MATURITY_QUESTIONS[i]["theme"],
+            "short_text": (MATURITY_QUESTIONS[i]["text"][:80] + "…") if len(MATURITY_QUESTIONS[i]["text"]) > 80 else MATURITY_QUESTIONS[i]["text"],
+            "counts": c,
+        }
         if t <= 0:
             questions_out.append({
-                "index": i,
-                "theme": MATURITY_QUESTIONS[i]["theme"],
-                "short_text": (MATURITY_QUESTIONS[i]["text"][:80] + "…") if len(MATURITY_QUESTIONS[i]["text"]) > 80 else MATURITY_QUESTIONS[i]["text"],
+                **base,
                 "yes_pct": 0.0,
+                "rather_yes_pct": 0.0,
                 "no_pct": 0.0,
+                "rather_no_pct": 0.0,
                 "dont_know_pct": 0.0,
-                "counts": c,
             })
         else:
             questions_out.append({
-                "index": i,
-                "theme": MATURITY_QUESTIONS[i]["theme"],
-                "short_text": (MATURITY_QUESTIONS[i]["text"][:80] + "…") if len(MATURITY_QUESTIONS[i]["text"]) > 80 else MATURITY_QUESTIONS[i]["text"],
+                **base,
                 "yes_pct": round(100.0 * c["yes"] / t, 1),
+                "rather_yes_pct": round(100.0 * c["rather_yes"] / t, 1),
                 "no_pct": round(100.0 * c["no"] / t, 1),
+                "rather_no_pct": round(100.0 * c["rather_no"] / t, 1),
                 "dont_know_pct": round(100.0 * c["dont_know"] / t, 1),
-                "counts": c,
             })
 
     return jsonify({
@@ -1156,7 +1192,9 @@ def maturity_admin_aggregates():
                 "group_name": g,
                 "sessions": v["sessions"],
                 "yes": v["yes"],
+                "rather_yes": v["rather_yes"],
                 "no": v["no"],
+                "rather_no": v["rather_no"],
                 "dont_know": v["dont_know"],
             }
             for g, v in sorted(by_group.items(), key=lambda item: item[0].lower())
@@ -1182,6 +1220,8 @@ def maturity_admin_insights():
     if selected_group:
         completed = [s for s in completed if _normalize_group_name(getattr(s, "group_name", None)) == selected_group]
     theme_yes = {}
+    theme_rather_yes = {}
+    theme_score_sum = defaultdict(float)
     theme_n = {}
     for s in completed:
         raw_ans, _ = _extract_answers_and_comments(s.answers)
@@ -1191,15 +1231,21 @@ def maturity_admin_insights():
         for i, q in enumerate(MATURITY_QUESTIONS):
             th = q["theme"]
             theme_n[th] = theme_n.get(th, 0) + 1
-            if row[i] is True:
+            cell = row[i]
+            if cell == "yes":
                 theme_yes[th] = theme_yes.get(th, 0) + 1
+            if cell == "rather_yes":
+                theme_rather_yes[th] = theme_rather_yes.get(th, 0) + 1
+            theme_score_sum[th] += MATURITY_ANSWER_SCORE.get(cell, 0.0)
 
     lines = []
     for th in sorted(theme_n.keys()):
         n = theme_n[th]
         y = theme_yes.get(th, 0)
+        ry = theme_rather_yes.get(th, 0)
         pct = round(100.0 * y / n, 1) if n else 0
-        lines.append(f"- {th}: «да» {y}/{n} ({pct}%)")
+        avg = round(theme_score_sum[th] / n, 2) if n else 0.0
+        lines.append(f"- {th}: «да» {y}/{n} ({pct}%), «скорее да» {ry}/{n}, средний балл за ответ {avg}/1")
 
     if not lines:
         return jsonify({"content": "<p>Нет завершённых оценок для сводки.</p>"})
@@ -1207,7 +1253,7 @@ def maturity_admin_insights():
     summary = "\n".join(lines)
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-    prompt = f"""По агрегированным данным оценок зрелости (доля ответов «да» по темам среди завершённых опросов) дай краткий executive summary.
+    prompt = f"""По агрегированным данным оценок зрелости (число «да», «скорее да» и средний балл 0–1 за ответ по темам) дай краткий executive summary.
 
 Сводка:
 {summary}
@@ -1315,6 +1361,8 @@ def maturity_admin_group_plan_generate():
         return jsonify({'error': 'Нет завершённых оценок для выбранной группы'}), 400
 
     theme_yes = {}
+    theme_rather_yes = {}
+    theme_score_sum = defaultdict(float)
     theme_n = {}
     for s in completed:
         raw_ans, _ = _extract_answers_and_comments(s.answers)
@@ -1324,8 +1372,12 @@ def maturity_admin_group_plan_generate():
         for i, q in enumerate(MATURITY_QUESTIONS):
             th = q["theme"]
             theme_n[th] = theme_n.get(th, 0) + 1
-            if row[i] is True:
+            cell = row[i]
+            if cell == "yes":
                 theme_yes[th] = theme_yes.get(th, 0) + 1
+            if cell == "rather_yes":
+                theme_rather_yes[th] = theme_rather_yes.get(th, 0) + 1
+            theme_score_sum[th] += MATURITY_ANSWER_SCORE.get(cell, 0.0)
 
     if not theme_n:
         return jsonify({'error': 'Недостаточно валидных данных по группе'}), 400
@@ -1334,9 +1386,14 @@ def maturity_admin_group_plan_generate():
     for th in sorted(theme_n.keys()):
         n = theme_n[th]
         y = theme_yes.get(th, 0)
+        ry = theme_rather_yes.get(th, 0)
         pct = round(100.0 * y / n, 1) if n else 0.0
-        theme_rows.append({"theme": th, "yes": y, "total": n, "yes_pct": pct})
-    summary = "\n".join([f"- {r['theme']}: да {r['yes']}/{r['total']} ({r['yes_pct']}%)" for r in theme_rows])
+        avg = round(theme_score_sum[th] / n, 2) if n else 0.0
+        theme_rows.append({"theme": th, "yes": y, "rather_yes": ry, "total": n, "yes_pct": pct, "avg_score": avg})
+    summary = "\n".join([
+        f"- {r['theme']}: да {r['yes']}/{r['total']} ({r['yes_pct']}%), скорее да {r['rather_yes']}/{r['total']}, средний балл {r['avg_score']}/1"
+        for r in theme_rows
+    ])
 
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))

@@ -467,11 +467,18 @@ export default {
     formatAnswerLabel(raw) {
       if (raw === true) return this.$t('maturity.yes');
       if (raw === false) return this.$t('maturity.no');
-      return 'Не знаю';
+      if (raw === 'yes') return this.$t('maturity.yes');
+      if (raw === 'no') return this.$t('maturity.no');
+      if (raw === 'rather_yes') return this.$t('maturity.ratherYes');
+      if (raw === 'rather_no') return this.$t('maturity.ratherNo');
+      if (raw === 'dont_know') return this.$t('maturity.dontKnow');
+      return this.$t('maturity.dontKnow');
     },
     answerCssClass(raw) {
-      if (raw === true) return 'answer-yes';
-      if (raw === false) return 'answer-no';
+      if (raw === true || raw === 'yes') return 'answer-yes';
+      if (raw === false || raw === 'no') return 'answer-no';
+      if (raw === 'rather_yes') return 'answer-rather-yes';
+      if (raw === 'rather_no') return 'answer-rather-no';
       return 'answer-dont-know';
     },
     openDetail(theme) {
@@ -929,6 +936,16 @@ export default {
 .detail-answer.answer-dont-know {
   background: #e2e8f0;
   color: #334155;
+}
+
+.detail-answer.answer-rather-no {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.detail-answer.answer-rather-yes {
+  background: #ecfccb;
+  color: #3f6212;
 }
 
 .dont-know-rec-block .rec-hint {

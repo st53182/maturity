@@ -296,7 +296,7 @@ class SurveyTemplate(db.Model):
     creator = db.relationship('User', backref=db.backref('survey_templates', lazy=True))
 
 
-# 🔹 Оценка зрелости по ссылке (да/нет, радар, PDF)
+# 🔹 Оценка зрелости по ссылке (пять вариантов ответа, радар, PDF)
 class MaturityLinkSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     access_token = db.Column(db.String(36), unique=True, nullable=False)
@@ -304,7 +304,7 @@ class MaturityLinkSession(db.Model):
     group_name = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
-    answers = db.Column(JSON, nullable=True)  # список 205 bool или dict по индексу
+    answers = db.Column(JSON, nullable=True)  # список ответов по индексу (строки no/rather_no/dont_know/rather_yes/yes)
     recommendations_html = db.Column(db.Text, nullable=True)
     dont_know_recommendations_html = db.Column(db.Text, nullable=True)
     recommendations_plan_json = db.Column(JSON, nullable=True)

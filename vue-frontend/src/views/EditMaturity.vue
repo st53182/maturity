@@ -15,24 +15,38 @@
           <div class="edit-yes-no">
             <button
               type="button"
-              :class="['btn-answer', 'btn-yes', { active: answers[q.id] === true }]"
-              @click="setAnswer(q.id, true)"
+              :class="['btn-answer', 'btn-no', { active: answers[q.id] === 'no' }]"
+              @click="setAnswer(q.id, 'no')"
             >
-              Да
+              {{ $t('maturity.no') }}
             </button>
             <button
               type="button"
-              :class="['btn-answer', 'btn-no', { active: answers[q.id] === false }]"
-              @click="setAnswer(q.id, false)"
+              :class="['btn-answer', 'btn-rather-no', { active: answers[q.id] === 'rather_no' }]"
+              @click="setAnswer(q.id, 'rather_no')"
             >
-              Нет
+              {{ $t('maturity.ratherNo') }}
             </button>
             <button
               type="button"
               :class="['btn-answer', 'btn-dont-know', { active: answers[q.id] === 'dont_know' }]"
               @click="setAnswer(q.id, 'dont_know')"
             >
-              Не знаю
+              {{ $t('maturity.dontKnow') }}
+            </button>
+            <button
+              type="button"
+              :class="['btn-answer', 'btn-rather-yes', { active: answers[q.id] === 'rather_yes' }]"
+              @click="setAnswer(q.id, 'rather_yes')"
+            >
+              {{ $t('maturity.ratherYes') }}
+            </button>
+            <button
+              type="button"
+              :class="['btn-answer', 'btn-yes', { active: answers[q.id] === 'yes' }]"
+              @click="setAnswer(q.id, 'yes')"
+            >
+              {{ $t('maturity.yes') }}
             </button>
           </div>
 
@@ -112,12 +126,13 @@ export default {
         const comList = resultsRes.data.comments || [];
         this.answers = {};
         this.comments = {};
+        const allowed = new Set(['no', 'rather_no', 'dont_know', 'rather_yes', 'yes']);
         this.questions.forEach(q => {
           const raw = ansList[q.id];
-          if (raw === true) this.answers[q.id] = true;
-          else if (raw === false) this.answers[q.id] = false;
-          else if (raw === 'dont_know') this.answers[q.id] = 'dont_know';
-          else this.answers[q.id] = !!raw;
+          if (raw === true) this.answers[q.id] = 'yes';
+          else if (raw === false) this.answers[q.id] = 'no';
+          else if (allowed.has(raw)) this.answers[q.id] = raw;
+          else this.answers[q.id] = 'no';
           this.comments[q.id] = (comList[q.id] || '').toString();
         });
       } catch (e) {
@@ -131,10 +146,10 @@ export default {
     },
     async saveAndRecalc() {
       if (this.saving) return;
+      const allowed = new Set(['no', 'rather_no', 'dont_know', 'rather_yes', 'yes']);
       const arr = this.questions.map(q => {
         const a = this.answers[q.id];
-        if (a === 'dont_know') return 'dont_know';
-        return a === true;
+        return allowed.has(a) ? a : 'no';
       });
       const commentsArr = this.questions.map(q => {
         const s = (this.comments[q.id] || '').toString().trim();
@@ -187,8 +202,9 @@ export default {
 
 .edit-question-block {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid #eee;
 }
@@ -235,7 +251,7 @@ export default {
 .edit-yes-no {
   display: flex;
   gap: 0.5rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .btn-answer {
@@ -249,6 +265,8 @@ export default {
 }
 .btn-answer.btn-yes.active { background: #d1fae5; border-color: #059669; color: #065f46; }
 .btn-answer.btn-no.active { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+.btn-answer.btn-rather-no.active { background: #ffedd5; border-color: #ea580c; color: #9a3412; }
+.btn-answer.btn-rather-yes.active { background: #ecfccb; border-color: #65a30d; color: #3f6212; }
 .btn-answer.btn-dont-know.active { background: #e2e8f0; border-color: #64748b; color: #334155; }
 
 .edit-actions {
@@ -356,6 +374,18 @@ export default {
 .edit-maturity--new .btn-answer.btn-dont-know.active {
   background: linear-gradient(135deg, rgba(100, 116, 139, 0.95), rgba(71, 85, 105, 0.86));
   border-color: rgba(100, 116, 139, 0.58);
+  color: #fff;
+}
+
+.edit-maturity--new .btn-answer.btn-rather-no.active {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.95), rgba(249, 115, 22, 0.86));
+  border-color: rgba(234, 88, 12, 0.58);
+  color: #fff;
+}
+
+.edit-maturity--new .btn-answer.btn-rather-yes.active {
+  background: linear-gradient(135deg, rgba(101, 163, 13, 0.95), rgba(132, 204, 22, 0.86));
+  border-color: rgba(101, 163, 13, 0.58);
   color: #fff;
 }
 

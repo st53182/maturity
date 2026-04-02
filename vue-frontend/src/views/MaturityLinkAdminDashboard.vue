@@ -107,7 +107,10 @@
           <article v-for="g in groupSummaries" :key="g.group_name" class="group-card">
             <h3>{{ g.group_name }}</h3>
             <p>Сессий: <strong>{{ g.sessions }}</strong></p>
-            <p>Да: {{ g.yes }} · Нет: {{ g.no }} · Не знаю: {{ g.dont_know }}</p>
+            <p>
+              Да: {{ g.yes }} · Скорее да: {{ g.rather_yes ?? 0 }} · Нет: {{ g.no }} · Скорее нет:
+              {{ g.rather_no ?? 0 }} · Не знаю: {{ g.dont_know }}
+            </p>
           </article>
         </div>
       </section>
@@ -193,7 +196,7 @@
       <section class="dash-section">
         <h2>Доли ответов по всем вопросам</h2>
         <p class="muted small">
-          Для каждого вопроса — доли «да» / «нет» / «не знаю» среди завершённых сессий. Блок ниже прокручивается.
+          Для каждого вопроса — доли пяти вариантов ответа среди завершённых сессий. Блок ниже прокручивается.
         </p>
         <div class="q-grid-scroll">
           <div class="q-grid">
@@ -315,20 +318,26 @@ export default {
       const qs = this.aggregates.questions;
       if (!Array.isArray(qs) || !qs.length) return null;
       let y = 0;
+      let ry = 0;
       let n = 0;
+      let rn = 0;
       let d = 0;
       for (const q of qs) {
         const c = q.counts || {};
         y += c.yes || 0;
+        ry += c.rather_yes || 0;
         n += c.no || 0;
+        rn += c.rather_no || 0;
         d += c.dont_know || 0;
       }
       return {
         labels: ['Все ответы'],
         datasets: [
-          { label: 'Да', data: [y], backgroundColor: '#10b981' },
           { label: 'Нет', data: [n], backgroundColor: '#ef4444' },
-          { label: 'Не знаю', data: [d], backgroundColor: '#94a3b8' }
+          { label: 'Скорее нет', data: [rn], backgroundColor: '#f97316' },
+          { label: 'Не знаю', data: [d], backgroundColor: '#94a3b8' },
+          { label: 'Скорее да', data: [ry], backgroundColor: '#84cc16' },
+          { label: 'Да', data: [y], backgroundColor: '#10b981' }
         ]
       };
     },
@@ -383,9 +392,11 @@ export default {
       return {
         labels: [''],
         datasets: [
-          { label: 'Да', data: [q.yes_pct], backgroundColor: '#10b981' },
-          { label: 'Нет', data: [q.no_pct], backgroundColor: '#ef4444' },
-          { label: 'Не знаю', data: [q.dont_know_pct], backgroundColor: '#94a3b8' }
+          { label: 'Нет', data: [q.no_pct || 0], backgroundColor: '#ef4444' },
+          { label: 'Скорее нет', data: [q.rather_no_pct || 0], backgroundColor: '#f97316' },
+          { label: 'Не знаю', data: [q.dont_know_pct || 0], backgroundColor: '#94a3b8' },
+          { label: 'Скорее да', data: [q.rather_yes_pct || 0], backgroundColor: '#84cc16' },
+          { label: 'Да', data: [q.yes_pct || 0], backgroundColor: '#10b981' }
         ]
       };
     },

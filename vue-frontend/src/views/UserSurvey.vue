@@ -659,23 +659,28 @@ h1 {
   border-radius: 20px;
   border: 1px solid rgba(10, 20, 45, 0.08);
   box-shadow: 0 22px 70px rgba(10, 20, 45, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
 .survey--new h1 {
-  font-size: 1.65rem;
+  font-size: 32px;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  color: rgba(10, 20, 45, 0.92);
+  color: #1a1a1a;
 }
 
 .survey--new .team-name {
+  font-size: 18px;
+  font-weight: 600;
   color: rgba(10, 20, 45, 0.75);
-  font-weight: 650;
 }
 
 .survey--new .disclaimer {
   background: rgba(32, 90, 255, 0.06);
   border-left: 4px solid rgba(32, 90, 255, 0.55);
   border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .survey--new .question-card {
@@ -689,6 +694,8 @@ h1 {
 }
 
 .survey--new .question-text {
+  font-size: 20px;
+  font-weight: 600;
   color: rgba(10, 20, 45, 0.9);
   padding-right: 44px;
 }

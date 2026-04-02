@@ -27,7 +27,7 @@
     "hint": "Введите e-mail участника Growboard — после проверки вы оба появляетесь в списках контактов друг у друга. Логин = e-mail. Статусы «в сети» обновляются в реальном времени, пока открыта эта страница.",
     "friendsTitle": "Контакты",
     "removeContact": "Удалить контакт у обоих",
-    "emailPlaceholder": "colleague@example.com",
+    "emailPlaceholder": "colleague{'@'}example.com",
     "openChat": "Найти и открыть чат",
     "online": "В сети",
     "offline": "Не в сети",

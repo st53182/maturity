@@ -69,6 +69,7 @@ jwt = JWTManager(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 init_socketio(socketio)
 register_socketio_handlers(socketio)
+register_community_socketio_handlers(socketio)
 
 with app.app_context():
     db.create_all()

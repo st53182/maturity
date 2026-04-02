@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, jsonify, send_from_directory
 from flask_jwt_extended import JWTManager
 from database import db

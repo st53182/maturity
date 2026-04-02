@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime, timedelta
 from typing import Dict, Set
 
 from flask import Blueprint, request, jsonify
@@ -13,6 +14,9 @@ from sqlalchemy.exc import IntegrityError
 from database import db
 from models import ChatContact, DirectMessage, User
 from flask_socketio import emit, join_room
+
+MESSAGE_TTL_HOURS = 72
+_flask_app_ref = None
 
 bp_community_chat = Blueprint("community_chat", __name__, url_prefix="/api/chat")
 
@@ -295,3 +299,28 @@ def send_message():
         socketio_ref.emit("dm_new", payload, room=_user_room(recipient_id), namespace="/community")
         socketio_ref.emit("dm_new", payload, room=_user_room(me), namespace="/community")
     return jsonify({"message": payload}), 201
+
+
+def _purge_old_messages() -> int:
+    cutoff = datetime.utcnow() - timedelta(hours=MESSAGE_TTL_HOURS)
+    count = DirectMessage.query.filter(DirectMessage.created_at < cutoff).delete()
+    db.session.commit()
+    return count
+
+
+def start_message_cleanup_loop(app):
+    """Запускает фоновый цикл очистки сообщений старше 72 ч (каждый час)."""
+    global _flask_app_ref
+    _flask_app_ref = app
+    import eventlet
+    def _loop():
+        while True:
+            eventlet.sleep(3600)
+            try:
+                with _flask_app_ref.app_context():
+                    deleted = _purge_old_messages()
+                    if deleted:
+                        print(f"[chat-cleanup] purged {deleted} messages older than {MESSAGE_TTL_HOURS}h")
+            except Exception as exc:
+                print(f"[chat-cleanup] error: {exc}")
+    eventlet.spawn(_loop)

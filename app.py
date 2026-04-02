@@ -21,7 +21,7 @@ from surveys import surveys_bp
 from maturity_link import maturity_bp
 from backlog_prep import bp_backlog_prep
 from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
-from community_chat import bp_community_chat, register_community_socketio_handlers
+from community_chat import bp_community_chat, register_community_socketio_handlers, start_message_cleanup_loop
 from system_thinking import bp_system_thinking
 from agile_kata import bp_agile_kata
 from agile_tools_ai import bp_agile_tools_ai
@@ -121,6 +121,7 @@ with app.app_context():
         db.session.rollback()
 
 register_ai_limit_hooks(app)
+start_message_cleanup_loop(app)
 
 # Blueprints
 app.register_blueprint(bp_auth)

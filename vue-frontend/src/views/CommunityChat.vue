@@ -85,15 +85,53 @@
         </div>
         <p v-if="!messages.length" class="chat-empty">{{ $t('chat.noMessages') }}</p>
       </div>
+      <p class="chat-auto-delete-notice">{{ $t('chat.autoDeleteNotice') }}</p>
 
       <div class="chat-compose">
-        <textarea
-          v-model="draft"
-          class="modern-input chat-textarea"
-          rows="3"
-          :placeholder="$t('chat.messagePlaceholder')"
-          @keydown.enter.exact.prevent="send"
-        />
+        <div class="chat-compose__input-wrap">
+          <textarea
+            ref="draftEl"
+            v-model="draft"
+            class="modern-input chat-textarea"
+            rows="3"
+            :placeholder="$t('chat.messagePlaceholder')"
+            @keydown.enter.exact.prevent="send"
+          />
+          <button
+            type="button"
+            class="chat-emoji-toggle"
+            :title="$t('chat.emoji')"
+            :aria-label="$t('chat.emoji')"
+            @click="showEmoji = !showEmoji"
+          >
+            😊
+          </button>
+          <div v-if="showEmoji" class="chat-emoji-picker">
+            <div class="chat-emoji-picker__tabs">
+              <button
+                v-for="cat in emojiCategories"
+                :key="cat.key"
+                type="button"
+                class="chat-emoji-picker__tab"
+                :class="{ 'chat-emoji-picker__tab--active': emojiTab === cat.key }"
+                @click="emojiTab = cat.key"
+              >
+                {{ cat.icon }}
+              </button>
+            </div>
+            <div class="chat-emoji-picker__grid">
+              <button
+                v-for="e in activeEmojis"
+                :key="e"
+                type="button"
+                class="chat-emoji-picker__item"
+                @click="insertEmoji(e)"
+              >
+                {{ e }}
+              </button>
+            </div>
+          </div>
+        </div>
         <button
           type="button"
           class="community-chat__btn community-chat__btn--send"
@@ -126,6 +164,26 @@ function parseJwtSub(token) {
   }
 }
 
+const EMOJI_MAP = {
+  smileys: [
+    "😊","😂","🤣","😍","🥰","😘","😜","🤪","😎","🤩",
+    "😇","🙂","😉","😋","🤗","🤔","🫡","😏","😌","🥳",
+    "😢","😭","😤","😡","🤯","😱","🥺","😴","🤮","🤢",
+  ],
+  gestures: [
+    "👍","👎","👏","🙌","🤝","✌️","🤞","🫶","💪","👋",
+    "🙏","🤙","👌","✋","🫰","🤟","🤘","☝️","👆","👇",
+  ],
+  objects: [
+    "🔥","❤️","💯","⭐","🎉","🎯","🏆","💡","📌","📎",
+    "✅","❌","⚡","💬","📊","🚀","⏰","🛠️","📝","🎓",
+  ],
+  nature: [
+    "🌟","🌈","☀️","🌙","🍀","🌸","🌊","🐱","🐶","🦊",
+    "🐻","🦁","🐼","🐸","🦋","🐝","🌻","🍕","🍺","☕",
+  ],
+};
+
 export default {
   name: "CommunityChat",
   data() {
@@ -143,6 +201,8 @@ export default {
       myUserId: null,
       pollTimer: null,
       presenceTimer: null,
+      showEmoji: false,
+      emojiTab: "smileys",
     };
   },
   computed: {
@@ -153,6 +213,17 @@ export default {
     activePeerOnline() {
       if (!this.peer) return false;
       return !!this.presenceById[this.peer.id];
+    },
+    emojiCategories() {
+      return [
+        { key: "smileys", icon: "😊" },
+        { key: "gestures", icon: "👍" },
+        { key: "objects", icon: "🔥" },
+        { key: "nature", icon: "🌟" },
+      ];
+    },
+    activeEmojis() {
+      return EMOJI_MAP[this.emojiTab] || [];
     },
   },
   watch: {
@@ -418,6 +489,21 @@ export default {
         }));
       } catch (_e) {
         this.messages = [];
+      }
+    },
+    insertEmoji(e) {
+      const ta = this.$refs.draftEl;
+      if (ta) {
+        const start = ta.selectionStart || this.draft.length;
+        const end = ta.selectionEnd || start;
+        this.draft = this.draft.slice(0, start) + e + this.draft.slice(end);
+        this.$nextTick(() => {
+          const pos = start + e.length;
+          ta.focus();
+          ta.setSelectionRange(pos, pos);
+        });
+      } else {
+        this.draft += e;
       }
     },
     async send() {
@@ -754,5 +840,111 @@ export default {
 .community-chat__remove:hover {
   color: #b91c1c;
   background: rgba(220, 38, 38, 0.06);
+}
+
+.chat-auto-delete-notice {
+  margin: 6px 14px 0;
+  font-size: 11.5px;
+  color: rgba(10, 20, 45, 0.38);
+  text-align: center;
+  line-height: 1.35;
+}
+
+.chat-compose__input-wrap {
+  position: relative;
+}
+
+.chat-emoji-toggle {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: rgba(10, 20, 45, 0.05);
+  border-radius: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.chat-emoji-toggle:hover {
+  background: rgba(32, 90, 255, 0.12);
+}
+
+.chat-emoji-picker {
+  position: absolute;
+  bottom: 46px;
+  right: 0;
+  z-index: 50;
+  width: 296px;
+  background: #fff;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(10, 20, 45, 0.14);
+  padding: 8px;
+}
+
+.chat-emoji-picker__tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(10, 20, 45, 0.08);
+  padding-bottom: 6px;
+}
+
+.chat-emoji-picker__tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  padding: 6px 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.chat-emoji-picker__tab:hover {
+  opacity: 0.8;
+  background: rgba(10, 20, 45, 0.04);
+}
+
+.chat-emoji-picker__tab--active {
+  opacity: 1;
+  background: rgba(32, 90, 255, 0.1);
+}
+
+.chat-emoji-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.chat-emoji-picker__item {
+  width: 100%;
+  aspect-ratio: 1;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.chat-emoji-picker__item:hover {
+  background: rgba(32, 90, 255, 0.1);
+  transform: scale(1.2);
 }
 </style>

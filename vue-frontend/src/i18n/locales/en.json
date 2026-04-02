@@ -38,7 +38,9 @@
     "errorSelf": "You cannot message yourself.",
     "errorInvalidEmail": "Please enter a valid email.",
     "errorGeneric": "Request failed.",
-    "errorSend": "Could not send the message."
+    "errorSend": "Could not send the message.",
+    "emoji": "Emoji",
+    "autoDeleteNotice": "Messages are auto-deleted after 72 hours."
   },
   "auth": {
     "login": "Login",

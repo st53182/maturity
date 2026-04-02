@@ -157,6 +157,9 @@ button {
   min-width: unset;
   padding: 0;
   line-height: 1;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 #app button.level-option {

@@ -590,22 +590,33 @@ h1 {
 }
 
 .tracker-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tracker-dot::before {
+  content: "";
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background: #ccc;
-  cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-  border: none;
-  padding: 10px;
-  margin: -10px;
-  box-sizing: content-box;
+  transition: inherit;
   flex-shrink: 0;
 }
-.tracker-dot.answered {
+.tracker-dot.answered::before {
   background: #2ecc71;
 }
-.tracker-dot.active {
+.tracker-dot.active::before {
   border: 2px solid #3498db;
   background: white;
 }
@@ -698,20 +709,25 @@ h1 {
 }
 
 .survey--new .tracker-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+.survey--new .tracker-dot::before {
   width: 12px;
   height: 12px;
   border-radius: 4px;
   background: rgba(10, 20, 45, 0.12);
-  padding: 11px;
-  margin: -11px;
-  box-sizing: content-box;
 }
 
-.survey--new .tracker-dot.answered {
+.survey--new .tracker-dot.answered::before {
   background: rgba(34, 197, 94, 0.85);
 }
 
-.survey--new .tracker-dot.active {
+.survey--new .tracker-dot.active::before {
   background: #fff;
   border: 2px solid rgba(32, 90, 255, 0.75);
   box-shadow: 0 0 0 1px rgba(32, 90, 255, 0.2);

@@ -121,7 +121,7 @@ function parseJwtSub(token) {
     const payload = JSON.parse(atob(b64));
     const sub = payload.sub;
     return sub != null ? parseInt(String(sub), 10) : null;
-  } catch {
+  } catch (_e) {
     return null;
   }
 }
@@ -239,7 +239,7 @@ export default {
         });
         this.contacts = data.contacts || [];
         this.$nextTick(() => this.syncContactWatches());
-      } catch {
+      } catch (_e) {
         this.contacts = [];
       }
     },
@@ -285,7 +285,7 @@ export default {
           hour: "2-digit",
           minute: "2-digit",
         });
-      } catch {
+      } catch (_e) {
         return iso;
       }
     },
@@ -339,7 +339,7 @@ export default {
           ...m,
           mine: m.mine != null ? m.mine : m.sender_id === this.myUserId,
         }));
-      } catch {
+      } catch (_e) {
         this.messages = [];
       }
     },

@@ -3,6 +3,7 @@
     <div class="modal template-editor">
       <button class="modal-close-top" @click="$emit('close')" aria-label="Close">✕</button>
       <h2>{{ isEditing ? 'Редактировать шаблон' : 'Создать шаблон' }}</h2>
+      <p class="template-editor-save-hint">{{ $t('surveys.templateEditor.saveHint') }}</p>
       
       <input v-model="templateName" placeholder="Название шаблона" class="template-input" />
       
@@ -80,7 +81,7 @@ export default {
   },
   computed: {
     isEditing() {
-      return !!this.template
+      return !!(this.template && this.template.id)
     }
   },
   watch: {
@@ -230,6 +231,13 @@ export default {
   position: relative;
   border: 1px solid rgba(10, 20, 45, 0.12);
   box-shadow: 0 24px 70px rgba(10, 20, 45, 0.25);
+}
+
+.template-editor-save-hint {
+  margin: -0.25rem 0 1rem;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
 }
 
 .modal-close-top {

@@ -2,8 +2,8 @@
   <div class="modal-overlay" v-if="show" @click.self="$emit('close')">
     <div class="modal question-preview">
       <div class="modal-header">
-        <h2>Предпросмотр опросника</h2>
-        <button @click="$emit('close')" class="close-btn">✖</button>
+        <h2>{{ $t('surveys.preview.title') }}</h2>
+        <button type="button" @click="$emit('close')" class="close-btn" :aria-label="$t('surveys.preview.close')">✖</button>
       </div>
       
       <div class="survey-title-section">
@@ -17,7 +17,7 @@
             <span class="question-number">{{ index + 1 }}.</span>
             <div class="question-content">
               <span class="question-text">{{ question.question }}</span>
-              <span v-if="question.required" class="required-badge">Обязательный</span>
+              <span v-if="question.required" class="required-badge">{{ $t('surveys.preview.required') }}</span>
             </div>
             <span class="question-type">{{ getQuestionTypeLabel(question.type) }}</span>
           </div>
@@ -45,18 +45,21 @@
           </div>
           
           <div v-if="question.type === 'scale'" class="scale-preview">
-            <span class="scale-info">Шкала: {{ question.min || 1 }} - {{ question.max || 10 }}</span>
+            <span class="scale-info">{{ $t('surveys.preview.scaleInfo', { min: question.min || 1, max: question.max || 10 }) }}</span>
           </div>
         </div>
       </div>
       
       <div class="modal-footer">
-        <div class="footer-info">
-          <span>Всего вопросов: {{ questions.length }}</span>
-        </div>
-        <div class="modal-buttons">
-          <button @click="editQuestions" class="edit-btn">✏️ Редактировать вопросы</button>
-          <button @click="confirmCreate" class="confirm-btn">✅ Создать опросник</button>
+        <p class="preview-edit-hint">{{ $t('surveys.preview.editHint') }}</p>
+        <div class="modal-footer__row">
+          <div class="footer-info">
+            <span>{{ $t('surveys.preview.totalQuestions', { count: questions.length }) }}</span>
+          </div>
+          <div class="modal-buttons">
+            <button type="button" @click="editQuestions" class="edit-btn">✏️ {{ $t('surveys.preview.editBtn') }}</button>
+            <button type="button" @click="confirmCreate" class="confirm-btn">✅ {{ $t('surveys.preview.confirmBtn') }}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -334,8 +337,24 @@ export default {
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.preview-edit-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.modal-footer__row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .footer-info {
@@ -415,9 +434,8 @@ export default {
     width: 100%;
   }
   
-  .modal-footer {
+  .modal-footer__row {
     flex-direction: column;
-    gap: 16px;
     align-items: stretch;
   }
 }

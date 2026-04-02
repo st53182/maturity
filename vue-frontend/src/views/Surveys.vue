@@ -4,103 +4,217 @@
     <header class="page-head">
       <div>
         <h1 class="page-title">{{ $t('surveys.title') }}</h1>
-        <p class="page-sub">Создавайте опросы, управляйте шаблонами и быстро копируйте текст приглашения для email.</p>
+        <p class="page-sub">{{ $t('surveys.hr.pageLead') }}</p>
       </div>
     </header>
     
     <div class="create-survey-section">
-      <h2>{{ $t('surveys.createSurvey') }}</h2>
+      <h2 class="create-section-title">{{ $t('surveys.createSurvey') }}</h2>
       
+      <p class="step-label step-label--outer">{{ $t('surveys.hr.step1Title') }}</p>
       <div class="survey-type-selection">
         <div class="survey-type-card" 
              :class="{ active: selectedType === 'enps' }"
              @click="selectSurveyType('enps')">
           <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
-          <p>Собрать обратную связь от сотрудников о текущем состоянии в команде</p>
+          <p class="survey-type-card__lead">{{ $t('surveys.hr.enpsShort') }}</p>
+          <ul class="survey-type-card__bullets">
+            <li v-for="(b, i) in enpsWhenBullets" :key="'enps-' + i">{{ b }}</li>
+          </ul>
         </div>
         
         <div class="survey-type-card"
              :class="{ active: selectedType === '360' }"
              @click="selectSurveyType('360')">
           <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
-          <p>Собрать анонимную обратную связь о конкретном сотруднике от коллег</p>
+          <p class="survey-type-card__lead">{{ $t('surveys.hr.feedback360Short') }}</p>
+          <ul class="survey-type-card__bullets">
+            <li v-for="(b, i) in feedback360WhenBullets" :key="'360-' + i">{{ b }}</li>
+          </ul>
         </div>
       </div>
       
-      <div v-if="selectedType" class="survey-form">
-        <input v-model="surveyTitle" 
-               :placeholder="$t('surveys.surveyTitle')" 
-               class="survey-input" />
-        
-        <!-- Template Selection -->
-        <div class="template-selection">
-          <label>Выберите шаблон:</label>
-          <select v-model="selectedTemplateId" class="survey-select">
-            <option value="">Стандартный шаблон</option>
-            <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
-              {{ template.name }}
-            </option>
-          </select>
-          <div class="template-actions">
-          <button @click="editTemplate" class="edit-template-btn">
-            {{ selectedTemplateId ? 'Редактировать' : 'Создать свой' }}
-          </button>
+      <div v-if="selectedType" class="survey-create-frame">
+        <section class="survey-create-intro" aria-labelledby="survey-create-intro-title">
+          <h3 id="survey-create-intro-title" class="survey-create-intro__title">{{ $t('surveys.hr.introTitle') }}</h3>
+          <p class="survey-create-intro__lead">
+            {{ $t('surveys.hr.introScenario') }}
+          </p>
+          <div class="survey-create-intro__toolbar">
+            <div
+              class="ai-assistant-badge"
+              tabindex="0"
+              @mouseenter="showSurveyAiPopover = true"
+              @mouseleave="showSurveyAiPopover = false"
+              @focusin="showSurveyAiPopover = true"
+              @focusout="showSurveyAiPopover = false"
+            >
+              <span class="ai-assistant-badge__icon" aria-hidden="true">✨</span>
+              <span>{{ $t('surveys.hr.aiBadgeLabel') }}</span>
+              <div v-show="showSurveyAiPopover" class="ai-popover-survey" role="tooltip">
+                <p>{{ $t('surveys.hr.aiPopover1') }}</p>
+                <p>{{ $t('surveys.hr.aiPopover2') }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="survey-form survey-form--framed">
+          <p class="step-label step-label--in">{{ $t('surveys.hr.step2Title') }}</p>
+          <div class="stacked-field">
+            <label class="stacked-field-label" for="survey-title-input">{{ $t('surveys.hr.surveyNameLabel') }}</label>
+            <input
+              id="survey-title-input"
+              v-model="surveyTitle"
+              :placeholder="$t('surveys.surveyTitle')"
+              class="survey-input"
+            />
+          </div>
+
+          <div class="optional-block">
+            <h4 class="optional-block__title">{{ $t('surveys.hr.optionalBlockTitle') }}</h4>
+            <p class="optional-block__lead">{{ $t('surveys.hr.optionalBlockLead') }}</p>
+            <div class="optional-selection">
+              <label>
+                <input type="checkbox" v-model="useTeamSelection" />
+                {{ $t('surveys.hr.linkTeam') }}
+              </label>
+              <p v-if="selectedType === 'enps'" class="optional-hint">{{ $t('surveys.hr.teamLinkHint') }}</p>
+              <select v-if="useTeamSelection && selectedType === 'enps'" 
+                      v-model="selectedTeamId" 
+                      class="survey-select">
+                <option value="">{{ $t('surveys.selectTeam') }}</option>
+                <option v-for="team in teams" :key="team.id" :value="team.id">
+                  {{ team.name }}
+                </option>
+              </select>
+            </div>
+            <div class="optional-selection">
+              <label>
+                <input type="checkbox" v-model="useEmployeeSelection" />
+                {{ $t('surveys.hr.linkEmployee') }}
+              </label>
+              <p v-if="selectedType === '360'" class="optional-hint">{{ $t('surveys.hr.employeeLinkHint') }}</p>
+              <select v-if="useEmployeeSelection && selectedType === '360'" 
+                      v-model="selectedEmployeeId" 
+                      class="survey-select">
+                <option value="">{{ $t('surveys.selectEmployee') }}</option>
+                <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+                  {{ employee.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <p class="step-label step-label--in">{{ $t('surveys.hr.step3Title') }}</p>
+          <div class="template-subcard">
+            <h4 class="template-subcard__title">{{ $t('surveys.hr.templateBlockTitle') }}</h4>
+            <p class="template-subcard__hint template-subcard__glossary">
+              {{ $t('surveys.hr.glossary') }}
+            </p>
+            <label class="stacked-field-label" for="survey-template-select">{{ $t('surveys.hr.selectTemplateLabel') }}</label>
+            <select id="survey-template-select" v-model="selectedTemplateId" class="survey-select">
+              <option value="">{{ $t('surveys.hr.standardTemplate') }}</option>
+              <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
+                {{ template.name }}
+              </option>
+            </select>
+
+            <div class="template-action-grid">
+              <div class="template-action-card">
+                <div class="template-action-card__head">
+                  <span class="template-action-card__badge">1</span>
+                  <strong>{{ $t('surveys.hr.cardEditorTitle') }}</strong>
+                </div>
+                <p class="template-action-card__text">
+                  {{ $t('surveys.hr.cardEditorBody') }}
+                </p>
+                <button type="button" class="template-action-card__btn primary" @click="editTemplate">
+                  {{ $t('surveys.hr.cardEditorBtn') }}
+                </button>
+              </div>
+
+              <div class="template-action-card">
+                <div class="template-action-card__head">
+                  <span class="template-action-card__badge">2</span>
+                  <strong>{{ $t('surveys.hr.cardCopyTitle') }}</strong>
+                </div>
+                <p class="template-action-card__text">
+                  {{ $t('surveys.hr.cardCopyBody') }}
+                </p>
+                <button
+                  type="button"
+                  class="template-action-card__btn secondary"
+                  :disabled="!selectedType"
+                  @click="createTemplateFromBase"
+                >
+                  {{ $t('surveys.hr.cardCopyBtn') }}
+                </button>
+              </div>
+
+              <div class="template-action-card template-action-card--ai">
+                <div class="template-action-card__head">
+                  <span class="template-action-card__badge template-action-card__badge--ai">✨</span>
+                  <strong>{{ $t('surveys.hr.cardAiTitle') }}</strong>
+                </div>
+                <p class="template-action-card__text">
+                  {{ $t('surveys.hr.cardAiBody') }}
+                </p>
+                <button type="button" class="template-action-card__btn ai" @click="openAiDraftModal">
+                  {{ $t('surveys.hr.cardAiBtn') }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="canDeleteSelectedTemplate" class="template-delete-row">
+              <button
+                type="button"
+                class="delete-template-btn"
+                :title="$t('surveys.hr.deleteTemplateBtn')"
+                @click="deleteSelectedTemplate"
+              >
+                {{ $t('surveys.hr.deleteTemplateBtn') }}
+              </button>
+            </div>
+          </div>
+
           <button
             type="button"
-            class="edit-template-btn ghost"
-            :disabled="!selectedType"
-            @click="createTemplateFromBase"
+            @click="createSurvey"
+            :disabled="!canCreateSurvey"
+            class="create-survey-btn create-survey-btn--wide"
           >
-            Создать свой на базе
+            {{ $t('surveys.hr.createSurveyBtn') }}
           </button>
-            <button
-    v-if="canDeleteSelectedTemplate"
-    @click="deleteSelectedTemplate"
-    class="delete-template-btn"
-    title="Удалить выбранный шаблон"
-  >
-    Удалить шаблон
-  </button>
-          </div>
         </div>
-        
-        <!-- Optional Team Selection -->
-        <div class="optional-selection">
-          <label>
-            <input type="checkbox" v-model="useTeamSelection" />
-            Привязать к команде
-          </label>
-          <select v-if="useTeamSelection && selectedType === 'enps'" 
-                  v-model="selectedTeamId" 
-                  class="survey-select">
-            <option value="">{{ $t('surveys.selectTeam') }}</option>
-            <option v-for="team in teams" :key="team.id" :value="team.id">
-              {{ team.name }}
-            </option>
-          </select>
+      </div>
+    </div>
+
+    <!-- Модальное окно: черновик вопросов с ИИ -->
+    <div v-if="showAiDraftModal" class="modal-overlay" @click.self="closeAiDraftModal">
+      <div class="modal-content survey-ai-modal">
+        <button type="button" class="modal-close-top" aria-label="Закрыть" @click="closeAiDraftModal">✕</button>
+        <h2>{{ $t('surveys.hr.aiModalTitle') }}</h2>
+        <p class="survey-ai-lead">
+          {{ $t('surveys.hr.aiModalLead') }}
+        </p>
+        <div class="modern-form-block">
+          <label for="ai-brief" class="stacked-field-label">{{ $t('surveys.hr.aiBriefLabel') }}</label>
+          <textarea
+            id="ai-brief"
+            v-model="aiDraftBrief"
+            class="survey-textarea survey-ai-textarea"
+            rows="6"
+            :placeholder="$t('surveys.hr.aiBriefPlaceholder')"
+          />
         </div>
-        
-        <!-- Optional Employee Selection -->
-        <div class="optional-selection">
-          <label>
-            <input type="checkbox" v-model="useEmployeeSelection" />
-            Привязать к сотруднику
-          </label>
-          <select v-if="useEmployeeSelection && selectedType === '360'" 
-                  v-model="selectedEmployeeId" 
-                  class="survey-select">
-            <option value="">{{ $t('surveys.selectEmployee') }}</option>
-            <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-              {{ employee.name }}
-            </option>
-          </select>
+        <p v-if="aiDraftError" class="survey-ai-error">{{ aiDraftError }}</p>
+        <div class="modal-actions survey-ai-actions">
+          <button type="button" class="cancel-btn" :disabled="aiDraftLoading" @click="closeAiDraftModal">{{ $t('surveys.hr.aiCancel') }}</button>
+          <button type="button" class="save-btn" :disabled="aiDraftLoading || (aiDraftBrief || '').trim().length < 20" @click="generateAiDraft">
+            {{ aiDraftLoading ? $t('surveys.hr.aiGenerating') : $t('surveys.hr.aiGenerate') }}
+          </button>
         </div>
-        
-        <button @click="createSurvey" 
-                :disabled="!canCreateSurvey"
-                class="create-survey-btn">
-          Создать опрос
-        </button>
       </div>
     </div>
 
@@ -280,11 +394,24 @@ export default {
       showEditModal: false,
       createdLink: '',
       createdEmailText: '',
-      copiedMsg: ''
+      copiedMsg: '',
+      showSurveyAiPopover: false,
+      showAiDraftModal: false,
+      aiDraftBrief: '',
+      aiDraftLoading: false,
+      aiDraftError: ''
     }
   },
   
   computed: {
+    enpsWhenBullets() {
+      const m = this.$tm('surveys.hr.enpsWhenBullets')
+      return Array.isArray(m) ? m : []
+    },
+    feedback360WhenBullets() {
+      const m = this.$tm('surveys.hr.feedback360WhenBullets')
+      return Array.isArray(m) ? m : []
+    },
     canCreateSurvey() {
       return this.surveyTitle && 
              (!this.useTeamSelection || this.selectedTeamId) &&
@@ -374,17 +501,71 @@ export default {
 },
     
     editTemplate() {
-      console.log('editTemplate called with selectedTemplateId:', this.selectedTemplateId)
-      console.log('availableTemplates:', this.availableTemplates)
-      
       if (this.selectedTemplateId) {
         this.editingTemplate = this.availableTemplates.find(t => t.id == this.selectedTemplateId)
-        console.log('Found template for editing:', this.editingTemplate)
       } else {
-        this.editingTemplate = null
-        console.log('No template selected, creating new template')
+        const q =
+          this.selectedType === 'enps'
+            ? this.getDefaultEnpsQuestions()
+            : this.getDefault360Questions()
+        this.editingTemplate = {
+          name: '',
+          survey_type: this.selectedType,
+          questions: JSON.parse(JSON.stringify(q))
+        }
       }
       this.showTemplateEditor = true
+    },
+
+    openAiDraftModal() {
+      this.aiDraftError = ''
+      this.aiDraftBrief = ''
+      this.showAiDraftModal = true
+    },
+
+    closeAiDraftModal() {
+      if (this.aiDraftLoading) return
+      this.showAiDraftModal = false
+      this.aiDraftError = ''
+    },
+
+    async generateAiDraft() {
+      const brief = (this.aiDraftBrief || '').trim()
+      if (brief.length < 20) {
+        this.aiDraftError = 'Нужно не менее 20 символов описания.'
+        return
+      }
+      this.aiDraftLoading = true
+      this.aiDraftError = ''
+      try {
+        const token = localStorage.getItem('token')
+        const { data } = await axios.post(
+          '/api/survey-templates/ai-draft',
+          { survey_type: this.selectedType, brief },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        const questions = data?.questions
+        if (!Array.isArray(questions) || !questions.length) {
+          this.aiDraftError = 'Не удалось получить вопросы. Попробуйте ещё раз.'
+          return
+        }
+        const stamp = new Date().toLocaleDateString('ru-RU')
+        this.editingTemplate = {
+          name: `Черновик ИИ — ${stamp}`,
+          survey_type: this.selectedType,
+          questions
+        }
+        this.showAiDraftModal = false
+        this.showTemplateEditor = true
+      } catch (e) {
+        const msg = e?.response?.data?.error || e?.message || 'Ошибка запроса'
+        this.aiDraftError = msg
+        if (e?.response?.status === 429) {
+          this.aiDraftError = 'Лимит AI-запросов на месяц исчерпан. Попробуйте позже.'
+        }
+      } finally {
+        this.aiDraftLoading = false
+      }
     },
     
     closeTemplateEditor() {
@@ -847,6 +1028,14 @@ export default {
   line-height: 1.5;
 }
 
+.create-section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 20px;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
 h2 {
   font-size: 24px;
   font-weight: 600;
@@ -895,12 +1084,393 @@ h2 {
   line-height: 1.6;
 }
 
+.step-label {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.step-label--outer {
+  margin-top: 8px;
+}
+
+.step-label--in {
+  margin-top: 8px;
+}
+
+.survey-type-card__lead {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.survey-type-card__bullets {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.survey-type-card__bullets li {
+  margin-bottom: 6px;
+}
+
+.optional-block__lead {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.optional-hint {
+  margin: 6px 0 10px;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.template-subcard__glossary {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.survey-create-frame {
+  margin-top: 8px;
+}
+
+.survey-create-intro {
+  margin-bottom: 20px;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  border-radius: 16px;
+  border: 1px solid #bae6fd;
+}
+
+.survey-create-intro__title {
+  font-size: 1.15rem;
+  margin: 0 0 10px;
+  color: #0c4a6e;
+  font-weight: 700;
+}
+
+.survey-create-intro__lead {
+  margin: 0 0 14px;
+  line-height: 1.6;
+  color: #334155;
+  font-size: 15px;
+}
+
+.survey-create-intro__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.ai-assistant-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #7dd3fc;
+  color: #0369a1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: default;
+}
+
+.ai-assistant-badge__icon {
+  font-size: 15px;
+}
+
+.ai-popover-survey {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  top: calc(100% + 8px);
+  min-width: 260px;
+  max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.ai-popover-survey p {
+  margin: 0 0 8px;
+}
+
+.ai-popover-survey p:last-child {
+  margin-bottom: 0;
+}
+
 .survey-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 600px;
+  max-width: 720px;
   margin-bottom: 32px;
+}
+
+.survey-form--framed {
+  padding: 24px 22px 26px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
+}
+
+.stacked-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stacked-field-label {
+  font-size: 13px;
+  font-weight: 650;
+  color: #334155;
+}
+
+.template-subcard {
+  padding: 18px 18px 8px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 48%);
+}
+
+.template-subcard__title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.template-subcard__hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.template-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.template-action-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  min-height: 100%;
+}
+
+.template-action-card--ai {
+  border-color: #c4b5fd;
+  background: linear-gradient(135deg, #faf5ff 0%, #fff 70%);
+}
+
+.template-action-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.template-action-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.template-action-card__badge--ai {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  font-size: 14px;
+}
+
+.template-action-card__text {
+  flex: 1;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.template-action-card__text em {
+  color: #475569;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.template-action-card__btn {
+  margin-top: auto;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.template-action-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.template-action-card__btn.primary {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+}
+
+.template-action-card__btn.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.45);
+}
+
+.template-action-card__btn.secondary {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+}
+
+.template-action-card__btn.secondary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.template-action-card__btn.ai {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.template-action-card__btn.ai:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+}
+
+.template-delete-row {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.delete-template-btn {
+  background: transparent;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.delete-template-btn:hover {
+  background: #fef2f2;
+}
+
+.optional-block {
+  padding: 16px 16px 4px;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+}
+
+.optional-block__title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.create-survey-btn--wide {
+  width: 100%;
+  max-width: none;
+  padding: 16px 24px;
+  font-size: 16px;
+}
+
+.survey-ai-modal {
+  max-width: 560px;
+  width: 100%;
+  background: #fff;
+  padding: 28px 26px 22px;
+  border-radius: 18px;
+  position: relative;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.2);
+}
+
+.survey-ai-modal h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.survey-ai-lead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.modern-form-block {
+  margin-bottom: 12px;
+}
+
+.survey-ai-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.survey-ai-error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.survey-ai-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .template-action-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .survey-input, .survey-select, .survey-textarea {

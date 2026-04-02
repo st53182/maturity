@@ -18,6 +18,7 @@ from surveys import surveys_bp
 from maturity_link import maturity_bp
 from backlog_prep import bp_backlog_prep
 from roadmap import bp_roadmap, init_socketio, register_socketio_handlers
+from community_chat import bp_community_chat, register_community_socketio_handlers
 from system_thinking import bp_system_thinking
 from agile_kata import bp_agile_kata
 from agile_tools_ai import bp_agile_tools_ai
@@ -135,6 +136,7 @@ app.register_blueprint(surveys_bp, url_prefix="/api")
 app.register_blueprint(maturity_bp)
 app.register_blueprint(bp_backlog_prep)
 app.register_blueprint(bp_roadmap)
+app.register_blueprint(bp_community_chat)
 app.register_blueprint(bp_system_thinking)
 app.register_blueprint(bp_agile_kata)
 app.register_blueprint(bp_agile_tools_ai)

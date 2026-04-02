@@ -540,3 +540,35 @@ class BacklogWorkItem(db.Model):
             ch = sorted(self.children, key=lambda c: c.id)
             out["children"] = [c.to_dict(include_children=False) for c in ch]
         return out
+
+
+class DirectMessage(db.Model):
+    """Личные сообщения между пользователями (username = email в системе)."""
+
+    __tablename__ = "direct_message"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    sender = db.relationship("User", foreign_keys=[sender_id], backref=db.backref("sent_direct_messages", lazy="dynamic"))
+    recipient = db.relationship("User", foreign_keys=[recipient_id], backref=db.backref("received_direct_messages", lazy="dynamic"))
+
+
+class ChatContact(db.Model):
+    """Сохранённые контакты для чата: пользователь A ведёт список собеседников по e-mail."""
+
+    __tablename__ = "chat_contact"
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "contact_user_id", name="uq_chat_contact_owner_peer"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    contact_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    owner = db.relationship("User", foreign_keys=[user_id], backref=db.backref("chat_contacts_owned", lazy="dynamic"))
+    contact = db.relationship("User", foreign_keys=[contact_user_id], backref=db.backref("chat_contacts_as_target", lazy="dynamic"))

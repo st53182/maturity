@@ -76,6 +76,10 @@
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push('/new/chat')">
+          <span>💬</span>
+          <small>{{ $t('nav.communityChat') }}</small>
+        </button>
         <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
           <span>🔗</span>
           <small>{{ $t('nav.maturityLink') }}</small>
@@ -172,6 +176,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/surveys' : '/surveys')">
             <span>📋</span>
             <span>{{ $t('nav.surveys') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/new/chat')">
+            <span>💬</span>
+            <span>{{ $t('nav.communityChat') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/maturity' : '/maturity/create')">
             <span>🔗</span>

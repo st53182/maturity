@@ -5,6 +5,7 @@ from models import Survey, SurveyResponse, SurveyInvitation, Team, Employee, Use
 import uuid
 from datetime import datetime
 import json
+import re
 
 surveys_bp = Blueprint('surveys', __name__)
 
@@ -220,14 +221,19 @@ def get_survey_results(survey_id):
     if survey.survey_type == 'enps':
         analytics = analyze_enps_results(responses)
     else:
-        analytics = analyze_360_results(responses, show_names=(user_id == survey.creator_id))
+        analytics = analyze_360_results(
+            responses,
+            show_names=(user_id == survey.creator_id),
+            survey=survey,
+        )
     
     return jsonify({
         'survey': {
             'id': survey.id,
             'title': survey.title,
             'survey_type': survey.survey_type,
-            'response_count': len(responses)
+            'response_count': len(responses),
+            'questions': survey.questions,
         },
         'analytics': analytics,
         'responses': [r.answers for r in responses] if survey.survey_type == 'enps' else None
@@ -293,13 +299,30 @@ def analyze_enps_results(responses):
         'nps_score': calculate_nps_score([r.answers.get('3') for r in responses if r.answers.get('3')])
     }
 
-def analyze_360_results(responses, show_names=False):
+def _matrix_question_answer_key(survey):
+    """Key in response.answers for the competency matrix (id differs between templates)."""
+    questions = getattr(survey, 'questions', None) or []
+    if isinstance(questions, list):
+        for q in questions:
+            if isinstance(q, dict) and q.get('type') == 'matrix' and q.get('id') is not None:
+                return str(q['id'])
+    return '6'
+
+
+def analyze_360_results(responses, show_names=False, survey=None):
     if not responses:
         return {}
-    
+
+    matrix_key = _matrix_question_answer_key(survey) if survey else '6'
+
     matrix_data = {}
     for response in responses:
-        matrix_answers = response.answers.get('6', {})
+        answers = response.answers or {}
+        matrix_answers = answers.get(matrix_key)
+        if matrix_answers is None and matrix_key.isdigit():
+            matrix_answers = answers.get(int(matrix_key))
+        if not isinstance(matrix_answers, dict):
+            matrix_answers = {}
         for row, rating in matrix_answers.items():
             if row not in matrix_data:
                 matrix_data[row] = []
@@ -345,14 +368,22 @@ def calculate_nps_score(scores):
     return ((promoters - detractors) / total) * 100 if total > 0 else 0
 
 def convert_rating_to_number(rating_text):
+    if rating_text is None:
+        return 3
+    if isinstance(rating_text, (int, float)) and not isinstance(rating_text, bool):
+        n = int(rating_text)
+        return max(1, min(5, n))
+    s = str(rating_text).strip()
+    if s.isdigit():
+        return max(1, min(5, int(s)))
     rating_map = {
         "Требует срочной корректировки": 1,
-        "Требует улучшения": 2, 
+        "Требует улучшения": 2,
         "Соответствует занимаемой должности": 3,
         "Превосходит ожидания": 4,
-        "Выдающийся результат": 5
+        "Выдающийся результат": 5,
     }
-    return rating_map.get(rating_text, 3)
+    return rating_map.get(s, rating_map.get(rating_text, 3))
 
 @surveys_bp.route('/survey-templates', methods=['GET'])
 @jwt_required()
@@ -556,3 +587,178 @@ def delete_survey(survey_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to delete survey: {str(e)}'}), 500
+
+
+def _slug_option(text, index):
+    if not text:
+        return f"opt_{index}"
+    ascii_part = re.sub(r"[^a-z0-9]+", "_", str(text).strip().lower())
+    ascii_part = ascii_part.strip("_")[:64]
+    return ascii_part if len(ascii_part) >= 2 else f"opt_{index}"
+
+
+def _normalize_survey_questions(raw_list):
+    if not isinstance(raw_list, list):
+        return []
+    out = []
+    for idx, q in enumerate(raw_list, start=1):
+        if not isinstance(q, dict):
+            continue
+        qq = dict(q)
+        qq["id"] = idx
+        t = (qq.get("type") or "textarea").strip().lower()
+        if t not in ("text", "textarea", "radio", "scale", "matrix"):
+            t = "textarea"
+        qq["type"] = t
+        qq["question"] = (qq.get("question") or f"Вопрос {idx}").strip()
+        qq["required"] = bool(qq.get("required", False))
+
+        if t == "radio":
+            opts = qq.get("options") or []
+            norm = []
+            for j, o in enumerate(opts):
+                if isinstance(o, dict):
+                    tx = (o.get("text") or str(o.get("value") or "")).strip()
+                    val = str(o.get("value") or _slug_option(tx, j)).strip()
+                    norm.append({"text": tx or f"Вариант {j + 1}", "value": val})
+                else:
+                    s = str(o).strip()
+                    norm.append({"text": s, "value": _slug_option(s, j)})
+            if not norm:
+                norm = [{"text": "Да", "value": "yes"}, {"text": "Нет", "value": "no"}]
+            qq["options"] = norm
+
+        elif t == "scale":
+            if isinstance(qq.get("scale"), list) and qq["scale"]:
+                nums = []
+                for x in qq["scale"]:
+                    try:
+                        nums.append(int(x))
+                    except (TypeError, ValueError):
+                        continue
+                qq["scale"] = nums if nums else list(range(1, 6))
+            else:
+                try:
+                    mn = int(qq.get("min", 1))
+                    mx = int(qq.get("max", 5))
+                    if mn > mx:
+                        mn, mx = mx, mn
+                    qq["scale"] = list(range(mn, mx + 1))
+                except (TypeError, ValueError):
+                    qq["scale"] = list(range(1, 6))
+            qq.pop("min", None)
+            qq.pop("max", None)
+
+        elif t == "matrix":
+            rows = qq.get("rows") or []
+            nr = []
+            for j, r in enumerate(rows):
+                if isinstance(r, dict):
+                    tx = (r.get("text") or str(r.get("value") or "")).strip()
+                    val = str(r.get("value") or _slug_option(tx, j))
+                    nr.append({"text": tx or f"Строка {j + 1}", "value": val})
+                else:
+                    s = str(r).strip()
+                    nr.append({"text": s, "value": _slug_option(s, j)})
+            cols = qq.get("columns") or []
+            nc = []
+            for j, c in enumerate(cols):
+                if isinstance(c, dict):
+                    tx = (c.get("text") or str(c.get("value") or "")).strip()
+                    val = str(c.get("value") or str(j + 1))
+                    nc.append({"text": tx or f"Колонка {j + 1}", "value": val})
+                else:
+                    s = str(c).strip()
+                    nc.append({"text": s, "value": str(j + 1)})
+            if len(nr) < 2:
+                nr = [
+                    {"text": "Коммуникация", "value": "communication"},
+                    {"text": "Результативность", "value": "delivery"},
+                ]
+            if len(nc) < 2:
+                nc = [
+                    {"text": "Ниже ожиданий", "value": "1"},
+                    {"text": "Соответствует", "value": "3"},
+                    {"text": "Выше ожиданий", "value": "5"},
+                ]
+            qq["rows"] = nr
+            qq["columns"] = nc
+
+        out.append(qq)
+    return out
+
+
+@surveys_bp.route("/survey-templates/ai-draft", methods=["POST"])
+@jwt_required()
+def survey_template_ai_draft():
+    raw_user_id = get_jwt_identity()
+    try:
+        int(raw_user_id)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid user identity"}), 401
+
+    data = request.get_json() or {}
+    survey_type = data.get("survey_type")
+    brief = (data.get("brief") or "").strip()
+    if survey_type not in ("enps", "360"):
+        return jsonify({"error": "Invalid survey_type"}), 400
+    if len(brief) < 20:
+        return jsonify({"error": "Опишите цель опроса подробнее (от 20 символов)."}), 400
+    if len(brief) > 4000:
+        return jsonify({"error": "Слишком длинный текст."}), 400
+
+    try:
+        from openai import OpenAI
+    except ImportError:
+        return jsonify({"error": "ИИ недоступен на сервере"}), 503
+
+    kind = (
+        "eNPS (вовлечённость и отношение к работе)"
+        if survey_type == "enps"
+        else "360° (обратная связь о сотруднике по компетенциям)"
+    )
+
+    schema_hint = """
+Верни ТОЛЬКО валидный JSON: {"questions": [ ... ]}
+Каждый элемент questions:
+- id: число по порядку
+- type: один из "text", "textarea", "radio", "scale", "matrix"
+- question: текст вопроса на русском
+- required: true/false
+Для type "radio": поле options — массив объектов {"text":"...","value":"..."} (value латиница или snake_case)
+Для type "scale": массив scale — целые числа, например [1,2,3,4,5], либо min и max
+Для type "matrix": rows и columns — массивы объектов {"text","value"}; для 360 минимум 4 строки и 3 колонки
+Не более 10 вопросов. Без markdown.
+"""
+
+    nq = 6 if survey_type == "enps" else 7
+    user_msg = f"""Тип опроса: {kind}.
+Краткое описание от пользователя:
+{brief}
+
+Сгенерируй ровно {nq} вопросов. Для 360 включи ровно один вопрос type matrix с компетенциями (rows/columns)."""
+
+    try:
+        client = OpenAI()
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Ты эксперт по HR-опросам. Отвечаешь только JSON без markdown."},
+                {"role": "user", "content": schema_hint + "\n\n" + user_msg},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.35,
+        )
+        raw_text = completion.choices[0].message.content or "{}"
+        parsed = json.loads(raw_text)
+        questions_raw = parsed.get("questions")
+        if not isinstance(questions_raw, list):
+            return jsonify({"error": "Некорректный ответ ИИ"}), 502
+        questions = _normalize_survey_questions(questions_raw)
+        if not questions:
+            return jsonify({"error": "ИИ не вернул вопросы"}), 502
+        return jsonify({"questions": questions})
+    except json.JSONDecodeError:
+        return jsonify({"error": "Не удалось разобрать ответ ИИ"}), 502
+    except Exception as e:
+        return jsonify({"error": str(e) or "Ошибка генерации"}), 502

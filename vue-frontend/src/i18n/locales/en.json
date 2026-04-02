@@ -19,7 +19,26 @@
     "surveys": "Surveys",
     "agileKata": "Agile Kata",
     "agileTools": "Agile tools",
-    "metricsTree": "Metrics tree"
+    "metricsTree": "Metrics tree",
+    "communityChat": "Chat"
+  },
+  "chat": {
+    "title": "Messages",
+    "hint": "Enter a Growboard member’s email — after verification, you both appear in each other’s contact lists. Login = email. Online status updates in real time while this page is open.",
+    "friendsTitle": "Contacts",
+    "removeContact": "Remove for both of you",
+    "emailPlaceholder": "colleague@example.com",
+    "openChat": "Find and open chat",
+    "online": "Online",
+    "offline": "Offline",
+    "noMessages": "No messages yet — say hello.",
+    "messagePlaceholder": "Type a message…",
+    "send": "Send",
+    "userNotFound": "No user with this email was found.",
+    "errorSelf": "You cannot message yourself.",
+    "errorInvalidEmail": "Please enter a valid email.",
+    "errorGeneric": "Request failed.",
+    "errorSend": "Could not send the message."
   },
   "auth": {
     "login": "Login",

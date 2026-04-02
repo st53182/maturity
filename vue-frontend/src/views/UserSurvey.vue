@@ -67,15 +67,18 @@
 
         <div class="answer-options">
           <button
-            v-for="(desc, level) in currentQuestion.levels"
-            :key="level"
+            v-for="item in levelEntries(currentQuestion)"
+            :key="item.key"
             type="button"
             class="level-option"
-            :class="{ selected: answers[currentQuestion.id] === level }"
-            @click="answerQuestion(level)"
+            :class="[
+              `level-option--n${item.index}`,
+              { selected: answers[currentQuestion.id] === item.key },
+            ]"
+            @click="answerQuestion(item.key)"
           >
-            <span class="level-option__badge">{{ level }}</span>
-            <span class="level-option__text">{{ desc }}</span>
+            <span class="level-option__badge">{{ item.index }}</span>
+            <span class="level-option__text">{{ item.desc }}</span>
           </button>
         </div>
       </div>
@@ -132,6 +135,17 @@ export default {
   },
 
   methods: {
+    levelEntries(question) {
+      const order = ["basic", "transitional", "growing", "normalization", "optimal"];
+      if (!question?.levels) return [];
+      return order
+        .filter((k) => Object.prototype.hasOwnProperty.call(question.levels, k))
+        .map((key, idx) => ({
+          key,
+          index: idx + 1,
+          desc: question.levels[key],
+        }));
+    },
     async fetchTeams() {
       try {
         console.log("📡 Загружаем список команд...");
@@ -570,7 +584,7 @@ h1 {
   display: flex;
   justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 14px;
   margin: 0;
   max-height: none;
 }
@@ -583,7 +597,9 @@ h1 {
   cursor: pointer;
   transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   border: none;
-  padding: 0;
+  padding: 10px;
+  margin: -10px;
+  box-sizing: content-box;
   flex-shrink: 0;
 }
 .tracker-dot.answered {
@@ -677,11 +693,18 @@ h1 {
   font-weight: 600;
 }
 
+.survey--new .question-tracker {
+  gap: 16px;
+}
+
 .survey--new .tracker-dot {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border-radius: 4px;
   background: rgba(10, 20, 45, 0.12);
+  padding: 11px;
+  margin: -11px;
+  box-sizing: content-box;
 }
 
 .survey--new .tracker-dot.answered {
@@ -739,17 +762,18 @@ h1 {
   font-size: 15px;
 }
 
-.survey--new .level-option:hover {
+.survey--new .level-option:hover:not(.selected) {
   transform: translateY(-1px);
-  border-color: rgba(32, 90, 255, 0.28);
-  box-shadow: 0 6px 16px rgba(10, 20, 45, 0.07);
+  border-color: rgba(32, 90, 255, 0.35);
+  box-shadow: 0 6px 16px rgba(32, 90, 255, 0.08);
+  background: rgba(32, 90, 255, 0.04);
 }
 
-.survey--new .level-option:nth-child(1) .level-option__badge { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
-.survey--new .level-option:nth-child(2) .level-option__badge { background: rgba(245, 158, 11, 0.15); color: #b45309; }
-.survey--new .level-option:nth-child(3) .level-option__badge { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
-.survey--new .level-option:nth-child(4) .level-option__badge { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
-.survey--new .level-option:nth-child(5) .level-option__badge { background: rgba(34, 197, 94, 0.14); color: #15803d; }
+.survey--new .level-option--n1 .level-option__badge { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+.survey--new .level-option--n2 .level-option__badge { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+.survey--new .level-option--n3 .level-option__badge { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+.survey--new .level-option--n4 .level-option__badge { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
+.survey--new .level-option--n5 .level-option__badge { background: rgba(34, 197, 94, 0.14); color: #15803d; }
 
 .survey--new .level-option.selected {
   background: linear-gradient(135deg, rgba(32, 90, 255, 0.95), rgba(37, 99, 235, 0.88)) !important;

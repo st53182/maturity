@@ -19,7 +19,26 @@
     "testingTypes": "Типы тестирования",
     "agileKata": "Agile Kata",
     "agileTools": "Agile инструменты",
-    "metricsTree": "Древо метрик"
+    "metricsTree": "Древо метрик",
+    "communityChat": "Чат"
+  },
+  "chat": {
+    "title": "Сообщения",
+    "hint": "Введите e-mail участника Growboard — после проверки вы оба появляетесь в списках контактов друг у друга. Логин = e-mail. Статусы «в сети» обновляются в реальном времени, пока открыта эта страница.",
+    "friendsTitle": "Контакты",
+    "removeContact": "Удалить контакт у обоих",
+    "emailPlaceholder": "colleague@example.com",
+    "openChat": "Найти и открыть чат",
+    "online": "В сети",
+    "offline": "Не в сети",
+    "noMessages": "Пока нет сообщений — напишите первым.",
+    "messagePlaceholder": "Текст сообщения…",
+    "send": "Отправить",
+    "userNotFound": "Пользователь с таким e-mail не найден в системе.",
+    "errorSelf": "Нельзя написать самому себе.",
+    "errorInvalidEmail": "Введите корректный e-mail.",
+    "errorGeneric": "Не удалось выполнить запрос.",
+    "errorSend": "Не удалось отправить сообщение."
   },
   "auth": {
     "login": "Вход",

@@ -1,197 +1,269 @@
 <template>
   <div class="surveys-shell">
     <div class="surveys-container">
-    <header class="page-head">
-      <div>
-        <h1 class="page-title">{{ $t('surveys.title') }}</h1>
-        <p class="page-sub">{{ $t('surveys.hr.pageLead') }}</p>
+    <section class="iceberg-intro surveys-landing-intro" aria-labelledby="surveys-landing-intro-title">
+      <h2 id="surveys-landing-intro-title" class="iceberg-intro__title">{{ $t('surveys.wizard.introTitle') }}</h2>
+      <p class="iceberg-intro__lead">{{ $t('surveys.wizard.introLead') }}</p>
+      <button type="button" class="iceberg-intro__toggle" @click="surveyIntroExpanded = !surveyIntroExpanded">
+        {{ surveyIntroExpanded ? $t('surveys.wizard.introCollapse') : $t('surveys.wizard.introExpand') }}
+      </button>
+      <div v-show="surveyIntroExpanded" class="iceberg-intro__levels">
+        <article class="iceberg-intro__level-card">
+          <h3><span class="iceberg-intro__badge">1</span> {{ $t('surveys.wizard.introStep1Title') }}</h3>
+          <p>{{ $t('surveys.wizard.introStep1Body') }}</p>
+        </article>
+        <article class="iceberg-intro__level-card">
+          <h3><span class="iceberg-intro__badge">2</span> {{ $t('surveys.wizard.introStep2Title') }}</h3>
+          <p>{{ $t('surveys.wizard.introStep2Body') }}</p>
+        </article>
+        <article class="iceberg-intro__level-card">
+          <h3><span class="iceberg-intro__badge">3</span> {{ $t('surveys.wizard.introStep3Title') }}</h3>
+          <p>{{ $t('surveys.wizard.introStep3Body') }}</p>
+        </article>
       </div>
-    </header>
-    
-    <div class="create-survey-section">
-      <h2 class="create-section-title">{{ $t('surveys.createSurvey') }}</h2>
-      
-      <p class="step-label step-label--outer">{{ $t('surveys.hr.step1Title') }}</p>
-      <div class="survey-type-selection">
-        <div class="survey-type-card" 
-             :class="{ active: selectedType === 'enps' }"
-             @click="selectSurveyType('enps')">
-          <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
-          <p class="survey-type-card__lead">{{ $t('surveys.hr.enpsShort') }}</p>
-          <ul class="survey-type-card__bullets">
-            <li v-for="(b, i) in enpsWhenBullets" :key="'enps-' + i">{{ b }}</li>
-          </ul>
-        </div>
-        
-        <div class="survey-type-card"
-             :class="{ active: selectedType === '360' }"
-             @click="selectSurveyType('360')">
-          <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
-          <p class="survey-type-card__lead">{{ $t('surveys.hr.feedback360Short') }}</p>
-          <ul class="survey-type-card__bullets">
-            <li v-for="(b, i) in feedback360WhenBullets" :key="'360-' + i">{{ b }}</li>
-          </ul>
-        </div>
+      <div class="surveys-landing-cta">
+        <button type="button" class="surveys-open-wizard-btn" @click="openCreateSurveyWizard">
+          {{ $t('surveys.wizard.openWizardBtn') }}
+        </button>
       </div>
-      
-      <div v-if="selectedType" class="survey-create-frame">
-        <section class="survey-create-intro" aria-labelledby="survey-create-intro-title">
-          <h3 id="survey-create-intro-title" class="survey-create-intro__title">{{ $t('surveys.hr.introTitle') }}</h3>
-          <p class="survey-create-intro__lead">
-            {{ $t('surveys.hr.introScenario') }}
-          </p>
-          <div class="survey-create-intro__toolbar">
+    </section>
+
+    <!-- Мастер создания (как модалка «создать айсберг») -->
+    <div
+      v-if="showCreateSurveyModal"
+      class="modal-overlay survey-master-overlay"
+      @click.self="closeCreateSurveyWizard"
+    >
+      <div class="modal-content survey-master-modal modal-content--wide">
+        <button
+          type="button"
+          class="modal-close-top"
+          :aria-label="$t('surveys.wizard.modalClose')"
+          @click="closeCreateSurveyWizard"
+        >✕</button>
+        <h2 class="survey-master-modal__title">{{ $t('surveys.wizard.modalTitle') }}</h2>
+
+        <div v-if="createFlowMode === 'choose'" class="wizard-choose">
+          <p class="wizard-choose__lead">{{ $t('surveys.wizard.chooseLead') }}</p>
+          <div class="wizard-choose__grid">
+            <button type="button" class="wizard-choice-card" @click="pickQuickFlow">
+              <strong class="wizard-choice-card__title">{{ $t('surveys.wizard.quickTitle') }}</strong>
+              <p class="wizard-choice-card__text">{{ $t('surveys.wizard.quickBody') }}</p>
+              <span class="wizard-choice-card__cta">{{ $t('surveys.wizard.quickPick') }}</span>
+            </button>
+            <button type="button" class="wizard-choice-card" @click="pickCustomFlow">
+              <strong class="wizard-choice-card__title">{{ $t('surveys.wizard.customTitle') }}</strong>
+              <p class="wizard-choice-card__text">{{ $t('surveys.wizard.customBody') }}</p>
+              <span class="wizard-choice-card__cta">{{ $t('surveys.wizard.customPick') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="wizard-body">
+          <button type="button" class="wizard-back-btn" @click="backToCreateChoice">
+            {{ $t('surveys.wizard.backToChoice') }}
+          </button>
+
+          <p class="step-label step-label--outer">{{ $t('surveys.hr.step1Title') }}</p>
+          <div class="survey-type-selection">
             <div
-              class="ai-assistant-badge"
-              tabindex="0"
-              @mouseenter="showSurveyAiPopover = true"
-              @mouseleave="showSurveyAiPopover = false"
-              @focusin="showSurveyAiPopover = true"
-              @focusout="showSurveyAiPopover = false"
+              class="survey-type-card"
+              :class="{ active: selectedType === 'enps' }"
+              @click="selectSurveyType('enps')"
             >
-              <span class="ai-assistant-badge__icon" aria-hidden="true">✨</span>
-              <span>{{ $t('surveys.hr.aiBadgeLabel') }}</span>
-              <div v-show="showSurveyAiPopover" class="ai-popover-survey" role="tooltip">
-                <p>{{ $t('surveys.hr.aiPopover1') }}</p>
-                <p>{{ $t('surveys.hr.aiPopover2') }}</p>
-              </div>
+              <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
+              <p class="survey-type-card__lead">{{ $t('surveys.hr.enpsShort') }}</p>
+              <ul class="survey-type-card__bullets">
+                <li v-for="(b, i) in enpsWhenBullets" :key="'enps-' + i">{{ b }}</li>
+              </ul>
             </div>
-          </div>
-        </section>
 
-        <div class="survey-form survey-form--framed">
-          <p class="step-label step-label--in">{{ $t('surveys.hr.step2Title') }}</p>
-          <div class="stacked-field">
-            <label class="stacked-field-label" for="survey-title-input">{{ $t('surveys.hr.surveyNameLabel') }}</label>
-            <input
-              id="survey-title-input"
-              v-model="surveyTitle"
-              :placeholder="$t('surveys.surveyTitle')"
-              class="survey-input"
-            />
-          </div>
-
-          <div class="optional-block">
-            <h4 class="optional-block__title">{{ $t('surveys.hr.optionalBlockTitle') }}</h4>
-            <p class="optional-block__lead">{{ $t('surveys.hr.optionalBlockLead') }}</p>
-            <div class="optional-selection">
-              <label>
-                <input type="checkbox" v-model="useTeamSelection" />
-                {{ $t('surveys.hr.linkTeam') }}
-              </label>
-              <p v-if="selectedType === 'enps'" class="optional-hint">{{ $t('surveys.hr.teamLinkHint') }}</p>
-              <select v-if="useTeamSelection && selectedType === 'enps'" 
-                      v-model="selectedTeamId" 
-                      class="survey-select">
-                <option value="">{{ $t('surveys.selectTeam') }}</option>
-                <option v-for="team in teams" :key="team.id" :value="team.id">
-                  {{ team.name }}
-                </option>
-              </select>
-            </div>
-            <div class="optional-selection">
-              <label>
-                <input type="checkbox" v-model="useEmployeeSelection" />
-                {{ $t('surveys.hr.linkEmployee') }}
-              </label>
-              <p v-if="selectedType === '360'" class="optional-hint">{{ $t('surveys.hr.employeeLinkHint') }}</p>
-              <select v-if="useEmployeeSelection && selectedType === '360'" 
-                      v-model="selectedEmployeeId" 
-                      class="survey-select">
-                <option value="">{{ $t('surveys.selectEmployee') }}</option>
-                <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-                  {{ employee.name }}
-                </option>
-              </select>
+            <div
+              class="survey-type-card"
+              :class="{ active: selectedType === '360' }"
+              @click="selectSurveyType('360')"
+            >
+              <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
+              <p class="survey-type-card__lead">{{ $t('surveys.hr.feedback360Short') }}</p>
+              <ul class="survey-type-card__bullets">
+                <li v-for="(b, i) in feedback360WhenBullets" :key="'360-' + i">{{ b }}</li>
+              </ul>
             </div>
           </div>
 
-          <p class="step-label step-label--in">{{ $t('surveys.hr.step3Title') }}</p>
-          <div class="template-subcard">
-            <h4 class="template-subcard__title">{{ $t('surveys.hr.templateBlockTitle') }}</h4>
-            <p class="template-subcard__hint template-subcard__glossary">
-              {{ $t('surveys.hr.glossary') }}
-            </p>
-            <label class="stacked-field-label" for="survey-template-select">{{ $t('surveys.hr.selectTemplateLabel') }}</label>
-            <select id="survey-template-select" v-model="selectedTemplateId" class="survey-select">
-              <option value="">{{ $t('surveys.hr.standardTemplate') }}</option>
-              <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
-                {{ template.name }}
-              </option>
-            </select>
-
-            <div class="template-action-grid">
-              <div class="template-action-card">
-                <div class="template-action-card__head">
-                  <span class="template-action-card__badge">1</span>
-                  <strong>{{ $t('surveys.hr.cardEditorTitle') }}</strong>
-                </div>
-                <p class="template-action-card__text">
-                  {{ $t('surveys.hr.cardEditorBody') }}
-                </p>
-                <button type="button" class="template-action-card__btn primary" @click="editTemplate">
-                  {{ $t('surveys.hr.cardEditorBtn') }}
-                </button>
-              </div>
-
-              <div class="template-action-card">
-                <div class="template-action-card__head">
-                  <span class="template-action-card__badge">2</span>
-                  <strong>{{ $t('surveys.hr.cardCopyTitle') }}</strong>
-                </div>
-                <p class="template-action-card__text">
-                  {{ $t('surveys.hr.cardCopyBody') }}
-                </p>
-                <button
-                  type="button"
-                  class="template-action-card__btn secondary"
-                  :disabled="!selectedType"
-                  @click="createTemplateFromBase"
+          <div v-if="selectedType" class="survey-create-frame">
+            <section class="survey-create-intro" aria-labelledby="survey-create-intro-title">
+              <h3 id="survey-create-intro-title" class="survey-create-intro__title">{{ $t('surveys.hr.introTitle') }}</h3>
+              <p class="survey-create-intro__lead">
+                {{ $t('surveys.hr.introScenario') }}
+              </p>
+              <div v-if="createFlowMode === 'custom'" class="survey-create-intro__toolbar">
+                <div
+                  class="ai-assistant-badge"
+                  tabindex="0"
+                  @mouseenter="showSurveyAiPopover = true"
+                  @mouseleave="showSurveyAiPopover = false"
+                  @focusin="showSurveyAiPopover = true"
+                  @focusout="showSurveyAiPopover = false"
                 >
-                  {{ $t('surveys.hr.cardCopyBtn') }}
-                </button>
-              </div>
-
-              <div class="template-action-card template-action-card--ai">
-                <div class="template-action-card__head">
-                  <span class="template-action-card__badge template-action-card__badge--ai">✨</span>
-                  <strong>{{ $t('surveys.hr.cardAiTitle') }}</strong>
+                  <span class="ai-assistant-badge__icon" aria-hidden="true">✨</span>
+                  <span>{{ $t('surveys.hr.aiBadgeLabel') }}</span>
+                  <div v-show="showSurveyAiPopover" class="ai-popover-survey" role="tooltip">
+                    <p>{{ $t('surveys.hr.aiPopover1') }}</p>
+                    <p>{{ $t('surveys.hr.aiPopover2') }}</p>
+                  </div>
                 </div>
-                <p class="template-action-card__text">
-                  {{ $t('surveys.hr.cardAiBody') }}
-                </p>
-                <button type="button" class="template-action-card__btn ai" @click="openAiDraftModal">
-                  {{ $t('surveys.hr.cardAiBtn') }}
-                </button>
               </div>
-            </div>
+            </section>
 
-            <div v-if="canDeleteSelectedTemplate" class="template-delete-row">
+            <div class="survey-form survey-form--framed">
+              <p class="step-label step-label--in">{{ $t('surveys.hr.step2Title') }}</p>
+              <div class="stacked-field">
+                <label class="stacked-field-label" for="survey-title-input">{{ $t('surveys.hr.surveyNameLabel') }}</label>
+                <input
+                  id="survey-title-input"
+                  v-model="surveyTitle"
+                  :placeholder="$t('surveys.surveyTitle')"
+                  class="survey-input"
+                />
+              </div>
+
+              <div class="optional-block">
+                <h4 class="optional-block__title">{{ $t('surveys.hr.optionalBlockTitle') }}</h4>
+                <p class="optional-block__lead">{{ $t('surveys.hr.optionalBlockLead') }}</p>
+                <div class="optional-selection">
+                  <label>
+                    <input type="checkbox" v-model="useTeamSelection" />
+                    {{ $t('surveys.hr.linkTeam') }}
+                  </label>
+                  <p v-if="selectedType === 'enps'" class="optional-hint">{{ $t('surveys.hr.teamLinkHint') }}</p>
+                  <select
+                    v-if="useTeamSelection && selectedType === 'enps'"
+                    v-model="selectedTeamId"
+                    class="survey-select"
+                  >
+                    <option value="">{{ $t('surveys.selectTeam') }}</option>
+                    <option v-for="team in teams" :key="team.id" :value="team.id">
+                      {{ team.name }}
+                    </option>
+                  </select>
+                </div>
+                <div class="optional-selection">
+                  <label>
+                    <input type="checkbox" v-model="useEmployeeSelection" />
+                    {{ $t('surveys.hr.linkEmployee') }}
+                  </label>
+                  <p v-if="selectedType === '360'" class="optional-hint">{{ $t('surveys.hr.employeeLinkHint') }}</p>
+                  <select
+                    v-if="useEmployeeSelection && selectedType === '360'"
+                    v-model="selectedEmployeeId"
+                    class="survey-select"
+                  >
+                    <option value="">{{ $t('surveys.selectEmployee') }}</option>
+                    <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+                      {{ employee.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <template v-if="createFlowMode === 'custom'">
+                <p class="step-label step-label--in">{{ $t('surveys.hr.step3Title') }}</p>
+                <div class="template-subcard">
+                  <h4 class="template-subcard__title">{{ $t('surveys.hr.templateBlockTitle') }}</h4>
+                  <p class="template-subcard__hint template-subcard__glossary">
+                    {{ $t('surveys.hr.glossary') }}
+                  </p>
+                  <label class="stacked-field-label" for="survey-template-select">{{ $t('surveys.hr.selectTemplateLabel') }}</label>
+                  <select id="survey-template-select" v-model="selectedTemplateId" class="survey-select">
+                    <option value="">{{ $t('surveys.hr.standardTemplate') }}</option>
+                    <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
+                      {{ template.name }}
+                    </option>
+                  </select>
+
+                  <div class="template-action-grid">
+                    <div class="template-action-card">
+                      <div class="template-action-card__head">
+                        <span class="template-action-card__badge">1</span>
+                        <strong>{{ $t('surveys.hr.cardEditorTitle') }}</strong>
+                      </div>
+                      <p class="template-action-card__text">
+                        {{ $t('surveys.hr.cardEditorBody') }}
+                      </p>
+                      <button type="button" class="template-action-card__btn primary" @click="editTemplate">
+                        {{ $t('surveys.hr.cardEditorBtn') }}
+                      </button>
+                    </div>
+
+                    <div class="template-action-card">
+                      <div class="template-action-card__head">
+                        <span class="template-action-card__badge">2</span>
+                        <strong>{{ $t('surveys.hr.cardCopyTitle') }}</strong>
+                      </div>
+                      <p class="template-action-card__text">
+                        {{ $t('surveys.hr.cardCopyBody') }}
+                      </p>
+                      <button
+                        type="button"
+                        class="template-action-card__btn secondary"
+                        :disabled="!selectedType"
+                        @click="createTemplateFromBase"
+                      >
+                        {{ $t('surveys.hr.cardCopyBtn') }}
+                      </button>
+                    </div>
+
+                    <div class="template-action-card template-action-card--ai">
+                      <div class="template-action-card__head">
+                        <span class="template-action-card__badge template-action-card__badge--ai">✨</span>
+                        <strong>{{ $t('surveys.hr.cardAiTitle') }}</strong>
+                      </div>
+                      <p class="template-action-card__text">
+                        {{ $t('surveys.hr.cardAiBody') }}
+                      </p>
+                      <button type="button" class="template-action-card__btn ai" @click="openAiDraftModal">
+                        {{ $t('surveys.hr.cardAiBtn') }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-if="canDeleteSelectedTemplate" class="template-delete-row">
+                    <button
+                      type="button"
+                      class="delete-template-btn"
+                      :title="$t('surveys.hr.deleteTemplateBtn')"
+                      @click="deleteSelectedTemplate"
+                    >
+                      {{ $t('surveys.hr.deleteTemplateBtn') }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <p v-else class="quick-flow-hint">
+                {{ $t('surveys.wizard.quickTemplateHint') }}
+                <button type="button" class="quick-flow-hint__link" @click="switchToCustomFlow">
+                  {{ $t('surveys.wizard.switchToCustom') }}
+                </button>
+              </p>
+
               <button
                 type="button"
-                class="delete-template-btn"
-                :title="$t('surveys.hr.deleteTemplateBtn')"
-                @click="deleteSelectedTemplate"
+                @click="createSurvey"
+                :disabled="!canCreateSurvey"
+                class="create-survey-btn create-survey-btn--wide"
               >
-                {{ $t('surveys.hr.deleteTemplateBtn') }}
+                {{ $t('surveys.hr.createSurveyBtn') }}
               </button>
             </div>
           </div>
-
-          <button
-            type="button"
-            @click="createSurvey"
-            :disabled="!canCreateSurvey"
-            class="create-survey-btn create-survey-btn--wide"
-          >
-            {{ $t('surveys.hr.createSurveyBtn') }}
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- Модальное окно: черновик вопросов с ИИ -->
-    <div v-if="showAiDraftModal" class="modal-overlay" @click.self="closeAiDraftModal">
+    <!-- Модальное окно: черновик вопросов с ИИ (поверх мастера) -->
+    <div v-if="showAiDraftModal" class="modal-overlay survey-ai-modal-overlay" @click.self="closeAiDraftModal">
       <div class="modal-content survey-ai-modal">
         <button type="button" class="modal-close-top" aria-label="Закрыть" @click="closeAiDraftModal">✕</button>
         <h2>{{ $t('surveys.hr.aiModalTitle') }}</h2>
@@ -399,7 +471,10 @@ export default {
       showAiDraftModal: false,
       aiDraftBrief: '',
       aiDraftLoading: false,
-      aiDraftError: ''
+      aiDraftError: '',
+      surveyIntroExpanded: false,
+      showCreateSurveyModal: false,
+      createFlowMode: 'choose'
     }
   },
   
@@ -440,6 +515,43 @@ export default {
   },
   
   methods: {
+    openCreateSurveyWizard() {
+      this.createFlowMode = 'choose'
+      this.showCreateSurveyModal = true
+    },
+
+    closeCreateSurveyWizard() {
+      if (this.aiDraftLoading) return
+      this.resetForm()
+    },
+
+    pickQuickFlow() {
+      this.createFlowMode = 'quick'
+      this.selectedTemplateId = ''
+    },
+
+    pickCustomFlow() {
+      this.createFlowMode = 'custom'
+    },
+
+    backToCreateChoice() {
+      this.createFlowMode = 'choose'
+      this.selectedType = ''
+      this.surveyTitle = ''
+      this.selectedTeamId = ''
+      this.selectedEmployeeId = ''
+      this.selectedTemplateId = ''
+      this.useTeamSelection = false
+      this.useEmployeeSelection = false
+    },
+
+    switchToCustomFlow() {
+      this.createFlowMode = 'custom'
+      if (this.selectedType) {
+        this.fetchTemplates()
+      }
+    },
+
     selectSurveyType(type) {
       this.selectedType = type
       this.selectedTeamId = ''
@@ -749,6 +861,8 @@ export default {
       this.useTeamSelection = false
       this.useEmployeeSelection = false
       this.previewQuestions = []
+      this.showCreateSurveyModal = false
+      this.createFlowMode = 'choose'
     },
 
     getDefaultEnpsQuestions() {
@@ -1005,27 +1119,234 @@ export default {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
-.page-head {
+.surveys-landing-intro.iceberg-intro {
+  margin-bottom: 28px;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+  border-radius: 16px;
+  border: 1px solid #bae6fd;
+}
+
+.iceberg-intro__title {
+  font-size: 1.2rem;
+  margin: 0 0 10px;
+  color: #0c4a6e;
+  font-weight: 700;
+}
+
+.iceberg-intro__lead {
+  margin: 0 0 12px;
+  line-height: 1.6;
+  color: #334155;
+  font-size: 15px;
+}
+
+.iceberg-intro__toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #7dd3fc;
+  background: #fff;
+  color: #0369a1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 12px;
+}
+
+.iceberg-intro__toggle:hover {
+  background: #f0f9ff;
+}
+
+.iceberg-intro__levels {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.iceberg-intro__level-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e0f2fe;
+}
+
+.iceberg-intro__level-card h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  align-items: center;
+  gap: 8px;
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 750;
-  margin: 0 0 6px 0;
-  color: rgba(10, 20, 45, 0.92);
-  letter-spacing: -0.02em;
-}
-
-.page-sub {
+.iceberg-intro__level-card p {
   margin: 0;
+  font-size: 13px;
   color: #64748b;
-  font-size: 14px;
   line-height: 1.5;
+}
+
+.iceberg-intro__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.surveys-landing-cta {
+  margin-top: 8px;
+}
+
+.surveys-open-wizard-btn {
+  padding: 14px 28px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.95), rgba(0, 194, 255, 0.85));
+  box-shadow: 0 10px 28px rgba(32, 90, 255, 0.28);
+}
+
+.surveys-open-wizard-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 34px rgba(32, 90, 255, 0.35);
+}
+
+
+.survey-master-modal.modal-content--wide {
+  max-width: min(920px, 96vw);
+  width: 100%;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  margin: 0 auto;
+  padding: 28px 26px 24px;
+  position: relative;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.2);
+}
+
+.survey-master-modal__title {
+  margin: 0 0 18px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  padding-right: 36px;
+}
+
+.wizard-choose__lead {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.wizard-choose__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.wizard-choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 20px 18px;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 48%);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.wizard-choice-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
+  transform: translateY(-2px);
+}
+
+.wizard-choice-card__title {
+  display: block;
+  font-size: 17px;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.wizard-choice-card__text {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.wizard-choice-card__cta {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.wizard-back-btn {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wizard-back-btn:hover {
+  color: #1d4ed8;
+}
+
+.quick-flow-hint {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.quick-flow-hint__link {
+  display: inline;
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .wizard-choose__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .create-section-title {
@@ -1846,6 +2167,18 @@ h2 {
   align-items: center;
   z-index: 1000;
   padding: 20px;
+}
+
+.modal-overlay.survey-master-overlay {
+  align-items: flex-start;
+  padding-top: 28px;
+  padding-bottom: 28px;
+  overflow-y: auto;
+}
+
+.modal-overlay.survey-ai-modal-overlay {
+  z-index: 1100;
+  align-items: center;
 }
 
 .edit-modal {

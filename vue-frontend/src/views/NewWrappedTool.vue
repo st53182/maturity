@@ -1,5 +1,5 @@
 <template>
-  <NewToolShell v-if="config" :title="title">
+  <NewToolShell v-if="config" :title="title" :subtitle="subtitle">
     <component :is="asyncComp" />
   </NewToolShell>
   <div v-else class="new-tool-shell-error" role="alert">{{ $t("common.error") }}: {{ $t("common.notFound") }}</div>
@@ -21,6 +21,7 @@ const TOOL_MAP = {
   surveys: {
     loader: () => import("@/views/Surveys.vue"),
     titleKey: "nav.surveys",
+    subtitleKey: "surveys.pageSubtitle",
   },
   "backlog-prep": {
     loader: () => import("@/views/BacklogPrep.vue"),
@@ -71,6 +72,10 @@ export default {
     title() {
       if (!this.config) return "";
       return this.$t(this.config.titleKey);
+    },
+    subtitle() {
+      if (!this.config?.subtitleKey) return "";
+      return this.$t(this.config.subtitleKey);
     },
   },
   watch: {

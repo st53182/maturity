@@ -141,6 +141,8 @@ export default {
       presenceById: {},
       contacts: [],
       myUserId: null,
+      pollTimer: null,
+      presenceTimer: null,
     };
   },
   computed: {
@@ -165,6 +167,8 @@ export default {
     this.fetchContacts();
   },
   beforeUnmount() {
+    this.stopPolling();
+    this.stopPresencePolling();
     this.unwatchAllContacts();
     if (this.socket) {
       this.socket.disconnect();
@@ -214,6 +218,74 @@ export default {
       this.socket.on("chat_contacts_changed", () => {
         this.fetchContacts();
       });
+      this.socket.on("connect_error", () => {
+        this.startPolling();
+      });
+    },
+    startPolling() {
+      if (this.pollTimer) return;
+      this.pollTimer = setInterval(() => {
+        if (this.peer) this.pollMessages();
+      }, 4000);
+    },
+    stopPolling() {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer);
+        this.pollTimer = null;
+      }
+    },
+    async pollMessages() {
+      if (!this.peer) return;
+      try {
+        const lastId = this.messages.length
+          ? this.messages[this.messages.length - 1].id
+          : 0;
+        const { data } = await axios.get(`/api/chat/messages/${this.peer.id}`, {
+          headers: this.authHeaders(),
+          params: { limit: 50 },
+        });
+        const list = data.messages || [];
+        for (const m of list) {
+          if (m.id > lastId && !this.messages.some((x) => x.id === m.id)) {
+            this.messages.push({
+              ...m,
+              mine: m.mine != null ? m.mine : m.sender_id === this.myUserId,
+            });
+          }
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+    },
+    startPresencePolling() {
+      if (this.presenceTimer) return;
+      this.pollPresence();
+      this.presenceTimer = setInterval(() => this.pollPresence(), 8000);
+    },
+    stopPresencePolling() {
+      if (this.presenceTimer) {
+        clearInterval(this.presenceTimer);
+        this.presenceTimer = null;
+      }
+    },
+    async pollPresence() {
+      const ids = this.contacts.map((c) => c.id);
+      if (!ids.length) return;
+      try {
+        const { data } = await axios.post(
+          "/api/chat/presence",
+          { ids },
+          { headers: this.authHeaders() }
+        );
+        const p = data.presence || {};
+        const next = {};
+        for (const [k, v] of Object.entries(p)) {
+          next[Number(k)] = !!v;
+        }
+        this.presenceById = next;
+      } catch (_e) {
+        /* ignore */
+      }
     },
     contactDisplayName(c) {
       return (c.name && String(c.name).trim()) || c.username;
@@ -238,7 +310,10 @@ export default {
           headers: this.authHeaders(),
         });
         this.contacts = data.contacts || [];
-        this.$nextTick(() => this.syncContactWatches());
+        this.$nextTick(() => {
+          this.syncContactWatches();
+          this.startPresencePolling();
+        });
       } catch (_e) {
         this.contacts = [];
       }
@@ -247,6 +322,7 @@ export default {
       this.resolveError = "";
       this.peer = { id: c.id, name: c.name || "", username: c.username };
       await this.loadMessages();
+      this.startPolling();
       if (this.socket?.connected) {
         this.socket.emit("watch_presence", { peer_id: c.id });
       }
@@ -267,7 +343,7 @@ export default {
           this.messages = [];
         }
         await this.fetchContacts();
-      } catch {
+      } catch (_e) {
         /* ignore */
       }
     },
@@ -317,6 +393,7 @@ export default {
         await this.fetchContacts();
         this.peer = data.user;
         await this.loadMessages();
+        this.startPolling();
         if (this.socket?.connected) {
           this.socket.emit("watch_presence", { peer_id: this.peer.id });
         }
@@ -348,12 +425,15 @@ export default {
       if (!text || !this.peer) return;
       this.sendLoading = true;
       try {
-        await axios.post(
+        const { data } = await axios.post(
           "/api/chat/send",
           { recipient_id: this.peer.id, body: text },
           { headers: this.authHeaders() }
         );
         this.draft = "";
+        if (data.message && !this.messages.some((x) => x.id === data.message.id)) {
+          this.messages.push({ ...data.message, mine: true });
+        }
       } catch (e) {
         this.resolveError =
           e.response?.data?.error || e.message || this.$t("chat.errorSend");

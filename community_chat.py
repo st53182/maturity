@@ -148,6 +148,24 @@ def _emit_contacts_changed(user_ids: list) -> None:
         )
 
 
+@bp_community_chat.route("/presence", methods=["POST"])
+@jwt_required()
+def check_presence():
+    """Bulk presence check — returns online status for a list of user IDs."""
+    data = request.get_json() or {}
+    ids = data.get("ids") or []
+    if not isinstance(ids, list):
+        return jsonify({"error": "bad_ids"}), 400
+    result = {}
+    for uid in ids[:50]:
+        try:
+            uid = int(uid)
+        except (TypeError, ValueError):
+            continue
+        result[str(uid)] = _peer_online(uid)
+    return jsonify({"presence": result}), 200
+
+
 @bp_community_chat.route("/resolve", methods=["POST"])
 @jwt_required()
 def resolve_peer():

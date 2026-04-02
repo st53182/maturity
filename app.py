@@ -63,7 +63,7 @@ db.init_app(app)
 jwt = JWTManager(app)
 
 # Инициализация SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 init_socketio(socketio)
 register_socketio_handlers(socketio)
 

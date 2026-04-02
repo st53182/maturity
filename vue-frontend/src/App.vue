@@ -208,9 +208,35 @@
     <!-- Основной контент -->
     <main class="main-content">
       <router-view />
-
-
     </main>
+
+    <!-- Floating chat FAB -->
+    <button
+      v-if="isAuthenticated"
+      class="chat-fab"
+      :class="{ 'chat-fab--pulse': unreadCount > 0 }"
+      :aria-label="$t('nav.communityChat')"
+      @click="$router.push('/new/chat')"
+    >
+      💬
+      <span v-if="unreadCount > 0" class="chat-fab__badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+    </button>
+
+    <!-- Toast notification -->
+    <transition name="toast-slide">
+      <div
+        v-if="toast"
+        class="chat-toast"
+        @click="goToChat"
+      >
+        <span class="chat-toast__icon">💬</span>
+        <div class="chat-toast__body">
+          <strong class="chat-toast__sender">{{ toast.sender }}</strong>
+          <p class="chat-toast__text">{{ toast.text }}</p>
+        </div>
+        <button type="button" class="chat-toast__close" @click.stop="toast = null">×</button>
+      </div>
+    </transition>
 
 <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
   <div class="modal">
@@ -238,9 +264,42 @@
 <script>
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
-import { computed, ref } from "vue";
+import { computed, ref, watch, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { io } from "socket.io-client";
+
+function parseJwtPayload(token) {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    let b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4;
+    if (pad) b64 += "=".repeat(4 - pad);
+    return JSON.parse(atob(b64));
+  } catch (_e) {
+    return null;
+  }
+}
+
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1046, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (_e) {
+    /* Web Audio not available */
+  }
+}
 
 export default {
   setup() {
@@ -249,14 +308,73 @@ export default {
     const router = useRouter();
     const { locale } = useI18n();
 
-    // ✅ Проверяем авторизацию
     const isAuthenticated = computed(() => authStore.isAuthenticated);
     const isNewUi = computed(() => (route.path || "").startsWith("/new"));
 
-    // ✅ Добавляем реактивные переменные
     const showTeamModal = ref(false);
     const newTeamName = ref("");
     const showMobileMenu = ref(false);
+
+    const toast = ref(null);
+    const unreadCount = ref(0);
+    let toastTimer = null;
+    let globalSocket = null;
+    let myUserId = null;
+
+    function connectGlobalChat() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      if (globalSocket?.connected) return;
+      if (globalSocket) { globalSocket.disconnect(); globalSocket = null; }
+      const payload = parseJwtPayload(token);
+      myUserId = payload?.sub ? parseInt(String(payload.sub), 10) : null;
+      globalSocket = io(`${window.location.origin}/community`, {
+        auth: { token },
+        path: "/socket.io",
+        transports: ["websocket", "polling"],
+      });
+      globalSocket.on("dm_new", (msg) => {
+        if (!msg || msg.sender_id === myUserId) return;
+        const onChatPage = route.path === "/new/chat" || route.path === "/chat";
+        if (!onChatPage) {
+          unreadCount.value++;
+        }
+        toast.value = {
+          sender: msg.sender_name || `User #${msg.sender_id}`,
+          text: (msg.body || "").slice(0, 100),
+          peerId: msg.sender_id,
+        };
+        playNotificationSound();
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toast.value = null; }, 5000);
+      });
+    }
+
+    function disconnectGlobalChat() {
+      if (globalSocket) { globalSocket.disconnect(); globalSocket = null; }
+    }
+
+    watch(isAuthenticated, (val) => {
+      if (val) connectGlobalChat();
+      else disconnectGlobalChat();
+    }, { immediate: true });
+
+    watch(() => route.path, (p) => {
+      if (p === "/new/chat" || p === "/chat") {
+        unreadCount.value = 0;
+      }
+    });
+
+    onBeforeUnmount(() => {
+      disconnectGlobalChat();
+      clearTimeout(toastTimer);
+    });
+
+    const goToChat = () => {
+      toast.value = null;
+      unreadCount.value = 0;
+      router.push("/new/chat");
+    };
 
     // ✅ Функция выхода
     const logout = () => {
@@ -341,6 +459,9 @@ export default {
       showTeamModal, 
       newTeamName, 
       showMobileMenu,
+      toast,
+      unreadCount,
+      goToChat,
       logout, 
       createTeam,
       navigateAndClose,
@@ -348,7 +469,6 @@ export default {
       openExternalLink,
       openExternalLinkAndClose,
       switchLanguage(lang) {
-        // composition mode (legacy: false): locale is a ref — must use .value
         locale.value = lang;
         localStorage.setItem("language", lang);
       },
@@ -804,6 +924,154 @@ export default {
   to { transform: translateX(0); }
 }
 
+/* Floating Chat FAB */
+.chat-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 900;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.8));
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 24px rgba(32, 90, 255, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.chat-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 32px rgba(32, 90, 255, 0.4);
+}
+
+.chat-fab--pulse {
+  animation: fab-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fab-pulse {
+  0%, 100% { box-shadow: 0 6px 24px rgba(32, 90, 255, 0.3); }
+  50% { box-shadow: 0 6px 32px rgba(32, 90, 255, 0.55), 0 0 0 8px rgba(32, 90, 255, 0.1); }
+}
+
+.chat-fab__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  line-height: 1;
+}
+
+/* Toast notification */
+.chat-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 380px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid rgba(32, 90, 255, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(10, 20, 45, 0.16);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.chat-toast:hover {
+  border-color: rgba(32, 90, 255, 0.35);
+}
+
+.chat-toast__icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.chat-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-toast__sender {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(10, 20, 45, 0.88);
+  margin-bottom: 3px;
+}
+
+.chat-toast__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(10, 20, 45, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-toast__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(10, 20, 45, 0.06);
+  border-radius: 8px;
+  font-size: 18px;
+  color: rgba(10, 20, 45, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.chat-toast__close:hover {
+  background: rgba(10, 20, 45, 0.12);
+  color: rgba(10, 20, 45, 0.7);
+}
+
+.toast-slide-enter-active {
+  animation: toast-in 0.35s ease-out;
+}
+
+.toast-slide-leave-active {
+  animation: toast-out 0.25s ease-in forwards;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(80px) scale(0.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(80px) scale(0.9); }
+}
+
 @media (max-width: 768px) {
   .mobile-hamburger {
     display: flex !important;
@@ -841,6 +1109,22 @@ export default {
   .cancel-btn {
     max-width: 100% !important;
     width: 100% !important;
+  }
+
+  .chat-fab {
+    bottom: 18px;
+    right: 18px;
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+
+  .chat-toast {
+    top: auto;
+    bottom: 80px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
   }
 }
 </style>

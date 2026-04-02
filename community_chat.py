@@ -117,14 +117,18 @@ def register_community_socketio_handlers(sio):
         watcher_by_peer[peer_id].discard(uid)
 
 
-def _message_payload(msg: DirectMessage) -> dict:
-    return {
+def _message_payload(msg: DirectMessage, include_sender_name: bool = False) -> dict:
+    d = {
         "id": msg.id,
         "sender_id": msg.sender_id,
         "recipient_id": msg.recipient_id,
         "body": msg.body,
         "created_at": msg.created_at.isoformat() if msg.created_at else None,
     }
+    if include_sender_name:
+        sender = User.query.get(msg.sender_id)
+        d["sender_name"] = (sender.name or sender.username) if sender else ""
+    return d
 
 
 def _ensure_single_contact(owner_id: int, contact_id: int) -> None:
@@ -296,8 +300,9 @@ def send_message():
     db.session.commit()
     payload = _message_payload(msg)
     if socketio_ref:
-        socketio_ref.emit("dm_new", payload, room=_user_room(recipient_id), namespace="/community")
-        socketio_ref.emit("dm_new", payload, room=_user_room(me), namespace="/community")
+        rich_payload = _message_payload(msg, include_sender_name=True)
+        socketio_ref.emit("dm_new", rich_payload, room=_user_room(recipient_id), namespace="/community")
+        socketio_ref.emit("dm_new", rich_payload, room=_user_room(me), namespace="/community")
     return jsonify({"message": payload}), 201
 
 

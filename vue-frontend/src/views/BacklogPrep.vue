@@ -69,6 +69,7 @@
         <button type="button" class="secondary-btn" :disabled="specLoading" @click="runSpecDecompose">
           {{ specLoading ? $t('backlogPrep.specLoading') : $t('backlogPrep.specRun') }}
         </button>
+        <p v-if="specFileTextErr" class="assist-error">{{ specFileTextErr }}</p>
         <p v-if="specError" class="assist-error">{{ specError }}</p>
         <div v-if="specResult" class="spec-result">
           <h3 class="spec-result__title">{{ specResult.epic_title }}</h3>
@@ -436,6 +437,8 @@ export default {
       specPaste: "",
       specFile: null,
       specFileName: "",
+      specFileText: "",
+      specFileTextErr: "",
       specLoading: false,
       specError: "",
       specResult: null,
@@ -796,11 +799,34 @@ export default {
       const f = ev.target.files && ev.target.files[0];
       this.specFile = f || null;
       this.specFileName = f ? f.name : "";
+      this.specFileText = "";
+      this.specFileTextErr = "";
+      if (!f) return;
+
+      const name = (f.name || "").toLowerCase();
+      const isPlain = name.endsWith(".txt") || name.endsWith(".md") || name.endsWith(".markdown") || name.endsWith(".csv");
+      if (!isPlain) return;
+
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const t = typeof reader.result === "string" ? reader.result : "";
+          this.specFileText = t;
+        };
+        reader.onerror = () => {
+          this.specFileTextErr = this.$t("common.error");
+        };
+        reader.readAsText(f, "utf-8");
+      } catch (e) {
+        this.specFileTextErr = e?.message || this.$t("common.error");
+      }
     },
     async runSpecDecompose() {
       this.specError = "";
       this.specResult = null;
-      const hasText = (this.specPaste || "").trim().length >= 80;
+      const pasted = (this.specPaste || "").trim();
+      const fileText = (this.specFileText || "").trim();
+      const hasText = pasted.length >= 80 || fileText.length >= 80;
       if (!this.specFile && !hasText) {
         this.specError = this.$t("backlogPrep.specTooShort");
         return;
@@ -808,8 +834,9 @@ export default {
       this.specLoading = true;
       try {
         const fd = new FormData();
-        if (this.specFile) fd.append("file", this.specFile);
-        if ((this.specPaste || "").trim()) fd.append("text", (this.specPaste || "").trim());
+        if (this.specFile) fd.append("file", this.specFile, this.specFile.name || "spec");
+        if (fileText) fd.append("text", fileText);
+        if (pasted) fd.append("text", pasted);
         fd.append("language", this.form.language || "ru");
         const { data } = await axios.post("/api/backlog/spec-decompose", fd, {
           headers: { ...this.authHeaders() },
@@ -876,6 +903,10 @@ export default {
         if (data.suggested_context) this.form.context = data.suggested_context;
         if (data.suggested_acceptance_criteria != null) this.form.acceptance_criteria = data.suggested_acceptance_criteria;
         if (data.suggested_nfr != null) this.form.nfr = data.suggested_nfr;
+        const title = (this.form.title || "").trim();
+        if (!title) {
+          this.form.title = this.deriveTitle(this.form.text);
+        }
         await this.fetchAiUsage();
       } catch (err) {
         this.assistError = err?.response?.data?.error || err?.message || this.$t("common.error");
@@ -1718,8 +1749,8 @@ h1 {
 .input-icon {
   position: absolute;
   left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 22px;
+  transform: none;
   font-size: 20px;
   z-index: 2;
   pointer-events: none;
@@ -1788,6 +1819,11 @@ h1 {
   border-color: #0ea5e9;
   background: linear-gradient(to bottom, #ffffff 0%, #f0f9ff 100%);
   box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+}
+
+.textarea-wrapper .modern-input:focus,
+.textarea-wrapper .modern-input.has-value {
+  padding-top: 32px;
 }
 
 .modern-input:focus + .floating-label,

@@ -1,6 +1,12 @@
 <template>
-  <div class="surveys-container">
-    <h1>📋 {{ $t('surveys.title') }}</h1>
+  <div class="surveys-shell">
+    <div class="surveys-container">
+    <header class="page-head">
+      <div>
+        <h1 class="page-title">{{ $t('surveys.title') }}</h1>
+        <p class="page-sub">Создавайте опросы, управляйте шаблонами и быстро копируйте текст приглашения для email.</p>
+      </div>
+    </header>
     
     <div class="create-survey-section">
       <h2>{{ $t('surveys.createSurvey') }}</h2>
@@ -35,8 +41,17 @@
               {{ template.name }}
             </option>
           </select>
+          <div class="template-actions">
           <button @click="editTemplate" class="edit-template-btn">
             {{ selectedTemplateId ? 'Редактировать' : 'Создать свой' }}
+          </button>
+          <button
+            type="button"
+            class="edit-template-btn ghost"
+            :disabled="!selectedType"
+            @click="createTemplateFromBase"
+          >
+            Создать свой на базе
           </button>
             <button
     v-if="canDeleteSelectedTemplate"
@@ -46,6 +61,7 @@
   >
     Удалить шаблон
   </button>
+          </div>
         </div>
         
         <!-- Optional Team Selection -->
@@ -83,10 +99,32 @@
         <button @click="createSurvey" 
                 :disabled="!canCreateSurvey"
                 class="create-survey-btn">
-          {{ $t('surveys.createAndSend') }}
+          Создать опрос
         </button>
       </div>
     </div>
+
+    <section v-if="createdLink" class="invite-card" aria-label="invite">
+      <h2 class="invite-title">Готово: ссылка и текст для email</h2>
+      <div class="invite-grid">
+        <div class="invite-field">
+          <label class="invite-label">Ссылка</label>
+          <div class="invite-row">
+            <input class="survey-input mono" :value="createdLink" readonly />
+            <button type="button" class="copy-btn" @click="copyText(createdLink)">Копировать</button>
+          </div>
+        </div>
+        <div class="invite-field">
+          <label class="invite-label">Текст письма</label>
+          <textarea class="survey-textarea" rows="6" :value="createdEmailText" readonly />
+          <div class="invite-row">
+            <button type="button" class="copy-btn" @click="copyText(createdEmailText)">Копировать текст</button>
+            <span v-if="copiedMsg" class="copied-msg">{{ copiedMsg }}</span>
+          </div>
+        </div>
+      </div>
+      <p class="invite-hint">Вставьте текст в email/мессенджер и отправьте участникам.</p>
+    </section>
     
     <div class="existing-surveys">
       <div class="surveys-header">
@@ -205,6 +243,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script>
@@ -238,7 +277,10 @@ export default {
       previewQuestions: [],
       statusFilter: '',
       editingSurvey: null,
-      showEditModal: false
+      showEditModal: false,
+      createdLink: '',
+      createdEmailText: '',
+      copiedMsg: ''
     }
   },
   
@@ -406,6 +448,52 @@ export default {
       this.showQuestionPreview = true
     },
 
+    buildInviteEmailText({ link, type, title, deadline }) {
+      const kind = type === '360' ? '360° обратная связь' : 'eNPS';
+      const dline = deadline ? `\nДедлайн: ${this.formatDate(deadline)}` : '';
+      const t = (title || '').trim();
+      const titleLine = t ? `Опрос: ${t}\n` : '';
+      return (
+        `${titleLine}Коллеги, пожалуйста, пройдите опрос (${kind}).` +
+        `${dline}\n\nСсылка:\n${link}\n\nСпасибо!`
+      );
+    },
+
+    async copyText(text) {
+      try {
+        await navigator.clipboard.writeText(String(text || ''));
+        this.copiedMsg = 'Скопировано';
+        window.setTimeout(() => (this.copiedMsg = ''), 2000);
+      } catch {
+        this.copiedMsg = 'Не удалось скопировать';
+        window.setTimeout(() => (this.copiedMsg = ''), 2000);
+      }
+    },
+
+    async createTemplateFromBase() {
+      if (!this.selectedType) return;
+      const token = localStorage.getItem('token');
+      const base =
+        (this.currentTemplate && this.currentTemplate.questions) ||
+        (this.selectedType === 'enps' ? this.getDefaultEnpsQuestions() : this.getDefault360Questions());
+      const baseName = this.currentTemplate ? this.currentTemplate.name : 'Стандартный шаблон';
+      const name = window.prompt('Название нового шаблона', `Мой шаблон (копия: ${baseName})`);
+      if (!name) return;
+      try {
+        const resp = await axios.post(
+          '/api/survey-templates',
+          { name, survey_type: this.selectedType, questions: base },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        await this.fetchTemplates();
+        const newId = resp?.data?.id;
+        if (newId != null) this.selectedTemplateId = String(newId);
+        alert('Шаблон создан');
+      } catch (e) {
+        alert(e?.response?.data?.error || 'Ошибка создания шаблона');
+      }
+    },
+
     async confirmCreateSurvey() {
       try {
         const token = localStorage.getItem('token')
@@ -424,13 +512,20 @@ export default {
         
         const surveyToken = createResponse.data.access_token
         const link = `${window.location.origin}/survey/${surveyToken}`
+        this.createdLink = link
+        this.createdEmailText = this.buildInviteEmailText({
+          link,
+          type: this.selectedType,
+          title: this.surveyTitle,
+          deadline: null
+        })
         
         try {
           await navigator.clipboard.writeText(link)
-          alert(`${this.$t('surveys.surveyCreated')}\n\nСсылка скопирована в буфер обмена!`)
+          this.copiedMsg = 'Ссылка скопирована'
+          window.setTimeout(() => (this.copiedMsg = ''), 2000)
         } catch (clipboardError) {
           console.error('Clipboard error:', clipboardError)
-          alert(`${this.$t('surveys.surveyCreated')}\n\nСсылка: ${link}`)
         }
         
         this.resetForm()
@@ -711,22 +806,45 @@ export default {
 </script>
 
 <style scoped>
-.surveys-container {
+.surveys-shell {
   max-width: 1280px;
-  margin: 40px auto;
-  padding: 32px;
-  background: #ffffff;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  background: linear-gradient(180deg, rgba(247, 249, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 50%);
+}
+
+.surveys-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.96);
   border-radius: 20px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(10, 20, 45, 0.06);
+  box-shadow: 0 20px 60px rgba(10, 20, 45, 0.08);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
-h1 {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 32px;
-  color: #1a1a1a;
-  letter-spacing: -0.5px;
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 750;
+  margin: 0 0 6px 0;
+  color: rgba(10, 20, 45, 0.92);
+  letter-spacing: -0.02em;
+}
+
+.page-sub {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 h2 {
@@ -1005,6 +1123,13 @@ h2 {
   font-size: 14px;
 }
 
+.template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .edit-template-btn {
   background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   color: white;
@@ -1012,7 +1137,6 @@ h2 {
   padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
-  margin-left: 12px;
   font-size: 14px;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -1023,6 +1147,74 @@ h2 {
 .edit-template-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+}
+
+.edit-template-btn.ghost {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.12), rgba(0, 194, 255, 0.1));
+  color: #0b4a6f;
+}
+
+.invite-card {
+  margin: 18px 0 28px;
+  padding: 18px 18px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.10), rgba(59, 130, 246, 0.08));
+}
+
+.invite-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+}
+
+.invite-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.invite-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invite-label {
+  font-size: 12px;
+  color: #334155;
+  font-weight: 650;
+}
+
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.copy-btn {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.92), rgba(0, 194, 255, 0.82));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.copied-msg {
+  font-size: 13px;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.invite-hint {
+  margin: 10px 0 0 0;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .optional-selection {

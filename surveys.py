@@ -94,6 +94,8 @@ def create_survey():
         settings=data.get('settings', {}),
         deadline=datetime.fromisoformat(data['deadline']) if data.get('deadline') else None
     )
+    # По умолчанию сразу активируем опрос после создания.
+    survey.status = 'active'
     
     db.session.add(survey)
     db.session.commit()

@@ -1,7 +1,7 @@
 <template>
-  <div class="modal-overlay" v-if="show">
+  <div class="modal-overlay template-editor-overlay" v-if="show">
     <div class="modal template-editor">
-      <button class="modal-close-top" @click="$emit('close')" aria-label="Close">✕</button>
+      <button class="modal-close-top" type="button" @click="requestClose" aria-label="Close">✕</button>
       <h2>{{ isEditing ? 'Редактировать шаблон' : 'Создать шаблон' }}</h2>
       <p class="template-editor-save-hint">{{ $t('surveys.templateEditor.saveHint') }}</p>
       
@@ -56,8 +56,8 @@
       </div>
       
       <div class="modal-buttons">
-        <button @click="saveTemplate" class="confirm-btn">Сохранить</button>
-        <button @click="$emit('close')" class="cancel-btn">Отмена</button>
+        <button type="button" @click="saveTemplate" class="confirm-btn">Сохранить</button>
+        <button type="button" @click="requestClose" class="cancel-btn">Отмена</button>
       </div>
     </div>
   </div>
@@ -93,14 +93,40 @@ export default {
         } else {
           this.resetForm()
         }
+        this.$nextTick(() => this.captureSnapshot())
       },
       immediate: true
     }
   },
   methods: {
+    captureSnapshot() {
+      this.snapshotJson = JSON.stringify({
+        name: this.templateName,
+        questions: this.questions
+      })
+    },
+    isDirty() {
+      try {
+        return (
+          JSON.stringify({ name: this.templateName, questions: this.questions }) !==
+          this.snapshotJson
+        )
+      } catch {
+        return true
+      }
+    },
+    requestClose() {
+      if (!this.isDirty()) {
+        this.$emit('close')
+        return
+      }
+      const ok = window.confirm(this.$t('surveys.templateEditor.unsavedCloseConfirm'))
+      if (ok) this.$emit('close')
+    },
     resetForm() {
       this.templateName = ''
       this.questions = []
+      this.snapshotJson = ''
     },
     addQuestion() {
       this.questions.push({
@@ -193,6 +219,7 @@ export default {
           alert('Шаблон создан успешно!')
         }
         
+        this.captureSnapshot()
         this.$emit('saved')
         this.$emit('close')
       } catch (error) {
@@ -218,6 +245,10 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+
+.modal-overlay.template-editor-overlay {
+  z-index: 1150;
 }
 
 .template-editor {

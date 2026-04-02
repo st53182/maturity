@@ -21,6 +21,33 @@
           <p>{{ $t('surveys.wizard.introStep3Body') }}</p>
         </article>
       </div>
+
+      <p class="surveys-landing-type-hint">{{ $t('surveys.wizard.landingTypeHint') }}</p>
+      <div class="survey-type-selection survey-type-selection--landing">
+        <button
+          type="button"
+          class="survey-type-card survey-type-card--landing"
+          @click="openWizardFromTypeCard('enps')"
+        >
+          <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
+          <p class="survey-type-card__lead">{{ $t('surveys.hr.enpsShort') }}</p>
+          <ul class="survey-type-card__bullets">
+            <li v-for="(b, i) in enpsWhenBullets" :key="'land-enps-' + i">{{ b }}</li>
+          </ul>
+        </button>
+        <button
+          type="button"
+          class="survey-type-card survey-type-card--landing"
+          @click="openWizardFromTypeCard('360')"
+        >
+          <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
+          <p class="survey-type-card__lead">{{ $t('surveys.hr.feedback360Short') }}</p>
+          <ul class="survey-type-card__bullets">
+            <li v-for="(b, i) in feedback360WhenBullets" :key="'land-360-' + i">{{ b }}</li>
+          </ul>
+        </button>
+      </div>
+
       <div class="surveys-landing-cta">
         <button type="button" class="surveys-open-wizard-btn" @click="openCreateSurveyWizard">
           {{ $t('surveys.wizard.openWizardBtn') }}
@@ -43,7 +70,7 @@
         >✕</button>
         <h2 class="survey-master-modal__title">{{ $t('surveys.wizard.modalTitle') }}</h2>
 
-        <div v-if="createFlowMode === 'choose'" class="wizard-choose">
+        <div v-if="createFlowMode === 'choose' && !wizardEntryType" class="wizard-choose">
           <p class="wizard-choose__lead">{{ $t('surveys.wizard.chooseLead') }}</p>
           <div class="wizard-choose__grid">
             <button type="button" class="wizard-choice-card" @click="pickQuickFlow">
@@ -64,32 +91,43 @@
             {{ $t('surveys.wizard.backToChoice') }}
           </button>
 
-          <p class="step-label step-label--outer">{{ $t('surveys.hr.step1Title') }}</p>
-          <div class="survey-type-selection">
-            <div
-              class="survey-type-card"
-              :class="{ active: selectedType === 'enps' }"
-              @click="selectSurveyType('enps')"
-            >
-              <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
-              <p class="survey-type-card__lead">{{ $t('surveys.hr.enpsShort') }}</p>
-              <ul class="survey-type-card__bullets">
-                <li v-for="(b, i) in enpsWhenBullets" :key="'enps-' + i">{{ b }}</li>
-              </ul>
-            </div>
-
-            <div
-              class="survey-type-card"
-              :class="{ active: selectedType === '360' }"
-              @click="selectSurveyType('360')"
-            >
-              <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
-              <p class="survey-type-card__lead">{{ $t('surveys.hr.feedback360Short') }}</p>
-              <ul class="survey-type-card__bullets">
-                <li v-for="(b, i) in feedback360WhenBullets" :key="'360-' + i">{{ b }}</li>
-              </ul>
-            </div>
+          <div v-if="wizardEntryType" class="wizard-type-chip">
+            <span class="wizard-type-chip__label">{{
+              wizardEntryType === 'enps' ? $t('surveys.enpsTitle') : $t('surveys.feedback360Title')
+            }}</span>
+            <button type="button" class="wizard-type-chip__change" @click="clearWizardEntryType">
+              {{ $t('surveys.wizard.changeType') }}
+            </button>
           </div>
+
+          <template v-if="!wizardEntryType">
+            <p class="step-label step-label--outer">{{ $t('surveys.hr.step1Title') }}</p>
+            <div class="survey-type-selection">
+              <div
+                class="survey-type-card"
+                :class="{ active: selectedType === 'enps' }"
+                @click="selectSurveyType('enps')"
+              >
+                <h3>📊 {{ $t('surveys.enpsTitle') }}</h3>
+                <p class="survey-type-card__lead">{{ $t('surveys.hr.enpsShort') }}</p>
+                <ul class="survey-type-card__bullets">
+                  <li v-for="(b, i) in enpsWhenBullets" :key="'enps-' + i">{{ b }}</li>
+                </ul>
+              </div>
+
+              <div
+                class="survey-type-card"
+                :class="{ active: selectedType === '360' }"
+                @click="selectSurveyType('360')"
+              >
+                <h3>🔄 {{ $t('surveys.feedback360Title') }}</h3>
+                <p class="survey-type-card__lead">{{ $t('surveys.hr.feedback360Short') }}</p>
+                <ul class="survey-type-card__bullets">
+                  <li v-for="(b, i) in feedback360WhenBullets" :key="'360-' + i">{{ b }}</li>
+                </ul>
+              </div>
+            </div>
+          </template>
 
           <div v-if="selectedType" class="survey-create-frame">
             <section class="survey-create-intro" aria-labelledby="survey-create-intro-title">
@@ -174,13 +212,46 @@
                   <p class="template-subcard__hint template-subcard__glossary">
                     {{ $t('surveys.hr.glossary') }}
                   </p>
-                  <label class="stacked-field-label" for="survey-template-select">{{ $t('surveys.hr.selectTemplateLabel') }}</label>
-                  <select id="survey-template-select" v-model="selectedTemplateId" class="survey-select">
-                    <option value="">{{ $t('surveys.hr.standardTemplate') }}</option>
-                    <option v-for="template in availableTemplates" :key="template.id" :value="template.id">
-                      {{ template.name }}
-                    </option>
-                  </select>
+
+                  <div v-if="hasUserTemplatesForSelectedType" class="template-source-block">
+                    <p class="template-source-block__lead">{{ $t('surveys.wizard.templateSourceLead') }}</p>
+                    <label class="template-source-row">
+                      <input v-model="templateSourceMode" type="radio" value="standard" />
+                      <span>{{ $t('surveys.wizard.templateSourceStandard') }}</span>
+                    </label>
+                    <label class="template-source-row">
+                      <input v-model="templateSourceMode" type="radio" value="saved" />
+                      <span>{{ $t('surveys.wizard.templateSourceSaved') }}</span>
+                    </label>
+                    <label
+                      v-if="templateSourceMode === 'saved'"
+                      class="stacked-field-label"
+                      for="survey-template-select-saved"
+                    >{{ $t('surveys.wizard.templateSourcePickSaved') }}</label>
+                    <select
+                      v-if="templateSourceMode === 'saved'"
+                      id="survey-template-select-saved"
+                      v-model="selectedTemplateId"
+                      class="survey-select"
+                    >
+                      <option
+                        v-for="template in userTemplatesForType"
+                        :key="template.id"
+                        :value="String(template.id)"
+                      >
+                        {{ template.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div v-else>
+                    <label class="stacked-field-label" for="survey-template-select">{{ $t('surveys.hr.selectTemplateLabel') }}</label>
+                    <select id="survey-template-select" v-model="selectedTemplateId" class="survey-select">
+                      <option value="">{{ $t('surveys.hr.standardTemplate') }}</option>
+                      <option v-for="template in availableTemplates" :key="template.id" :value="String(template.id)">
+                        {{ template.name }}
+                      </option>
+                    </select>
+                  </div>
 
                   <div class="template-action-grid">
                     <div class="template-action-card">
@@ -474,7 +545,9 @@ export default {
       aiDraftError: '',
       surveyIntroExpanded: false,
       showCreateSurveyModal: false,
-      createFlowMode: 'choose'
+      createFlowMode: 'choose',
+      wizardEntryType: null,
+      templateSourceMode: 'standard'
     }
   },
   
@@ -505,6 +578,26 @@ export default {
     filteredSurveys() {
       if (!this.statusFilter) return this.surveys
       return this.surveys.filter(s => s.status === this.statusFilter)
+    },
+
+    userTemplatesForType() {
+      if (!this.selectedType || !this.availableTemplates?.length) return []
+      return this.availableTemplates.filter(t => t.is_default === false)
+    },
+
+    hasUserTemplatesForSelectedType() {
+      return this.createFlowMode === 'custom' && this.userTemplatesForType.length > 0
+    }
+  },
+
+  watch: {
+    templateSourceMode(val) {
+      if (val === 'standard') {
+        this.selectedTemplateId = ''
+      } else if (val === 'saved' && this.userTemplatesForType.length) {
+        const first = this.userTemplatesForType[0]
+        this.selectedTemplateId = String(first.id)
+      }
     }
   },
   
@@ -516,8 +609,41 @@ export default {
   
   methods: {
     openCreateSurveyWizard() {
+      this.wizardEntryType = null
       this.createFlowMode = 'choose'
       this.showCreateSurveyModal = true
+    },
+
+    async openWizardFromTypeCard(type) {
+      this.wizardEntryType = type
+      this.selectedType = type
+      this.createFlowMode = 'quick'
+      this.templateSourceMode = 'standard'
+      this.selectedTemplateId = ''
+      this.surveyTitle = ''
+      this.selectedTeamId = ''
+      this.selectedEmployeeId = ''
+      this.useTeamSelection = false
+      this.useEmployeeSelection = false
+      this.showCreateSurveyModal = true
+      await this.fetchTemplates()
+      if (type === 'enps') {
+        await this.fetchTeams()
+      } else if (type === '360') {
+        await this.fetchEmployees()
+      }
+    },
+
+    clearWizardEntryType() {
+      this.wizardEntryType = null
+      this.selectedType = ''
+      this.createFlowMode = 'choose'
+      this.surveyTitle = ''
+      this.selectedTeamId = ''
+      this.selectedEmployeeId = ''
+      this.selectedTemplateId = ''
+      this.useTeamSelection = false
+      this.useEmployeeSelection = false
     },
 
     closeCreateSurveyWizard() {
@@ -528,13 +654,16 @@ export default {
     pickQuickFlow() {
       this.createFlowMode = 'quick'
       this.selectedTemplateId = ''
+      this.templateSourceMode = 'standard'
     },
 
     pickCustomFlow() {
       this.createFlowMode = 'custom'
+      this.templateSourceMode = 'standard'
     },
 
     backToCreateChoice() {
+      this.wizardEntryType = null
       this.createFlowMode = 'choose'
       this.selectedType = ''
       this.surveyTitle = ''
@@ -547,6 +676,7 @@ export default {
 
     switchToCustomFlow() {
       this.createFlowMode = 'custom'
+      this.templateSourceMode = 'standard'
       if (this.selectedType) {
         this.fetchTemplates()
       }
@@ -557,6 +687,7 @@ export default {
       this.selectedTeamId = ''
       this.selectedEmployeeId = ''
       this.selectedTemplateId = ''
+      this.templateSourceMode = 'standard'
       this.useTeamSelection = false
       this.useEmployeeSelection = false
       
@@ -863,6 +994,8 @@ export default {
       this.previewQuestions = []
       this.showCreateSurveyModal = false
       this.createFlowMode = 'choose'
+      this.wizardEntryType = null
+      this.templateSourceMode = 'standard'
     },
 
     getDefaultEnpsQuestions() {
@@ -1225,6 +1358,93 @@ export default {
   box-shadow: 0 14px 34px rgba(32, 90, 255, 0.35);
 }
 
+.surveys-landing-type-hint {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.survey-type-selection--landing {
+  margin-bottom: 22px;
+}
+
+.survey-type-card--landing {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  border: 2px solid #e5e7eb;
+}
+
+.survey-type-card--landing:focus-visible {
+  outline: 3px solid rgba(32, 90, 255, 0.45);
+  outline-offset: 2px;
+}
+
+.wizard-type-chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.wizard-type-chip__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #14532d;
+}
+
+.wizard-type-chip__change {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #86efac;
+  background: #fff;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.wizard-type-chip__change:hover {
+  background: #f0fdf4;
+}
+
+.template-source-block {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.template-source-block__lead {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.template-source-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.template-source-row input {
+  margin-top: 3px;
+}
 
 .survey-master-modal.modal-content--wide {
   max-width: min(920px, 96vw);

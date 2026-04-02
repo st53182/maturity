@@ -36,7 +36,7 @@
                 </div>
               </div>
               <div class="matrix-scale">
-                <span class="scale-label">Шкала оценки:</span>
+                <span class="scale-label">{{ $t('surveys.preview.matrixScaleLabel') }}</span>
                 <span v-for="(col, idx) in (question.columns || question.scale || [])" :key="idx" class="scale-item">
                   {{ typeof col === 'object' ? col.text : col }}
                 </span>
@@ -77,14 +77,15 @@ export default {
   },
   methods: {
     getQuestionTypeLabel(type) {
-      const labels = {
-        'text': 'Текст',
-        'textarea': 'Длинный текст', 
-        'radio': 'Выбор варианта',
-        'scale': 'Шкала оценки',
-        'matrix': 'Матрица оценок'
+      const keys = {
+        text: 'surveys.preview.typeText',
+        textarea: 'surveys.preview.typeTextarea',
+        radio: 'surveys.preview.typeRadio',
+        scale: 'surveys.preview.typeScale',
+        matrix: 'surveys.preview.typeMatrix'
       }
-      return labels[type] || type
+      const key = keys[type]
+      return key ? this.$t(key) : type
     },
     editQuestions() {
       this.$emit('edit-questions')
@@ -108,7 +109,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1120;
   padding: 20px;
 }
 

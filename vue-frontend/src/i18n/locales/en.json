@@ -138,7 +138,13 @@
       "customBody": "Pick a saved template, use the editor, save a copy, or an AI draft — when you need to change wording before launch.",
       "customPick": "Choose",
       "quickTemplateHint": "Standard questions are used. Need your own wording or AI?",
-      "switchToCustom": "Customize questions (template, editor, AI)"
+      "switchToCustom": "Customize questions (template, editor, AI)",
+      "landingTypeHint": "Click a type to open the wizard, or use the button below.",
+      "changeType": "Change type",
+      "templateSourceLead": "Questions for this survey",
+      "templateSourceStandard": "Base set (standard questions)",
+      "templateSourceSaved": "My saved template",
+      "templateSourcePickSaved": "Choose a saved template"
     },
     "createSurvey": "Create survey",
     "enpsTitle": "Employee e-NPS survey",
@@ -249,7 +255,8 @@
       "typeMatrix": "Matrix"
     },
     "templateEditor": {
-      "saveHint": "Saving the template stores your question set for future surveys."
+      "saveHint": "Saving the template stores your question set for future surveys.",
+      "unsavedCloseConfirm": "Questions were changed. Save as a template to reuse next time? Press Cancel, then Save. Close without saving?"
     }
   },
   "results": {

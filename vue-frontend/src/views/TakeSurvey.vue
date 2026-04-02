@@ -150,9 +150,9 @@ export default {
       
       if (question.type === 'matrix') {
         const matrixData = this.matrixAnswers[question.id] || {}
-        return question.required ? 
-          question.rows.every(row => matrixData[row]) : 
-          true
+        return question.required
+          ? question.rows.every(row => matrixData[this.matrixRowKey(row)])
+          : true
       }
       
       return question.required ? 
@@ -166,7 +166,7 @@ export default {
         
         if (question.type === 'matrix') {
           const matrixData = this.matrixAnswers[question.id] || {}
-          return question.rows.every(row => matrixData[row])
+          return question.rows.every(row => matrixData[this.matrixRowKey(row)])
         }
         
         return this.answers[question.id] !== undefined && this.answers[question.id] !== ''
@@ -179,6 +179,10 @@ export default {
   },
   
   methods: {
+    matrixRowKey(row) {
+      return typeof row === 'object' && row !== null ? row.value : row
+    },
+
     async loadSurvey() {
       try {
         const token = this.$route.params.token
@@ -465,9 +469,19 @@ export default {
 }
 
 .matrix-option {
+  position: relative;
   display: flex;
   justify-content: center;
+  align-items: center;
   cursor: pointer;
+}
+
+.matrix-option input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
 }
 
 .radio-custom {

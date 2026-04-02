@@ -166,45 +166,6 @@
                 />
               </div>
 
-              <div class="optional-block">
-                <h4 class="optional-block__title">{{ $t('surveys.hr.optionalBlockTitle') }}</h4>
-                <p class="optional-block__lead">{{ $t('surveys.hr.optionalBlockLead') }}</p>
-                <div class="optional-selection">
-                  <label>
-                    <input type="checkbox" v-model="useTeamSelection" />
-                    {{ $t('surveys.hr.linkTeam') }}
-                  </label>
-                  <p v-if="selectedType === 'enps'" class="optional-hint">{{ $t('surveys.hr.teamLinkHint') }}</p>
-                  <select
-                    v-if="useTeamSelection && selectedType === 'enps'"
-                    v-model="selectedTeamId"
-                    class="survey-select"
-                  >
-                    <option value="">{{ $t('surveys.selectTeam') }}</option>
-                    <option v-for="team in teams" :key="team.id" :value="team.id">
-                      {{ team.name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="optional-selection">
-                  <label>
-                    <input type="checkbox" v-model="useEmployeeSelection" />
-                    {{ $t('surveys.hr.linkEmployee') }}
-                  </label>
-                  <p v-if="selectedType === '360'" class="optional-hint">{{ $t('surveys.hr.employeeLinkHint') }}</p>
-                  <select
-                    v-if="useEmployeeSelection && selectedType === '360'"
-                    v-model="selectedEmployeeId"
-                    class="survey-select"
-                  >
-                    <option value="">{{ $t('surveys.selectEmployee') }}</option>
-                    <option v-for="employee in employees" :key="employee.id" :value="employee.id">
-                      {{ employee.name }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
               <template v-if="createFlowMode === 'custom'">
                 <p class="step-label step-label--in">{{ $t('surveys.hr.step3Title') }}</p>
                 <div class="template-subcard">
@@ -518,13 +479,7 @@ export default {
     return {
       selectedType: '',
       surveyTitle: '',
-      selectedTeamId: '',
-      selectedEmployeeId: '',
       selectedTemplateId: '',
-      useTeamSelection: false,
-      useEmployeeSelection: false,
-      teams: [],
-      employees: [],
       surveys: [],
       availableTemplates: [],
       loading: false,
@@ -561,9 +516,7 @@ export default {
       return Array.isArray(m) ? m : []
     },
     canCreateSurvey() {
-      return this.surveyTitle && 
-             (!this.useTeamSelection || this.selectedTeamId) &&
-             (!this.useEmployeeSelection || this.selectedEmployeeId)
+      return !!this.surveyTitle?.trim()
     },
     currentTemplate() {
     if (!this.selectedTemplateId) return null
@@ -602,8 +555,6 @@ export default {
   },
   
   async mounted() {
-    await this.fetchTeams()
-    await this.fetchEmployees()
     await this.fetchSurveys()
   },
   
@@ -621,17 +572,8 @@ export default {
       this.templateSourceMode = 'standard'
       this.selectedTemplateId = ''
       this.surveyTitle = ''
-      this.selectedTeamId = ''
-      this.selectedEmployeeId = ''
-      this.useTeamSelection = false
-      this.useEmployeeSelection = false
       this.showCreateSurveyModal = true
       await this.fetchTemplates()
-      if (type === 'enps') {
-        await this.fetchTeams()
-      } else if (type === '360') {
-        await this.fetchEmployees()
-      }
     },
 
     clearWizardEntryType() {
@@ -639,11 +581,7 @@ export default {
       this.selectedType = ''
       this.createFlowMode = 'choose'
       this.surveyTitle = ''
-      this.selectedTeamId = ''
-      this.selectedEmployeeId = ''
       this.selectedTemplateId = ''
-      this.useTeamSelection = false
-      this.useEmployeeSelection = false
     },
 
     closeCreateSurveyWizard() {
@@ -667,11 +605,7 @@ export default {
       this.createFlowMode = 'choose'
       this.selectedType = ''
       this.surveyTitle = ''
-      this.selectedTeamId = ''
-      this.selectedEmployeeId = ''
       this.selectedTemplateId = ''
-      this.useTeamSelection = false
-      this.useEmployeeSelection = false
     },
 
     switchToCustomFlow() {
@@ -684,20 +618,9 @@ export default {
 
     selectSurveyType(type) {
       this.selectedType = type
-      this.selectedTeamId = ''
-      this.selectedEmployeeId = ''
       this.selectedTemplateId = ''
       this.templateSourceMode = 'standard'
-      this.useTeamSelection = false
-      this.useEmployeeSelection = false
-      
       this.fetchTemplates()
-      
-      if (type === 'enps') {
-        this.fetchTeams()
-      } else if (type === '360') {
-        this.fetchEmployees()
-      }
     },
 
     async fetchTemplates() {
@@ -820,30 +743,6 @@ export default {
       await this.fetchTemplates()
     },
 
-    async fetchTeams() {
-      try {
-        const token = localStorage.getItem('token')
-        const response = await axios.get('/user_teams', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        this.teams = response.data
-      } catch (error) {
-        console.error('Error fetching teams:', error)
-      }
-    },
-    
-    async fetchEmployees() {
-      try {
-        const token = localStorage.getItem('token')
-        const response = await axios.get('/api/employees', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        this.employees = response.data
-      } catch (error) {
-        console.error('Error fetching employees:', error)
-      }
-    },
-    
     async fetchSurveys() {
       try {
         this.loading = true
@@ -925,8 +824,8 @@ export default {
         const surveyData = {
           survey_type: this.selectedType,
           title: this.surveyTitle,
-          team_id: this.useTeamSelection ? this.selectedTeamId : null,
-          target_employee_id: this.useEmployeeSelection ? this.selectedEmployeeId : null,
+          team_id: null,
+          target_employee_id: null,
           questions: this.previewQuestions
         }
         
@@ -986,11 +885,7 @@ export default {
     resetForm() {
       this.selectedType = ''
       this.surveyTitle = ''
-      this.selectedTeamId = ''
-      this.selectedEmployeeId = ''
       this.selectedTemplateId = ''
-      this.useTeamSelection = false
-      this.useEmployeeSelection = false
       this.previewQuestions = []
       this.showCreateSurveyModal = false
       this.createFlowMode = 'choose'
@@ -2084,10 +1979,57 @@ h2 {
   box-shadow: none;
 }
 
+/* Блок «Мои опросники»: явный отступ и строка заголовок + фильтр без налезания на сетку */
+.existing-surveys {
+  margin-top: 8px;
+}
+
+.surveys-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 22px;
+  position: relative;
+  z-index: 2;
+}
+
+.surveys-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.filter-controls {
+  flex: 0 0 auto;
+}
+
+.status-select,
+.status-filter {
+  display: block;
+  min-width: min(220px, 100%);
+  padding: 10px 40px 10px 14px;
+  font-size: 14px;
+  line-height: 1.35;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
 .surveys-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
+  position: relative;
+  z-index: 1;
+  padding-top: 4px;
 }
 
 .survey-card {
@@ -2096,11 +2038,11 @@ h2 {
   padding: 24px;
   background: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .survey-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
   border-color: #d1d5db;
 }

@@ -20,7 +20,8 @@
     "agileKata": "Agile Kata",
     "agileTools": "Agile инструменты",
     "metricsTree": "Древо метрик",
-    "communityChat": "Чат"
+    "communityChat": "Чат",
+    "tests": "Автотесты"
   },
   "chat": {
     "title": "Сообщения",
@@ -1045,5 +1046,17 @@
     "decomposeEpic": "Декомпозиция эпика на истории",
     "decomposeStoriesTitle": "Предлагаемые истории",
     "applyStoryToForm": "В форму как story"
+  },
+  "tests": {
+    "title": "Автотесты портала",
+    "hint": "Запустите все тесты или выберите категорию. Результаты с деталями ошибок можно скопировать для исправления.",
+    "runAll": "Запустить все тесты",
+    "running": "Тесты выполняются…",
+    "total": "Всего",
+    "passed": "Пройдено",
+    "failed": "Не пройдено",
+    "copyFailed": "Скопировать отчёт об ошибках",
+    "copied": "Скопировано!",
+    "progressText": "{pct}% выполнено"
   }
 }

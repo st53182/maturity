@@ -80,6 +80,10 @@
           <span>💬</span>
           <small>{{ $t('nav.communityChat') }}</small>
         </button>
+        <button class="sidebar-btn" @click="$router.push('/new/tests')">
+          <span>🧪</span>
+          <small>{{ $t('nav.tests') }}</small>
+        </button>
         <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
           <span>🔗</span>
           <small>{{ $t('nav.maturityLink') }}</small>
@@ -180,6 +184,10 @@
           <button class="mobile-menu-btn" @click="navigateAndClose('/new/chat')">
             <span>💬</span>
             <span>{{ $t('nav.communityChat') }}</span>
+          </button>
+          <button class="mobile-menu-btn" @click="navigateAndClose('/new/tests')">
+            <span>🧪</span>
+            <span>{{ $t('nav.tests') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/maturity' : '/maturity/create')">
             <span>🔗</span>

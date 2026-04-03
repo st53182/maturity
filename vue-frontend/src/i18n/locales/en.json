@@ -20,7 +20,8 @@
     "agileKata": "Agile Kata",
     "agileTools": "Agile tools",
     "metricsTree": "Metrics tree",
-    "communityChat": "Chat"
+    "communityChat": "Chat",
+    "tests": "Auto Tests"
   },
   "chat": {
     "title": "Messages",
@@ -965,5 +966,17 @@
     "decomposeEpic": "Decompose epic into stories",
     "decomposeStoriesTitle": "Suggested stories",
     "applyStoryToForm": "Use as story in form"
+  },
+  "tests": {
+    "title": "Portal Auto Tests",
+    "hint": "Run all tests or pick a category. Failed test details can be copied for debugging.",
+    "runAll": "Run All Tests",
+    "running": "Tests running…",
+    "total": "Total",
+    "passed": "Passed",
+    "failed": "Failed",
+    "copyFailed": "Copy Failed Tests Report",
+    "copied": "Copied!",
+    "progressText": "{pct}% complete"
   }
 }

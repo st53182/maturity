@@ -171,6 +171,29 @@ def serve_vue(path):
 def api_root():
     return {"message": "Scrum Maturity API is working!"}
 
+
+@app.route("/api/ai-health")
+def ai_health():
+    """Diagnostic: check OpenAI connectivity (no auth required, no quota consumed)."""
+    import os as _os
+    key = _os.getenv("OPENAI_API_KEY") or ""
+    if not key:
+        return jsonify({"status": "error", "detail": "OPENAI_API_KEY not set"}), 503
+    masked = key[:7] + "..." + key[-4:] if len(key) > 12 else "too_short"
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=key)
+        models = client.models.list()
+        names = sorted(m.id for m in models.data if "gpt" in m.id)[:20]
+        return jsonify({"status": "ok", "key_masked": masked, "gpt_models": names})
+    except Exception as exc:
+        return jsonify({
+            "status": "error",
+            "key_masked": masked,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:500],
+        }), 502
+
 # Экспортируем socketio для использования в gunicorn
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

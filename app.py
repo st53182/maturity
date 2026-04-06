@@ -1,6 +1,61 @@
 import eventlet
 eventlet.monkey_patch()
 
+# ---------------------------------------------------------------------------
+# DNS-over-HTTPS fallback: если системный DNS не резолвит api.openai.com
+# (бывает на Render), подменяем кеш через DoH от Cloudflare / Google.
+# ---------------------------------------------------------------------------
+import socket
+import json
+import logging
+import urllib.request
+
+_dns_log = logging.getLogger("dns_fallback")
+_original_getaddrinfo = socket.getaddrinfo
+_doh_cache: dict = {}
+
+
+def _resolve_via_doh(hostname: str) -> str | None:
+    """Resolve A-record via Cloudflare DNS-over-HTTPS (uses HTTPS, not port 53)."""
+    for doh_url in [
+        f"https://1.1.1.1/dns-query?name={hostname}&type=A",
+        f"https://8.8.8.8/resolve?name={hostname}&type=A",
+    ]:
+        try:
+            req = urllib.request.Request(doh_url, headers={"Accept": "application/dns-json"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read())
+            for ans in data.get("Answer", []):
+                if ans.get("type") == 1:
+                    ip = ans["data"]
+                    _dns_log.info("DoH resolved %s -> %s", hostname, ip)
+                    return ip
+        except Exception as exc:
+            _dns_log.debug("DoH via %s failed: %s", doh_url[:30], exc)
+    return None
+
+
+def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """Try system DNS first; on failure for known hosts, fall back to DoH."""
+    try:
+        return _original_getaddrinfo(host, port, family, type, proto, flags)
+    except socket.gaierror:
+        if host not in ("api.openai.com",):
+            raise
+        cached = _doh_cache.get(host)
+        if not cached:
+            ip = _resolve_via_doh(host)
+            if not ip:
+                raise
+            _doh_cache[host] = ip
+            cached = ip
+        _dns_log.info("Using DoH-resolved IP for %s: %s", host, cached)
+        return _original_getaddrinfo(cached, port, family, type, proto, flags)
+
+
+socket.getaddrinfo = _patched_getaddrinfo
+# ---------------------------------------------------------------------------
+
 from flask import Flask, jsonify, send_from_directory
 from flask_jwt_extended import JWTManager
 from database import db

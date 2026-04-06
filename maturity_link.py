@@ -725,7 +725,7 @@ def get_maturity_recommendations(token):
 }}
 - Пиши только на русском."""
 
-    rec_model = "gpt-4o-mini"
+    rec_model = "gpt-5.4-mini"
     _log.info("Maturity recommendations: using model=%s, token=%s", rec_model, token[:8])
     try:
         response = client.chat.completions.create(

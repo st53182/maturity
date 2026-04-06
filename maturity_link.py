@@ -1,4 +1,5 @@
 # Оценка зрелости по ссылке: пять вариантов ответа, баллы за вопрос, результаты для радара и PDF.
+import logging
 import os
 import json
 import re
@@ -21,6 +22,30 @@ from maturity_questions import (
 )
 
 maturity_bp = Blueprint('maturity_link', __name__)
+_log = logging.getLogger(__name__)
+
+
+def _openai_http_response(exc: BaseException):
+    """Переводит исключения OpenAI SDK в JSON и HTTP-код для публичных эндпоинтов."""
+    try:
+        from openai import APIError, APIConnectionError, APITimeoutError, RateLimitError, AuthenticationError
+
+        if isinstance(exc, RateLimitError):
+            return jsonify(
+                {"error": "Превышен лимит запросов к AI. Повторите через несколько минут."}
+            ), 429
+        if isinstance(exc, AuthenticationError):
+            return jsonify({"error": "Сервис рекомендаций временно недоступен (доступ к AI)."}), 503
+        if isinstance(exc, (APIConnectionError, APITimeoutError)):
+            return jsonify({"error": "Не удалось связаться с сервисом AI. Повторите позже."}), 503
+        if isinstance(exc, APIError):
+            msg = (str(exc) or "").strip() or "Ошибка сервиса AI"
+            _log.warning("OpenAI APIError (maturity_link): %s", msg[:500])
+            return jsonify({"error": msg[:800]}), 502
+    except ImportError:
+        pass
+    _log.exception("OpenAI call failed in maturity_link")
+    return jsonify({"error": str(exc)}), 500
 
 # Значения ответа в JSON (строки). Устаревшие: true → yes, false → no.
 MATURITY_ANSWER_KEYS = frozenset({'no', 'rather_no', 'dont_know', 'rather_yes', 'yes'})
@@ -700,7 +725,7 @@ def get_maturity_recommendations(token):
 
     try:
         response = client.chat.completions.create(
-            model=os.getenv("MATURITY_TEAM_PLAN_MODEL", "gpt-4.1-mini"),
+            model=os.getenv("MATURITY_TEAM_PLAN_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Дай структурированные рекомендации по улучшению зрелости команды на основе данных оценки."},
                 {"role": "user", "content": prompt},
@@ -731,7 +756,7 @@ def get_maturity_recommendations(token):
             "plan": _normalize_group_plan(session.recommendations_plan_json),
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations/dont-know', methods=['GET'])
@@ -866,7 +891,7 @@ def get_maturity_recommendations_dont_know(token):
             "plan": _normalize_group_plan(session.dont_know_recommendations_plan_json),
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)
 
 
 @maturity_bp.route('/api/maturity/<token>/clarify', methods=['POST'])
@@ -939,7 +964,7 @@ def metrics_tree_explain():
 Кратко, по делу, без воды."""
     try:
         response = client.chat.completions.create(
-            model=os.getenv("METRICS_TREE_MODEL", "gpt-4.1-mini"),
+            model=os.getenv("METRICS_TREE_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile/Product консультант. Даешь точные прикладные разъяснения метрик."},
                 {"role": "user", "content": prompt},
@@ -1033,7 +1058,7 @@ def metrics_tree_relationship():
 Кратко и прикладно, без воды."""
     try:
         response = client.chat.completions.create(
-            model=os.getenv("METRICS_TREE_MODEL", "gpt-4.1-mini"),
+            model=os.getenv("METRICS_TREE_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile/Engineering эксперт по системным метрикам потока и продукта."},
                 {"role": "user", "content": prompt},
@@ -1272,7 +1297,7 @@ def maturity_admin_insights():
 
     try:
         response = client.chat.completions.create(
-            model=os.getenv("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-4.1-mini"),
+            model=os.getenv("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Интерпретируешь только переданные агрегаты."},
                 {"role": "user", "content": prompt},

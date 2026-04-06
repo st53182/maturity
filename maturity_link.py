@@ -27,6 +27,9 @@ _log = logging.getLogger(__name__)
 
 def _openai_http_response(exc: BaseException):
     """Переводит исключения OpenAI SDK в JSON и HTTP-код для публичных эндпоинтов."""
+    exc_type = type(exc).__name__
+    exc_msg = str(exc)[:600]
+    _log.error("OpenAI error in maturity_link [%s]: %s", exc_type, exc_msg)
     try:
         from openai import APIError, APIConnectionError, APITimeoutError, RateLimitError, AuthenticationError
 
@@ -35,17 +38,16 @@ def _openai_http_response(exc: BaseException):
                 {"error": "Превышен лимит запросов к AI. Повторите через несколько минут."}
             ), 429
         if isinstance(exc, AuthenticationError):
-            return jsonify({"error": "Сервис рекомендаций временно недоступен (доступ к AI)."}), 503
+            _log.error("OpenAI AuthenticationError — check OPENAI_API_KEY on server")
+            return jsonify({"error": f"Сервис рекомендаций временно недоступен (ошибка авторизации AI: {exc_type})."}), 503
         if isinstance(exc, (APIConnectionError, APITimeoutError)):
-            return jsonify({"error": "Не удалось связаться с сервисом AI. Повторите позже."}), 503
+            return jsonify({"error": f"Не удалось связаться с сервисом AI ({exc_type}). Повторите позже."}), 503
         if isinstance(exc, APIError):
-            msg = (str(exc) or "").strip() or "Ошибка сервиса AI"
-            _log.warning("OpenAI APIError (maturity_link): %s", msg[:500])
-            return jsonify({"error": msg[:800]}), 502
+            return jsonify({"error": f"Ошибка сервиса AI ({exc_type}): {exc_msg[:300]}"}), 502
     except ImportError:
         pass
-    _log.exception("OpenAI call failed in maturity_link")
-    return jsonify({"error": str(exc)}), 500
+    _log.exception("Unhandled OpenAI exception in maturity_link")
+    return jsonify({"error": f"Внутренняя ошибка ({exc_type}): {exc_msg[:300]}"}), 500
 
 # Значения ответа в JSON (строки). Устаревшие: true → yes, false → no.
 MATURITY_ANSWER_KEYS = frozenset({'no', 'rather_no', 'dont_know', 'rather_yes', 'yes'})
@@ -723,9 +725,11 @@ def get_maturity_recommendations(token):
 }}
 - Пиши только на русском."""
 
+    rec_model = "gpt-4o-mini"
+    _log.info("Maturity recommendations: using model=%s, token=%s", rec_model, token[:8])
     try:
         response = client.chat.completions.create(
-            model=os.getenv("MATURITY_TEAM_PLAN_MODEL", "gpt-4o-mini"),
+            model=rec_model,
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Дай структурированные рекомендации по улучшению зрелости команды на основе данных оценки."},
                 {"role": "user", "content": prompt},
@@ -1474,7 +1478,7 @@ def maturity_admin_group_plan_generate():
     try:
         import json
         response = client.chat.completions.create(
-            model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-4.1"),
+            model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": "Ты практик Agile-трансформаций в enterprise и банковской среде."},
                 {"role": "user", "content": prompt},

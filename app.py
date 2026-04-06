@@ -1,8 +1,9 @@
 # ---------------------------------------------------------------------------
 # DNS-over-HTTPS fallback  (MUST run BEFORE eventlet.monkey_patch)
 # Render's system DNS cannot resolve api.openai.com — we pre-resolve via
-# Cloudflare/Google DoH at startup and short-circuit getaddrinfo so that
-# neither the stdlib nor eventlet ever hits the broken resolver for this host.
+# Cloudflare/Google DoH at startup and replace hostnames with IPs at
+# EVERY level: getaddrinfo, create_connection, and getaddrinfo again
+# after eventlet monkey-patches.
 # ---------------------------------------------------------------------------
 import socket as _sock_stdlib
 import json as _json_stdlib
@@ -13,6 +14,7 @@ _dns_log = _logging_stdlib.getLogger("dns_fallback")
 _DOH_HOSTS = ("api.openai.com",)
 _doh_cache: dict = {}
 _real_getaddrinfo = _sock_stdlib.getaddrinfo
+_real_create_connection = _sock_stdlib.create_connection
 
 
 def _resolve_via_doh(hostname: str):
@@ -40,22 +42,31 @@ def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     return _real_getaddrinfo(host, port, family, type, proto, flags)
 
 
+def _patched_create_connection(address, timeout=None, source_address=None, **kw):
+    host, port = address
+    if host in _doh_cache:
+        address = (_doh_cache[host], port)
+    return _real_create_connection(address, timeout=timeout, source_address=source_address, **kw)
+
+
 # Pre-resolve at import time (before eventlet touches socket)
 for _h in _DOH_HOSTS:
     _ip = _resolve_via_doh(_h)
     if _ip:
         _doh_cache[_h] = _ip
 
-# Patch BEFORE eventlet so eventlet captures our version as "original"
+# Patch BEFORE eventlet
 _sock_stdlib.getaddrinfo = _patched_getaddrinfo
+_sock_stdlib.create_connection = _patched_create_connection
 # ---------------------------------------------------------------------------
 
 import eventlet
 eventlet.monkey_patch()
 
-# Re-apply patch AFTER eventlet.monkey_patch() overwrites socket.getaddrinfo
+# Re-apply ALL patches AFTER eventlet.monkey_patch()
 import socket as _sock_green
 _sock_green.getaddrinfo = _patched_getaddrinfo
+_sock_green.create_connection = _patched_create_connection
 # ---------------------------------------------------------------------------
 
 from flask import Flask, jsonify, send_from_directory
@@ -251,6 +262,8 @@ def ai_health():
     result["key_masked"] = (key[:7] + "..." + key[-4:]) if len(key) > 12 else ("too_short" if key else "missing")
 
     host = "api.openai.com"
+    resolved_ip = _doh_cache.get(host)
+    result["doh_cache"] = resolved_ip
 
     t0 = time.time()
     try:
@@ -258,14 +271,16 @@ def ai_health():
         result["dns"] = {"ok": True, "ms": int((time.time() - t0) * 1000), "ips": list({a[4][0] for a in ips})[:4]}
     except Exception as e:
         result["dns"] = {"ok": False, "ms": int((time.time() - t0) * 1000), "error": str(e)[:200]}
-        return jsonify(result), 502
+        if not resolved_ip:
+            return jsonify(result), 502
 
+    connect_target = resolved_ip or host
     t0 = time.time()
     try:
-        sock = socket.create_connection((host, 443), timeout=10)
-        result["tcp"] = {"ok": True, "ms": int((time.time() - t0) * 1000)}
+        sock = _real_create_connection((connect_target, 443), timeout=10)
+        result["tcp"] = {"ok": True, "ms": int((time.time() - t0) * 1000), "connected_to": connect_target}
     except Exception as e:
-        result["tcp"] = {"ok": False, "ms": int((time.time() - t0) * 1000), "error": str(e)[:200]}
+        result["tcp"] = {"ok": False, "ms": int((time.time() - t0) * 1000), "target": connect_target, "error": str(e)[:200]}
         return jsonify(result), 502
 
     t0 = time.time()

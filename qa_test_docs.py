@@ -120,7 +120,7 @@ def plan_ai_help():
     try:
         client = _openai_client()
         resp = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты QA эксперт. Возвращай только JSON."},
                 {"role": "user", "content": prompt},
@@ -167,7 +167,7 @@ def plan_evaluate():
     try:
         client = _openai_client()
         resp = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты QA эксперт. Возвращай только JSON."},
                 {"role": "user", "content": prompt},
@@ -327,7 +327,7 @@ def case_ai_help():
     try:
         client = _openai_client()
         resp = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты QA эксперт. Возвращай только JSON."},
                 {"role": "user", "content": prompt},
@@ -387,7 +387,7 @@ def case_evaluate():
     try:
         client = _openai_client()
         resp = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты QA эксперт. Возвращай только JSON."},
                 {"role": "user", "content": prompt},

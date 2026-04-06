@@ -55,7 +55,7 @@ def help_section():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты помощник по составлению отчётов юзабилити-тестирования. Отвечай кратко, на русском, с примерами где уместно."},
                 {"role": "user", "content": prompt},

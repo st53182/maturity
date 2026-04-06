@@ -276,7 +276,7 @@ def ai_assist():
 
     try:
         resp = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},

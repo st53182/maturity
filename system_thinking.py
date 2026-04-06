@@ -233,7 +233,7 @@ def ask_question(iceberg_id):
 
         try:
             response = client.chat.completions.create(
-                model="gpt-5.4-mini",
+                model="gpt-4.1",
                 messages=[
                     {"role": "system", "content": "Ты эксперт по системному мышлению и помогаешь пользователям анализировать проблемы."},
                     {"role": "user", "content": prompt},
@@ -366,7 +366,7 @@ def generate_solutions(iceberg):
     
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты эксперт по системному мышлению и помогаешь находить решения проблем."},
                 {"role": "user", "content": prompt}

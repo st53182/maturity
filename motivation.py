@@ -83,7 +83,7 @@ Reactions to criticism and changes: {employee.feedback}
 
         client = get_openai_client()
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты коуч, психолог и DISC-аналитик."},
                 {"role": "user", "content": prompt}

@@ -57,7 +57,7 @@ Recommendations: [detailed, tools, roles, links]
 
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч, создающий детальные персонализированные рекомендации."},
                 {"role": "user", "content": prompt}
@@ -151,7 +151,7 @@ Based on these responses, create a detailed 5-step plan to improve team performa
 """
 
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",

@@ -137,7 +137,7 @@ def evaluate():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты оцениваешь ответы студентов. Отвечай только валидным JSON."},
                 {"role": "user", "content": prompt},
@@ -233,7 +233,7 @@ def example_report():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты пишешь краткие структурированные отчёты о тестировании ПО. Соблюдай запрошенный формат и не добавляй ничего лишнего."},
                 {"role": "user", "content": prompt},

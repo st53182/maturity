@@ -196,7 +196,7 @@ Language: {lang_name}. No numbering in strings. Practical and specific.
 Return JSON only with key "topics" (array of strings).
 """
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",
@@ -258,7 +258,7 @@ Return ONLY valid JSON with exactly these keys:
 constraint_keys must contain ONLY values from this set (subset allowed, can be empty): {allowed_list}
 """
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",
@@ -349,7 +349,7 @@ def ai_facilitator_help():
             )
 
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",
@@ -392,7 +392,7 @@ def generate_meeting_design():
             return jsonify({"error": "OpenAI API не настроен"}), 500
         
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты эксперт по фасилитации встреч. Отвечай только в формате JSON без дополнительного текста."},
                 {"role": "user", "content": prompt}
@@ -451,7 +451,7 @@ def regenerate_block():
             return jsonify({"error": "OpenAI API не настроен"}), 500
         
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {"role": "system", "content": "Ты эксперт по фасилитации встреч. Отвечай только в формате JSON без дополнительного текста."},
                 {"role": "user", "content": prompt}

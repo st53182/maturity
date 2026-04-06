@@ -274,7 +274,7 @@ def prepare_backlog_item():
 
     try:
         completion = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=_build_prep_analysis_messages(
                 description, work_type, context, language, acceptance_criteria, nfr
             ),
@@ -329,7 +329,7 @@ Non-functional hints:
 """
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",
@@ -384,7 +384,7 @@ def prep_form_assist():
     )
     try:
         completion = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
             response_format=BACKLOG_ASSIST_SCHEMA,
             temperature=0.45,
@@ -457,7 +457,7 @@ Specification:
 """
     try:
         response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+            model="gpt-4.1",
             messages=[
                 {
                     "role": "system",

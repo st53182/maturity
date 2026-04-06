@@ -49,6 +49,69 @@ def _openai_http_response(exc: BaseException):
     _log.exception("Unhandled OpenAI exception in maturity_link")
     return jsonify({"error": f"Внутренняя ошибка ({exc_type}): {exc_msg[:300]}"}), 500
 
+
+def _openai_client():
+    """Клиент OpenAI с таймаутом (на проде без таймаута долгие запросы дают 502 от прокси)."""
+    from openai import OpenAI
+
+    timeout = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "120"))
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=timeout)
+
+
+def _unique_model_chain(*names):
+    seen = set()
+    out = []
+    for n in names:
+        n = (n or "").strip()
+        if not n or n in seen:
+            continue
+        seen.add(n)
+        out.append(n)
+    return out
+
+
+def _openai_chat_model_list(env_primary: str, default_primary: str) -> list:
+    """Модель из env (по умолчанию gpt-4.1); при ошибке API — запасные модели."""
+    primary = os.getenv(env_primary, default_primary)
+    return _unique_model_chain(primary, "gpt-4o", "gpt-4-turbo")
+
+
+def _chat_completions_with_model_fallback(client, model_names, **kwargs):
+    from openai import (
+        APIError,
+        APIConnectionError,
+        APITimeoutError,
+        RateLimitError,
+        AuthenticationError,
+    )
+
+    if not model_names:
+        raise ValueError("model_names is empty")
+    last = None
+    for m in model_names:
+        try:
+            resp = client.chat.completions.create(model=m, **kwargs)
+            if m != model_names[0]:
+                _log.warning(
+                    "OpenAI chat: used fallback model=%s (primary=%s)",
+                    m,
+                    model_names[0],
+                )
+            return resp
+        except (RateLimitError, AuthenticationError, APIConnectionError, APITimeoutError):
+            raise
+        except APIError as e:
+            last = e
+            _log.warning(
+                "OpenAI chat model=%s failed [%s]: %s",
+                m,
+                type(e).__name__,
+                str(e)[:240],
+            )
+            continue
+    raise last
+
+
 # Значения ответа в JSON (строки). Устаревшие: true → yes, false → no.
 MATURITY_ANSWER_KEYS = frozenset({'no', 'rather_no', 'dont_know', 'rather_yes', 'yes'})
 MATURITY_ANSWER_SCORE = {
@@ -671,8 +734,7 @@ def get_maturity_recommendations(token):
         )
 
     summary_text = "\n".join(summary_lines)
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
 
     tools_hint = ", ".join(AGILE_TOOLS_LINKS)
     prompt = f"""Ты опытный Agile-коуч. По результатам оценки зрелости команды (да/нет по темам) дай конкретный план улучшений для команды.
@@ -725,11 +787,16 @@ def get_maturity_recommendations(token):
 }}
 - Пиши только на русском."""
 
-    rec_model = "gpt-5.4-mini"
-    _log.info("Maturity recommendations: using model=%s, token=%s", rec_model, token[:8])
+    rec_models = _openai_chat_model_list("MATURITY_TEAM_PLAN_MODEL", "gpt-4.1")
+    _log.info(
+        "Maturity recommendations: model_chain=%s, token=%s",
+        rec_models,
+        token[:8],
+    )
     try:
-        response = client.chat.completions.create(
-            model=rec_model,
+        response = _chat_completions_with_model_fallback(
+            client,
+            rec_models,
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Дай структурированные рекомендации по улучшению зрелости команды на основе данных оценки."},
                 {"role": "user", "content": prompt},
@@ -824,8 +891,7 @@ def get_maturity_recommendations_dont_know(token):
         return jsonify({'content': content})
 
     topics = "\n".join(lines)
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
     prompt = f"""Команда прошла оценку зрелости и на перечисленные ниже утверждения ответила «не знаю» (нет уверенности, есть ли это у них).
 
 Утверждения:
@@ -863,8 +929,9 @@ def get_maturity_recommendations_dont_know(token):
 Только русский язык."""
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+        response = _chat_completions_with_model_fallback(
+            client,
+            _openai_chat_model_list("MATURITY_TEAM_PLAN_MODEL", "gpt-4.1"),
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Помогаешь командам снять неопределённость по практикам зрелости."},
                 {"role": "user", "content": prompt},
@@ -911,8 +978,7 @@ def clarify_question(token):
     question_text = data.get('question_text', '').strip() or data.get('text', '').strip()
     if not question_text:
         return jsonify({'error': 'Укажите question_text'}), 400
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
     prompt = f"""Разъясни, что имеется в виду в этом утверждении оценки зрелости команды. Приведи конкретные примеры в банковской сфере для трёх типов команд:
 1) продуктовые команды (разработка продуктов для клиентов — карты, кредиты, приложения);
 2) платформенные команды (внутренние платформы, API, инфраструктура);
@@ -922,8 +988,9 @@ def clarify_question(token):
 
 Ответ дай кратко, по-русски, с 1–2 примерами на каждый тип команды где уместно."""
     try:
-        response = client.chat.completions.create(
-            model="gpt-5.4-mini",
+        response = _chat_completions_with_model_fallback(
+            client,
+            _openai_chat_model_list("MATURITY_TEAM_PLAN_MODEL", "gpt-4.1"),
             messages=[
                 {"role": "system", "content": "Ты эксперт по Agile и банковской разработке. Разъясняешь вопросы оценки зрелости с примерами из банков (Citibank, Deutsche Bank и др.)."},
                 {"role": "user", "content": prompt},
@@ -934,7 +1001,7 @@ def clarify_question(token):
         content = response.choices[0].message.content
         return jsonify({"content": content})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)
 
 
 @maturity_bp.route('/api/metrics-tree/explain', methods=['POST'])
@@ -952,8 +1019,7 @@ def metrics_tree_explain():
     if not metric_key and not metric_name:
         return jsonify({'error': 'Укажите metric_key или metric_name'}), 400
 
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
     metric_title = f"{metric_name} ({metric_name_ru})" if metric_name_ru else metric_name
     prompt = f"""Объясни метрику простым языком для продуктовой команды.
 
@@ -967,8 +1033,9 @@ def metrics_tree_explain():
 4) Какие действия команды влияют на метрику в ближайшие 2-4 недели.
 Кратко, по делу, без воды."""
     try:
-        response = client.chat.completions.create(
-            model=os.getenv("METRICS_TREE_MODEL", "gpt-5.4-mini"),
+        response = _chat_completions_with_model_fallback(
+            client,
+            _openai_chat_model_list("METRICS_TREE_MODEL", "gpt-4.1"),
             messages=[
                 {"role": "system", "content": "Ты Agile/Product консультант. Даешь точные прикладные разъяснения метрик."},
                 {"role": "user", "content": prompt},
@@ -979,7 +1046,7 @@ def metrics_tree_explain():
         content = response.choices[0].message.content
         return jsonify({"content": content})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)
 
 
 @maturity_bp.route('/api/metrics-tree/relationship', methods=['POST'])
@@ -999,8 +1066,7 @@ def metrics_tree_relationship():
     if not metric_a_name or not metric_b_name:
         return jsonify({'error': 'Укажите metric_a_name и metric_b_name'}), 400
 
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
     def _classify_metric(metric_key, metric_name_text):
         key = (metric_key or "").lower()
         name_text = (metric_name_text or "").lower()
@@ -1061,8 +1127,9 @@ def metrics_tree_relationship():
 - плюс "Промежуточные метрики", "Trade-off", "Еженедельный контроль".
 Кратко и прикладно, без воды."""
     try:
-        response = client.chat.completions.create(
-            model=os.getenv("METRICS_TREE_MODEL", "gpt-5.4-mini"),
+        response = _chat_completions_with_model_fallback(
+            client,
+            _openai_chat_model_list("METRICS_TREE_MODEL", "gpt-4.1"),
             messages=[
                 {"role": "system", "content": "Ты Agile/Engineering эксперт по системным метрикам потока и продукта."},
                 {"role": "user", "content": prompt},
@@ -1073,7 +1140,7 @@ def metrics_tree_relationship():
         content = response.choices[0].message.content
         return jsonify({"content": content})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)
 
 
 @maturity_bp.route('/api/maturity-admin/overview', methods=['GET'])
@@ -1280,8 +1347,7 @@ def maturity_admin_insights():
         return jsonify({"content": "<p>Нет завершённых оценок для сводки.</p>"})
 
     summary = "\n".join(lines)
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
     prompt = f"""По агрегированным данным оценок зрелости (число «да», «скорее да» и средний балл 0–1 за ответ по темам) дай краткий executive summary.
 
 Сводка:
@@ -1300,8 +1366,9 @@ def maturity_admin_insights():
 Ответ: кратко, по-русски, HTML (<p>, <strong>, <ul>, <li>, <a>)."""
 
     try:
-        response = client.chat.completions.create(
-            model=os.getenv("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-5.4-mini"),
+        response = _chat_completions_with_model_fallback(
+            client,
+            _openai_chat_model_list("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-4.1"),
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Интерпретируешь только переданные агрегаты."},
                 {"role": "user", "content": prompt},
@@ -1312,7 +1379,7 @@ def maturity_admin_insights():
         content = response.choices[0].message.content
         return jsonify({"content": content})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)
 
 
 @maturity_bp.route('/api/maturity-admin/group-plan', methods=['GET'])
@@ -1424,8 +1491,7 @@ def maturity_admin_group_plan_generate():
         for r in theme_rows
     ])
 
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = _openai_client()
     tools_hint = ", ".join(AGILE_TOOLS_LINKS)
     prompt = f"""Ты Agile transformation lead. Нужно подготовить план улучшений для стрима команд по агрегированной зрелости.
 
@@ -1476,9 +1542,9 @@ def maturity_admin_group_plan_generate():
 - Не выдумывай числа вне переданной сводки.
 """
     try:
-        import json
-        response = client.chat.completions.create(
-            model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-5.4-mini"),
+        response = _chat_completions_with_model_fallback(
+            client,
+            _openai_chat_model_list("MATURITY_GROUP_PLAN_MODEL", "gpt-4.1"),
             messages=[
                 {"role": "system", "content": "Ты практик Agile-трансформаций в enterprise и банковской среде."},
                 {"role": "user", "content": prompt},
@@ -1510,4 +1576,4 @@ def maturity_admin_group_plan_generate():
             "updated_at": row.updated_at.isoformat() if row.updated_at else None,
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return _openai_http_response(e)

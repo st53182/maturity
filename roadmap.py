@@ -769,7 +769,7 @@ def _parse_image_with_ai(image_file) -> List[Dict]:
     
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5.4-mini",
             messages=[
                 {
                     "role": "user",

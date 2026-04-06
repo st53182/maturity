@@ -741,7 +741,7 @@ def survey_template_ai_draft():
     try:
         client = OpenAI()
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты эксперт по HR-опросам. Отвечаешь только JSON без markdown."},
                 {"role": "user", "content": schema_hint + "\n\n" + user_msg},

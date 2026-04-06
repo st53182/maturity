@@ -55,7 +55,7 @@ def evaluate():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты оцениваешь пользовательские истории. Отвечай только валидным JSON."},
                 {"role": "user", "content": prompt},

@@ -275,7 +275,7 @@ def generate_recommendations(personality_type, scores):
         """
         
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-5.4-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
             temperature=0.7

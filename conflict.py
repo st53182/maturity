@@ -213,7 +213,7 @@ algoritm-konstruktivnoj-konfrontacii-005
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты профессиональный фасилитатор Agile-команд."},
                 {"role": "user", "content": prompt}
@@ -452,7 +452,7 @@ algoritm-konstruktivnoj-konfrontacii-005
 
         client = get_openai_client()
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты фасилитатор конфликтов и Agile-коуч."},
                 {"role": "user", "content": prompt}
@@ -714,7 +714,7 @@ algoritm-konstruktivnoj-konfrontacii-005
 
         client = get_openai_client()
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты фасилитатор конфликтов и Agile-коуч."},
                 {"role": "user", "content": prompt}

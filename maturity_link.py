@@ -725,7 +725,7 @@ def get_maturity_recommendations(token):
 }}
 - Пиши только на русском."""
 
-    rec_model = "gpt-4o-mini"
+    rec_model = "gpt-5.4-mini"
     _log.info("Maturity recommendations: using model=%s, token=%s", rec_model, token[:8])
     try:
         response = client.chat.completions.create(
@@ -864,7 +864,7 @@ def get_maturity_recommendations_dont_know(token):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Помогаешь командам снять неопределённость по практикам зрелости."},
                 {"role": "user", "content": prompt},
@@ -923,7 +923,7 @@ def clarify_question(token):
 Ответ дай кратко, по-русски, с 1–2 примерами на каждый тип команды где уместно."""
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=[
                 {"role": "system", "content": "Ты эксперт по Agile и банковской разработке. Разъясняешь вопросы оценки зрелости с примерами из банков (Citibank, Deutsche Bank и др.)."},
                 {"role": "user", "content": prompt},
@@ -968,7 +968,7 @@ def metrics_tree_explain():
 Кратко, по делу, без воды."""
     try:
         response = client.chat.completions.create(
-            model=os.getenv("METRICS_TREE_MODEL", "gpt-4o-mini"),
+            model=os.getenv("METRICS_TREE_MODEL", "gpt-5.4-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile/Product консультант. Даешь точные прикладные разъяснения метрик."},
                 {"role": "user", "content": prompt},
@@ -1062,7 +1062,7 @@ def metrics_tree_relationship():
 Кратко и прикладно, без воды."""
     try:
         response = client.chat.completions.create(
-            model=os.getenv("METRICS_TREE_MODEL", "gpt-4o-mini"),
+            model=os.getenv("METRICS_TREE_MODEL", "gpt-5.4-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile/Engineering эксперт по системным метрикам потока и продукта."},
                 {"role": "user", "content": prompt},
@@ -1301,7 +1301,7 @@ def maturity_admin_insights():
 
     try:
         response = client.chat.completions.create(
-            model=os.getenv("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-4o-mini"),
+            model=os.getenv("MATURITY_ADMIN_INSIGHTS_MODEL", "gpt-5.4-mini"),
             messages=[
                 {"role": "system", "content": "Ты Agile-коуч. Интерпретируешь только переданные агрегаты."},
                 {"role": "user", "content": prompt},
@@ -1478,7 +1478,7 @@ def maturity_admin_group_plan_generate():
     try:
         import json
         response = client.chat.completions.create(
-            model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-4o-mini"),
+            model=os.getenv("MATURITY_GROUP_PLAN_MODEL", "gpt-5.4-mini"),
             messages=[
                 {"role": "system", "content": "Ты практик Agile-трансформаций в enterprise и банковской среде."},
                 {"role": "user", "content": prompt},

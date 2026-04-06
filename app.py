@@ -174,25 +174,70 @@ def api_root():
 
 @app.route("/api/ai-health")
 def ai_health():
-    """Diagnostic: check OpenAI connectivity (no auth required, no quota consumed)."""
+    """Diagnostic: check OpenAI connectivity at DNS / TCP / TLS / API levels."""
     import os as _os
+    import socket
+    import ssl
+    import time
+    import importlib
+
+    result = {"openai_lib_version": None, "dns": None, "tcp": None, "tls": None, "api": None}
+
+    try:
+        import openai as _oai
+        result["openai_lib_version"] = getattr(_oai, "__version__", "unknown")
+    except Exception:
+        result["openai_lib_version"] = "import_failed"
+
     key = _os.getenv("OPENAI_API_KEY") or ""
+    result["key_set"] = bool(key)
+    result["key_masked"] = (key[:7] + "..." + key[-4:]) if len(key) > 12 else ("too_short" if key else "missing")
+
+    host = "api.openai.com"
+
+    t0 = time.time()
+    try:
+        ips = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
+        result["dns"] = {"ok": True, "ms": int((time.time() - t0) * 1000), "ips": list({a[4][0] for a in ips})[:4]}
+    except Exception as e:
+        result["dns"] = {"ok": False, "ms": int((time.time() - t0) * 1000), "error": str(e)[:200]}
+        return jsonify(result), 502
+
+    t0 = time.time()
+    try:
+        sock = socket.create_connection((host, 443), timeout=10)
+        result["tcp"] = {"ok": True, "ms": int((time.time() - t0) * 1000)}
+    except Exception as e:
+        result["tcp"] = {"ok": False, "ms": int((time.time() - t0) * 1000), "error": str(e)[:200]}
+        return jsonify(result), 502
+
+    t0 = time.time()
+    try:
+        ctx = ssl.create_default_context()
+        ssock = ctx.wrap_socket(sock, server_hostname=host)
+        result["tls"] = {"ok": True, "ms": int((time.time() - t0) * 1000), "version": ssock.version()}
+        ssock.close()
+    except Exception as e:
+        result["tls"] = {"ok": False, "ms": int((time.time() - t0) * 1000), "error": str(e)[:200]}
+        sock.close()
+        return jsonify(result), 502
+
     if not key:
-        return jsonify({"status": "error", "detail": "OPENAI_API_KEY not set"}), 503
-    masked = key[:7] + "..." + key[-4:] if len(key) > 12 else "too_short"
+        result["api"] = {"ok": False, "error": "OPENAI_API_KEY not set"}
+        return jsonify(result), 503
+
+    t0 = time.time()
     try:
         from openai import OpenAI
-        client = OpenAI(api_key=key)
+        client = OpenAI(api_key=key, timeout=15.0)
         models = client.models.list()
         names = sorted(m.id for m in models.data if "gpt" in m.id)[:20]
-        return jsonify({"status": "ok", "key_masked": masked, "gpt_models": names})
+        result["api"] = {"ok": True, "ms": int((time.time() - t0) * 1000), "gpt_models": names}
+        return jsonify(result)
     except Exception as exc:
-        return jsonify({
-            "status": "error",
-            "key_masked": masked,
-            "error_type": type(exc).__name__,
-            "detail": str(exc)[:500],
-        }), 502
+        result["api"] = {"ok": False, "ms": int((time.time() - t0) * 1000),
+                         "error_type": type(exc).__name__, "detail": str(exc)[:400]}
+        return jsonify(result), 502
 
 # Экспортируем socketio для использования в gunicorn
 if __name__ == '__main__':

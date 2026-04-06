@@ -1,59 +1,61 @@
-import eventlet
-eventlet.monkey_patch()
-
 # ---------------------------------------------------------------------------
-# DNS-over-HTTPS fallback: если системный DNS не резолвит api.openai.com
-# (бывает на Render), подменяем кеш через DoH от Cloudflare / Google.
+# DNS-over-HTTPS fallback  (MUST run BEFORE eventlet.monkey_patch)
+# Render's system DNS cannot resolve api.openai.com — we pre-resolve via
+# Cloudflare/Google DoH at startup and short-circuit getaddrinfo so that
+# neither the stdlib nor eventlet ever hits the broken resolver for this host.
 # ---------------------------------------------------------------------------
-import socket
-import json
-import logging
-import urllib.request
+import socket as _sock_stdlib
+import json as _json_stdlib
+import logging as _logging_stdlib
+import urllib.request as _urllib_req
 
-_dns_log = logging.getLogger("dns_fallback")
-_original_getaddrinfo = socket.getaddrinfo
+_dns_log = _logging_stdlib.getLogger("dns_fallback")
+_DOH_HOSTS = ("api.openai.com",)
 _doh_cache: dict = {}
+_real_getaddrinfo = _sock_stdlib.getaddrinfo
 
 
-def _resolve_via_doh(hostname: str) -> str | None:
-    """Resolve A-record via Cloudflare DNS-over-HTTPS (uses HTTPS, not port 53)."""
+def _resolve_via_doh(hostname: str):
     for doh_url in [
         f"https://1.1.1.1/dns-query?name={hostname}&type=A",
         f"https://8.8.8.8/resolve?name={hostname}&type=A",
     ]:
         try:
-            req = urllib.request.Request(doh_url, headers={"Accept": "application/dns-json"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                data = json.loads(resp.read())
+            req = _urllib_req.Request(doh_url, headers={"Accept": "application/dns-json"})
+            with _urllib_req.urlopen(req, timeout=5) as resp:
+                data = _json_stdlib.loads(resp.read())
             for ans in data.get("Answer", []):
                 if ans.get("type") == 1:
                     ip = ans["data"]
-                    _dns_log.info("DoH resolved %s -> %s", hostname, ip)
+                    _dns_log.info("DoH resolved %s -> %s via %s", hostname, ip, doh_url[:25])
                     return ip
         except Exception as exc:
-            _dns_log.debug("DoH via %s failed: %s", doh_url[:30], exc)
+            _dns_log.debug("DoH %s failed: %s", doh_url[:25], exc)
     return None
 
 
 def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-    """Try system DNS first; on failure for known hosts, fall back to DoH."""
-    try:
-        return _original_getaddrinfo(host, port, family, type, proto, flags)
-    except socket.gaierror:
-        if host not in ("api.openai.com",):
-            raise
-        cached = _doh_cache.get(host)
-        if not cached:
-            ip = _resolve_via_doh(host)
-            if not ip:
-                raise
-            _doh_cache[host] = ip
-            cached = ip
-        _dns_log.info("Using DoH-resolved IP for %s: %s", host, cached)
-        return _original_getaddrinfo(cached, port, family, type, proto, flags)
+    if host in _doh_cache:
+        return _real_getaddrinfo(_doh_cache[host], port, family, type, proto, flags)
+    return _real_getaddrinfo(host, port, family, type, proto, flags)
 
 
-socket.getaddrinfo = _patched_getaddrinfo
+# Pre-resolve at import time (before eventlet touches socket)
+for _h in _DOH_HOSTS:
+    _ip = _resolve_via_doh(_h)
+    if _ip:
+        _doh_cache[_h] = _ip
+
+# Patch BEFORE eventlet so eventlet captures our version as "original"
+_sock_stdlib.getaddrinfo = _patched_getaddrinfo
+# ---------------------------------------------------------------------------
+
+import eventlet
+eventlet.monkey_patch()
+
+# Re-apply patch AFTER eventlet.monkey_patch() overwrites socket.getaddrinfo
+import socket as _sock_green
+_sock_green.getaddrinfo = _patched_getaddrinfo
 # ---------------------------------------------------------------------------
 
 from flask import Flask, jsonify, send_from_directory

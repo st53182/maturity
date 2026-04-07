@@ -50,6 +50,12 @@
         <p>{{ $t('qa.puzzleTestCaseDesc') }}</p>
         <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
       </div>
+      <div class="puzzle-card" @click="$router.push('/qa/sql')">
+        <span class="puzzle-icon">🗃️</span>
+        <h2>{{ $t('qa.puzzleSqlTitle') }}</h2>
+        <p>{{ $t('qa.puzzleSqlDesc') }}</p>
+        <span class="puzzle-cta">{{ $t('qa.puzzleStart') }} →</span>
+      </div>
     </div>
 
     <!-- Кнопка назад -->

@@ -61,6 +61,7 @@ const routes = [
   {path: '/qa/user-story', name: 'QAUserStoryAssignment', component: () => import('@/views/QAUserStoryAssignment.vue')},
   {path: '/qa/test-plan', name: 'QATestPlanAssignment', component: () => import('@/views/QATestPlanAssignment.vue'), meta: { requiresAuth: true }},
   {path: '/qa/test-case', name: 'QATestCaseAssignment', component: () => import('@/views/QATestCaseAssignment.vue') },
+  {path: '/qa/sql', name: 'QASqlPractice', component: () => import('@/views/QASqlPractice.vue') },
   { path: '/maturity/artdash', name: 'MaturityLinkAdminDashboard', component: () => import('@/views/MaturityLinkAdminDashboard.vue'), meta: { requiresAuth: true, maturityLinkAdmin: true } },
   { path: '/maturity/create', redirect: '/new/maturity' },
   { path: '/maturity/:token/edit', redirect: to => `/new/maturity/${to.params.token}/edit` },

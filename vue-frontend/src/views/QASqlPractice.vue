@@ -23,6 +23,8 @@
               type="button"
               class="sql-lesson-tab"
               :class="{ active: activeLesson === idx, done: isLessonComplete(idx) }"
+              :style="{ '--sql-lesson-hue': String((idx * 23) % 360) }"
+              :aria-current="activeLesson === idx ? 'true' : undefined"
               @click="selectLesson(idx)"
             >
               <span class="sql-lesson-tab-num">{{ idx + 1 }}.</span>
@@ -688,41 +690,75 @@ export default {
 .sql-lesson-tab {
   width: 100%;
   text-align: left;
-  padding: 0.45rem 0.5rem;
-  margin-bottom: 0.25rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: #fff;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.82rem;
-  color: #334155;
+  line-height: 1.35;
+  color: #f8fafc;
   display: flex;
   align-items: flex-start;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  --h: var(--sql-lesson-hue, 250);
+  background: linear-gradient(
+    145deg,
+    hsl(var(--h), 40%, 38%),
+    hsl(calc(var(--h) + 16), 44%, 26%)
+  );
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .sql-lesson-tab-num {
   flex-shrink: 0;
+  font-weight: 700;
+  opacity: 0.95;
 }
 
 .sql-lesson-done {
   margin-left: auto;
-  color: #059669;
+  color: #86efac;
   font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-.sql-lesson-tab:hover {
-  border-color: #c4b5fd;
+.sql-lesson-tab:hover:not(.active) {
+  filter: brightness(1.09);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
+.sql-lesson-tab:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+/* Текущий урок: контрастный «якорь», не зависит от --sql-lesson-hue */
 .sql-lesson-tab.active {
-  background: #ede9fe;
-  border-color: #8b5cf6;
-  font-weight: 600;
+  color: #1c1917;
+  border-color: rgba(180, 83, 9, 0.55);
+  font-weight: 800;
+  background: linear-gradient(145deg, #fde68a, #f59e0b);
+  box-shadow:
+    0 0 0 3px rgba(251, 191, 36, 0.65),
+    0 10px 24px rgba(245, 158, 11, 0.35);
+  transform: translateX(5px);
+}
+
+.sql-lesson-tab.active .sql-lesson-done {
+  color: #047857;
+  text-shadow: none;
 }
 
 .sql-lesson-tab.done:not(.active) {
-  opacity: 0.92;
+  box-shadow:
+    inset 3px 0 0 0 #34d399,
+    0 2px 8px rgba(15, 23, 42, 0.2);
 }
 
 .sql-lesson-body h3 {

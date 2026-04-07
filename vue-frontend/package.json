@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "verify-sql-tasks": "node scripts/verify-sql-tasks.mjs",
     "lint": "vue-cli-service lint",
     "postinstall": "node scripts/copy-sql-wasm.js"
   },

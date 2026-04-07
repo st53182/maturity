@@ -572,7 +572,7 @@ export const SQL_LESSONS = [
     id: 'l05',
     title: 'ORDER BY и LIMIT',
     theory:
-      'ORDER BY сортирует строки (ASC по умолчанию, DESC — по убыванию). LIMIT n ограничивает число строк. Сначала ORDER BY, потом LIMIT. Таблица в каждом задании названа явно. В этом уроке сортировка и лимит — часть условия. В других уроках ORDER BY не обязателен, если в подсказке не сказано иное; там, где в подсказке указаны ORDER BY и LIMIT, их нужно повторить в запросе, иначе LIMIT без сортировки даст произвольный набор строк.',
+      'ORDER BY сортирует строки (ASC по умолчанию, DESC — по убыванию). LIMIT n ограничивает число строк. Сначала ORDER BY, потом LIMIT. Таблица в каждом задании названа явно. Для «топа» или «первых N» в условии всегда нужны и сортировка, и LIMIT — иначе СУБД вернёт произвольное подмножество строк.',
     tasks: [
       {
         id: 'l05-t1',
@@ -594,7 +594,7 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l05-t4',
-        hint: 'Таблица order_items: две позиции с наибольшим line_total_cents.',
+        hint: 'Таблица order_items: две позиции с наибольшим line_total_cents (сортировка по line_total_cents по убыванию, LIMIT 2).',
         exampleSql:
           'SELECT id, order_id, line_total_cents FROM order_items ORDER BY line_total_cents DESC LIMIT 2;',
         checkSql:
@@ -610,17 +610,13 @@ export const SQL_LESSONS = [
     tasks: [
       {
         id: 'l06-t1',
-        hint: 'Таблицы orders и customers: для каждого заказа — id и order_date из orders, full_name из customers (JOIN по customer_id). Для проверки: ORDER BY o.id и LIMIT 8 — иначе LIMIT без сортировки выберет произвольные строки.',
+        hint: 'Таблицы orders и customers: для каждого заказа — id и order_date из orders, full_name из customers (JOIN по customer_id). Выведите все такие строки.',
         exampleSql: `SELECT o.id, o.order_date, c.full_name
 FROM orders o
-JOIN customers c ON c.id = o.customer_id
-ORDER BY o.id
-LIMIT 8;`,
+JOIN customers c ON c.id = o.customer_id;`,
         checkSql: `SELECT o.id, o.order_date, c.full_name
 FROM orders o
-JOIN customers c ON c.id = o.customer_id
-ORDER BY o.id
-LIMIT 8;`,
+JOIN customers c ON c.id = o.customer_id;`,
       },
       {
         id: 'l06-t2',
@@ -656,17 +652,13 @@ WHERE o.id = 5;`,
     tasks: [
       {
         id: 'l07-t1',
-        hint: 'Таблицы order_items и products: name и quantity (первые 10 строк order_items по oi.id). Для проверки: ORDER BY oi.id и LIMIT 10.',
+        hint: 'Таблицы order_items и products: для каждой позиции заказа — name товара и quantity (JOIN по product_id). Все строки.',
         exampleSql: `SELECT p.name, oi.quantity
 FROM order_items oi
-JOIN products p ON p.id = oi.product_id
-ORDER BY oi.id
-LIMIT 10;`,
+JOIN products p ON p.id = oi.product_id;`,
         checkSql: `SELECT p.name, oi.quantity
 FROM order_items oi
-JOIN products p ON p.id = oi.product_id
-ORDER BY oi.id
-LIMIT 10;`,
+JOIN products p ON p.id = oi.product_id;`,
       },
       {
         id: 'l07-t2',
@@ -737,19 +729,15 @@ WHERE o.id = 4;`,
       },
       {
         id: 'l08-t3',
-        hint: 'Таблицы order_items, orders, products: order_date, sku и quantity (первые 6 строк по order_items.id). Для проверки: ORDER BY oi.id и LIMIT 6.',
+        hint: 'Таблицы order_items, orders, products: для каждой позиции — дата заказа (order_date), sku товара и quantity (цепочка JOIN). Все строки.',
         exampleSql: `SELECT o.order_date, p.sku, oi.quantity
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
-JOIN products p ON p.id = oi.product_id
-ORDER BY oi.id
-LIMIT 6;`,
+JOIN products p ON p.id = oi.product_id;`,
         checkSql: `SELECT o.order_date, p.sku, oi.quantity
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
-JOIN products p ON p.id = oi.product_id
-ORDER BY oi.id
-LIMIT 6;`,
+JOIN products p ON p.id = oi.product_id;`,
       },
       {
         id: 'l08-t4',
@@ -793,9 +781,9 @@ WHERE oi.id = 10;`,
       },
       {
         id: 'l09-t4',
-        hint: 'Таблица order_items: сколько позиций на каждый order_id (первые 8 групп по order_id). Для проверки: ORDER BY order_id и LIMIT 8.',
-        exampleSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id ORDER BY order_id LIMIT 8;`,
-        checkSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id ORDER BY order_id LIMIT 8;`,
+        hint: 'Таблица order_items: сколько позиций приходится на каждый order_id (GROUP BY order_id, COUNT). Все группы.',
+        exampleSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id;`,
+        checkSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id;`,
       },
     ],
   },
@@ -831,19 +819,15 @@ HAVING COUNT(*) > 2;`,
       },
       {
         id: 'l10-t3',
-        hint: 'Таблица order_items: order_id, у которых больше одной позиции (первые 10 по order_id). Для проверки: ORDER BY order_id и LIMIT 10.',
+        hint: 'Таблица order_items: только те order_id, у которых больше одной строки-позиции, и число позиций в группе (GROUP BY, HAVING). Все такие группы.',
         exampleSql: `SELECT order_id, COUNT(*) AS cnt
 FROM order_items
 GROUP BY order_id
-HAVING COUNT(*) > 1
-ORDER BY order_id
-LIMIT 10;`,
+HAVING COUNT(*) > 1;`,
         checkSql: `SELECT order_id, COUNT(*) AS cnt
 FROM order_items
 GROUP BY order_id
-HAVING COUNT(*) > 1
-ORDER BY order_id
-LIMIT 10;`,
+HAVING COUNT(*) > 1;`,
       },
     ],
   },
@@ -949,15 +933,11 @@ WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin');`,
       },
       {
         id: 'l14-t3',
-        hint: 'Таблицы order_items и products: id и quantity позиций, где product_id IN (id товаров с category = «Дом»). Для проверки: ORDER BY oi.id и LIMIT 12.',
+        hint: 'Таблицы order_items и products: id и quantity всех позиций, у которых product_id входит в подзапрос id товаров с category = «Дом».',
         exampleSql: `SELECT oi.id, oi.quantity FROM order_items oi
-WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом')
-ORDER BY oi.id
-LIMIT 12;`,
+WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом');`,
         checkSql: `SELECT oi.id, oi.quantity FROM order_items oi
-WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом')
-ORDER BY oi.id
-LIMIT 12;`,
+WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом');`,
       },
     ],
   },
@@ -969,21 +949,17 @@ LIMIT 12;`,
     tasks: [
       {
         id: 'l15-t1',
-        hint: 'Таблица order_items: сумма line_total_cents по каждому order_id (первые 10 групп по order_id). Для проверки: ORDER BY order_id и LIMIT 10.',
+        hint: 'Таблица order_items: сумма line_total_cents по каждому order_id (GROUP BY). Все группы.',
         exampleSql: `SELECT order_id, SUM(line_total_cents) AS sum_lines
 FROM order_items
-GROUP BY order_id
-ORDER BY order_id
-LIMIT 10;`,
+GROUP BY order_id;`,
         checkSql: `SELECT order_id, SUM(line_total_cents) AS sum_lines
 FROM order_items
-GROUP BY order_id
-ORDER BY order_id
-LIMIT 10;`,
+GROUP BY order_id;`,
       },
       {
         id: 'l15-t2',
-        hint: 'Таблицы orders и customers: full_name и сумма total_cents по всем заказам этого покупателя (JOIN, GROUP BY, топ-8 по сумме). Для проверки: ORDER BY spent DESC и LIMIT 8.',
+        hint: 'Таблицы orders и customers: для каждого покупателя — full_name и сумма total_cents по всем его заказам (JOIN, GROUP BY). Нужны ровно 8 покупателей с наибольшей суммой: отсортируйте по убыванию суммы (например ORDER BY spent DESC) и LIMIT 8.',
         exampleSql: `SELECT c.full_name, SUM(o.total_cents) AS spent
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -1037,7 +1013,7 @@ WHERE o.status = 'shipped';`,
       },
       {
         id: 'l16-t2',
-        hint: 'Таблицы order_items и products: name и SUM(line_total_cents) как выручка — топ-5 товаров. Для проверки: ORDER BY revenue DESC и LIMIT 5.',
+        hint: 'Таблицы order_items и products: для каждого товара — name и сумма line_total_cents как выручка (например алиас revenue, GROUP BY). Нужны 5 товаров с наибольшей выручкой: ORDER BY revenue DESC и LIMIT 5.',
         exampleSql: `SELECT p.name, SUM(oi.line_total_cents) AS revenue
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id

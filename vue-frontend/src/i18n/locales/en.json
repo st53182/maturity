@@ -898,7 +898,7 @@
     "sqlNoSelectResult": "Executed. No row set to display (e.g. only INSERT/UPDATE or empty SELECT).",
     "sqlEmptyQuery": "Enter a SQL query.",
     "sqlExternalBolt": "Extra course in English: SQLBolt",
-    "sqlTasksHint": "Your query is checked automatically after a typing pause (or use Run now). Grading is by result: same multiset of rows and cell values as the reference (row order and column names are ignored). You can list only the needed columns or use SELECT * if the result includes every required column with the same names. ORDER BY is not required unless the task hint says otherwise; if the hint mentions LIMIT, add the ORDER BY and LIMIT spelled out there so your row set matches the checker. After a correct answer your SQL stays in the editor — pick the next task by number on the left.",
+    "sqlTasksHint": "Your query is checked automatically after a typing pause (or use Run now). Grading is by result: same multiset of rows and cell values as the reference (row order and column names are ignored). You can list columns or use SELECT * if the result includes every required column by name. Use ORDER BY and LIMIT only when the task text explicitly asks for ordering, a “top N”, or a fixed row count. After a correct answer your SQL stays in the editor — pick the next task by number on the left.",
     "sqlTaskProgress": "Task {current} of {total}",
     "sqlCorrect": "Correct! Task completed.",
     "sqlCorrectCongrats": "Congratulations! You entered the correct query.",

@@ -70,6 +70,7 @@ _sock_green.create_connection = _patched_create_connection
 # ---------------------------------------------------------------------------
 
 from flask import Flask, jsonify, send_from_directory
+from werkzeug.utils import safe_join
 from flask_jwt_extended import JWTManager
 from database import db
 from survey import bp_survey
@@ -227,13 +228,18 @@ def handle_ai_limit_exceeded(e):
     return jsonify({"error": e.message}), 429
 
 
-# 🎯 Отдача Vue SPA
+# 🎯 Отдача Vue SPA (static_folder — абсолютный путь от корня приложения; не зависит от CWD на Render)
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):
-    if path != "" and os.path.exists(os.path.join("static", path)):
-        return send_from_directory("static", path)
-    return send_from_directory("static", "index.html")
+    root = app.static_folder
+    if not root:
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    if path:
+        fs_path = safe_join(root, path)
+        if fs_path is not None and os.path.isfile(fs_path):
+            return send_from_directory(root, path)
+    return send_from_directory(root, "index.html")
 
 @app.route("/api")
 def api_root():

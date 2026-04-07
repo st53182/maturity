@@ -216,6 +216,82 @@ ${oiVals};
 `.trim();
 }
 
+/** Сравнимое представление ячейки: числа/строки с числом приводятся к одному виду. */
+export function normalizeCellForCompare(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v)) return String(v);
+    if (Number.isInteger(v)) return String(v);
+    const r = Math.round(v);
+    if (Math.abs(v - r) < 1e-9) return String(r);
+    return String(v);
+  }
+  if (typeof v === 'boolean') return v ? '1' : '0';
+  const s = String(v).trim();
+  if (s === '') return '';
+  if (/^-?\d+$/.test(s)) return s;
+  if (/^-?\d+\.\d+$/.test(s)) {
+    const num = Number(s);
+    if (Number.isFinite(num)) {
+      const r = Math.round(num);
+      if (Math.abs(num - r) < 1e-9) return String(r);
+    }
+  }
+  return s;
+}
+
+/** Макс. число колонок для перебора перестановок (n!); дальше только сравнение по именам колонок. */
+const GRIDS_MAX_PERMUTE_COLS = 8;
+
+/** Все перестановки индексов [0..n-1] (n ≤ 8). */
+function forEachColumnPermutation(n, fn) {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  function dfs(start) {
+    if (start === n) {
+      fn([...arr]);
+      return;
+    }
+    for (let i = start; i < n; i++) {
+      const tmp = arr[start];
+      arr[start] = arr[i];
+      arr[i] = tmp;
+      dfs(start + 1);
+      const t2 = arr[start];
+      arr[start] = arr[i];
+      arr[i] = t2;
+    }
+  }
+  dfs(0);
+}
+
+/**
+ * Тот же набор строк, что у эталона, если переупорядочить колонки ответа пользователя.
+ * Нужен, когда совпадают данные, но другие имена/порядок колонок (разный SQL).
+ */
+function gridsMatchByColumnPermutation(userCols, userRows, refCols, refRows) {
+  const n = userCols && userCols.length;
+  if (!n || n !== (refCols && refCols.length)) return false;
+  const ur = userRows || [];
+  const rr = refRows || [];
+  if (ur.length !== rr.length) return false;
+  if (n > GRIDS_MAX_PERMUTE_COLS) return false;
+
+  const refSigs = rr
+    .map((row) => refCols.map((_, i) => normalizeCellForCompare(row[i])).join('\u001f'))
+    .sort();
+
+  let matched = false;
+  forEachColumnPermutation(n, (perm) => {
+    if (matched) return;
+    const userSigs = ur
+      .map((row) => perm.map((ui) => normalizeCellForCompare(row[ui])).join('\u001f'))
+      .sort();
+    if (userSigs.length !== refSigs.length) return;
+    matched = userSigs.every((s, idx) => s === refSigs[idx]);
+  });
+  return matched;
+}
+
 /** Последний результат SELECT из exec (многострочный SQL). */
 export function getLastSelectResult(db, sql) {
   const results = db.exec(sql);
@@ -246,7 +322,7 @@ export function normalizeGrid(columns, rows) {
     .sort((a, b) => a.key.localeCompare(b.key));
   const colKeys = order.map((o) => o.key);
   const rowSigs = (rows || []).map((row) =>
-    order.map((o) => (row[o.i] == null ? '' : String(row[o.i]))).join('\u001f'),
+    order.map((o) => normalizeCellForCompare(row[o.i])).join('\u001f'),
   );
   rowSigs.sort();
   return { colKeys, rowSigs };
@@ -264,6 +340,15 @@ export function gridsMatch(columnsA, rowsA, columnsB, rowsB) {
     if (a.rowSigs[i] !== b.rowSigs[i]) return false;
   }
   return true;
+}
+
+/**
+ * Сравнение результатов SELECT: сначала по именам колонок (порядок строк/колонок не важен),
+ * иначе та же таблица значений при какой-то перестановке колонок ответа пользователя.
+ */
+export function gridsMatchRelaxed(columnsUser, rowsUser, columnsRef, rowsRef) {
+  if (gridsMatch(columnsUser, rowsUser, columnsRef, rowsRef)) return true;
+  return gridsMatchByColumnPermutation(columnsUser, rowsUser, columnsRef, rowsRef);
 }
 
 /**
@@ -313,7 +398,7 @@ export function validateTaskWithCtor(SQL, seedUint8Array, userSql, checkSql) {
     return { ok: false, userError: 'internal: bad check sql' };
   }
 
-  const ok = gridsMatch(
+  const ok = gridsMatchRelaxed(
     userResult.columns,
     userResult.rows,
     refResult.columns,
@@ -325,7 +410,7 @@ export function validateTaskWithCtor(SQL, seedUint8Array, userSql, checkSql) {
   return { ok: true };
 }
 
-/** Урок с подзаданиями; check.sql — эталонный SELECT (детерминированный ORDER BY). */
+/** Урок с подзаданиями; checkSql — эталон для набора строк/значений (другой SQL с тем же результатом тоже засчитывается). */
 export const SQL_LESSONS = [
   {
     id: 'l01',

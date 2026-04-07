@@ -102,6 +102,21 @@
 
         <section class="sql-editor-block" aria-label="Редактор SQL">
           <h2>{{ $t('qa.sqlEditorTitle') }}</h2>
+          <div
+            v-if="currentLesson && currentTask"
+            class="sql-editor-task-above"
+          >
+            <p class="sql-editor-task-progress">
+              {{ $t('qa.sqlTaskProgress', { current: activeTaskIndex + 1, total: currentLesson.tasks.length }) }}
+            </p>
+            <p class="sql-editor-task-kicker">{{ $t('qa.sqlHintLabel') }}</p>
+            <p
+              :id="`sql-task-prompt-${currentTask.id}`"
+              class="sql-editor-task-body"
+            >
+              {{ currentTask.hint }}
+            </p>
+          </div>
           <p class="sql-muted">{{ $t('qa.sqlEditorHint') }}</p>
           <p class="sql-muted sql-auto-hint">{{ $t('qa.sqlAutoRunHint') }}</p>
           <textarea
@@ -110,6 +125,7 @@
             spellcheck="false"
             rows="10"
             :aria-label="$t('qa.sqlEditorTitle')"
+            :aria-describedby="currentTask ? `sql-task-prompt-${currentTask.id}` : undefined"
           />
           <div class="sql-actions">
             <button type="button" class="sql-btn-secondary sql-btn-run-now" :disabled="!db" @click="runSqlNow">
@@ -949,6 +965,38 @@ export default {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #fafafa;
+}
+
+.sql-editor-task-above {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #c4b5fd;
+  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+.sql-editor-task-above .sql-editor-task-progress {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6d28d9;
+}
+
+.sql-editor-task-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7c3aed;
+}
+
+.sql-editor-task-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #1e1b4b;
+  font-weight: 500;
 }
 
 .sql-textarea {

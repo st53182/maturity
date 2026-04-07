@@ -66,6 +66,19 @@
             <button type="button" class="sql-btn-secondary sql-use-example" @click="useExample">
               {{ $t('qa.sqlInsertExample') }}
             </button>
+            <template v-if="currentTask.checkSql">
+              <button
+                type="button"
+                class="sql-btn-secondary sql-show-correct"
+                @click="showCorrectSql = !showCorrectSql"
+              >
+                {{ showCorrectSql ? $t('qa.sqlHideCorrectAnswer') : $t('qa.sqlShowCorrectAnswer') }}
+              </button>
+              <p v-if="showCorrectSql" class="sql-correct-explainer">
+                {{ $t('qa.sqlCorrectAnswerExplainer') }}
+              </p>
+              <pre v-if="showCorrectSql" class="sql-example sql-example--correct">{{ correctSqlTrimmed }}</pre>
+            </template>
           </template>
         </div>
       </aside>
@@ -118,6 +131,19 @@
             >
               {{ currentTask.hint }}
             </p>
+            <template v-if="currentTask.checkSql">
+              <button
+                type="button"
+                class="sql-btn-secondary sql-show-correct sql-show-correct--main"
+                @click="showCorrectSql = !showCorrectSql"
+              >
+                {{ showCorrectSql ? $t('qa.sqlHideCorrectAnswer') : $t('qa.sqlShowCorrectAnswer') }}
+              </button>
+              <p v-if="showCorrectSql" class="sql-correct-explainer">
+                {{ $t('qa.sqlCorrectAnswerExplainer') }}
+              </p>
+              <pre v-if="showCorrectSql" class="sql-example sql-example--correct">{{ correctSqlTrimmed }}</pre>
+            </template>
           </div>
           <p class="sql-muted">{{ $t('qa.sqlEditorHint') }}</p>
           <p class="sql-muted sql-auto-hint">{{ $t('qa.sqlAutoRunHint') }}</p>
@@ -235,6 +261,7 @@ export default {
       activeTaskIndex: 0,
       completedTasks: {},
       showHintSql: false,
+      showCorrectSql: false,
       editorSql: '',
       previewCustomers: { columns: [], rows: [] },
       previewProducts: { columns: [], rows: [] },
@@ -276,14 +303,20 @@ export default {
     isLastLesson() {
       return this.activeLesson >= this.lessons.length - 1;
     },
+    correctSqlTrimmed() {
+      const sql = this.currentTask && this.currentTask.checkSql;
+      return sql ? String(sql).trim() : '';
+    },
   },
   watch: {
     activeLesson() {
       this.showHintSql = false;
+      this.showCorrectSql = false;
       this.syncEditorForTask();
     },
     activeTaskIndex() {
       this.showHintSql = false;
+      this.showCorrectSql = false;
       this.syncEditorForTask();
     },
     editorSql() {
@@ -904,6 +937,27 @@ export default {
   margin-top: 0.5rem;
 }
 
+.sql-show-correct {
+  margin-top: 0.5rem;
+}
+
+.sql-show-correct--main {
+  margin-top: 0.65rem;
+}
+
+.sql-correct-explainer {
+  margin: 0.45rem 0 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.sql-example--correct {
+  margin-top: 0.35rem;
+  border: 1px solid #6ee7b7;
+  box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.12);
+}
+
 .sql-main h2 {
   margin: 0 0 0.35rem;
   font-size: 1.15rem;
@@ -1033,6 +1087,11 @@ export default {
   line-height: 1.5;
   color: #1e1b4b;
   font-weight: 500;
+}
+
+.sql-editor-task-above .sql-example--correct {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
 }
 
 .sql-textarea {

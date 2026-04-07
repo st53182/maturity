@@ -416,31 +416,31 @@ export const SQL_LESSONS = [
     id: 'l01',
     title: 'Таблицы и первый SELECT',
     theory:
-      'Данные интернет-магазина: покупатели (customers), товары (products), заказы (orders) и позиции заказа (order_items). SELECT читает строки; * — все колонки. Запросы выполняются только в браузере.',
+      'Данные интернет-магазина: покупатели (customers), товары (products), заказы (orders) и позиции заказа (order_items). SELECT читает строки; * — все колонки. Запросы выполняются только в браузере. Порядок строк в ответе для проверки не важен, если в задании не сказано иное.',
     tasks: [
       {
         id: 'l01-t1',
         hint: 'Таблица customers: покажите все колонки всех покупателей.',
         exampleSql: 'SELECT * FROM customers;',
-        checkSql: 'SELECT * FROM customers ORDER BY id;',
+        checkSql: 'SELECT * FROM customers;',
       },
       {
         id: 'l01-t2',
         hint: 'Таблица products: покажите все колонки всех товаров.',
         exampleSql: 'SELECT * FROM products;',
-        checkSql: 'SELECT * FROM products ORDER BY id;',
+        checkSql: 'SELECT * FROM products;',
       },
       {
         id: 'l01-t3',
         hint: 'Таблица orders: покажите все колонки всех заказов.',
         exampleSql: 'SELECT * FROM orders;',
-        checkSql: 'SELECT * FROM orders ORDER BY id;',
+        checkSql: 'SELECT * FROM orders;',
       },
       {
         id: 'l01-t4',
         hint: 'Таблица order_items: покажите все колонки всех позиций заказов.',
         exampleSql: 'SELECT * FROM order_items;',
-        checkSql: 'SELECT * FROM order_items ORDER BY id;',
+        checkSql: 'SELECT * FROM order_items;',
       },
     ],
   },
@@ -454,25 +454,25 @@ export const SQL_LESSONS = [
         id: 'l02-t1',
         hint: 'Таблица customers: выведите только full_name, email и city.',
         exampleSql: 'SELECT full_name, email, city FROM customers;',
-        checkSql: 'SELECT full_name, email, city FROM customers ORDER BY full_name;',
+        checkSql: 'SELECT full_name, email, city FROM customers;',
       },
       {
         id: 'l02-t2',
         hint: 'Таблица products: выведите sku, name и price_cents.',
         exampleSql: 'SELECT sku, name, price_cents FROM products;',
-        checkSql: 'SELECT sku, name, price_cents FROM products ORDER BY sku;',
+        checkSql: 'SELECT sku, name, price_cents FROM products;',
       },
       {
         id: 'l02-t3',
         hint: 'Таблица orders: выведите id, order_date и status.',
         exampleSql: 'SELECT id, order_date, status FROM orders;',
-        checkSql: 'SELECT id, order_date, status FROM orders ORDER BY id;',
+        checkSql: 'SELECT id, order_date, status FROM orders;',
       },
       {
         id: 'l02-t4',
         hint: 'Таблица order_items: выведите order_id, product_id и quantity.',
         exampleSql: 'SELECT order_id, product_id, quantity FROM order_items;',
-        checkSql: 'SELECT order_id, product_id, quantity FROM order_items ORDER BY id;',
+        checkSql: 'SELECT order_id, product_id, quantity FROM order_items;',
       },
     ],
   },
@@ -487,26 +487,26 @@ export const SQL_LESSONS = [
         hint: 'Таблица products: товары категории «Электроника».',
         exampleSql: "SELECT * FROM products WHERE category = 'Электроника';",
         checkSql:
-          "SELECT * FROM products WHERE category = 'Электроника' ORDER BY id;",
+          "SELECT * FROM products WHERE category = 'Электроника';",
       },
       {
         id: 'l03-t2',
         hint: 'Таблица orders: заказы со статусом paid.',
         exampleSql: "SELECT * FROM orders WHERE status = 'paid';",
-        checkSql: "SELECT * FROM orders WHERE status = 'paid' ORDER BY id;",
+        checkSql: "SELECT * FROM orders WHERE status = 'paid';",
       },
       {
         id: 'l03-t3',
         hint: 'Таблица customers: покупатели из Берлина (поле city = Berlin).',
         exampleSql: "SELECT full_name, email FROM customers WHERE city = 'Berlin';",
         checkSql:
-          "SELECT full_name, email FROM customers WHERE city = 'Berlin' ORDER BY full_name;",
+          "SELECT full_name, email FROM customers WHERE city = 'Berlin';",
       },
       {
         id: 'l03-t4',
         hint: 'Таблица order_items: позиции с quantity не меньше 3.',
         exampleSql: 'SELECT * FROM order_items WHERE quantity >= 3;',
-        checkSql: 'SELECT * FROM order_items WHERE quantity >= 3 ORDER BY id;',
+        checkSql: 'SELECT * FROM order_items WHERE quantity >= 3;',
       },
     ],
   },
@@ -522,7 +522,7 @@ export const SQL_LESSONS = [
         exampleSql:
           "SELECT name, category FROM products WHERE category IN ('Книги', 'Спорт');",
         checkSql:
-          "SELECT name, category FROM products WHERE category IN ('Книги', 'Спорт') ORDER BY category, name;",
+          "SELECT name, category FROM products WHERE category IN ('Книги', 'Спорт');",
       },
       {
         id: 'l04-t2',
@@ -530,7 +530,7 @@ export const SQL_LESSONS = [
         exampleSql:
           "SELECT id, status FROM orders WHERE status = 'pending' OR status = 'shipped';",
         checkSql:
-          "SELECT id, status FROM orders WHERE status IN ('pending', 'shipped') ORDER BY id;",
+          "SELECT id, status FROM orders WHERE status IN ('pending', 'shipped');",
       },
       {
         id: 'l04-t3',
@@ -538,7 +538,7 @@ export const SQL_LESSONS = [
         exampleSql:
           "SELECT name, price_cents FROM products WHERE category = 'Электроника' AND price_cents < 200000;",
         checkSql:
-          "SELECT name, price_cents FROM products WHERE category = 'Электроника' AND price_cents < 200000 ORDER BY price_cents;",
+          "SELECT name, price_cents FROM products WHERE category = 'Электроника' AND price_cents < 200000;",
       },
       {
         id: 'l04-t4',
@@ -546,7 +546,7 @@ export const SQL_LESSONS = [
         exampleSql:
           "SELECT full_name, city FROM customers WHERE city = 'Prague' OR city = 'Lisbon';",
         checkSql:
-          "SELECT full_name, city FROM customers WHERE city IN ('Prague', 'Lisbon') ORDER BY city, full_name;",
+          "SELECT full_name, city FROM customers WHERE city IN ('Prague', 'Lisbon');",
       },
     ],
   },
@@ -554,7 +554,7 @@ export const SQL_LESSONS = [
     id: 'l05',
     title: 'ORDER BY и LIMIT',
     theory:
-      'ORDER BY сортирует строки (ASC по умолчанию, DESC — по убыванию). LIMIT n ограничивает число строк. Сначала ORDER BY, потом LIMIT. Таблица в каждом задании названа явно.',
+      'ORDER BY сортирует строки (ASC по умолчанию, DESC — по убыванию). LIMIT n ограничивает число строк. Сначала ORDER BY, потом LIMIT. Таблица в каждом задании названа явно. В этом уроке сортировка и лимит — часть условия. В других уроках ORDER BY не обязателен, если в подсказке не сказано иное; там, где в подсказке указаны ORDER BY и LIMIT, их нужно повторить в запросе, иначе LIMIT без сортировки даст произвольный набор строк.',
     tasks: [
       {
         id: 'l05-t1',
@@ -592,7 +592,7 @@ export const SQL_LESSONS = [
     tasks: [
       {
         id: 'l06-t1',
-        hint: 'Таблицы orders и customers: для каждого заказа — id и order_date из orders, full_name из customers (JOIN по customer_id).',
+        hint: 'Таблицы orders и customers: для каждого заказа — id и order_date из orders, full_name из customers (JOIN по customer_id). Для проверки: ORDER BY o.id и LIMIT 8 — иначе LIMIT без сортировки выберет произвольные строки.',
         exampleSql: `SELECT o.id, o.order_date, c.full_name
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -607,8 +607,8 @@ LIMIT 8;`,
       {
         id: 'l06-t2',
         hint: 'Таблица orders: заказы покупателя customer_id = 1 — order_date и total_cents.',
-        exampleSql: `SELECT order_date, total_cents FROM orders WHERE customer_id = 1 ORDER BY order_date;`,
-        checkSql: `SELECT order_date, total_cents FROM orders WHERE customer_id = 1 ORDER BY order_date;`,
+        exampleSql: `SELECT order_date, total_cents FROM orders WHERE customer_id = 1;`,
+        checkSql: `SELECT order_date, total_cents FROM orders WHERE customer_id = 1;`,
       },
       {
         id: 'l06-t3',
@@ -638,7 +638,7 @@ WHERE o.id = 5;`,
     tasks: [
       {
         id: 'l07-t1',
-        hint: 'Таблицы order_items и products: name и quantity (первые 10 строк order_items по oi.id).',
+        hint: 'Таблицы order_items и products: name и quantity (первые 10 строк order_items по oi.id). Для проверки: ORDER BY oi.id и LIMIT 10.',
         exampleSql: `SELECT p.name, oi.quantity
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
@@ -656,13 +656,11 @@ LIMIT 10;`,
         exampleSql: `SELECT p.sku, oi.line_total_cents
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
-WHERE oi.order_id = 3
-ORDER BY oi.id;`,
+WHERE oi.order_id = 3;`,
         checkSql: `SELECT p.sku, oi.line_total_cents
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
-WHERE oi.order_id = 3
-ORDER BY oi.id;`,
+WHERE oi.order_id = 3;`,
       },
       {
         id: 'l07-t3',
@@ -680,8 +678,8 @@ WHERE oi.id = 7;`,
         id: 'l07-t4',
         hint: 'Таблица order_items: все позиции с product_id = 2 — order_id и quantity.',
         exampleSql:
-          'SELECT order_id, quantity FROM order_items WHERE product_id = 2 ORDER BY id;',
-        checkSql: 'SELECT order_id, quantity FROM order_items WHERE product_id = 2 ORDER BY id;',
+          'SELECT order_id, quantity FROM order_items WHERE product_id = 2;',
+        checkSql: 'SELECT order_id, quantity FROM order_items WHERE product_id = 2;',
       },
     ],
   },
@@ -699,15 +697,13 @@ FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
 JOIN customers c ON c.id = o.customer_id
 JOIN products p ON p.id = oi.product_id
-WHERE oi.order_id = 1
-ORDER BY p.name;`,
+WHERE oi.order_id = 1;`,
         checkSql: `SELECT c.full_name, p.name
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
 JOIN customers c ON c.id = o.customer_id
 JOIN products p ON p.id = oi.product_id
-WHERE oi.order_id = 1
-ORDER BY p.name;`,
+WHERE oi.order_id = 1;`,
       },
       {
         id: 'l08-t2',
@@ -723,7 +719,7 @@ WHERE o.id = 4;`,
       },
       {
         id: 'l08-t3',
-        hint: 'Таблицы order_items, orders, products: order_date, sku и quantity (первые 6 строк по order_items.id).',
+        hint: 'Таблицы order_items, orders, products: order_date, sku и quantity (первые 6 строк по order_items.id). Для проверки: ORDER BY oi.id и LIMIT 6.',
         exampleSql: `SELECT o.order_date, p.sku, oi.quantity
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
@@ -762,24 +758,24 @@ WHERE oi.id = 10;`,
       {
         id: 'l09-t1',
         hint: 'Таблица products: сколько товаров в каждой category.',
-        exampleSql: `SELECT category, COUNT(*) AS cnt FROM products GROUP BY category ORDER BY category;`,
-        checkSql: `SELECT category, COUNT(*) AS cnt FROM products GROUP BY category ORDER BY category;`,
+        exampleSql: `SELECT category, COUNT(*) AS cnt FROM products GROUP BY category;`,
+        checkSql: `SELECT category, COUNT(*) AS cnt FROM products GROUP BY category;`,
       },
       {
         id: 'l09-t2',
         hint: 'Таблица orders: сколько заказов у каждого status.',
-        exampleSql: `SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status ORDER BY status;`,
-        checkSql: `SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status ORDER BY status;`,
+        exampleSql: `SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status;`,
+        checkSql: `SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status;`,
       },
       {
         id: 'l09-t3',
         hint: 'Таблица customers: сколько покупателей в каждом city.',
-        exampleSql: `SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city ORDER BY city;`,
-        checkSql: `SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city ORDER BY city;`,
+        exampleSql: `SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city;`,
+        checkSql: `SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city;`,
       },
       {
         id: 'l09-t4',
-        hint: 'Таблица order_items: сколько позиций на каждый order_id (первые 8 групп по order_id).',
+        hint: 'Таблица order_items: сколько позиций на каждый order_id (первые 8 групп по order_id). Для проверки: ORDER BY order_id и LIMIT 8.',
         exampleSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id ORDER BY order_id LIMIT 8;`,
         checkSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id ORDER BY order_id LIMIT 8;`,
       },
@@ -797,13 +793,11 @@ WHERE oi.id = 10;`,
         exampleSql: `SELECT city, COUNT(*) AS cnt
 FROM customers
 GROUP BY city
-HAVING COUNT(*) > 1
-ORDER BY city;`,
+HAVING COUNT(*) > 1;`,
         checkSql: `SELECT city, COUNT(*) AS cnt
 FROM customers
 GROUP BY city
-HAVING COUNT(*) > 1
-ORDER BY city;`,
+HAVING COUNT(*) > 1;`,
       },
       {
         id: 'l10-t2',
@@ -811,17 +805,15 @@ ORDER BY city;`,
         exampleSql: `SELECT category, COUNT(*) AS cnt
 FROM products
 GROUP BY category
-HAVING COUNT(*) > 2
-ORDER BY category;`,
+HAVING COUNT(*) > 2;`,
         checkSql: `SELECT category, COUNT(*) AS cnt
 FROM products
 GROUP BY category
-HAVING COUNT(*) > 2
-ORDER BY category;`,
+HAVING COUNT(*) > 2;`,
       },
       {
         id: 'l10-t3',
-        hint: 'Таблица order_items: order_id, у которых больше одной позиции (первые 10 по order_id).',
+        hint: 'Таблица order_items: order_id, у которых больше одной позиции (первые 10 по order_id). Для проверки: ORDER BY order_id и LIMIT 10.',
         exampleSql: `SELECT order_id, COUNT(*) AS cnt
 FROM order_items
 GROUP BY order_id
@@ -845,21 +837,21 @@ LIMIT 10;`,
     tasks: [
       {
         id: 'l11-t1',
-        hint: 'Таблица customers: уникальные city (отсортированы).',
-        exampleSql: 'SELECT DISTINCT city FROM customers ORDER BY city;',
-        checkSql: 'SELECT DISTINCT city FROM customers ORDER BY city;',
+        hint: 'Таблица customers: уникальные city; порядок строк не важен.',
+        exampleSql: 'SELECT DISTINCT city FROM customers;',
+        checkSql: 'SELECT DISTINCT city FROM customers;',
       },
       {
         id: 'l11-t2',
-        hint: 'Таблица orders: уникальные status.',
-        exampleSql: 'SELECT DISTINCT status FROM orders ORDER BY status;',
-        checkSql: 'SELECT DISTINCT status FROM orders ORDER BY status;',
+        hint: 'Таблица orders: уникальные status; порядок строк не важен.',
+        exampleSql: 'SELECT DISTINCT status FROM orders;',
+        checkSql: 'SELECT DISTINCT status FROM orders;',
       },
       {
         id: 'l11-t3',
-        hint: 'Таблица products: уникальные пары (category, name) для товаров с price_cents > 50000.',
-        exampleSql: `SELECT DISTINCT category, name FROM products WHERE price_cents > 50000 ORDER BY category, name;`,
-        checkSql: `SELECT DISTINCT category, name FROM products WHERE price_cents > 50000 ORDER BY category, name;`,
+        hint: 'Таблица products: уникальные пары (category, name) для товаров с price_cents > 50000; порядок строк не важен.',
+        exampleSql: `SELECT DISTINCT category, name FROM products WHERE price_cents > 50000;`,
+        checkSql: `SELECT DISTINCT category, name FROM products WHERE price_cents > 50000;`,
       },
     ],
   },
@@ -873,19 +865,19 @@ LIMIT 10;`,
         id: 'l12-t1',
         hint: 'Таблица products: name, где есть подстрока «Bluetooth».',
         exampleSql: "SELECT name FROM products WHERE name LIKE '%Bluetooth%';",
-        checkSql: "SELECT name FROM products WHERE name LIKE '%Bluetooth%' ORDER BY name;",
+        checkSql: "SELECT name FROM products WHERE name LIKE '%Bluetooth%';",
       },
       {
         id: 'l12-t2',
         hint: 'Таблица customers: email, начинающиеся на «user1».',
         exampleSql: "SELECT email FROM customers WHERE email LIKE 'user1%';",
-        checkSql: "SELECT email FROM customers WHERE email LIKE 'user1%' ORDER BY email;",
+        checkSql: "SELECT email FROM customers WHERE email LIKE 'user1%';",
       },
       {
         id: 'l12-t3',
         hint: 'Таблица products: sku, у которых третий символ «U» (шаблон __U%).',
         exampleSql: "SELECT sku FROM products WHERE sku LIKE '__U%';",
-        checkSql: "SELECT sku FROM products WHERE sku LIKE '__U%' ORDER BY sku;",
+        checkSql: "SELECT sku FROM products WHERE sku LIKE '__U%';",
       },
     ],
   },
@@ -898,20 +890,20 @@ LIMIT 10;`,
       {
         id: 'l13-t1',
         hint: 'Таблица orders: id и order_date для заказов с датой не раньше 2025-06-01.',
-        exampleSql: "SELECT id, order_date FROM orders WHERE order_date >= '2025-06-01' ORDER BY order_date;",
-        checkSql: "SELECT id, order_date FROM orders WHERE order_date >= '2025-06-01' ORDER BY order_date;",
+        exampleSql: "SELECT id, order_date FROM orders WHERE order_date >= '2025-06-01';",
+        checkSql: "SELECT id, order_date FROM orders WHERE order_date >= '2025-06-01';",
       },
       {
         id: 'l13-t2',
         hint: 'Таблица customers: full_name и signup_date для регистраций в 2024 году (дата вида 2024-…).',
-        exampleSql: "SELECT full_name, signup_date FROM customers WHERE signup_date LIKE '2024-%' ORDER BY signup_date;",
-        checkSql: "SELECT full_name, signup_date FROM customers WHERE signup_date LIKE '2024-%' ORDER BY signup_date;",
+        exampleSql: "SELECT full_name, signup_date FROM customers WHERE signup_date LIKE '2024-%';",
+        checkSql: "SELECT full_name, signup_date FROM customers WHERE signup_date LIKE '2024-%';",
       },
       {
         id: 'l13-t3',
         hint: 'Таблица orders: id, order_date и total_cents для заказов в марте 2025 (order_date вида 2025-03-%).',
-        exampleSql: "SELECT id, order_date, total_cents FROM orders WHERE order_date LIKE '2025-03-%' ORDER BY order_date;",
-        checkSql: "SELECT id, order_date, total_cents FROM orders WHERE order_date LIKE '2025-03-%' ORDER BY order_date;",
+        exampleSql: "SELECT id, order_date, total_cents FROM orders WHERE order_date LIKE '2025-03-%';",
+        checkSql: "SELECT id, order_date, total_cents FROM orders WHERE order_date LIKE '2025-03-%';",
       },
     ],
   },
@@ -925,25 +917,21 @@ LIMIT 10;`,
         id: 'l14-t1',
         hint: 'Таблица products: name и price_cents, где цена выше средней price_cents по всей таблице products.',
         exampleSql: `SELECT name, price_cents FROM products
-WHERE price_cents > (SELECT AVG(price_cents) FROM products)
-ORDER BY price_cents;`,
+WHERE price_cents > (SELECT AVG(price_cents) FROM products);`,
         checkSql: `SELECT name, price_cents FROM products
-WHERE price_cents > (SELECT AVG(price_cents) FROM products)
-ORDER BY price_cents;`,
+WHERE price_cents > (SELECT AVG(price_cents) FROM products);`,
       },
       {
         id: 'l14-t2',
         hint: 'Таблицы orders и customers: id и order_date заказов покупателей из Берлина (customer_id IN подзапросе по customers.city = Berlin).',
         exampleSql: `SELECT id, order_date FROM orders
-WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin')
-ORDER BY order_date;`,
+WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin');`,
         checkSql: `SELECT id, order_date FROM orders
-WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin')
-ORDER BY order_date;`,
+WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin');`,
       },
       {
         id: 'l14-t3',
-        hint: 'Таблицы order_items и products: id и quantity позиций, где product_id IN (id товаров с category = «Дом»).',
+        hint: 'Таблицы order_items и products: id и quantity позиций, где product_id IN (id товаров с category = «Дом»). Для проверки: ORDER BY oi.id и LIMIT 12.',
         exampleSql: `SELECT oi.id, oi.quantity FROM order_items oi
 WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом')
 ORDER BY oi.id
@@ -963,7 +951,7 @@ LIMIT 12;`,
     tasks: [
       {
         id: 'l15-t1',
-        hint: 'Таблица order_items: сумма line_total_cents по каждому order_id (первые 10 групп по order_id).',
+        hint: 'Таблица order_items: сумма line_total_cents по каждому order_id (первые 10 групп по order_id). Для проверки: ORDER BY order_id и LIMIT 10.',
         exampleSql: `SELECT order_id, SUM(line_total_cents) AS sum_lines
 FROM order_items
 GROUP BY order_id
@@ -977,7 +965,7 @@ LIMIT 10;`,
       },
       {
         id: 'l15-t2',
-        hint: 'Таблицы orders и customers: full_name и сумма total_cents по всем заказам этого покупателя (JOIN, GROUP BY, топ-8 по сумме).',
+        hint: 'Таблицы orders и customers: full_name и сумма total_cents по всем заказам этого покупателя (JOIN, GROUP BY, топ-8 по сумме). Для проверки: ORDER BY spent DESC и LIMIT 8.',
         exampleSql: `SELECT c.full_name, SUM(o.total_cents) AS spent
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -997,13 +985,11 @@ LIMIT 8;`,
         exampleSql: `SELECT p.category, SUM(oi.quantity) AS units
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
-GROUP BY p.category
-ORDER BY p.category;`,
+GROUP BY p.category;`,
         checkSql: `SELECT p.category, SUM(oi.quantity) AS units
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
-GROUP BY p.category
-ORDER BY p.category;`,
+GROUP BY p.category;`,
       },
       {
         id: 'l15-t4',
@@ -1025,17 +1011,15 @@ ORDER BY p.category;`,
         exampleSql: `SELECT c.full_name, o.order_date, o.total_cents
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
-WHERE o.status = 'shipped'
-ORDER BY o.order_date;`,
+WHERE o.status = 'shipped';`,
         checkSql: `SELECT c.full_name, o.order_date, o.total_cents
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
-WHERE o.status = 'shipped'
-ORDER BY o.order_date;`,
+WHERE o.status = 'shipped';`,
       },
       {
         id: 'l16-t2',
-        hint: 'Таблицы order_items и products: name и SUM(line_total_cents) как выручка — топ-5 товаров.',
+        hint: 'Таблицы order_items и products: name и SUM(line_total_cents) как выручка — топ-5 товаров. Для проверки: ORDER BY revenue DESC и LIMIT 5.',
         exampleSql: `SELECT p.name, SUM(oi.line_total_cents) AS revenue
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
@@ -1056,14 +1040,12 @@ LIMIT 5;`,
 FROM customers c
 JOIN orders o ON o.customer_id = c.id
 GROUP BY c.id, c.full_name
-HAVING COUNT(o.id) > 1
-ORDER BY order_cnt DESC;`,
+HAVING COUNT(o.id) > 1;`,
         checkSql: `SELECT c.full_name, COUNT(o.id) AS order_cnt
 FROM customers c
 JOIN orders o ON o.customer_id = c.id
 GROUP BY c.id, c.full_name
-HAVING COUNT(o.id) > 1
-ORDER BY order_cnt DESC;`,
+HAVING COUNT(o.id) > 1;`,
       },
       {
         id: 'l16-t4',

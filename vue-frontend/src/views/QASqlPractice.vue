@@ -45,6 +45,7 @@
               :class="{
                 current: ti === activeTaskIndex,
                 done: completedTasks[t.id],
+                pending: !completedTasks[t.id] && ti !== activeTaskIndex,
               }"
             >
               <button type="button" class="sql-task-chip-btn" @click="activeTaskIndex = ti">
@@ -102,6 +103,7 @@
         <section class="sql-editor-block" aria-label="Редактор SQL">
           <h2>{{ $t('qa.sqlEditorTitle') }}</h2>
           <p class="sql-muted">{{ $t('qa.sqlEditorHint') }}</p>
+          <p class="sql-muted sql-auto-hint">{{ $t('qa.sqlAutoRunHint') }}</p>
           <textarea
             v-model="editorSql"
             class="sql-textarea"
@@ -110,8 +112,8 @@
             :aria-label="$t('qa.sqlEditorTitle')"
           />
           <div class="sql-actions">
-            <button type="button" class="sql-btn-primary" :disabled="!db" @click="runSql">
-              {{ $t('qa.sqlRun') }}
+            <button type="button" class="sql-btn-secondary sql-btn-run-now" :disabled="!db" @click="runSqlNow">
+              {{ $t('qa.sqlRunNow') }}
             </button>
             <button type="button" class="sql-btn-secondary" :disabled="!db" @click="resetDb">
               {{ $t('qa.sqlResetDb') }}
@@ -227,6 +229,8 @@ export default {
       successFlash: false,
       lessonCompleteOpen: false,
       advanceTimer: null,
+      debounceTimer: null,
+      suppressAutoRun: false,
     };
   },
   computed: {
@@ -264,6 +268,17 @@ export default {
       this.showHintSql = false;
       this.syncEditorForTask();
     },
+    editorSql() {
+      if (this.suppressAutoRun || this.loading || !this.db) return;
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = null;
+      }
+      this.debounceTimer = setTimeout(() => {
+        this.debounceTimer = null;
+        this.runSqlCore({ manual: false });
+      }, 480);
+    },
   },
   mounted() {
     this.loadProgress();
@@ -275,6 +290,10 @@ export default {
     if (this.advanceTimer) {
       clearTimeout(this.advanceTimer);
       this.advanceTimer = null;
+    }
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
     }
   },
   methods: {
@@ -320,7 +339,11 @@ export default {
       this.firstIncompleteInCurrentLesson();
     },
     syncEditorForTask() {
+      this.suppressAutoRun = true;
       this.editorSql = '';
+      this.$nextTick(() => {
+        this.suppressAutoRun = false;
+      });
     },
     async initDb() {
       this.loading = true;
@@ -401,7 +424,16 @@ export default {
     async resetDb() {
       await this.initDb();
     },
-    runSql() {
+    runSqlNow() {
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = null;
+      }
+      this.runSqlCore({ manual: true });
+    },
+    /** @param {{ manual: boolean }} opts manual: кнопка «сейчас»; иначе автозапуск после паузы */
+    runSqlCore(opts) {
+      const manual = opts && opts.manual;
       this.runError = null;
       this.resultMessage = '';
       this.resultColumns = [];
@@ -414,13 +446,27 @@ export default {
 
       const sql = (this.editorSql || '').trim();
       if (!sql) {
-        this.runError = this.$t('qa.sqlEmptyQuery');
+        if (manual) {
+          this.runError = this.$t('qa.sqlEmptyQuery');
+        } else {
+          this.runError = null;
+          this.resultMessage = '';
+          this.resultColumns = [];
+          this.resultRows = [];
+        }
         return;
       }
       if (!this.db || !this.sqlFactory || !this.seedBytes) return;
 
       const task = this.currentTask;
-      if (task && task.checkSql) {
+      const taskGraded = task && task.checkSql && !this.completedTasks[task.id];
+
+      if (task && task.checkSql && this.completedTasks[task.id]) {
+        this.runExploratorySql(sql);
+        return;
+      }
+
+      if (taskGraded) {
         const v = validateTaskWithCtor(this.sqlFactory, this.seedBytes, sql, task.checkSql);
         if (!v.ok) {
           if (v.userError) {
@@ -481,6 +527,9 @@ export default {
         return;
       }
 
+      this.runExploratorySql(sql);
+    },
+    runExploratorySql(sql) {
       try {
         const results = this.db.exec(sql);
         if (!results || results.length === 0) {
@@ -690,36 +739,68 @@ export default {
 }
 
 .sql-task-chip-btn {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 10px;
+  border: 2px solid #cbd5e1;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
   cursor: pointer;
   font-size: 0.8rem;
+  font-weight: 600;
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
 }
 
+.sql-task-chip.pending .sql-task-chip-btn:hover {
+  border-color: #94a3b8;
+  background: #e2e8f0 !important;
+}
+
+/* Текущее задание: фиолетовый акцент */
 .sql-task-chip.current .sql-task-chip-btn {
-  border-color: #7c3aed;
-  background: #ede9fe;
-  font-weight: 700;
+  border-color: #7c3aed !important;
+  background: linear-gradient(145deg, #ede9fe, #ddd6fe) !important;
+  color: #5b21b6 !important;
+  font-weight: 800;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35);
 }
 
+/* Выполнено: зелёный, явно отличается от ожидающих */
 .sql-task-chip.done .sql-task-chip-btn {
-  border-color: #6ee7b7;
-  background: #ecfdf5;
+  border-color: #059669 !important;
+  background: linear-gradient(145deg, #34d399, #059669) !important;
+  color: #fff !important;
+  font-weight: 800;
+}
+
+/* Вернулись на уже сделанный шаг: зелёный + фиолетовое кольцо «вы здесь» */
+.sql-task-chip.done.current .sql-task-chip-btn {
+  background: linear-gradient(145deg, #10b981, #047857) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.55);
 }
 
 .sql-chip-check {
   position: absolute;
-  top: -0.2rem;
-  right: -0.2rem;
-  font-size: 0.65rem;
-  color: #059669;
+  top: -0.35rem;
+  right: -0.35rem;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+  border-radius: 4px;
+  background: #fff;
+  color: #047857;
+  font-weight: 800;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .sql-hint-label {
@@ -780,6 +861,16 @@ export default {
   font-size: 0.85rem;
   color: #64748b;
   margin: 0 0 0.75rem;
+}
+
+.sql-auto-hint {
+  margin-top: -0.35rem;
+  font-size: 0.8rem;
+  color: #7c3aed;
+}
+
+.sql-btn-run-now {
+  font-weight: 600;
 }
 
 .sql-tables-grid {

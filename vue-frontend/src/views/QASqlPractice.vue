@@ -184,11 +184,32 @@ export default {
       this.loadError = null;
       this.db = null;
       try {
-        const base = process.env.BASE_URL || '/';
         const initSqlJs = (await import('sql.js')).default;
-        const SQL = await initSqlJs({
-          locateFile: (file) => `${base}${file}`,
-        });
+        const baseNorm = (process.env.BASE_URL || '/').replace(/\/?$/, '/');
+        const localWasmUrl = new URL('sql-wasm.wasm', window.location.origin + baseNorm).href;
+        // Должна совпадать с версией в package-lock (node_modules/sql.js)
+        const sqlJsCdnBase = 'https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/';
+
+        const looksLikeWasm = (buf) => {
+          if (!buf || buf.byteLength < 4) return false;
+          const u = new Uint8Array(buf);
+          return u[0] === 0x00 && u[1] === 0x61 && u[2] === 0x73 && u[3] === 0x6d;
+        };
+
+        let SQL;
+        const localResp = await fetch(localWasmUrl);
+        if (localResp.ok) {
+          const wasmBuf = await localResp.arrayBuffer();
+          if (looksLikeWasm(wasmBuf)) {
+            SQL = await initSqlJs({ wasmBinary: wasmBuf });
+          }
+        }
+        if (!SQL) {
+          SQL = await initSqlJs({
+            locateFile: (file) => `${sqlJsCdnBase}${file}`,
+          });
+        }
+
         const database = new SQL.Database();
         database.run(getSeedSQL());
         this.db = database;

@@ -69,7 +69,9 @@ _sock_green.getaddrinfo = _patched_getaddrinfo
 _sock_green.create_connection = _patched_create_connection
 # ---------------------------------------------------------------------------
 
-from flask import Flask, jsonify, send_from_directory
+import mimetypes
+
+from flask import Flask, abort, jsonify, send_file, send_from_directory
 from werkzeug.utils import safe_join
 from flask_jwt_extended import JWTManager
 from database import db
@@ -103,6 +105,7 @@ from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
 
 app = Flask(__name__, static_folder="static")
+mimetypes.add_type("application/wasm", ".wasm")
 CORS(app, supports_credentials=True)
 CORS(app, resources={r"/api/*": {"origins": "https://www.growboard.ru"}}, supports_credentials=True)
 
@@ -228,16 +231,32 @@ def handle_ai_limit_exceeded(e):
     return jsonify({"error": e.message}), 429
 
 
+def _static_root():
+    root = app.static_folder
+    if not root:
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    return root
+
+
+# Явный маршрут: .wasm часто отдаётся как HTML за счёт SPA/nginx; плюс нужен MIME application/wasm
+@app.route("/sql-wasm.wasm")
+def serve_sql_wasm():
+    fp = os.path.join(_static_root(), "sql-wasm.wasm")
+    if not os.path.isfile(fp):
+        abort(404)
+    return send_file(fp, mimetype="application/wasm", max_age=86400)
+
+
 # 🎯 Отдача Vue SPA (static_folder — абсолютный путь от корня приложения; не зависит от CWD на Render)
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_vue(path):
-    root = app.static_folder
-    if not root:
-        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    root = _static_root()
     if path:
         fs_path = safe_join(root, path)
         if fs_path is not None and os.path.isfile(fs_path):
+            if path.endswith(".wasm"):
+                return send_file(fs_path, mimetype="application/wasm", max_age=86400)
             return send_from_directory(root, path)
     return send_from_directory(root, "index.html")
 

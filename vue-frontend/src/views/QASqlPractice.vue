@@ -8,6 +8,7 @@
       <h1>{{ $t('qa.sqlPageTitle') }}</h1>
       <p class="sql-lead">{{ $t('qa.sqlPageLead') }}</p>
       <p class="sql-note">{{ $t('qa.sqlBrowserOnly') }}</p>
+      <p class="sql-note sql-note--soft">{{ $t('qa.sqlTasksHint') }}</p>
     </header>
 
     <div v-if="loadError" class="sql-banner sql-banner--error">{{ loadError }}</div>
@@ -21,61 +22,74 @@
             <button
               type="button"
               class="sql-lesson-tab"
-              :class="{ active: activeLesson === idx }"
-              @click="activeLesson = idx"
+              :class="{ active: activeLesson === idx, done: isLessonComplete(idx) }"
+              @click="selectLesson(idx)"
             >
-              {{ idx + 1 }}. {{ lesson.title }}
+              <span class="sql-lesson-tab-num">{{ idx + 1 }}.</span>
+              {{ lesson.title }}
+              <span v-if="isLessonComplete(idx)" class="sql-lesson-done" aria-hidden="true">✓</span>
             </button>
           </li>
         </ul>
         <div v-if="currentLesson" class="sql-lesson-body">
           <h3>{{ currentLesson.title }}</h3>
           <p class="sql-theory">{{ currentLesson.theory }}</p>
-          <p class="sql-hint-label">{{ $t('qa.sqlHintLabel') }}</p>
-          <p class="sql-hint">{{ currentLesson.hint }}</p>
-          <button type="button" class="sql-btn-secondary" @click="showHintSql = !showHintSql">
-            {{ showHintSql ? $t('qa.sqlHideExample') : $t('qa.sqlShowExample') }}
-          </button>
-          <pre v-if="showHintSql" class="sql-example">{{ currentLesson.exampleSql }}</pre>
-          <button type="button" class="sql-btn-secondary sql-use-example" @click="useExample">
-            {{ $t('qa.sqlInsertExample') }}
-          </button>
+          <p class="sql-task-progress">
+            {{ $t('qa.sqlTaskProgress', { current: activeTaskIndex + 1, total: currentLesson.tasks.length }) }}
+          </p>
+          <ol class="sql-task-chips">
+            <li
+              v-for="(t, ti) in currentLesson.tasks"
+              :key="t.id"
+              class="sql-task-chip"
+              :class="{
+                current: ti === activeTaskIndex,
+                done: completedTasks[t.id],
+              }"
+            >
+              <button type="button" class="sql-task-chip-btn" @click="activeTaskIndex = ti">
+                {{ ti + 1 }}
+                <span v-if="completedTasks[t.id]" class="sql-chip-check">✓</span>
+              </button>
+            </li>
+          </ol>
+          <template v-if="currentTask">
+            <p class="sql-hint-label">{{ $t('qa.sqlHintLabel') }}</p>
+            <p class="sql-hint">{{ currentTask.hint }}</p>
+            <button type="button" class="sql-btn-secondary" @click="showHintSql = !showHintSql">
+              {{ showHintSql ? $t('qa.sqlHideExample') : $t('qa.sqlShowExample') }}
+            </button>
+            <pre v-if="showHintSql" class="sql-example">{{ currentTask.exampleSql }}</pre>
+            <button type="button" class="sql-btn-secondary sql-use-example" @click="useExample">
+              {{ $t('qa.sqlInsertExample') }}
+            </button>
+          </template>
         </div>
       </aside>
 
       <main class="sql-main">
+        <div v-if="successFlash" class="sql-banner sql-banner--success" role="status">
+          {{ $t('qa.sqlCorrect') }}
+        </div>
+
         <section class="sql-tables" aria-label="Демо-таблицы">
           <h2>{{ $t('qa.sqlDemoTablesTitle') }}</h2>
           <p class="sql-muted">{{ $t('qa.sqlDemoTablesHint') }}</p>
-          <div class="sql-tables-grid">
-            <div class="sql-table-card">
-              <h3>defects <span class="sql-badge">24 × 8</span></h3>
+          <div class="sql-tables-grid sql-tables-grid--4">
+            <div v-for="prev in tablePreviews" :key="prev.name" class="sql-table-card">
+              <h3>
+                {{ prev.name }}
+                <span class="sql-badge">{{ prev.badge }}</span>
+              </h3>
               <div class="sql-table-scroll">
                 <table class="sql-data-table">
                   <thead>
                     <tr>
-                      <th v-for="c in previewDefects.columns" :key="c">{{ c }}</th>
+                      <th v-for="c in prev.grid.columns" :key="c">{{ c }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(row, ri) in previewDefects.rows" :key="'d' + ri">
-                      <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div class="sql-table-card">
-              <h3>test_runs <span class="sql-badge">24 × 8</span></h3>
-              <div class="sql-table-scroll">
-                <table class="sql-data-table">
-                  <thead>
-                    <tr>
-                      <th v-for="c in previewRuns.columns" :key="c">{{ c }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(row, ri) in previewRuns.rows" :key="'r' + ri">
+                    <tr v-for="(row, ri) in prev.grid.rows" :key="prev.name + ri">
                       <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
                     </tr>
                   </tbody>
@@ -133,11 +147,47 @@
         </p>
       </main>
     </div>
+
+    <div
+      v-if="lessonCompleteOpen"
+      class="sql-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="$t('qa.sqlLessonDoneTitle')"
+      @click.self="lessonCompleteOpen = false"
+    >
+      <div class="sql-modal">
+        <h2 class="sql-modal-title">
+          {{ isLastLesson ? $t('qa.sqlCourseCompleteTitle') : $t('qa.sqlLessonDoneTitle') }}
+        </h2>
+        <p class="sql-modal-text">
+          {{ isLastLesson ? $t('qa.sqlCourseCompleteBody') : $t('qa.sqlLessonDoneBody') }}
+        </p>
+        <div class="sql-modal-actions">
+          <button
+            v-if="!isLastLesson"
+            type="button"
+            class="sql-btn-primary"
+            @click="goNextLesson"
+          >
+            {{ $t('qa.sqlNextLesson') }}
+          </button>
+          <button type="button" class="sql-btn-secondary" @click="lessonCompleteOpen = false">
+            {{ isLastLesson ? $t('qa.sqlClose') : $t('qa.sqlStayHere') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { getSeedSQL, SQL_LESSONS, DEFAULT_EDITOR_SQL } from '@/qa/sqlSandbox.js';
+import {
+  getSeedSQL,
+  SQL_LESSONS,
+  validateTaskWithCtor,
+  SQL_PROGRESS_STORAGE_KEY,
+} from '@/qa/sqlSandbox.js';
 
 function execToGrid(db, sql) {
   const results = db.exec(sql);
@@ -158,36 +208,135 @@ export default {
       loading: true,
       loadError: null,
       db: null,
+      sqlFactory: null,
+      seedBytes: null,
       lessons: SQL_LESSONS,
       activeLesson: 0,
+      activeTaskIndex: 0,
+      completedTasks: {},
       showHintSql: false,
-      editorSql: DEFAULT_EDITOR_SQL,
-      previewDefects: { columns: [], rows: [] },
-      previewRuns: { columns: [], rows: [] },
+      editorSql: '',
+      previewCustomers: { columns: [], rows: [] },
+      previewProducts: { columns: [], rows: [] },
+      previewOrders: { columns: [], rows: [] },
+      previewOrderItems: { columns: [], rows: [] },
       runError: null,
       resultMessage: '',
       resultColumns: [],
       resultRows: [],
+      successFlash: false,
+      lessonCompleteOpen: false,
+      advanceTimer: null,
     };
   },
   computed: {
     currentLesson() {
       return this.lessons[this.activeLesson] || null;
     },
+    currentTask() {
+      const L = this.currentLesson;
+      if (!L || !L.tasks) return null;
+      return L.tasks[this.activeTaskIndex] || null;
+    },
+    tablePreviews() {
+      const fmt = (name, grid) => {
+        const r = grid.rows?.length ?? 0;
+        const c = grid.columns?.length ?? 0;
+        return { name, grid, badge: `${r} × ${c}` };
+      };
+      return [
+        fmt('customers', this.previewCustomers),
+        fmt('products', this.previewProducts),
+        fmt('orders', this.previewOrders),
+        fmt('order_items', this.previewOrderItems),
+      ];
+    },
+    isLastLesson() {
+      return this.activeLesson >= this.lessons.length - 1;
+    },
   },
-  async mounted() {
-    await this.initDb();
+  watch: {
+    activeLesson() {
+      this.showHintSql = false;
+      this.syncEditorForTask();
+    },
+    activeTaskIndex() {
+      this.showHintSql = false;
+      this.syncEditorForTask();
+    },
+  },
+  mounted() {
+    this.loadProgress();
+    this.syncFirstIncompleteInLesson();
+    this.syncEditorForTask();
+    this.initDb();
+  },
+  beforeUnmount() {
+    if (this.advanceTimer) {
+      clearTimeout(this.advanceTimer);
+      this.advanceTimer = null;
+    }
   },
   methods: {
+    loadProgress() {
+      try {
+        const raw = localStorage.getItem(SQL_PROGRESS_STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data && typeof data.completed === 'object') {
+          this.completedTasks = { ...data.completed };
+        }
+      } catch (_) {
+        /* ignore */
+      }
+    },
+    saveProgress() {
+      try {
+        localStorage.setItem(
+          SQL_PROGRESS_STORAGE_KEY,
+          JSON.stringify({ completed: this.completedTasks }),
+        );
+      } catch (_) {
+        /* ignore */
+      }
+    },
+    isLessonComplete(lessonIdx) {
+      const L = this.lessons[lessonIdx];
+      if (!L) return false;
+      return L.tasks.every((t) => this.completedTasks[t.id]);
+    },
+    selectLesson(idx) {
+      this.activeLesson = idx;
+      this.lessonCompleteOpen = false;
+      this.firstIncompleteInCurrentLesson();
+    },
+    firstIncompleteInCurrentLesson() {
+      const L = this.currentLesson;
+      if (!L) return;
+      const i = L.tasks.findIndex((t) => !this.completedTasks[t.id]);
+      this.activeTaskIndex = i === -1 ? 0 : i;
+    },
+    syncFirstIncompleteInLesson() {
+      this.firstIncompleteInCurrentLesson();
+    },
+    syncEditorForTask() {
+      this.editorSql = '';
+    },
     async initDb() {
       this.loading = true;
       this.loadError = null;
-      this.db = null;
       try {
+        if (this.db) {
+          try {
+            this.db.close();
+          } catch (_) {
+            /* ignore */
+          }
+          this.db = null;
+        }
         const initSqlJs = (await import('sql.js')).default;
         const baseNorm = (process.env.BASE_URL || '/').replace(/\/?$/, '/');
         const localWasmUrl = new URL('sql-wasm.wasm', window.location.origin + baseNorm).href;
-        // Должна совпадать с версией в package-lock (node_modules/sql.js)
         const sqlJsCdnBase = 'https://cdn.jsdelivr.net/npm/sql.js@1.14.1/dist/';
 
         const looksLikeWasm = (buf) => {
@@ -209,9 +358,11 @@ export default {
             locateFile: (file) => `${sqlJsCdnBase}${file}`,
           });
         }
+        this.sqlFactory = SQL;
 
         const database = new SQL.Database();
         database.run(getSeedSQL());
+        this.seedBytes = database.export();
         this.db = database;
         this.refreshPreviews();
         this.runError = null;
@@ -224,20 +375,30 @@ export default {
         this.loading = false;
       }
     },
+    restoreDbFromSeed() {
+      if (!this.sqlFactory || !this.seedBytes) return;
+      try {
+        if (this.db) {
+          try {
+            this.db.close();
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        this.db = new this.sqlFactory.Database(new Uint8Array(this.seedBytes));
+        this.refreshPreviews();
+      } catch (e) {
+        this.runError = e.message || String(e);
+      }
+    },
     refreshPreviews() {
       if (!this.db) return;
-      this.previewDefects = execToGrid(this.db, 'SELECT * FROM defects ORDER BY id');
-      this.previewRuns = execToGrid(this.db, 'SELECT * FROM test_runs ORDER BY id');
+      this.previewCustomers = execToGrid(this.db, 'SELECT * FROM customers ORDER BY id');
+      this.previewProducts = execToGrid(this.db, 'SELECT * FROM products ORDER BY id');
+      this.previewOrders = execToGrid(this.db, 'SELECT * FROM orders ORDER BY id');
+      this.previewOrderItems = execToGrid(this.db, 'SELECT * FROM order_items ORDER BY id');
     },
     async resetDb() {
-      if (this.db) {
-        try {
-          this.db.close();
-        } catch (_) {
-          /* ignore */
-        }
-        this.db = null;
-      }
       await this.initDb();
     },
     runSql() {
@@ -245,12 +406,81 @@ export default {
       this.resultMessage = '';
       this.resultColumns = [];
       this.resultRows = [];
+      this.successFlash = false;
+      if (this.advanceTimer) {
+        clearTimeout(this.advanceTimer);
+        this.advanceTimer = null;
+      }
+
       const sql = (this.editorSql || '').trim();
       if (!sql) {
         this.runError = this.$t('qa.sqlEmptyQuery');
         return;
       }
-      if (!this.db) return;
+      if (!this.db || !this.sqlFactory || !this.seedBytes) return;
+
+      const task = this.currentTask;
+      if (task && task.checkSql) {
+        const v = validateTaskWithCtor(this.sqlFactory, this.seedBytes, sql, task.checkSql);
+        if (!v.ok) {
+          if (v.userError) {
+            this.runError = v.userError;
+            return;
+          }
+          if (v.messageKey) {
+            this.runError = this.$t(v.messageKey);
+            return;
+          }
+          this.runError = this.$t('qa.sqlWrongResult');
+          return;
+        }
+
+        this.completedTasks = { ...this.completedTasks, [task.id]: true };
+        this.saveProgress();
+        this.successFlash = true;
+        setTimeout(() => {
+          this.successFlash = false;
+        }, 1200);
+
+        this.restoreDbFromSeed();
+        try {
+          const results = this.db.exec(sql);
+          if (results && results.length) {
+            let last = null;
+            for (let i = results.length - 1; i >= 0; i--) {
+              const block = results[i];
+              if (block.columns && block.columns.length) {
+                last = block;
+                break;
+              }
+            }
+            if (last) {
+              this.resultColumns = last.columns;
+              this.resultRows = last.values || [];
+            } else {
+              this.resultMessage = this.$t('qa.sqlNoSelectResult');
+            }
+          } else {
+            this.resultMessage = this.$t('qa.sqlNoSelectResult');
+          }
+        } catch (e) {
+          this.runError = e.message || String(e);
+          return;
+        }
+
+        const L = this.currentLesson;
+        const lastIdx = L ? L.tasks.length - 1 : 0;
+        if (this.activeTaskIndex >= lastIdx) {
+          this.lessonCompleteOpen = true;
+        } else {
+          this.advanceTimer = setTimeout(() => {
+            this.activeTaskIndex += 1;
+            this.advanceTimer = null;
+          }, 750);
+        }
+        return;
+      }
+
       try {
         const results = this.db.exec(sql);
         if (!results || results.length === 0) {
@@ -277,9 +507,16 @@ export default {
         this.runError = e.message || String(e);
       }
     },
+    goNextLesson() {
+      this.lessonCompleteOpen = false;
+      if (this.activeLesson < this.lessons.length - 1) {
+        this.activeLesson += 1;
+        this.firstIncompleteInCurrentLesson();
+      }
+    },
     useExample() {
-      if (this.currentLesson && this.currentLesson.exampleSql) {
-        this.editorSql = this.currentLesson.exampleSql.trim();
+      if (this.currentTask && this.currentTask.exampleSql) {
+        this.editorSql = this.currentTask.exampleSql.trim();
         this.showHintSql = true;
       }
     },
@@ -326,6 +563,11 @@ export default {
   color: #64748b;
 }
 
+.sql-note--soft {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+}
+
 .sql-banner {
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -338,9 +580,15 @@ export default {
   color: #b91c1c;
 }
 
+.sql-banner--success {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 600;
+}
+
 .sql-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) 1fr;
+  grid-template-columns: minmax(280px, 320px) 1fr;
   gap: 1.5rem;
   margin-top: 1.25rem;
   align-items: start;
@@ -381,8 +629,21 @@ export default {
   border-radius: 6px;
   background: #fff;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #334155;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.sql-lesson-tab-num {
+  flex-shrink: 0;
+}
+
+.sql-lesson-done {
+  margin-left: auto;
+  color: #059669;
+  font-weight: 700;
 }
 
 .sql-lesson-tab:hover {
@@ -393,6 +654,10 @@ export default {
   background: #ede9fe;
   border-color: #8b5cf6;
   font-weight: 600;
+}
+
+.sql-lesson-tab.done:not(.active) {
+  opacity: 0.92;
 }
 
 .sql-lesson-body h3 {
@@ -406,6 +671,55 @@ export default {
   line-height: 1.45;
   margin: 0 0 0.5rem;
   color: #475569;
+}
+
+.sql-task-progress {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b21b6;
+  margin: 0.5rem 0 0.35rem;
+}
+
+.sql-task-chips {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.sql-task-chip-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sql-task-chip.current .sql-task-chip-btn {
+  border-color: #7c3aed;
+  background: #ede9fe;
+  font-weight: 700;
+}
+
+.sql-task-chip.done .sql-task-chip-btn {
+  border-color: #6ee7b7;
+  background: #ecfdf5;
+}
+
+.sql-chip-check {
+  position: absolute;
+  top: -0.2rem;
+  right: -0.2rem;
+  font-size: 0.65rem;
+  color: #059669;
 }
 
 .sql-hint-label {
@@ -474,8 +788,14 @@ export default {
   gap: 1rem;
 }
 
-@media (min-width: 900px) {
-  .sql-tables-grid {
+@media (min-width: 700px) {
+  .sql-tables-grid--4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1100px) {
+  .sql-tables-grid--4 {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -489,10 +809,11 @@ export default {
 
 .sql-table-card h3 {
   margin: 0 0 0.5rem;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .sql-badge {
@@ -506,20 +827,20 @@ export default {
 
 .sql-table-scroll {
   overflow-x: auto;
-  max-height: 320px;
+  max-height: 220px;
   overflow-y: auto;
 }
 
 .sql-data-table {
   border-collapse: collapse;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   min-width: 100%;
 }
 
 .sql-data-table th,
 .sql-data-table td {
   border: 1px solid #e2e8f0;
-  padding: 0.25rem 0.4rem;
+  padding: 0.2rem 0.35rem;
   text-align: left;
   white-space: nowrap;
 }
@@ -575,7 +896,7 @@ export default {
 }
 
 .sql-result-table {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .sql-footer-link {
@@ -585,5 +906,44 @@ export default {
 
 .sql-footer-link a {
   color: #5b21b6;
+}
+
+.sql-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.sql-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.sql-modal-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+  color: #1e1b4b;
+}
+
+.sql-modal-text {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.sql-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 </style>

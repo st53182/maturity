@@ -1,5 +1,6 @@
 /**
- * One-off: load seed + run every checkSql; ensure SELECT returns rows (except note in code).
+ * CI helper: run every checkSql on seed DB (non-empty result) and ensure exampleSql matches checkSql
+ * so «показать пример» and «верный ответ» never disagree (e.g. stray ORDER BY).
  */
 import initSqlJs from 'sql.js';
 import path from 'path';
@@ -13,9 +14,19 @@ const SQL = await initSqlJs({ locateFile: () => wasmPath });
 const db = new SQL.Database();
 db.run(getSeedSQL());
 
+function normSql(s) {
+  return String(s || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
 let failed = 0;
 for (const lesson of SQL_LESSONS) {
   for (const t of lesson.tasks) {
+    if (t.exampleSql != null && t.checkSql != null && normSql(t.exampleSql) !== normSql(t.checkSql)) {
+      console.error(`MISMATCH ${t.id}: exampleSql and checkSql differ (normalize whitespace)`);
+      failed++;
+    }
     let res;
     try {
       res = getLastSelectResult(db, t.checkSql);
@@ -41,4 +52,4 @@ if (failed) {
   console.error(`\n${failed} task(s) failed`);
   process.exit(1);
 }
-console.log('All checkSql queries return at least one row.');
+console.log('OK: every checkSql returns ≥1 row; exampleSql matches checkSql (normalized).');

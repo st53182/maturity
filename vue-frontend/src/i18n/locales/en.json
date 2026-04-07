@@ -884,7 +884,7 @@
     "sqlInsertExample": "Insert example into editor",
     "sqlShowCorrectAnswer": "Show correct answer",
     "sqlHideCorrectAnswer": "Hide correct answer",
-    "sqlCorrectAnswerExplainer": "Reference data set; your SQL can differ if cell values are the same (row order and column names are ignored).",
+    "sqlCorrectAnswerExplainer": "One valid query over the same data. If the task does not mention sorting or a “top N”, the reference has no ORDER BY—do not add it yourself. ORDER BY and LIMIT are required only where the task says so (lesson 5 and top-N tasks). Row order is ignored; other column names and SELECT * are fine if the column set matches (see the tasks hint).",
     "sqlDemoTablesTitle": "Demo data",
     "sqlDemoTablesHint": "Tables: customers, products, orders, order_items. For tasks, prefer SELECT; Reset database restores demo data.",
     "sqlEditorTitle": "Your SQL",

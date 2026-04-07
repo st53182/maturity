@@ -546,7 +546,7 @@ export const SQL_LESSONS = [
         id: 'l04-t2',
         hint: 'Таблица orders: заказы со статусом pending или shipped (условие через OR или через IN со списком статусов).',
         exampleSql:
-          "SELECT id, status FROM orders WHERE status = 'pending' OR status = 'shipped';",
+          "SELECT id, status FROM orders WHERE status IN ('pending', 'shipped');",
         checkSql:
           "SELECT id, status FROM orders WHERE status IN ('pending', 'shipped');",
       },
@@ -560,9 +560,9 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l04-t4',
-        hint: 'Таблица customers: покупатели из Праги или Лиссабона (Prague, Lisbon).',
+        hint: 'Таблица customers: покупатели из Праги или Лиссабона — city равен Prague или Lisbon (OR или IN (...)).',
         exampleSql:
-          "SELECT full_name, city FROM customers WHERE city = 'Prague' OR city = 'Lisbon';",
+          "SELECT full_name, city FROM customers WHERE city IN ('Prague', 'Lisbon');",
         checkSql:
           "SELECT full_name, city FROM customers WHERE city IN ('Prague', 'Lisbon');",
       },
@@ -576,7 +576,7 @@ export const SQL_LESSONS = [
     tasks: [
       {
         id: 'l05-t1',
-        hint: 'Таблица products: три самых дорогих товара по price_cents (сначала дороже).',
+        hint: 'Таблица products: три самых дорогих товара по price_cents. Нужны ORDER BY price_cents DESC и LIMIT 3.',
         exampleSql: 'SELECT name, price_cents FROM products ORDER BY price_cents DESC LIMIT 3;',
         checkSql: 'SELECT name, price_cents FROM products ORDER BY price_cents DESC LIMIT 3;',
       },
@@ -588,7 +588,7 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l05-t3',
-        hint: 'Таблица orders: три последних заказа по order_date (по убыванию).',
+        hint: 'Таблица orders: три последних заказа по дате (самые поздние первыми). Нужны ORDER BY order_date DESC и LIMIT 3.',
         exampleSql: 'SELECT id, order_date, total_cents FROM orders ORDER BY order_date DESC LIMIT 3;',
         checkSql: 'SELECT id, order_date, total_cents FROM orders ORDER BY order_date DESC LIMIT 3;',
       },
@@ -686,7 +686,7 @@ WHERE oi.id = 7;`,
       },
       {
         id: 'l07-t4',
-        hint: 'Таблица order_items: все позиции с product_id = 2 — order_id и quantity.',
+        hint: 'Таблица order_items: все строки, где product_id = 2; в ответе только колонки order_id и quantity. Сортировка ORDER BY не требуется и в эталонном запросе её нет.',
         exampleSql:
           'SELECT order_id, quantity FROM order_items WHERE product_id = 2;',
         checkSql: 'SELECT order_id, quantity FROM order_items WHERE product_id = 2;',

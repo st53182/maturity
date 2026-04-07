@@ -21,7 +21,8 @@ const CUSTOMER_NAMES = [
   'Никита Андреев',
 ];
 
-const CITIES = ['Москва', 'СПб', 'Казань', 'Екатеринбург', 'Новосибирск'];
+/** Города покупателей — европейские (значения в БД на латинице, как в международных демо-данных). */
+const CITIES = ['Berlin', 'Amsterdam', 'Prague', 'Vienna', 'Lisbon'];
 
 const PRODUCT_DATA = [
   ['SKU-E01', 'Наушники Bluetooth', 'Электроника', 499000, 40],
@@ -411,10 +412,10 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l03-t3',
-        hint: 'Покупатели из Москвы.',
-        exampleSql: "SELECT full_name, email FROM customers WHERE city = 'Москва';",
+        hint: 'Покупатели из Берлина (в таблице city хранится как Berlin).',
+        exampleSql: "SELECT full_name, email FROM customers WHERE city = 'Berlin';",
         checkSql:
-          "SELECT full_name, email FROM customers WHERE city = 'Москва' ORDER BY full_name;",
+          "SELECT full_name, email FROM customers WHERE city = 'Berlin' ORDER BY full_name;",
       },
       {
         id: 'l03-t4',
@@ -456,11 +457,11 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l04-t4',
-        hint: 'Покупатели из Казани или Новосибирска.',
+        hint: 'Покупатели из Праги или Лиссабона (Prague, Lisbon).',
         exampleSql:
-          "SELECT full_name, city FROM customers WHERE city = 'Казань' OR city = 'Новосибирск';",
+          "SELECT full_name, city FROM customers WHERE city = 'Prague' OR city = 'Lisbon';",
         checkSql:
-          "SELECT full_name, city FROM customers WHERE city IN ('Казань', 'Новосибирск') ORDER BY city, full_name;",
+          "SELECT full_name, city FROM customers WHERE city IN ('Prague', 'Lisbon') ORDER BY city, full_name;",
       },
     ],
   },
@@ -847,12 +848,12 @@ ORDER BY price_cents;`,
       },
       {
         id: 'l14-t2',
-        hint: 'Заказы покупателей из Москвы (customer_id IN подзапросом по city).',
+        hint: 'Заказы покупателей из Берлина (customer_id IN подзапросом по city = Berlin).',
         exampleSql: `SELECT id, order_date FROM orders
-WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Москва')
+WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin')
 ORDER BY order_date;`,
         checkSql: `SELECT id, order_date FROM orders
-WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Москва')
+WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin')
 ORDER BY order_date;`,
       },
       {

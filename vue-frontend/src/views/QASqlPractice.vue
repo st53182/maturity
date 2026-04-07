@@ -84,8 +84,8 @@
       </aside>
 
       <main class="sql-main">
-        <div v-if="successFlash" class="sql-banner sql-banner--success" role="status">
-          {{ $t('qa.sqlCorrect') }}
+        <div v-if="sqlCorrectCongrats" class="sql-banner sql-banner--success sql-banner--congrats" role="status">
+          {{ $t('qa.sqlCorrectCongrats') }}
         </div>
 
         <section class="sql-tables" aria-label="Демо-таблицы">
@@ -271,9 +271,8 @@ export default {
       resultMessage: '',
       resultColumns: [],
       resultRows: [],
-      successFlash: false,
+      sqlCorrectCongrats: false,
       lessonCompleteOpen: false,
-      advanceTimer: null,
       debounceTimer: null,
       suppressAutoRun: false,
     };
@@ -312,11 +311,13 @@ export default {
     activeLesson() {
       this.showHintSql = false;
       this.showCorrectSql = false;
+      this.sqlCorrectCongrats = false;
       this.syncEditorForTask();
     },
     activeTaskIndex() {
       this.showHintSql = false;
       this.showCorrectSql = false;
+      this.sqlCorrectCongrats = false;
       this.syncEditorForTask();
     },
     editorSql() {
@@ -338,10 +339,6 @@ export default {
     this.initDb();
   },
   beforeUnmount() {
-    if (this.advanceTimer) {
-      clearTimeout(this.advanceTimer);
-      this.advanceTimer = null;
-    }
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
@@ -538,11 +535,7 @@ export default {
       this.resultMessage = '';
       this.resultColumns = [];
       this.resultRows = [];
-      this.successFlash = false;
-      if (this.advanceTimer) {
-        clearTimeout(this.advanceTimer);
-        this.advanceTimer = null;
-      }
+      this.sqlCorrectCongrats = false;
 
       const sql = (this.editorSql || '').trim();
       if (!sql) {
@@ -582,24 +575,16 @@ export default {
 
         this.completedTasks = { ...this.completedTasks, [task.id]: true };
         this.saveProgress();
-        this.successFlash = true;
-        setTimeout(() => {
-          this.successFlash = false;
-        }, 1200);
 
         if (!this.execUserSqlOnFreshDbForPanel(sql)) {
           return;
         }
+        this.sqlCorrectCongrats = true;
 
         const L = this.currentLesson;
         const lastIdx = L ? L.tasks.length - 1 : 0;
         if (this.activeTaskIndex >= lastIdx) {
           this.lessonCompleteOpen = true;
-        } else {
-          this.advanceTimer = setTimeout(() => {
-            this.activeTaskIndex += 1;
-            this.advanceTimer = null;
-          }, 750);
         }
         return;
       }
@@ -710,6 +695,11 @@ export default {
   background: #ecfdf5;
   color: #047857;
   font-weight: 600;
+}
+
+.sql-banner--congrats {
+  font-size: 1.02rem;
+  line-height: 1.45;
 }
 
 .sql-layout {

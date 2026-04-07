@@ -475,6 +475,55 @@ export default {
     async resetDb() {
       await this.initDb();
     },
+    /**
+     * Сброс к сиду и выполнение SQL: последний SELECT в панель результата.
+     * @param {string} sql
+     * @param {{ lockRunError?: string }} [opts] если задано, при ошибке exec оставить это сообщение вместо текста исключения
+     * @returns {boolean} false если exec выбросил исключение
+     */
+    execUserSqlOnFreshDbForPanel(sql, opts) {
+      const lockRunError = opts && opts.lockRunError;
+      this.restoreDbFromSeed();
+      try {
+        const results = this.db.exec(sql);
+        if (results && results.length) {
+          let last = null;
+          for (let i = results.length - 1; i >= 0; i--) {
+            const block = results[i];
+            if (block.columns && block.columns.length) {
+              last = block;
+              break;
+            }
+          }
+          if (last) {
+            this.resultColumns = last.columns;
+            this.resultRows = last.values || [];
+            this.resultMessage = '';
+          } else {
+            this.resultColumns = [];
+            this.resultRows = [];
+            this.resultMessage = this.$t('qa.sqlNoSelectResult');
+          }
+        } else {
+          this.resultColumns = [];
+          this.resultRows = [];
+          this.resultMessage = this.$t('qa.sqlNoSelectResult');
+        }
+        this.refreshPreviews();
+        return true;
+      } catch (e) {
+        this.resultColumns = [];
+        this.resultRows = [];
+        this.resultMessage = '';
+        this.refreshPreviews();
+        if (lockRunError != null && String(lockRunError).length) {
+          this.runError = lockRunError;
+        } else {
+          this.runError = e.message || String(e);
+        }
+        return false;
+      }
+    },
     runSqlNow() {
       if (this.debounceTimer) {
         clearTimeout(this.debounceTimer);
@@ -520,15 +569,14 @@ export default {
       if (taskGraded) {
         const v = validateTaskWithCtor(this.sqlFactory, this.seedBytes, sql, task.checkSql);
         if (!v.ok) {
+          let lockMsg = this.$t('qa.sqlWrongResult');
           if (v.userError) {
-            this.runError = v.userError;
-            return;
+            lockMsg = v.userError;
+          } else if (v.messageKey) {
+            lockMsg = this.$t(v.messageKey);
           }
-          if (v.messageKey) {
-            this.runError = this.$t(v.messageKey);
-            return;
-          }
-          this.runError = this.$t('qa.sqlWrongResult');
+          this.runError = lockMsg;
+          this.execUserSqlOnFreshDbForPanel(sql, { lockRunError: lockMsg });
           return;
         }
 
@@ -539,29 +587,7 @@ export default {
           this.successFlash = false;
         }, 1200);
 
-        this.restoreDbFromSeed();
-        try {
-          const results = this.db.exec(sql);
-          if (results && results.length) {
-            let last = null;
-            for (let i = results.length - 1; i >= 0; i--) {
-              const block = results[i];
-              if (block.columns && block.columns.length) {
-                last = block;
-                break;
-              }
-            }
-            if (last) {
-              this.resultColumns = last.columns;
-              this.resultRows = last.values || [];
-            } else {
-              this.resultMessage = this.$t('qa.sqlNoSelectResult');
-            }
-          } else {
-            this.resultMessage = this.$t('qa.sqlNoSelectResult');
-          }
-        } catch (e) {
-          this.runError = e.message || String(e);
+        if (!this.execUserSqlOnFreshDbForPanel(sql)) {
           return;
         }
 

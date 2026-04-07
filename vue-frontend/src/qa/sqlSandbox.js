@@ -343,12 +343,30 @@ export function gridsMatch(columnsA, rowsA, columnsB, rowsB) {
 }
 
 /**
+ * Эталонные колонки есть в ответе пользователя (например SELECT * vs SELECT id, name):
+ * проецируем строки пользователя на имена/порядок эталона и сравниваем.
+ */
+function gridsMatchUserSupersetColumns(columnsUser, rowsUser, columnsRef, rowsRef) {
+  if (!columnsRef?.length || !columnsUser?.length) return false;
+  if (columnsUser.length < columnsRef.length) return false;
+  const idxs = columnsRef.map((rc) =>
+    columnsUser.findIndex((uc) => String(uc).toLowerCase() === String(rc).toLowerCase()),
+  );
+  if (idxs.some((i) => i < 0)) return false;
+  const projectedRows = (rowsUser || []).map((row) => idxs.map((i) => row[i]));
+  return gridsMatch(columnsRef, projectedRows, columnsRef, rowsRef);
+}
+
+/**
  * Сравнение результатов SELECT: сначала по именам колонок (порядок строк/колонок не важен),
- * иначе та же таблица значений при какой-то перестановке колонок ответа пользователя.
+ * иначе та же таблица значений при какой-то перестановке колонок ответа пользователя,
+ * иначе ответ с лишними колонками (SELECT *), если в нём есть все колонки эталона по имени.
  */
 export function gridsMatchRelaxed(columnsUser, rowsUser, columnsRef, rowsRef) {
   if (gridsMatch(columnsUser, rowsUser, columnsRef, rowsRef)) return true;
-  return gridsMatchByColumnPermutation(columnsUser, rowsUser, columnsRef, rowsRef);
+  if (gridsMatchByColumnPermutation(columnsUser, rowsUser, columnsRef, rowsRef)) return true;
+  if (gridsMatchUserSupersetColumns(columnsUser, rowsUser, columnsRef, rowsRef)) return true;
+  return false;
 }
 
 /**
@@ -410,7 +428,7 @@ export function validateTaskWithCtor(SQL, seedUint8Array, userSql, checkSql) {
   return { ok: true };
 }
 
-/** Урок с подзаданиями; checkSql — эталон для набора строк/значений (другой SQL с тем же результатом тоже засчитывается). */
+/** Урок с подзаданиями; checkSql — эталон для набора строк/значений (другой SQL с тем же результатом тоже засчитывается; SELECT * допустим, если в выборке есть все колонки эталона по имени). */
 export const SQL_LESSONS = [
   {
     id: 'l01',

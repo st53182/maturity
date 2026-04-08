@@ -129,9 +129,10 @@ else:
         }
     }
 
-# JWT
+# JWT (срок access-токена: по умолчанию 365 дней; переопределение: JWT_ACCESS_TOKEN_DAYS)
 app.config['JWT_SECRET_KEY'] = 'supersecretkey'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=365)
+_jwt_access_days = int(os.getenv('JWT_ACCESS_TOKEN_DAYS', '365'))
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=_jwt_access_days)
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=730)
 
 # Инициализация

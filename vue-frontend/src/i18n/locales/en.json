@@ -54,7 +54,9 @@
     "register": "Register",
     "forgotPassword": "Forgot password?",
     "contactUs": "Contact us at",
-    "weWillHelp": "and we will help you."
+    "weWillHelp": "and we will help you.",
+    "sessionExpired": "Your session has expired or the token is no longer valid. Sign in again to load data.",
+    "tokenLifetimeHint": "By default, your access token stays valid for 365 days after login unless the server sets a different value (JWT_ACCESS_TOKEN_DAYS)."
   },
   "dashboard": {
     "title": "Dashboard",

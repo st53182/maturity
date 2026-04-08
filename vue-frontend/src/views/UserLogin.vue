@@ -18,11 +18,15 @@
         </button>
       </div>
       <h2>{{ $t('auth.login') }}</h2>
+      <p v-if="sessionExpired" class="session-expired-banner" role="alert">
+        {{ $t('auth.sessionExpired') }}
+      </p>
       <form @submit.prevent="login">
         <input type="text" v-model="username" :placeholder="$t('auth.username')" required />
         <input type="password" v-model="password" :placeholder="$t('auth.password')" required />
         <button type="submit">{{ $t('auth.loginButton') }}</button>
       </form>
+      <p class="token-lifetime-hint">{{ $t('auth.tokenLifetimeHint') }}</p>
       <p class="register-link">{{ $t('auth.noAccount') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
       <div class="forgot-password-toggle">
   <button @click="showHelp = !showHelp" class="link-button">
@@ -42,6 +46,8 @@
 </template>
 
 <script>
+import { useAuthStore } from '@/stores/auth';
+
 export default {
   data() {
     return {
@@ -49,6 +55,11 @@ export default {
       password: '',
       showHelp: false,
     };
+  },
+  computed: {
+    sessionExpired() {
+      return this.$route.query.expired === '1';
+    },
   },
   methods: {
     async login() {
@@ -60,7 +71,8 @@ export default {
         });
         const data = await response.json();
         if (response.ok) {
-          localStorage.setItem('token', data.access_token);
+          const authStore = useAuthStore();
+          authStore.login(data.access_token);
           this.$router.push('/dashboard');
         } else {
           alert(data.message);
@@ -97,6 +109,26 @@ export default {
   max-width: 360px;
   width: 100%;
   position: relative;
+}
+
+.session-expired-banner {
+  background: #fff3cd;
+  color: #664d03;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: left;
+  border: 1px solid #ffecb5;
+}
+
+.token-lifetime-hint {
+  font-size: 12px;
+  color: #5f6368;
+  line-height: 1.4;
+  margin: 16px 0 8px;
+  text-align: left;
 }
 
 .language-switcher-login {

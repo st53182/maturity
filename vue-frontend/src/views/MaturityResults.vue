@@ -75,6 +75,13 @@
                 <textarea v-model="item.business_impact" class="plan-input" rows="2" />
                 <label class="plan-label">Эффект для заказчиков</label>
                 <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+                <label class="plan-label">Конкретные шаги (по одному на строку)</label>
+                <textarea
+                  class="plan-input"
+                  rows="6"
+                  :value="(item.steps || []).join('\n')"
+                  @input="syncPlanSteps(item, $event)"
+                />
               </div>
             </article>
             <button type="button" class="btn-rec" @click="addTeamInitiative">+ Добавить инициативу</button>
@@ -550,6 +557,10 @@ export default {
         ...this.teamInitiativeCollapsed,
         [idx]: !this.teamInitiativeCollapsed[idx]
       };
+    },
+    syncPlanSteps(item, e) {
+      const raw = e.target?.value ?? '';
+      item.steps = raw.split('\n').map((s) => s.trimEnd());
     },
     addTeamInitiative() {
       this.recommendationsPlan.initiatives.push({

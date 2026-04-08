@@ -61,6 +61,13 @@
               <textarea v-model="item.business_impact" class="plan-input" rows="2" />
               <label class="plan-label">Эффект для заказчиков</label>
               <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
+              <label class="plan-label">Конкретные шаги (по одному на строку)</label>
+              <textarea
+                class="plan-input"
+                rows="6"
+                :value="(item.steps || []).join('\n')"
+                @input="syncGroupPlanSteps(item, $event)"
+              />
             </div>
             <p v-else class="muted small initiative-preview">
               {{ item.title || 'Без названия' }} · {{ item.owner || 'Владелец не указан' }}
@@ -530,6 +537,10 @@ export default {
         ...this.initiativeCollapsed,
         [idx]: !this.initiativeCollapsed[idx]
       };
+    },
+    syncGroupPlanSteps(item, e) {
+      const raw = e.target?.value ?? '';
+      item.steps = raw.split('\n').map((s) => s.trimEnd());
     },
     addInitiative() {
       this.groupPlan.initiatives.push({

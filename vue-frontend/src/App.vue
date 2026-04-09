@@ -272,7 +272,7 @@
 <script>
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
-import { computed, ref, watch, onBeforeUnmount } from "vue";
+import { computed, ref, watch, onBeforeUnmount, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { syncI18nFallback } from "@/i18n";
@@ -374,7 +374,18 @@ export default {
       }
     });
 
+    let desktopNavMql = null;
+    const onDesktopNavMql = (e) => {
+      if (e.matches) showMobileMenu.value = false;
+    };
+
+    onMounted(() => {
+      desktopNavMql = window.matchMedia("(min-width: 769px)");
+      desktopNavMql.addEventListener("change", onDesktopNavMql);
+    });
+
     onBeforeUnmount(() => {
+      if (desktopNavMql) desktopNavMql.removeEventListener("change", onDesktopNavMql);
       disconnectGlobalChat();
       clearTimeout(toastTimer);
     });
@@ -795,8 +806,8 @@ export default {
   gap: 15px;
 }
 
-/* Mobile Hamburger Button */
-.mobile-hamburger {
+/* Mobile hamburger: hidden on desktop (same specificity as revolut-refresh #app button rules) */
+#app button.mobile-hamburger {
   display: none;
   position: fixed;
   top: 20px;
@@ -861,16 +872,29 @@ export default {
 .mobile-menu-header {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
-  padding: 20px;
+  padding: 14px 12px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 .mobile-menu-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-menu-header .mobile-language-switcher {
+  flex-shrink: 0;
+}
+
+.mobile-menu-header .mobile-menu-close {
+  flex-shrink: 0;
 }
 
 .mobile-menu-close {
@@ -925,7 +949,7 @@ export default {
 .lang-btn-mobile:focus-visible,
 .mobile-menu-btn:focus-visible,
 .mobile-menu-close:focus-visible,
-.mobile-hamburger:focus-visible {
+#app button.mobile-hamburger:focus-visible {
   outline: 3px solid rgba(32, 90, 255, 0.55);
   outline-offset: 2px;
 }
@@ -1106,7 +1130,7 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .mobile-hamburger {
+  #app button.mobile-hamburger {
     display: flex !important;
   }
   

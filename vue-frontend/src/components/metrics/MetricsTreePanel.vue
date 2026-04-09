@@ -30,6 +30,7 @@
           :selectable="true"
           :selected-id-a="selectedMetricA"
           :selected-id-b="selectedMetricB"
+          :ui-lang="resolvedUiLang"
           @toggle="toggleNode"
           @select-a="selectedMetricA = $event"
           @select-b="selectedMetricB = $event"
@@ -39,32 +40,32 @@
 
     <div class="mtp-ai-grid">
       <div class="mtp-ai-card">
-        <h4>Разъяснение метрики</h4>
-        <label class="mtp-label">Метрика</label>
+        <h4>{{ $t("metricsTree.explainTitle") }}</h4>
+        <label class="mtp-label">{{ $t("metricsTree.metricLabel") }}</label>
         <select v-model="selectedMetricA" class="mtp-input">
-          <option value="">Выберите метрику…</option>
+          <option value="">{{ $t("metricsTree.selectMetric") }}</option>
           <option v-for="m in metricOptions" :key="m.id" :value="m.id">
             {{ optionLabel(m) }}
           </option>
         </select>
         <button type="button" class="mtp-btn mtp-btn-primary" :disabled="aiLoadingExplain || !selectedMetricA" @click="askExplainMetric">
-          {{ aiLoadingExplain ? "Обработка..." : "Разъяснить метрику" }}
+          {{ aiLoadingExplain ? $t("metricsTree.processing") : $t("metricsTree.explainBtn") }}
         </button>
         <div v-if="explainResult" class="mtp-ai-result">{{ explainResult }}</div>
       </div>
 
       <div class="mtp-ai-card">
-        <h4>Связь между метриками</h4>
-        <label class="mtp-label">Метрика A</label>
+        <h4>{{ $t("metricsTree.relationshipTitle") }}</h4>
+        <label class="mtp-label">{{ $t("metricsTree.metricA") }}</label>
         <select v-model="selectedMetricA" class="mtp-input">
-          <option value="">Выберите метрику…</option>
+          <option value="">{{ $t("metricsTree.selectMetric") }}</option>
           <option v-for="m in metricOptions" :key="'a-' + m.id" :value="m.id">
             {{ optionLabel(m) }}
           </option>
         </select>
-        <label class="mtp-label">Метрика B</label>
+        <label class="mtp-label">{{ $t("metricsTree.metricB") }}</label>
         <select v-model="selectedMetricB" class="mtp-input">
-          <option value="">Выберите метрику…</option>
+          <option value="">{{ $t("metricsTree.selectMetric") }}</option>
           <option v-for="m in metricOptions" :key="'b-' + m.id" :value="m.id">
             {{ optionLabel(m) }}
           </option>
@@ -75,7 +76,7 @@
           :disabled="aiLoadingRel || !selectedMetricA || !selectedMetricB || selectedMetricA === selectedMetricB"
           @click="askRelationship"
         >
-          {{ aiLoadingRel ? "Обработка..." : "Пояснить связь" }}
+          {{ aiLoadingRel ? $t("metricsTree.processing") : $t("metricsTree.relationshipBtn") }}
         </button>
         <div v-if="relationshipResult" class="mtp-ai-result">{{ relationshipResult }}</div>
       </div>
@@ -156,7 +157,9 @@ export default {
   },
   methods: {
     optionLabel(m) {
-      return `${"  ".repeat(Math.max(0, m.level - 1))}${m.name}${m.nameRu ? ` (${m.nameRu})` : ""}`;
+      const indent = "  ".repeat(Math.max(0, m.level - 1));
+      if (this.resolvedUiLang === "en") return `${indent}${m.name}`;
+      return `${indent}${m.name}${m.nameRu ? ` (${m.nameRu})` : ""}`;
     },
     toggleNode(id) {
       this.expandedMap = { ...this.expandedMap, [id]: !this.expandedMap[id] };

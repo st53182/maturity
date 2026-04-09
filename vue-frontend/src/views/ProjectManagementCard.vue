@@ -21,7 +21,7 @@
             <table class="tasks-table">
               <thead>
                 <tr>
-                  <th class="col-num">№</th>
+                  <th class="col-num">{{ $t('projectCard.colNum') }}</th>
                   <th class="col-task">{{ $t('projectCard.colTask') }}</th>
                   <th class="col-status">{{ $t('projectCard.colStatus') }}</th>
                   <th class="col-deadline">{{ $t('projectCard.colDeadline') }}</th>
@@ -58,7 +58,7 @@
             <h3>MUST</h3>
             <ul>
               <li v-for="(item, i) in form.prioritiesMust" :key="'m'+i">
-                <input v-model="form.prioritiesMust[i]" placeholder="Задача" />
+                <input v-model="form.prioritiesMust[i]" :placeholder="$t('projectCard.taskPh')" />
               </li>
             </ul>
             <button type="button" class="add-item-btn" @click="form.prioritiesMust.push('')">+</button>
@@ -85,11 +85,11 @@
 
         <!-- ③ Зависимости — рисуемая схема как в draw.io -->
         <section class="card-section section-deps">
-          <h2><span class="section-num">③</span> Зависимости</h2>
-          <p class="section-hint">Добавьте этапы, перетащите блоки на холсте. Связи: выберите «От» и «К» или кликните два этапа подряд для создания стрелки.</p>
+          <h2><span class="section-num">③</span> {{ $t('projectCard.section3') }}</h2>
+          <p class="section-hint">{{ $t('projectCard.section3Hint') }}</p>
           <div class="deps-toolbar">
-            <button type="button" class="add-row-btn" @click="addDependencyNode">+ Добавить этап</button>
-            <span class="deps-mode-hint" v-if="linkFromId">Кликните этап-цель для связи</span>
+            <button type="button" class="add-row-btn" @click="addDependencyNode">{{ $t('projectCard.addStage') }}</button>
+            <span class="deps-mode-hint" v-if="linkFromId">{{ $t('projectCard.linkHint') }}</span>
           </div>
           <div ref="depsDiagram" class="deps-diagram-canvas" @click.self="linkFromId = null">
             <svg class="deps-arrows-layer" :viewBox="depsSvgViewBox" preserveAspectRatio="none">
@@ -347,11 +347,21 @@ export default {
       document.removeEventListener('mouseup', this.onDiagramMouseUp);
     },
     statusLabel(s) {
-      const l = { done: 'Готово', progress: 'В работе', risk: 'Риск', waiting: 'Ожидание' };
+      const l = {
+        done: this.$t('projectCard.tlDone'),
+        progress: this.$t('projectCard.tlProgress'),
+        risk: this.$t('projectCard.tlRisk'),
+        waiting: this.$t('projectCard.tlWaiting'),
+      };
       return l[s] || s;
     },
     riskLabel(r) {
-      const l = { normal: 'Норма', medium: 'Средний', high: 'Высокий', critical: 'Критический' };
+      const l = {
+        normal: this.$t('projectCard.riskNormal'),
+        medium: this.$t('projectCard.riskMedium'),
+        high: this.$t('projectCard.riskHigh'),
+        critical: this.$t('projectCard.riskCritical'),
+      };
       return l[r] || r;
     },
     addTask() {

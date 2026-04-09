@@ -22,6 +22,7 @@
         :selected-id-a="selectedIdA"
         :selected-id-b="selectedIdB"
         :selectable="selectable"
+        :ui-lang="uiLang"
         @toggle="$emit('toggle', $event)"
         @select-a="$emit('select-a', $event)"
         @select-b="$emit('select-b', $event)"
@@ -49,6 +50,7 @@ export default {
       return !!this.expandedMap[this.node.id];
     },
     label() {
+      if (this.uiLang === "en") return this.node.name || "";
       return `${this.node.name}${this.node.nameRu ? ` (${this.node.nameRu})` : ""}`;
     },
   },

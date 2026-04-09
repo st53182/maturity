@@ -115,6 +115,7 @@
 <script>
 import axios from 'axios';
 import { agilePracticeCategories } from '@/data/agilePractices.js';
+import { agilePracticeCategoriesEn } from '@/data/agilePracticesEn.js';
 import { renderAiMarkdown } from '@/utils/renderAiMarkdown.js';
 
 export default {
@@ -127,12 +128,18 @@ export default {
     };
   },
   computed: {
+    agileLocaleCategories() {
+      const loc = this.$i18n.locale;
+      const s = typeof loc === 'string' ? loc : loc?.value || 'ru';
+      return s === 'en' ? agilePracticeCategoriesEn : agilePracticeCategories;
+    },
     filteredCategories() {
       const q = (this.query || '').toLowerCase();
+      const source = this.agileLocaleCategories;
       if (!q) {
-        return agilePracticeCategories;
+        return source;
       }
-      return agilePracticeCategories
+      return source
         .map((cat) => ({
           ...cat,
           practices: cat.practices.filter((p) => {
@@ -201,7 +208,8 @@ export default {
       s.followUpPending = !!isFollowUp;
       s.error = '';
       try {
-        const locale = (this.$i18n.locale || 'ru').toString();
+        const loc = this.$i18n.locale;
+        const locale = (typeof loc === 'string' ? loc : loc?.value || 'ru').toString();
         const { data } = await axios.post(
           '/api/agile-tools/ask',
           {

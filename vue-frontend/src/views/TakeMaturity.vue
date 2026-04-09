@@ -12,10 +12,10 @@
         <p v-if="survey.team_name" class="team-name">{{ survey.team_name }}</p>
         <div class="header-tools">
           <button v-if="survey.business_metrics_glossary && survey.business_metrics_glossary.length" type="button" class="glossary-toggle" @click="showGlossary = !showGlossary">
-            {{ showGlossary ? 'Скрыть глоссарий метрик' : 'Что значат метрики (глоссарий)' }}
+            {{ showGlossary ? $t('maturity.hideGlossary') : $t('maturity.showGlossary') }}
           </button>
           <button type="button" class="glossary-toggle" @click="showMetricsTree = !showMetricsTree">
-            {{ showMetricsTree ? 'Скрыть древо метрик' : 'Показать древо метрик' }}
+            {{ showMetricsTree ? $t('maturity.hideMetricsTree') : $t('maturity.showMetricsTree') }}
           </button>
         </div>
         <div v-if="showGlossary && survey.business_metrics_glossary" class="glossary-block">
@@ -25,8 +25,9 @@
         </div>
         <MetricsTreePanel
           v-if="showMetricsTree"
-          title="Древо метрик (без выхода из опроса)"
+          :title="$t('maturity.metricsTreeInlineTitle')"
           :survey-token="token"
+          :ui-lang="surveyLang"
           compact
           class="survey-metrics-tree"
         />
@@ -49,7 +50,7 @@
                 :aria-expanded="!!expandedWhy[q.id]"
                 @click="toggleWhy(q.id)"
               >
-                Почему это важно?
+                {{ $t('maturity.whyImportantBtn') }}
               </button>
               <button
                 type="button"
@@ -57,10 +58,10 @@
                 :disabled="clarifyLoading === q.id"
                 @click="askClarify(q)"
               >
-                {{ clarifyLoading === q.id ? '...' : 'Попросить разъяснения' }}
+                {{ clarifyLoading === q.id ? '...' : $t('maturity.askClarify') }}
               </button>
               <div v-if="q.why_important" class="question-why-hint" :class="{ visible: expandedWhy[q.id] }">
-                <span class="why-label">Почему это важно:</span> {{ q.why_important }}
+                <span class="why-label">{{ $t('maturity.whyImportantLabel') }}</span> {{ q.why_important }}
               </div>
             </div>
             <div class="yes-no">
@@ -102,32 +103,32 @@
             </div>
 
             <div class="comment-block">
-              <label class="comment-label">Комментарий (опционально)</label>
+              <label class="comment-label">{{ $t('maturity.commentLabel') }}</label>
               <textarea
                 v-model="comments[q.id]"
                 class="comment-input"
                 :disabled="answers[q.id] === null || answers[q.id] === undefined"
-                placeholder="Например: контекст, примеры, почему ответ такой…"
+                :placeholder="$t('maturity.commentPlaceholder')"
                 rows="2"
               />
             </div>
           </div>
           <div v-if="clarifyResult && clarifyResult.id === q.id" class="clarify-block">
-              <strong>Разъяснение (на примере банковских команд):</strong>
+              <strong>{{ $t('maturity.clarifyLead') }}</strong>
               <p class="clarify-text">{{ clarifyResult.content }}</p>
             </div>
           <div v-if="q.business_metrics" class="info-block info-business-metrics">
-            <div class="info-block-title">Бизнес-метрики</div>
+            <div class="info-block-title">{{ $t('maturity.businessMetricsTitle') }}</div>
             <p class="info-block-text">{{ q.business_metrics }}</p>
             <p class="business-metrics-disclaimer">{{ survey.business_metrics_disclaimer }}</p>
           </div>
           <div v-if="q.metrics_impact || q.negative_for_business" class="question-info">
             <div v-if="q.metrics_impact" class="info-block info-metrics">
-              <div class="info-block-title">Метрики влияния</div>
+              <div class="info-block-title">{{ $t('maturity.metricsImpactTitle') }}</div>
               <p class="info-block-text">{{ q.metrics_impact }}</p>
             </div>
             <div v-if="q.negative_for_business" class="info-block info-negative">
-              <div class="info-block-title">Если у команды проблемы в этом</div>
+              <div class="info-block-title">{{ $t('maturity.negativeIfWeakTitle') }}</div>
               <p class="info-block-text">{{ q.negative_for_business }}</p>
             </div>
           </div>
@@ -220,6 +221,15 @@ export default {
     },
     maturityBase() {
       return this.variant === "new" ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
+    },
+    surveyLang() {
+      try {
+        const loc = this.$i18n?.locale;
+        const s = typeof loc === "string" ? loc : loc?.value;
+        return s === "en" ? "en" : "ru";
+      } catch (_e) {
+        return typeof localStorage !== "undefined" && localStorage.getItem("language") === "en" ? "en" : "ru";
+      }
     }
   },
   async mounted() {
@@ -229,7 +239,7 @@ export default {
   methods: {
     async loadSurvey() {
       try {
-        const res = await axios.get(`/api/maturity/${this.token}`);
+        const res = await axios.get(`/api/maturity/${this.token}`, { params: { lang: this.surveyLang } });
         this.survey = res.data;
         this.survey.business_metrics_disclaimer = res.data.business_metrics_disclaimer || '';
         this.survey.business_metrics_glossary = res.data.business_metrics_glossary || [];
@@ -238,7 +248,7 @@ export default {
           if (this.comments[q.id] === undefined) this.comments[q.id] = '';
         });
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка загрузки опроса';
+        this.error = e.response?.data?.error || this.$t('maturity.loadSurveyError');
       } finally {
         this.loading = false;
       }
@@ -254,11 +264,12 @@ export default {
       this.clarifyResult = null;
       try {
         const res = await axios.post(`/api/maturity/${this.token}/clarify`, {
-          question_text: q.text
+          question_text: q.text,
+          lang: this.surveyLang,
         });
         this.clarifyResult = { id: q.id, content: res.data.content || '' };
       } catch (e) {
-        this.clarifyResult = { id: q.id, content: 'Ошибка: ' + (e.response?.data?.error || 'Сервис недоступен') };
+        this.clarifyResult = { id: q.id, content: this.$t('maturity.clarifyErrorPrefix') + ' ' + (e.response?.data?.error || this.$t('maturity.serviceUnavailable')) };
       } finally {
         this.clarifyLoading = null;
       }
@@ -280,7 +291,7 @@ export default {
         await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr, comments: commentsArr });
         this.$router.push(`${this.maturityBase}/results`);
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка отправки';
+        this.error = e.response?.data?.error || this.$t('maturity.submitSurveyError');
       } finally {
         this.submitting = false;
       }

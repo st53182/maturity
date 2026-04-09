@@ -21,6 +21,13 @@ from maturity_questions import (
     BUSINESS_METRICS_DISCLAIMER,
     BUSINESS_METRICS_GLOSSARY,
 )
+from maturity_survey_locale import (
+    resolve_survey_lang,
+    localize_question_dict,
+    localize_related_roles,
+    localized_business_metrics_disclaimer,
+    localized_business_metrics_glossary,
+)
 
 maturity_bp = Blueprint('maturity_link', __name__)
 _log = logging.getLogger(__name__)
@@ -564,11 +571,18 @@ def create_maturity_link():
 @maturity_bp.route('/api/maturity/<token>', methods=['GET'])
 def get_maturity_survey(token):
     """Публично: получить опрос по токену (вопросы с id 0..N-1, по 10 на страницу)."""
+    lang = resolve_survey_lang(request)
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
-        return jsonify({'error': 'Ссылка не найдена или недействительна'}), 404
-    questions = [
-        {
+        err = (
+            'Link not found or invalid'
+            if lang == 'en'
+            else 'Ссылка не найдена или недействительна'
+        )
+        return jsonify({'error': err}), 404
+    questions = []
+    for i, q in enumerate(MATURITY_QUESTIONS):
+        base = {
             'id': i,
             'category': q['category'],
             'theme': q['theme'],
@@ -579,15 +593,19 @@ def get_maturity_survey(token):
             'business_metrics': q.get('business_metrics') or DEFAULT_BUSINESS_METRICS,
             'related_roles': ROLE_BY_THEME.get(q['theme'], []),
         }
-        for i, q in enumerate(MATURITY_QUESTIONS)
-    ]
+        base = localize_question_dict(i, base, lang)
+        base['related_roles'] = localize_related_roles(base['related_roles'], lang)
+        questions.append(base)
     return jsonify({
         'team_name': session.team_name,
         'group_name': session.group_name,
         'completed': session.completed_at is not None,
         'questions': questions,
-        'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
-        'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,
+        'lang': lang,
+        'business_metrics_disclaimer': localized_business_metrics_disclaimer(lang),
+        'business_metrics_glossary': localized_business_metrics_glossary(
+            BUSINESS_METRICS_GLOSSARY, lang
+        ),
     })
 
 
@@ -668,6 +686,7 @@ def get_maturity_results(token):
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
+    lang = resolve_survey_lang(request)
     answers_list, comments_list = _extract_answers_and_comments(session.answers)
     if not session.completed_at or not answers_list:
         return jsonify({'error': 'Оценка ещё не пройдена'}), 400
@@ -677,27 +696,32 @@ def get_maturity_results(token):
     results = _results_from_answers(normalized)
     completed_at = session.completed_at.isoformat() if session.completed_at else None
     questions = [
-        {
-            'id': i,
-            'theme': q['theme'],
-            'text': q['text'],
-            'why_important': q.get('why_important', ''),
-            'metrics_impact': q.get('metrics_impact', ''),
-            'negative_for_business': q.get('negative_for_business', ''),
-            'business_metrics': q.get('business_metrics') or DEFAULT_BUSINESS_METRICS,
-        }
+        localize_question_dict(
+            i,
+            {
+                'id': i,
+                'theme': q['theme'],
+                'text': q['text'],
+                'why_important': q.get('why_important', ''),
+                'metrics_impact': q.get('metrics_impact', ''),
+                'negative_for_business': q.get('negative_for_business', ''),
+                'business_metrics': q.get('business_metrics') or DEFAULT_BUSINESS_METRICS,
+            },
+            lang,
+        )
         for i, q in enumerate(MATURITY_QUESTIONS)
     ]
+    team_default = 'Team' if lang == 'en' else 'Команда'
     return jsonify({
-        'team_name': session.team_name or 'Команда',
+        'team_name': session.team_name or team_default,
         'completed_at': completed_at,
         'results': results,
         'radar_groups': RADAR_GROUPS,
         'answers': normalized,
         'comments': comments_list or [None] * QUESTIONS_COUNT,
         'questions': questions,
-        'business_metrics_disclaimer': BUSINESS_METRICS_DISCLAIMER,
-        'business_metrics_glossary': BUSINESS_METRICS_GLOSSARY,
+        'business_metrics_disclaimer': localized_business_metrics_disclaimer(lang),
+        'business_metrics_glossary': localized_business_metrics_glossary(BUSINESS_METRICS_GLOSSARY, lang),
         'recommendations_html': session.recommendations_html or '',
         'recommendations_plan': _normalize_group_plan(session.recommendations_plan_json),
         'dont_know_recommendations_html': session.dont_know_recommendations_html or '',
@@ -775,6 +799,17 @@ def get_maturity_recommendations(token):
 - **Не давай** рекомендаций в духе «впервые ввести/начать ретро, дейли, планирование спринта, бэклог, ревью» как будто их нет. Вместо этого — **докрутить качество**: формат, глубина, метрики, договорённости, DoR/DoD, фокус на ценности, снятие формализма.
 - План строй **строго от переданных баллов по темам**: приоритет — категории с **низкой суммой** и малым числом «да»; названия инициатив и шаги должны отражать **конкретные слабые темы** из сводки (можно упоминать тему в title/objective). Для сильных тем — 0–1 инициатива на усиление, без обучения «с нуля».
 
+Тип команд (важно):
+- Ориентируйся на команды **обеспечения поставки** и **внутренние платформенные/сервисные** (enablement, общие сервисы, платформа, интеграции, инфраструктура как продукт для внутренних заказчиков), а не на классические **продуктовые** команды у конечного клиента.
+- Примеры ценности: короче очередь на поставку для продуктовых команд, стабильнее пайплайн и релизы, быстрее готовность API/среды/интеграции, меньше ожидание внутреннего заказчика. Не уводи фокус только в продуктовые метрики конечного клиента (конверсия в приложении и т.п.), если это не вытекает из темы оценки.
+
+Приоритет инициатив (сначала поток):
+- **В первую очередь** предлагай инициативы, которые сокращают **Lead Time** (время от запроса до результата в эксплуатации у потребителя ценности) и **T2M / Time-to-Market** (скорость вывода изменений; для enablement — время до готовности возможности для смежных команд).
+- Минимум **3 из 5** инициатив: в поле `business_impact` обязательно тег **[Lead Time]** и/или **[T2M]** (можно оба). Остальные две не должны противоречить приоритету потока.
+
+Язык и термины:
+- Весь ответ на русском. Любой **англоязычный термин** (например Sprint Goal, backlog, DoR, DoD, CI/CD, WIP) при **первом упоминании** в diagnosis, title, objective, steps сопровождай **кратким пояснением в скобках** по-русскому.
+
 Требования:
 - Сфокусируйся на категориях с низким баллом; для сильных сторон можно дать 1–2 совета по усилению.
 - Ровно 5 инициатив (не больше и не меньше).
@@ -815,7 +850,7 @@ def get_maturity_recommendations(token):
   ],
   "risks": ["..."]
 }}
-- Пиши только на русском."""
+- Пиши по-русски; при необходимости допустимы англоязычные термины с кратким русским пояснением в скобках при первом упоминании (согласно блоку «Язык и термины» выше)."""
 
     rec_models = _maturity_plan_model_chain("MATURITY_TEAM_PLAN_MODEL")
     _log.info(
@@ -828,7 +863,7 @@ def get_maturity_recommendations(token):
             client,
             rec_models,
             messages=[
-                {"role": "system", "content": "Ты Agile-коуч. Команда уже работает в Scrum в каком-то виде; ты предлагаешь улучшения по слабым темам оценки, а не внедрение базовых ритуалов с нуля. Исполнимые шаги, явная выгода для бизнеса, русский язык."},
+                {"role": "system", "content": "Ты Agile-коуч для команд обеспечения поставки и платформенных команд. Приоритет — сокращение Lead Time и T2M. Команда уже в Scrum; улучшения по слабым темам оценки. Исполнимые шаги; англотермины с русскими пояснениями в скобках при первом упоминании."},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.6,
@@ -929,6 +964,8 @@ def get_maturity_recommendations_dont_know(token):
 
 Контекст: команда **уже в каком-то виде живёт в Scrum**; «не знаю» значит неуверенность в **качестве/наличии практики**, а не отсутствие Scrum целиком. Не предлагай «первую ретро/первый дейли» — предлагай **прояснение и аудит**: что уже делается, как проверить, как зафиксировать договорённости.
 
+Тип команд: в первую очередь **обеспечение поставки / платформа / внутренние сервисы**; примеры прояснения — как это влияет на **Lead Time** и **T2M** для внутренних потребителей. Минимум 3 из 5 инициатив: в `business_impact` теги **[Lead Time]** и/или **[T2M]**. Англотермины при первом упоминании — с кратким русским пояснением в скобках.
+
 Дай практичные советы на **следующий квартал**: что сделать, чтобы команда **поняла**, есть ли это у них (короткие проверки, вопросы на существующих ретро, лёгкий опрос, наблюдение за потоком, выборка артефактов и т.д.).
 Ровно 5 инициатив (не больше и не меньше). В каждой инициативе steps: 5–7 исполнимых шагов (глагол + артефакт/канал + срок/частота + роль), без размытых формулировок.
 business_impact: начни с 1–2 тегов из [T2M], [Lead Time], [Гибкость приоритетов], [Предсказуемость поставки], [Cost-to-serve], [Качество/дефектность], [Удержание/NPS] и кратко опиши, зачем бизнесу прояснять эту практику (без выдуманных цифр).
@@ -961,14 +998,14 @@ customer_impact: что получит заказчик, когда команд
   ],
   "risks": ["..."]
 }}
-Только русский язык."""
+Ответ по-русски; при необходимости допустимы англоязычные термины с кратким русским пояснением в скобках при первом упоминании."""
 
     try:
         response = _chat_completions_with_model_fallback(
             client,
             _maturity_plan_model_chain("MATURITY_TEAM_PLAN_MODEL"),
             messages=[
-                {"role": "system", "content": "Ты Agile-коуч. Команда уже использует Scrum в каком-то виде; ты помогаешь прояснить неопределённость по пунктам оценки без советов «ввести базовые ритуалы с нуля». Русский язык."},
+                {"role": "system", "content": "Ты Agile-коуч для команд обеспечения поставки и платформы. Проясняешь «не знаю» с прицелом на Lead Time и T2M для внутренних заказчиков. Англотермины — с русскими пояснениями в скобках."},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.55,
@@ -1004,17 +1041,36 @@ customer_impact: что получит заказчик, когда команд
 def clarify_question(token):
     """Разъяснение вопроса нейросетью с примерами для банковской сферы (продуктовые, платформенные, сервисные команды)."""
     import os
+    data = request.get_json() or {}
+    lang_raw = str(data.get('lang') or '').strip().lower()
+    lang = 'en' if lang_raw == 'en' else 'ru'
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
-        return jsonify({'error': 'Ссылка не найдена'}), 404
+        err = 'Link not found' if lang == 'en' else 'Ссылка не найдена'
+        return jsonify({'error': err}), 404
     if not os.getenv('OPENAI_API_KEY'):
-        return jsonify({'error': 'Сервис разъяснений не настроен (OPENAI_API_KEY)'}), 503
-    data = request.get_json() or {}
+        err = 'Explanations service is not configured (OPENAI_API_KEY)' if lang == 'en' else 'Сервис разъяснений не настроен (OPENAI_API_KEY)'
+        return jsonify({'error': err}), 503
     question_text = data.get('question_text', '').strip() or data.get('text', '').strip()
     if not question_text:
-        return jsonify({'error': 'Укажите question_text'}), 400
+        err = 'Provide question_text' if lang == 'en' else 'Укажите question_text'
+        return jsonify({'error': err}), 400
     client = _openai_client()
-    prompt = f"""Разъясни, что имеется в виду в этом утверждении оценки зрелости команды. Приведи конкретные примеры в банковской сфере для трёх типов команд:
+    if lang == 'en':
+        prompt = f"""Explain what this team maturity assessment statement means. Give concrete examples from banking for three team types:
+1) product teams (client-facing products — cards, loans, apps);
+2) platform teams (internal platforms, API, infrastructure);
+3) service teams (support, operations, services for internal stakeholders).
+
+Statement: «{question_text}»
+
+Answer briefly in English with 1–2 examples per team type where appropriate."""
+        system_msg = (
+            "You are an expert in Agile and banking delivery. You explain maturity assessment items with examples from banks "
+            "(Citibank, Deutsche Bank, etc.)."
+        )
+    else:
+        prompt = f"""Разъясни, что имеется в виду в этом утверждении оценки зрелости команды. Приведи конкретные примеры в банковской сфере для трёх типов команд:
 1) продуктовые команды (разработка продуктов для клиентов — карты, кредиты, приложения);
 2) платформенные команды (внутренние платформы, API, инфраструктура);
 3) сервисные команды (поддержка, операции, сервисы для внутренних заказчиков).
@@ -1022,12 +1078,13 @@ def clarify_question(token):
 Утверждение: «{question_text}»
 
 Ответ дай кратко, по-русски, с 1–2 примерами на каждый тип команды где уместно."""
+        system_msg = "Ты эксперт по Agile и банковской разработке. Разъясняешь вопросы оценки зрелости с примерами из банков (Citibank, Deutsche Bank и др.)."
     try:
         response = _chat_completions_with_model_fallback(
             client,
             _openai_chat_model_list("MATURITY_TEAM_PLAN_MODEL", "gpt-4.1"),
             messages=[
-                {"role": "system", "content": "Ты эксперт по Agile и банковской разработке. Разъясняешь вопросы оценки зрелости с примерами из банков (Citibank, Deutsche Bank и др.)."},
+                {"role": "system", "content": system_msg},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.5,
@@ -1042,21 +1099,40 @@ def clarify_question(token):
 @maturity_bp.route('/api/metrics-tree/explain', methods=['POST'])
 def metrics_tree_explain():
     import os
-    if not os.getenv('OPENAI_API_KEY'):
-        return jsonify({'error': 'Сервис разъяснений не настроен (OPENAI_API_KEY)'}), 503
     data = request.get_json() or {}
+    lang_raw = str(data.get('lang') or '').strip().lower()
+    lang = 'en' if lang_raw == 'en' else 'ru'
+    if not os.getenv('OPENAI_API_KEY'):
+        err = 'Explanations service is not configured (OPENAI_API_KEY)' if lang == 'en' else 'Сервис разъяснений не настроен (OPENAI_API_KEY)'
+        return jsonify({'error': err}), 503
     survey_token = data.get('survey_token')
     if not _metrics_tree_access_allowed(survey_token=survey_token):
-        return jsonify({'error': 'Доступ запрещён'}), 403
+        err = 'Access denied' if lang == 'en' else 'Доступ запрещён'
+        return jsonify({'error': err}), 403
     metric_key = str(data.get('metric_key') or '').strip()
     metric_name = str(data.get('metric_name') or '').strip()
     metric_name_ru = str(data.get('metric_name_ru') or '').strip()
     if not metric_key and not metric_name:
-        return jsonify({'error': 'Укажите metric_key или metric_name'}), 400
+        err = 'Provide metric_key or metric_name' if lang == 'en' else 'Укажите metric_key или metric_name'
+        return jsonify({'error': err}), 400
 
     client = _openai_client()
     metric_title = f"{metric_name} ({metric_name_ru})" if metric_name_ru else metric_name
-    prompt = f"""Объясни метрику простым языком для продуктовой команды.
+    if lang == 'en':
+        prompt = f"""Explain this metric in plain language for a product team.
+
+Metric: {metric_title}
+Key: {metric_key or 'n/a'}
+
+Give a structured answer in English:
+1) What it measures;
+2) Why it matters for profit/revenue/cost;
+3) How it is usually measured (formula or practical approach);
+4) What team actions affect it in the next 2–4 weeks.
+Be concise and practical."""
+        system_msg = "You are an Agile/Product consultant. You give precise, practical metric explanations."
+    else:
+        prompt = f"""Объясни метрику простым языком для продуктовой команды.
 
 Метрика: {metric_title}
 Ключ: {metric_key or 'n/a'}
@@ -1067,12 +1143,13 @@ def metrics_tree_explain():
 3) Как обычно измеряют (формула или практичный способ);
 4) Какие действия команды влияют на метрику в ближайшие 2-4 недели.
 Кратко, по делу, без воды."""
+        system_msg = "Ты Agile/Product консультант. Даешь точные прикладные разъяснения метрик."
     try:
         response = _chat_completions_with_model_fallback(
             client,
             _openai_chat_model_list("METRICS_TREE_MODEL", "gpt-4.1"),
             messages=[
-                {"role": "system", "content": "Ты Agile/Product консультант. Даешь точные прикладные разъяснения метрик."},
+                {"role": "system", "content": system_msg},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.35,
@@ -1087,19 +1164,24 @@ def metrics_tree_explain():
 @maturity_bp.route('/api/metrics-tree/relationship', methods=['POST'])
 def metrics_tree_relationship():
     import os
-    if not os.getenv('OPENAI_API_KEY'):
-        return jsonify({'error': 'Сервис разъяснений не настроен (OPENAI_API_KEY)'}), 503
     data = request.get_json() or {}
+    lang_raw = str(data.get('lang') or '').strip().lower()
+    lang = 'en' if lang_raw == 'en' else 'ru'
+    if not os.getenv('OPENAI_API_KEY'):
+        err = 'Explanations service is not configured (OPENAI_API_KEY)' if lang == 'en' else 'Сервис разъяснений не настроен (OPENAI_API_KEY)'
+        return jsonify({'error': err}), 503
     survey_token = data.get('survey_token')
     if not _metrics_tree_access_allowed(survey_token=survey_token):
-        return jsonify({'error': 'Доступ запрещён'}), 403
+        err = 'Access denied' if lang == 'en' else 'Доступ запрещён'
+        return jsonify({'error': err}), 403
 
     metric_a_name = str(data.get('metric_a_name') or '').strip()
     metric_a_name_ru = str(data.get('metric_a_name_ru') or '').strip()
     metric_b_name = str(data.get('metric_b_name') or '').strip()
     metric_b_name_ru = str(data.get('metric_b_name_ru') or '').strip()
     if not metric_a_name or not metric_b_name:
-        return jsonify({'error': 'Укажите metric_a_name и metric_b_name'}), 400
+        err = 'Provide metric_a_name and metric_b_name' if lang == 'en' else 'Укажите metric_a_name и metric_b_name'
+        return jsonify({'error': err}), 400
 
     client = _openai_client()
     def _classify_metric(metric_key, metric_name_text):
@@ -1128,20 +1210,56 @@ def metrics_tree_relationship():
     b_title = f"{metric_b_name} ({metric_b_name_ru})" if metric_b_name_ru else metric_b_name
 
     # Если пара "agile/delivery" + "business", оставляем только осмысленное направление.
-    if class_a == "agile_delivery" and class_b == "business":
-        direction_rules = f"""В этой паре давай только направление из Agile/Delivery в Business:
+    if lang == "en":
+        if class_a == "agile_delivery" and class_b == "business":
+            direction_rules = f"""For this pair, cover only the direction from Agile/Delivery to Business:
+- Required section "A -> B" (how {a_title} affects {b_title}).
+- Do not add section "B -> A".
+"""
+        elif class_b == "agile_delivery" and class_a == "business":
+            direction_rules = f"""For this pair, cover only the direction from Agile/Delivery to Business:
+- Required section "B -> A" (how {b_title} affects {a_title}).
+- Do not add section "A -> B".
+"""
+        else:
+            direction_rules = """Show influence both ways: "A -> B" and "B -> A"."""
+
+        prompt = f"""Explain the relationship between two metrics in product development.
+
+Metric A: {a_title}
+Metric B: {b_title}
+Class A: {class_a}
+Class B: {class_b}
+
+{direction_rules}
+
+Answer in English:
+1) For each required direction, describe the causal link and mechanism;
+2) State effect lag (fast/medium/slow) for each required direction;
+3) Name 2-3 intermediate operational metrics through which the effect shows up;
+4) Give a practical trade-off example and how to control it;
+5) What to monitor weekly so the target metric does not degrade.
+
+Output format:
+- only the sections required by the direction rules above;
+- plus "Intermediate metrics", "Trade-off", "Weekly monitoring".
+Be concise and practical."""
+        system_msg = "You are an Agile/Engineering expert on flow and product system metrics."
+    else:
+        if class_a == "agile_delivery" and class_b == "business":
+            direction_rules = f"""В этой паре давай только направление из Agile/Delivery в Business:
 - Обязательно раздел "A -> B" (как {a_title} влияет на {b_title}).
 - Не добавляй раздел "B -> A".
 """
-    elif class_b == "agile_delivery" and class_a == "business":
-        direction_rules = f"""В этой паре давай только направление из Agile/Delivery в Business:
+        elif class_b == "agile_delivery" and class_a == "business":
+            direction_rules = f"""В этой паре давай только направление из Agile/Delivery в Business:
 - Обязательно раздел "B -> A" (как {b_title} влияет на {a_title}).
 - Не добавляй раздел "A -> B".
 """
-    else:
-        direction_rules = """Покажи влияние в обе стороны: "A -> B" и "B -> A"."""
+        else:
+            direction_rules = """Покажи влияние в обе стороны: "A -> B" и "B -> A"."""
 
-    prompt = f"""Объясни связь между двумя метриками в продуктовой разработке.
+        prompt = f"""Объясни связь между двумя метриками в продуктовой разработке.
 
 Метрика A: {a_title}
 Метрика B: {b_title}
@@ -1161,12 +1279,13 @@ def metrics_tree_relationship():
 - только обязательные разделы по правилу направлений выше;
 - плюс "Промежуточные метрики", "Trade-off", "Еженедельный контроль".
 Кратко и прикладно, без воды."""
+        system_msg = "Ты Agile/Engineering эксперт по системным метрикам потока и продукта."
     try:
         response = _chat_completions_with_model_fallback(
             client,
             _openai_chat_model_list("METRICS_TREE_MODEL", "gpt-4.1"),
             messages=[
-                {"role": "system", "content": "Ты Agile/Engineering эксперт по системным метрикам потока и продукта."},
+                {"role": "system", "content": system_msg},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.35,
@@ -1540,6 +1659,11 @@ def maturity_admin_group_plan_generate():
 - **Не предлагай** инициативы уровня «впервые ввести ретро/стендап/планирование/бэклог для всех». Фокус — **выравнивание и улучшение** практик по темам, где в сводке **низкая доля «да» и средний балл** (явно опирайся на названия тем из сводки в diagnosis и в названиях инициатив).
 - План стрима = типовые дыры по данным агрегата, а не учебник Scrum для новичков.
 
+Тип команд стрима:
+- В основном команды **обеспечения поставки** и **платформенные/сервисные** (внутренние заказчики, enablement). Инициативы стрима — про сокращение **Lead Time** и **T2M** на стыках команд, очереди, пайплайны, а не только про продуктовые фичи для конечного клиента.
+- Минимум **3 из 5** инициатив: в `business_impact` теги **[Lead Time]** и/или **[T2M]**.
+- Англоязычные термины при первом упоминании сопровождай **кратким русским пояснением в скобках**.
+
 Верни ТОЛЬКО JSON без markdown и без пояснений в следующей структуре:
 {{
   "diagnosis": "2-4 предложения",
@@ -1574,13 +1698,13 @@ def maturity_admin_group_plan_generate():
 - business_impact: начни с 1–2 тегов из [T2M], [Lead Time], [Гибкость приоритетов], [Предсказуемость поставки], [Cost-to-serve], [Качество/дефектность], [Удержание/NPS], затем кратко — что получит бизнес от инициативы стрима.
 - customer_impact: эффект для клиента/внутреннего заказчика, согласованный с business_impact.
 - Для каждой инициативы заложи быстрый эксперимент 1–2 недели в первых шагах steps.
-- Приоритизируй по эффекту на T2M, Lead Time и бизнес-метрики (типы связи, без выдуманных цифр).
+- Приоритизируй по эффекту на **Lead Time** и **T2M** в первую очередь, затем прочие бизнес-метрики (типы связи, без выдуманных цифр).
 - Избегай абстракций про мировоззрение, ценности, культуру без артефактов и действий.
 - Не предлагай ротацию ролей PO/DPO и любые перестановки PO/DPO.
 - В конец diagnosis добавь блок «Рекомендуемые инструменты GrowBoard» с 3-5 ссылками HTML на Agile Tools:
   <a href="/new/agile-tools">Название инструмента</a>.
   Выбирай только релевантные инструменты из списка: {tools_hint}.
-- Пиши только по-русски.
+- Пиши по-русски; при необходимости допустимы англоязычные термины с кратким русским пояснением в скобках при первом упоминании.
 - Не выдумывай числа вне переданной сводки.
 """
     try:
@@ -1588,7 +1712,7 @@ def maturity_admin_group_plan_generate():
             client,
             _maturity_plan_model_chain("MATURITY_GROUP_PLAN_MODEL"),
             messages=[
-                {"role": "system", "content": "Ты практик Agile-трансформаций в enterprise. Команды уже в Scrum; план стрима — по слабым темам из данных, без «внедрить базовые ритуалы». Исполнимые шаги, выгода для бизнеса, русский язык."},
+                {"role": "system", "content": "Ты практик трансформаций в enterprise. Стрим — в основном enablement и обеспечение поставки; приоритет Lead Time и T2M. План по слабым темам данных. Исполнимые шаги; англотермины с русскими пояснениями в скобках."},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.45,

@@ -1,0 +1,866 @@
+[
+  {
+    "category": "People",
+    "theme": "Agile thinking",
+    "text": "The team frames the sprint goal as a measurable outcome or user value rather than a list of tasks.",
+    "why_important": "The team understands what effect it creates for the user or business, and not just performs tasks; the goal has a clear criterion for success. Example: not “do 5 tasks”, but “speed up the search for a product for the user.”",
+    "metrics_impact": "Achieving the sprint goal, set business value",
+    "negative_for_business": "Sprints are completed without achieving a business result, and the share of work without value for the client is growing.",
+    "business_metrics": "Business impact if the answer is “Yes”: Sprint Goal Success Rate or the percentage of tasks that provided measurable customer value. For a card product, as a second-level business effect, you can track Feature Adoption Rate or Time to First Transaction for changes included in the sprint. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Agile thinking",
+    "text": "The team uses the sprint goal to make decisions about priorities and changes during the sprint.",
+    "why_important": "With any changes, the team checks the goal and evaluates whether it helps achieve it. Example: A new task is added only if it does not interfere with the sprint goal.",
+    "metrics_impact": "Cycle time, volume stability, achieving the sprint goal",
+    "negative_for_business": "The amount of unplanned work increases, Cycle Time increases, and the likelihood of achieving the sprint goal decreases.",
+    "business_metrics": "Business impact if the answer is “Yes”: Lead Time for Change and the share of releases related to the sprint goal. If the sprint goal affects the customer journey, the second level business metric could be Approved to Activated Rate or First Transaction Rate. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Agile thinking",
+    "text": "The team uses product data and metrics to discuss issues, decisions, and priorities.",
+    "why_important": "Decisions are made based on data, not just opinions. Example: Before changing a feature, the team looks at metrics and impact on conversion.",
+    "metrics_impact": "Implementation of epics and stories, conversion, impact on revenue, retention",
+    "negative_for_business": "Epics and stories are implemented without any measurable effect, and the growth of product and business metrics slows down.",
+    "business_metrics": "Business impact if the answer is “Yes”: Share of decisions made based on data, Feature Adoption Rate and Conversion to Key Action. For a card or credit product, the next level may be Retention Rate, Active Cards Rate, or conversion to target action. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Cross functionality",
+    "text": "The team maintains up-to-date information about the skills of the participants (for example, a competency matrix).",
+    "why_important": "The team understands who has what skills and updates this information regularly. Example: the competency matrix is ​​updated quarterly.",
+    "metrics_impact": "Dependence on key people, time to implement changes, delivery risk",
+    "negative_for_business": "Critical tasks are delayed because the required expertise is unknown or unavailable.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Lead Time for Change, share of tasks without resource bottleneck and time to display changes. For a banking product, the second-level business effect is a faster launch of card or credit features and an increase in the Activation Rate. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Cross functionality",
+    "text": "The team regularly transfers knowledge between members.",
+    "why_important": "Knowledge does not remain with individuals, but is distributed within the team. Example: pair work, code reviews, internal reports.",
+    "metrics_impact": "Recovery time, development continuity, dependence on key people",
+    "negative_for_business": "The absence of one specialist dramatically increases the time it takes to resolve problems and can stop deliveries.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Bus Factor, Defect Rate and stability of delivery. For the card direction, the second level can track Active Cards Rate, Transaction Success Rate or Retention after releases. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Cross functionality",
+    "text": "Key competencies in a team are covered by more than one member.",
+    "why_important": "There is no dependence on one person - there is interchangeability. Example: if one specialist is absent, another can continue working.",
+    "metrics_impact": "Delivery risk, change implementation time, team throughput",
+    "negative_for_business": "The departure or unavailability of one person leads to missed deadlines and a drop in team throughput.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Change Failure Rate, MTTR and delivery stability, and not immediately with the financial result. For a bank, the long-term business effect may be a reduction in losses from incidents and stability in customer activity. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Team Engagement",
+    "text": "The team independently makes most of the technical decisions within its area of ​​responsibility.",
+    "why_important": "The team discusses and makes decisions on its own without constant dependence on external roles. Example: a team selects a technical solution without necessarily agreeing with the architect.",
+    "metrics_impact": "Time to implement changes, time to make decisions",
+    "negative_for_business": "Decisions are delayed due to unnecessary approvals, and delivery speeds drop.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Decision Latency, Lead Time for Change and Deployment Frequency. If the team influences the customer journey, Time to First Transaction or First Transaction Rate would be suitable as second-level business metrics. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Team Engagement",
+    "text": "The team implements most of the action items (points based on the results of the meeting) adopted at the retrospectives.",
+    "why_important": "Agreements adopted at retrospectives are actually implemented into work.",
+    "metrics_impact": "Process improvement rate, cycle time, defect rate",
+    "negative_for_business": "The same problems are repeated, processes are not improved, time wasted and defects persist.",
+    "business_metrics": "Business impact if the answer is “Yes”: Action Item Closure Rate, Rework Rate and Defect Escape Rate. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Team Engagement",
+    "text": "The team understands the goals of their work at the sprint, quarter, or product level and can explain them.",
+    "why_important": "Participants see connections between their work and product goals. Example: A developer can explain how his task affects the product goal.",
+    "metrics_impact": "Delivered business value, goal alignment, achieving sprint goal",
+    "negative_for_business": "The team closes tasks without understanding their value, and resources are wasted on low-priority work.",
+    "business_metrics": "Business impact if the answer is “Yes”: Goal Alignment Rate and the share of tasks related to the OKR or North Star Metric of the product. As a second level, you can track Feature Adoption, Conversion to Key Action or Active Cards Rate. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Autonomy in decision making",
+    "text": "The team independently distributes tasks between participants, taking into account workload and context.",
+    "why_important": "Tasks are distributed within the team rather than assigned from above. Example: the team agrees on who takes tasks for the sprint.",
+    "metrics_impact": "Cycle time, throughput, work in progress aging",
+    "negative_for_business": "Tasks are distributed ineffectively, some people are overloaded, some are underloaded, deadlines are growing.",
+    "business_metrics": "Business impact if the answer is “Yes”: Throughput, Flow Efficiency and Cycle Time. For a card product, the second-level business effect is faster output of changes that affect the Active Cards Rate or Monthly Spend per Card. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Autonomy in decision making",
+    "text": "The team participates in discussing and refining task priorities with the Product Owner and Product Manager.",
+    "why_important": "The team is involved in prioritization and can influence it. Example: Participants suggest changes to the order of tasks.",
+    "metrics_impact": "Predictability of delivery, time to implement changes",
+    "negative_for_business": "The work includes tasks with unrealistic deadlines or high technical risk.",
+    "business_metrics": "Business impact if the answer is “Yes”: Percentage of tasks prioritized based on value, risk and cost criteria, as well as Time to Market for high-value initiatives. For credit products, the second-level business effect is a more stable application conversion for target segments. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Autonomy in decision making",
+    "text": "The team makes operational decisions on work without necessarily having the approval of the product manager (dPO - delegated product owner) or technical lead in each case.",
+    "why_important": "Reduces approval time and speeds up work completion.",
+    "metrics_impact": "Decision time, delivery speed",
+    "negative_for_business": "Every change or decision is delayed by approvals from the product manager (dPO) or technical lead, and the team's velocity drops.",
+    "business_metrics": "Impact on business when the answer is “Yes”: Decision Latency and Lead Time for Change. If the team quickly makes operational decisions, the second level can track Time to First Transaction, Transaction Success Rate or Interchange Revenue by release. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Training and knowledge transfer",
+    "text": "The team regularly undergoes knowledge sharing activities: internal reports, demonstrations, solution reviews, or pair work.",
+    "why_important": "Increases the overall level of expertise and helps scale knowledge faster.",
+    "metrics_impact": "Dependence on key people, development efficiency, onboarding time",
+    "negative_for_business": "The team learns more slowly, new employees take longer to get started, and expertise is concentrated in a few.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Ramp-up Time, Defect Rate and Rework Rate. For product results, at the second level you can look at the speed of changes and conversion to key actions after the release. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Training and knowledge transfer",
+    "text": "The team’s work process allocates time for training and competency development.",
+    "why_important": "Allows you to keep your skills up to date and learn new approaches without becoming overwhelmed.",
+    "metrics_impact": "Development productivity, quality metrics, time to introduce new technologies",
+    "negative_for_business": "The team's competencies become outdated and it adapts less well to new requirements and technologies.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Quality of Delivery, number of defects and speed of team adaptation to new requirements. For the credit circuit, it is better to use Policy Change Lead Time rather than directly Delinquency Rate. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Training and knowledge transfer",
+    "text": "Key knowledge (about systems, platforms, business processes) within the team is distributed among several participants, rather than concentrated in one expert.",
+    "why_important": "Reduces the risk of work blocking and makes the team more resilient.",
+    "metrics_impact": "Lead time, delivery risk, dependence on key people",
+    "negative_for_business": "One narrow expert becomes a point of failure, and the work of the team depends on his availability.",
+    "business_metrics": "Business impact if the answer is “Yes”: Key Person Dependency, Release Predictability and MTTR. For a bank, the long-term business effect may be continuity of service and reduction of losses from failed releases. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Feedback culture",
+    "text": "Team members regularly provide each other with constructive feedback on their work and interactions.",
+    "why_important": "Helps you spot problems faster and enhance your team's strengths.",
+    "metrics_impact": "Employee engagement, team performance, defects lost to production",
+    "negative_for_business": "Errors in communication and quality of work accumulate, engagement and productivity decrease.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Defect Escape Rate, Customer Complaints and problem resolution speed. As the next level, you can track Retention Rate, App Rating or user satisfaction. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Feedback culture",
+    "text": "The team has regular formats for feedback, such as retrospectives, peer reviews, or 1:1s.",
+    "why_important": "Makes feedback systemic rather than random.",
+    "metrics_impact": "Employee satisfaction, retention, rate of process improvement",
+    "negative_for_business": "Problems are discussed sporadically, important signals are lost, and the risk of conflicts and burnout increases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Action Item Closure Rate, Time to Resolve Team Issues and process stability. For a product at the second level, Change Failure Rate and delivery quality are suitable, rather than direct customer Churn. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Feedback culture",
+    "text": "The team uses feedback to change behavior, process, or approach to work.",
+    "why_important": "The feedback received within the team is not ignored, but leads to specific changes - in the behavior of participants or in work processes. Example: Based on feedback, the team changes the planning format, improves the testing process, or agrees on new rules of interaction.",
+    "metrics_impact": "Process efficiency, team performance, employee engagement",
+    "negative_for_business": "Feedback does not lead to change, so problems are repeated and demotivate the team.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Rework Rate, Cycle Time and Cost of Poor Quality. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Team Leadership",
+    "text": "Team members take leadership on specific issues or initiatives based on expertise.",
+    "why_important": "Distributed leadership increases stability and speed of decision making.",
+    "metrics_impact": "Decision time, team autonomy, stability of delivery",
+    "negative_for_business": "All complex issues are concentrated on one person, which creates a bottleneck and slows down the team.",
+    "business_metrics": "Business impact if the answer is “Yes”: Decision Latency, Throughput and Cycle Time. When leadership is distributed across expertise, the team moves initiatives forward faster and reduces wait times for decisions. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Team Leadership",
+    "text": "Different team members lead meetings, initiatives, or work discussions, rather than the same person always leading.",
+    "why_important": "Develops leadership skills and reduces the team's dependence on one leader (Scrum Master or Product Manager).",
+    "metrics_impact": "Team autonomy, employee growth, meeting efficiency",
+    "negative_for_business": "The team remains dependent on one leader, scales worse and develops more slowly.",
+    "business_metrics": "Business impact if the answer is “Yes”: Delivery continuity, reduced dependence on one person and sustainability of team process facilitation. As an indirect effect, you can track the stability of delivery and fewer disruptions. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "People",
+    "theme": "Team Leadership",
+    "text": "The team is able to self-organize and distribute responsibility in a complex or unusual situation.",
+    "why_important": "In non-standard conditions, the team does not wait for instructions from the outside, but independently agrees on who is responsible for what and acts in a coordinated manner. Example: in the event of an incident in production, the team quickly distributes roles, begins to understand the problem and fix it without waiting for instructions from the manager.",
+    "metrics_impact": "Stability of delivery, response time to incidents, team resilience",
+    "negative_for_business": "In unstable situations, the team loses momentum, response time to incidents increases and the risk of delivery disruption increases.",
+    "business_metrics": "Business impact if the answer is “Yes”: MTTR, Incident Loss and Service Availability. In banking products, this is especially important to reduce losses from incidents and maintain the stability of operations. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Framework",
+    "theme": "Team and stream goals",
+    "text": "The team knows the goals of the stream (they are set by the owner of the stream) and can formulate them without turning to an external source.",
+    "why_important": "Team members understand what effect needs to be achieved, through what actions and in what time frame, and can explain it in their own words without prompting. Goals are transparent and understandable to the entire team. Example: a participant can describe what result is expected from the stream and how the team’s current tasks affect the achievement of this result.",
+    "metrics_impact": "Goal alignment, strategy execution",
+    "negative_for_business": "The team works in isolation from the strategy; resources can be spent on secondary tasks.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Goal Awareness Rate and the share of initiatives clearly related to the goals of the stream. For a banking product, at the second level you can look at the share of the roadmap that affects Active Cards, Loan Portfolio or Transaction Volume. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Framework",
+    "theme": "Team and stream goals",
+    "text": "The team frames its goals so that they are clearly related to the goals of the stream.",
+    "why_important": "Allows you to decompose the strategy to the level of a specific team.",
+    "metrics_impact": "Delivered business value, alignment of goals",
+    "negative_for_business": "Team goals do not support strategic results, and controllability of change decreases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Goal Alignment Rate between team goals and stream goals. As a second-level business effect, you can track the share of delivered items that influence the selected product metric, for example, Active Cards Rate or Loan Portfolio Growth. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Framework",
+    "theme": "Team and stream goals",
+    "text": "The team regularly monitors progress against its goals and discusses deviations.",
+    "why_important": "Allows you to notice problems in time and change your action plan.",
+    "metrics_impact": "Achieving goals, predictable delivery",
+    "negative_for_business": "Problems become noticeable too late, goals are not achieved on time.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Regularity of goal tracking, Plan vs Actual for goals and speed of response to deviations. This helps assess delivery predictability and achievement of business results as planned. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Control",
+    "theme": "Risk management",
+    "text": "The team identifies risks before implementing tasks, initiatives or changes.",
+    "why_important": "Allows you to reduce the likelihood of breakdowns and unexpected blockers.",
+    "metrics_impact": "Delivery risk, lead time, release predictability",
+    "negative_for_business": "Critical problems are discovered late, deadlines are pushed back, and the cost of fixes increases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Risk Identification Rate before the start of work, Change Failure Rate and the share of releases without critical incidents. For a credit product, the long-term effect may be more stable portfolio quality. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Control",
+    "theme": "Risk management",
+    "text": "The team records the identified risks explicitly: in a register, backlog, board or other working tool.",
+    "why_important": "Makes risks visible and manageable, rather than dependent on the memory of individuals.",
+    "metrics_impact": "Risk exposure, stability of supply",
+    "negative_for_business": "Risks are forgotten or ignored, causing the team to face the same problems over and over again.",
+    "business_metrics": "Business impact if the answer is “Yes”: Risk Register Coverage, incident repeatability and risk management transparency. This allows you to reduce losses from known but unrecorded risks. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Control",
+    "theme": "Risk management",
+    "text": "For significant risks, the team determines a management strategy and mitigation actions.",
+    "why_important": "Allows you not just to see the risk, but to manage its likelihood and impact.",
+    "metrics_impact": "Stability of delivery, frequency of incidents, success of releases",
+    "negative_for_business": "Risks are realized without preparation, and the number of missed deadlines, incidents, and unsuccessful releases increases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Mitigated Risk Rate, Incident Loss and share of risks with an action plan. For the credit area, as a second-level business effect, you can track the reduction of losses and deterioration in portfolio quality. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Grade",
+    "text": "The assessment of tasks is done by the team together with the product manager (dPO - delegated product owner) and technical leader, and not by one person alone.",
+    "why_important": "Improves the quality of estimates through collective expertise and a shared understanding of the scope of work.",
+    "metrics_impact": "Accuracy of estimates, predictability of delivery",
+    "negative_for_business": "Assessments are becoming subjective, and the number of misses in terms of timing and scope is growing.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Estimate Accuracy and Plan vs Actual Variance. Joint estimation usually reduces the risk of systematic underestimation and increases the predictability of delivery. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Grade",
+    "text": "The team evaluates the entire task, including dependencies, testing, integrations, and hidden work, and not just “their part.”",
+    "why_important": "When assessing, the team takes into account not only its area of ​​expertise, but also all related activities - transfers between participants, expectations, integration, clarification and verification. The estimate reflects the full scope of work. Example: when assessing a task, not only development is taken into account, but also time for integration, testing, approvals and possible delays.",
+    "metrics_impact": "Accuracy of estimates, percentage of task transfers, completion time",
+    "negative_for_business": "Tasks are systematically underestimated, work shifts increase and predictability decreases.",
+    "business_metrics": "Business impact if the answer is “Yes”: Accuracy of Estimation, the share of unplanned work and the number of tasks with hidden volume. This helps reduce missed deadlines and unexpected costs. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Grade",
+    "text": "The team regularly compares estimates with actual results and discusses reasons for deviations.",
+    "why_important": "Helps calibrate estimates and improve predictability.",
+    "metrics_impact": "Accuracy of estimates, predictability of delivery",
+    "negative_for_business": "Errors in estimation are repeated, deadlines and plans remain unreliable.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Forecast Accuracy, Plan vs Actual Variance and the share of recurring causes of deviations. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Documentation",
+    "text": "Key documents or architectural artifacts are updated as part of task completion (included in the Definition of Done - DoD).",
+    "why_important": "Keeps documentation current and useful to the team.",
+    "metrics_impact": "Onboarding time, development efficiency",
+    "negative_for_business": "New employees take longer to get to work, and decisions have to be recalled from memory.",
+    "business_metrics": "Business impact if the answer is “Yes”: Documentation Freshness, Rework Rate and Time to Onboard. Updating DoD documentation reduces re-explanation costs and rework errors. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Documentation",
+    "text": "The team has a single place for storing documentation (wiki - a collective wiki base, knowledge repository or similar).",
+    "why_important": "Provides a single source of truth for the team.",
+    "metrics_impact": "Knowledge Accessibility, Decision Lead Time",
+    "negative_for_business": "Information is lost in chats and emails, decisions take longer to make.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Time to Find Information, Time to Onboard and speed of decision making. A single document repository reduces wasted time and increases work continuity. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Documentation",
+    "text": "The team uses documentation as a source of truth when discussing solutions or requirements.",
+    "why_important": "The documentation is up-to-date and corresponds to the actual state of the system, so the team can rely on it when making decisions without additionally checking the code or other sources. Example: when discussing a feature, the team focuses on the description in the documentation, rather than spending time looking for discrepancies between it and the actual implementation.",
+    "metrics_impact": "Development efficiency, defect rate",
+    "negative_for_business": "Different participants work with different understandings of the requirements, and the number of errors increases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Rework Rate, Decision Latency and the share of decisions based on current artifacts. This reduces the risk of conflicting interpretations of requirements. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Request tracking",
+    "text": "All requests from the customer and interested parties are recorded in a single tool (tracker, queue, backlog).",
+    "why_important": "Increases transparency and controllability of incoming flow.",
+    "metrics_impact": "Request processing time, delivery predictability",
+    "negative_for_business": "Requests are lost or fulfilled chaotically, and delivery predictability decreases.",
+    "business_metrics": "Business impact if the answer is “Yes”: Request Lead Time, SLA Adherence and the share of requests not lost outside the system. This increases the controllability of the flow of incoming initiatives. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Request tracking",
+    "text": "The team regularly prioritizes incoming requests together with the product owner and customer (if necessary).",
+    "why_important": "Allows you to select the most valuable tasks.",
+    "metrics_impact": "Delivered business value, predictable delivery",
+    "negative_for_business": "The team is working on less valuable tasks, important requests are delayed.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Time to Prioritize, share of requests assessed by value and risk, and backlog health. For the business, this increases the likelihood of more valuable requests being implemented in a timely manner. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Request tracking",
+    "text": "The customer and product owner can independently see the status of their requests in the system.",
+    "why_important": "Reduces communication burden and increases transparency.",
+    "metrics_impact": "Satisfaction of the customer and product owner, time to resolve the request",
+    "negative_for_business": "The customer and the product owner constantly clarify the status, and the time for communication increases.",
+    "business_metrics": "Business impact if the answer is “Yes”: Status Visibility, Time to Status Update and stakeholder satisfaction. Transparency of statuses reduces the time for manual clarification and speeds up decision making. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Sprint planning",
+    "text": "The planning team identifies the main dependencies and blockers of future tasks.",
+    "why_important": "Allows you to reduce implementation risks in advance.",
+    "metrics_impact": "Lead time, predictable delivery",
+    "negative_for_business": "Dependencies are discovered late, tasks are blocked during the sprint.",
+    "business_metrics": "Business impact if the answer is “Yes”: Blocker Discovery Rate before the start of the sprint, Dependency Delay and Sprint Predictability. Early identification of blockers reduces missed deadlines and unexpected work. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Sprint planning",
+    "text": "The team forms a sprint plan together with the product manager (dPO - delegated product owner) based on the sprint goal and backlog priorities.",
+    "why_important": "Allows the team to work as a single system.",
+    "metrics_impact": "Achieving Sprint Goal, Throughput",
+    "negative_for_business": "Work becomes an unrelated set of tasks.",
+    "business_metrics": "Business impact if the answer is “Yes”: % committed vs completed and the percentage of tasks that support the sprint goal. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Sprint planning",
+    "text": "The team discusses the risks and uncertainties of tasks during planning.",
+    "why_important": "Allows you to take into account complexity and reduce the likelihood of blockers.",
+    "metrics_impact": "Predictability of delivery, lead time",
+    "negative_for_business": "Uncertainties are discovered late and increase deadlines.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Risk Discussion Coverage, share of tasks with obvious uncertainty and spillover rate. This question relates well to the predictability of delivery. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Retrospective",
+    "text": "Each retrospective begins with checking the implementation of action items (points based on the results of the meeting) of the previous retrospective.",
+    "why_important": "Helps the team track real changes.",
+    "metrics_impact": "Implementation of improvement actions, process improvement rate",
+    "negative_for_business": "The team forgets past improvements and repeats the same problems.",
+    "business_metrics": "Business impact if the answer is “Yes”: Action Item Closure Rate and the proportion of recurring problems. Starting retro by checking action items is useful if it actually reduces rework and repeated crashes. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Retrospective",
+    "text": "The team discusses both the process and the interactions within the team in the retrospective.",
+    "why_important": "Allows you to improve both process and team dynamics.",
+    "metrics_impact": "Team performance, cycle time",
+    "negative_for_business": "Interoperability problems remain unresolved.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Team Issue Resolution Rate, Rework Rate and Cycle Time. The question helps you understand whether the team is discussing the causes of problems, not just the symptoms. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Retrospective",
+    "text": "The team uses data or metrics to analyze problems in retrospect.",
+    "why_important": "When analyzing problems, the team relies not only on feelings, but also on specific metrics - productivity, lead time, time-to-market, number of defects and incidents, code quality. This allows you to objectively evaluate work efficiency and find the causes of problems. Example: in a retrospective, the team analyzes the increase in task completion time or the increase in the number of bugs and, based on this, makes decisions about improvements.",
+    "metrics_impact": "Cycle time, defect rate",
+    "negative_for_business": "Problems are discussed at the level of opinions, not real reasons.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Data Usage in Retro, defectiveness, Cycle Time and the share of decisions made based on facts. This improves the quality of process improvements. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Daly",
+    "text": "Daily (daily meeting) is held at a fixed time and in a clear format.",
+    "why_important": "Creates a stable working rhythm.",
+    "metrics_impact": "Team coordination, meeting efficiency",
+    "negative_for_business": "The command loses synchronization and information about the current state of work.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Cadence adherence, WIP age and timely identification of blockers. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Daly",
+    "text": "At the daily meeting, blockers are identified and actions are assigned to eliminate them.",
+    "why_important": "Allows you to quickly remove obstacles.",
+    "metrics_impact": "Blocker elimination time, cycle time",
+    "negative_for_business": "Blockers go undetected and increase task completion time.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Blocker Resolution Time, the number of unclosed blockers and their impact on Cycle Time. This is one of the most clear indicators of the usefulness of the daily. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Daly",
+    "text": "Facilitation (conducting) of the daily is periodically distributed among team members.",
+    "why_important": "Develops team responsibility and involvement.",
+    "metrics_impact": "Team autonomy, involvement",
+    "negative_for_business": "All responsibility for meetings falls on the Scrum Master or Product Manager (dPO).",
+    "business_metrics": "Impact on business if the answer is “Yes”: Facilitation distribution and reduced dependence on one participant. As an indirect effect, the stability of team rhythms and continuity of work can be monitored. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Delivery of increment",
+    "text": "The increment (product increment per sprint) at the end of the sprint is tested and stable.",
+    "why_important": "The result of the sprint has been brought to the “ready” state - it is not only implemented, but also fully tested and stable. An increment does not contain unfinished parts or deferred testing, even if it is not always immediately released into production. Example: A task is considered complete if it is developed, tested, and ready for release, even if the actual release occurs later.",
+    "metrics_impact": "Defect rate, release stability",
+    "negative_for_business": "The number of defects after release increases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Defect Escape Rate, release stability and Change Failure Rate. For the bank, this affects the Transaction Success Rate, the number of complaints and losses from incidents. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Delivery of increment",
+    "text": "The team regularly integrates changes into the overall code base.",
+    "why_important": "Changes are made in small parts and often, without lengthy work in isolated branches. This reduces conflicts and simplifies integration. Example: the team regularly merges changes into the main branch, avoiding situations where branches live for several weeks and lead to complex conflicts when merging.",
+    "metrics_impact": "Integration failure rate, execution time",
+    "negative_for_business": "Integration becomes complex and risky.",
+    "business_metrics": "Business impact if the answer is “Yes”: Integration Frequency, merge delay and Lead Time for Change. Regular integration reduces the risk of major conflicts and speeds up the release of useful changes. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Delivery of increment",
+    "text": "The team can release changes to production without complex manual procedures.",
+    "why_important": "Accelerates the delivery of value to users.",
+    "metrics_impact": "Frequency of deployments, time to implement changes",
+    "negative_for_business": "Releases are rare and time-consuming.",
+    "business_metrics": "Business impact if the answer is “Yes”: Deployment Frequency, Lead Time for Change and Manual Effort per Release. For card and credit products, this speeds up the delivery of changes to the customer journey. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Demo",
+    "text": "A demo (increment demonstration) is held at the end of each sprint or iteration.",
+    "why_important": "Allows you to receive quick feedback.",
+    "metrics_impact": "Feedback cycle time, epic and story validation",
+    "negative_for_business": "Feedback comes too late.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Demo cadence adherence and feedback cycle time. Demo regularity is not a business metric in itself. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Demo",
+    "text": "The demo (demonstration) shows working functionality, and not just reports or presentations.",
+    "why_important": "Allows the customer and product owner to see the real result.",
+    "metrics_impact": "Acceptance of epics and stories",
+    "negative_for_business": "Errors in understanding requirements are discovered late.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Share of demos with working functionality and Feedback-to-Decision Time. This increases the chance of getting feedback on real value rather than presentation. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Demo",
+    "text": "Feedback from the customer and product owner is recorded and added to the backlog.",
+    "why_important": "Allows you to use feedback for product development.",
+    "metrics_impact": "Rate of Product Improvement",
+    "negative_for_business": "Feedback is lost and does not affect the development of the product.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Feedback Capture Rate, Feedback-to-Backlog Conversion and time to act on feedback. For a product, this is one of the leading indicators of learning from customer feedback. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Agile/Scrum rhythms",
+    "text": "The team has a stable calendar of key events (planning - sprint planning, review - sprint review, retro - retrospective).",
+    "why_important": "Creates a stable rhythm of work.",
+    "metrics_impact": "Process stability, team coordination",
+    "negative_for_business": "The team's work becomes chaotic.",
+    "business_metrics": "Business impact if the answer is “Yes”: Cadence adherence, delivery predictability and decision-making rhythm. A robust calendar of events keeps work manageable, but should not replace real outcome metrics. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Agile/Scrum rhythms",
+    "text": "Most events run as scheduled with no frequent cancellations.",
+    "why_important": "Maintains process discipline.",
+    "metrics_impact": "Process reliability, team efficiency",
+    "negative_for_business": "The team loses regularity in improvements and synchronization.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Event reliability and planning stability. Frequent appointment cancellations typically correlate with increased uncertainty and decreased predictability of delivery. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Process",
+    "theme": "Agile/Scrum rhythms",
+    "text": "The results of the meetings are used as input for the following events.",
+    "why_important": "At the end of each meeting, agreements and results achieved are recorded, which are used as the basis for subsequent meetings and discussions. This ensures consistency and structure in the work. Example: before the start of the next meeting, the team relies on the recorded results of the previous one, rather than restoring agreements from memory.",
+    "metrics_impact": "Process efficiency",
+    "negative_for_business": "Meetings do not affect the actual work of the team.",
+    "business_metrics": "Business impact if the answer is “Yes”: Conversion of meeting outputs into next actions, Action Item Closure Rate and continuity of process. This shows whether the events are working as a cohesive system. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Planning and prioritization",
+    "text": "There is a single work backlog from which the team takes tasks.",
+    "why_important": "Creates transparency of the team's work.",
+    "metrics_impact": "Transparency of work, predictability of delivery",
+    "negative_for_business": "Work is distributed chaotically.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Backlog integrity and the share of work passing through a single flow. This reduces unplanned work and increases transparency in prioritization. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Planning and prioritization",
+    "text": "The team understands the reasons for current task priorities.",
+    "why_important": "Increases team awareness.",
+    "metrics_impact": "Delivered business value, alignment of goals",
+    "negative_for_business": "The team does not understand the value of the tasks being performed.",
+    "business_metrics": "Business impact when answering “Yes”: Priority Understanding Rate and the proportion of tasks for which the team can explain business value. This improves the quality of the team's local decisions. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Planning and prioritization",
+    "text": "Value, cost or risk criteria are used to select priorities.",
+    "why_important": "Allows you to make more rational decisions.",
+    "metrics_impact": "Return on investment, business value delivered",
+    "negative_for_business": "Priorities are determined subjectively.",
+    "business_metrics": "Business impact if the answer is “Yes”: Percentage of tasks prioritized by value, cost and risk, as well as value-weighted throughput. For the bank, this provides a clearer connection with Active Cards, Loan Portfolio or cost reduction. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Dependency management",
+    "text": "Dependencies between tasks and teams are recorded explicitly in the tracker (task accounting system) or on the board.",
+    "why_important": "The connections between tasks and teams are clearly reflected in the task management system, so that it is clear what depends on what and what work can be blocked. Standard connection types and dependency statuses are used. Example: A task management system specifies that one task blocks or is related to another, allowing dependencies to be taken into account when planning and executing work.",
+    "metrics_impact": "Execution time, delays due to dependencies",
+    "negative_for_business": "Dependencies are discovered late and increase implementation time.",
+    "business_metrics": "Business impact if the answer is “Yes”: Dependency Visibility, Blocked Time and Dependency Delay. Explicitly capturing dependencies helps reduce downtime and missed deadlines. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Dependency management",
+    "text": "Each dependency has someone responsible for tracking and communicating it (a product manager (dPO - delegated product owner) or product owner).",
+    "why_important": "Allows you to manage dependencies proactively rather than reactively.",
+    "metrics_impact": "Delivery predictability, dependency resolution time",
+    "negative_for_business": "Dependencies are “hanging in the air”, tasks are idle.",
+    "business_metrics": "Business impact if the answer is “Yes”: Owner coverage for dependencies and problem escalation rate. This reduces the response time for external dependencies. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Dependency management",
+    "text": "The team regularly synchronizes with adjacent teams on key dependencies.",
+    "why_important": "Team members interact directly with colleagues from adjacent teams on integrations, dependencies, and related issues. Such interaction occurs regularly and is not limited to formal meetings. Example: developers from different teams independently contact each other to agree on integration or clarify details on dependent tasks.",
+    "metrics_impact": "Lead time between teams, predictability of delivery",
+    "negative_for_business": "Inter-team blockers delay releases and increase Lead Time.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Dependency sync cadence, cross-team lead time and blocked time. Regular synchronization helps to remove risks associated with inter-team work earlier. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Synchronization and interaction",
+    "text": "There are regular meetings or synchronization channels with adjacent teams, their product managers (dPO - delegated product owner) and product owners.",
+    "why_important": "Supports coordination in complex systems.",
+    "metrics_impact": "Effective coordination between teams",
+    "negative_for_business": "Information about plans and changes arrives too late.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Sync cadence adherence, Decision Turnaround Time and number of dependencies without a communication channel. This affects the speed of approvals and reduces downtime. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Synchronization and interaction",
+    "text": "At synchronization meetings, decisions and agreements are recorded.",
+    "why_important": "Allows you to avoid discrepancies and forgotten agreements.",
+    "metrics_impact": "Decision making time, execution reliability",
+    "negative_for_business": "Teams understand decisions made differently.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Decision logging rate, action item completion and time from discussion to execution. Fixed agreements reduce losses due to repeated discussions. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Synchronization and interaction",
+    "text": "Contact persons have been appointed for key areas of interaction between teams.",
+    "why_important": "Speeds up communication between teams.",
+    "metrics_impact": "Response time between commands",
+    "negative_for_business": "Communication between teams slows down.",
+    "business_metrics": "Business impact if the answer is “Yes”: Contact coverage for interfaces and time to find the right contact. This helps reduce the latency of interaction between teams. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Continuous process improvement",
+    "text": "The team regularly discusses process improvements.",
+    "why_important": "Allows you to adapt the process to real problems.",
+    "metrics_impact": "Process improvement rate, cycle time",
+    "negative_for_business": "The process becomes outdated and no longer supports the team's effectiveness.",
+    "business_metrics": "Business impact if the answer is “Yes”: Improvement Discussion Cadence and number of process improvement initiatives. What is important is not the fact of the discussion itself, but its impact on Cycle Time, Rework and quality of delivery. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Continuous process improvement",
+    "text": "Ideas for improvement are recorded explicitly (an improvement board or backlog).",
+    "why_important": "Helps not to lose ideas for changes.",
+    "metrics_impact": "The pace of process experimentation",
+    "negative_for_business": "Useful ideas are forgotten and not implemented.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Visibility of improvements backlog, Action Item Closure Rate and share of improvements completed before implementation. This reduces the risk of initiatives being forgotten. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Continuous process improvement",
+    "text": "The team measures the impact of implemented changes on process metrics.",
+    "why_important": "Allows you to understand whether the changes are working.",
+    "metrics_impact": "Cycle time, throughput",
+    "negative_for_business": "Changes are implemented without understanding the effect.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Impact of process changes on Cycle Time, Throughput, Rework Rate and Defect Rate. This is the most correct business logic for the question about improvements. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Definition of Ready (DoR)",
+    "text": "The team has defined and documented criteria for the task’s readiness for development (DoR - Definition of Ready, readiness to work).",
+    "why_important": "Helps you take on only prepared tasks.",
+    "metrics_impact": "Task availability, cycle time",
+    "negative_for_business": "Poorly prepared tasks are put into work, and development time increases.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Story Readiness Rate and the proportion of tasks started without clarification. The presence of DoR reduces the risk of starting poorly prepared tasks. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Definition of Ready (DoR)",
+    "text": "The team checks that tasks meet DoR (development readiness) criteria before starting development.",
+    "why_important": "Reduces the risk of job uncertainty.",
+    "metrics_impact": "Share of improvements, completion time",
+    "negative_for_business": "Tasks are often returned for requirements revision.",
+    "business_metrics": "Business impact if the answer is “Yes”: DoR Compliance Rate, Rework due to unclear requirements and spillover rate. This is one of the best leading indicators of the quality of work preparation. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Definition of Ready (DoR)",
+    "text": "The DoR (Development Ready) criteria are regularly reviewed and updated by the team.",
+    "why_important": "Allows you to adapt the process to changes.",
+    "metrics_impact": "Process Adaptability",
+    "negative_for_business": "DoR is becoming obsolete and no longer useful.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Relevance of DoR criteria, rework from requirement gaps and readiness quality over time. Updating DoR is justified if it improves predictability and reduces losses. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Definition of Done (DoD)",
+    "text": "The team has defined and documented the Definition of Done (result readiness criterion, DoD).",
+    "why_important": "Forms a unified understanding of the completion of the work.",
+    "metrics_impact": "Quality metrics, defects passed into production",
+    "negative_for_business": "Tasks are closed without the same quality criteria.",
+    "business_metrics": "Impact on business if the answer is “Yes”: DoD Coverage and a common understanding of the quality of the result. For business, this is due to a reduction in defects and increased stability of releases. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Definition of Done (DoD)",
+    "text": "The team checks that tasks meet DoD (Done) criteria before moving them to Done status.",
+    "why_important": "Maintains consistent delivery quality.",
+    "metrics_impact": "Defect rate, release stability",
+    "negative_for_business": "The number of defects after release is growing.",
+    "business_metrics": "Impact on business if the answer is “Yes”: DoD Compliance Rate, Defect Escape Rate and reopened tasks rate. This helps assess whether completion criteria are actually met. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Definition of Done (DoD)",
+    "text": "DoD (DoD) is regularly reviewed and updated by the team.",
+    "why_important": "Allows you to take into account new quality requirements.",
+    "metrics_impact": "Rate of Quality Improvement",
+    "negative_for_business": "Quality criteria lag behind reality.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Relevance of DoD, release quality and repeatability of defects. Revising the DoD makes sense if it improves the quality of delivery. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Non-functional requirements (NFR)",
+    "text": "A set of non-functional requirements (performance, security, etc.) is defined for the product.",
+    "why_important": "Allows you to take into account the quality of the system at the architectural level.",
+    "metrics_impact": "System performance, security incidents",
+    "negative_for_business": "Performance and security issues are discovered late.",
+    "business_metrics": "Business impact if the answer is “Yes”: The presence of certain NFRs should lead to tracking of Availability, Latency, Error Rate, Fraud Loss or Security Incidents. For banking products, this is closer to business than general process KPIs. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Non-functional requirements (NFR)",
+    "text": "NFRs (non-functional requirements) are documented and available to the team.",
+    "why_important": "Provides a unified understanding of system limitations.",
+    "metrics_impact": "System reliability, SLA compliance",
+    "negative_for_business": "The team does not take into account quality requirements.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Accessibility of NFR, compliance rate and speed of making technical decisions. Documented NFRs reduce the risk of misreadings and missing critical requirements. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Engineering",
+    "theme": "Non-functional requirements (NFR)",
+    "text": "For key NFRs (non-functional requirements), measurable indicators are defined (KPI - key indicators, SLO - target service level) and they are monitored.",
+    "why_important": "Allows you to control the quality of the system.",
+    "metrics_impact": "Latency, error rate, availability",
+    "negative_for_business": "Deterioration in system quality goes unnoticed.",
+    "business_metrics": "Impact on business if the answer is “Yes”: KPIs and SLOs according to NFR: Availability, Latency, Error Rate, Security Incident Rate, Transaction Success Rate. This is one of the most direct bridges from engineering practice to business results. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Backlog health",
+    "text": "The backlog contains a supply of prepared tasks for at least the next sprint.",
+    "why_important": "Allows you to plan your work without haste.",
+    "metrics_impact": "Backlog readiness, sprint planning efficiency",
+    "negative_for_business": "The team spends time urgently clarifying tasks.",
+    "business_metrics": "Business impact if the answer is “Yes”: Ready Backlog Coverage and the risk of team downtime. A stock of prepared tasks reduces productivity losses and disruptions to the start of the sprint. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Backlog health",
+    "text": "Most tasks have acceptance criteria at the top of the backlog.",
+    "why_important": "Helps the team understand the expected result.",
+    "metrics_impact": "Clarity of requirements, defect rate",
+    "negative_for_business": "Errors due to incomplete requirements.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Percentage of tasks with acceptance criteria, Rework Rate and Requirement Clarification Delay. This improves workmanship and reduces rework. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Backlog health",
+    "text": "Refinement (clarification and development of the backlog, grooming) is carried out regularly according to an established rhythm.",
+    "why_important": "Maintains backlog quality.",
+    "metrics_impact": "Backlog quality, planning efficiency",
+    "negative_for_business": "The backlog degrades and becomes unsuitable for planning.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Refinement cadence, backlog readiness and planning interruption rate. Regular refinement maintains a steady flow of well-prepared work. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "User Story/Vertical Slicing",
+    "text": "The team uses a single template to describe the User Story.",
+    "why_important": "Makes tasks easier to understand.",
+    "metrics_impact": "Clarity of requirements",
+    "negative_for_business": "Different tasks are described differently and create confusion.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Consistency of story quality and speed of understanding of the task by the team. The template itself is important not in itself, but as a way to reduce ambiguity. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "User Story/Vertical Slicing",
+    "text": "Stories are usually sliced ​​vertically and provide end-to-end value.",
+    "why_important": "Allows you to quickly demonstrate the result to the user.",
+    "metrics_impact": "Initiative implementation time (epic/story), value delivery",
+    "negative_for_business": "The work is layered and doesn't add value.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Share of stories that provide end-to-end value, Cycle Time per story and speed of receiving feedback. For business, this is closer to Feature Adoption and faster time to value. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "User Story/Vertical Slicing",
+    "text": "Most stories can be presented to the user as complete value.",
+    "why_important": "Helps to get early feedback.",
+    "metrics_impact": "Implementation of epics and stories, feedback cycle time",
+    "negative_for_business": "The team makes parts of the system that cannot be shown.",
+    "business_metrics": "Business impact if the answer is “Yes”: Demoable value rate, Feature Adoption Rate and time to validate released value. If a story can be shown as a completed value, it is easier to measure its product effect. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Change management",
+    "text": "The team has rules for changing requirements during a sprint.",
+    "why_important": "Maintains planning stability.",
+    "metrics_impact": "Stability of volume, achievement of the sprint goal",
+    "negative_for_business": "The sprint plan is constantly changing.",
+    "business_metrics": "Business impact if the answer is “Yes”: Scope Change Rate within a sprint and the impact of changes on predictability. Having rules helps control unplanned work. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Change management",
+    "text": "Changes to requirements are recorded as new backlog items.",
+    "why_important": "Ensures transparency of changes.",
+    "metrics_impact": "Frequency of volume change",
+    "negative_for_business": "Changes are lost or implemented chaotically.",
+    "business_metrics": "Business impact if the answer is “Yes”: Traceability of changes, unplanned work ratio and backlog integrity. Recording changes in individual elements allows you to see their real cost. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Delivery",
+    "theme": "Change management",
+    "text": "The team evaluates the impact of changes on the timing and scope of work.",
+    "why_important": "Allows you to make informed decisions.",
+    "metrics_impact": "Delivery predictability",
+    "negative_for_business": "Changes lead to missed deadlines.",
+    "business_metrics": "Business impact if the answer is “Yes”: Impact-assessed changes share, Plan vs Actual Variance and Delivery Predictability. The issue relates well to the ability to manage change without losing control. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Transparency",
+    "theme": "Backlog and work transparency",
+    "text": "The customer and product owner have access to the team's board or backlog.",
+    "why_important": "Increases the transparency of the team's work.",
+    "metrics_impact": "Customer and product owner satisfaction",
+    "negative_for_business": "The customer and product owner do not understand the status of the work.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Stakeholder visibility and time to status access. Access to the backlog increases transparency and reduces the burden of manual refinements. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Transparency",
+    "theme": "Backlog and work transparency",
+    "text": "Task statuses on the board are updated regularly.",
+    "why_important": "Allows you to see the real state of work.",
+    "metrics_impact": "Transparency of work",
+    "negative_for_business": "Status information becomes outdated.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Status freshness, Time to Status Update and the share of tasks with current status. This affects the quality of management decisions and stakeholder expectations. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Transparency",
+    "theme": "Backlog and work transparency",
+    "text": "The team regularly demonstrates progress and results to the product owner and customer.",
+    "why_important": "Maintains trust in the team.",
+    "metrics_impact": "Trust of the customer and product owner",
+    "negative_for_business": "The customer and the product owner do not see the results of the work.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Stakeholder feedback cycle, transparency score and speed of approval of next steps. Regularly demonstrating progress accelerates value feedback. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Team and product metrics",
+    "text": "The team has a set of process metrics (cycle time - task cycle time, throughput - throughput, etc.).",
+    "why_important": "Allows you to manage process efficiency.",
+    "metrics_impact": "Cycle time, throughput",
+    "negative_for_business": "The team does not understand the effectiveness of its work.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Availability and use of process metrics: Cycle Time, Throughput, WIP, Lead Time for Change. These metrics are needed as leading indicators of business results. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Team and product metrics",
+    "text": "The team tracks product metrics (for example, conversion, feature usage, retention).",
+    "why_important": "Allows you to measure the value of the product and see the dynamics of change.",
+    "metrics_impact": "Conversion, feature implementation",
+    "negative_for_business": "The team does not understand the impact of changes on the product.",
+    "business_metrics": "Business impact if the answer is “Yes”: Availability of product metrics relevant to a specific product: Active Cards Rate, First Transaction Rate, Monthly Spend per Card, Approval Rate, Delinquency Rate, Feature Adoption. This is already a direct layer of communication with business. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Team and product metrics",
+    "text": "Metrics are visualized on dashboards (information panels) and are available to the team.",
+    "why_important": "Makes data available for decision making. Examples of metrics on dashboards - based on product relevance: product (conversion, retention, feature implementation), process (cycle time, throughput, WIP), technical and quality (errors, availability, response time); not necessarily all types at once.",
+    "metrics_impact": "Data Availability",
+    "negative_for_business": "The team makes decisions without data.",
+    "business_metrics": "Business impact if the answer is “Yes”: Dashboard availability, dashboard usage and speed of access to key KPIs. Visualization increases the likelihood that the team is actually managing metrics rather than just collecting them. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Data-driven solutions",
+    "text": "Before implementing changes, the team formulates a hypothesis and success metrics.",
+    "why_important": "Allows you to check the impact of changes.",
+    "metrics_impact": "Success of experiments",
+    "negative_for_business": "Changes are implemented without understanding the effect.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Hypothesis Coverage, presence of success metrics before launch and subsequent uplift in target KPI. This is the basic practice of data-driven product management. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Data-driven solutions",
+    "text": "The team conducts experiments (such as A/B tests) to test ideas.",
+    "why_important": "Allows you to reduce the risk of unsuccessful decisions.",
+    "metrics_impact": "Increase in conversion in experiments",
+    "negative_for_business": "Epics and stories are introduced without testing hypotheses.",
+    "business_metrics": "Business impact if the answer is “Yes”: Experiment Velocity, the share of ideas tested by the experiment, and measured uplift in the target product metric. For a card product, this could be an uplift in activation or the first transaction. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Data-driven solutions",
+    "text": "The team analyzes the results of experiments and makes decisions based on them.",
+    "why_important": "Provides data-driven learning.",
+    "metrics_impact": "Rate of Product Improvement",
+    "negative_for_business": "The team does not learn from the results of the changes.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Decision Quality after Experiment, experiment win rate and speed of translation of insight into a solution. This reflects whether the team is learning from data and changing the product consciously. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Reporting and visualization",
+    "text": "The team has dashboards with key metrics and work status.",
+    "why_important": "Allows you to quickly understand the status of the product and process. Key metrics may include, for example, product KPIs or North Star, sprint or delivery indicators (velocity, burndown, progress towards the sprint goal), quality (defects, incidents). Work status - visibility by tasks or epics, blockers, risks; the set is selected according to the team.",
+    "metrics_impact": "Reporting efficiency",
+    "negative_for_business": "Data is collected manually and takes a long time.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Coverage of key dashboards, time to insight and availability of work status and KPIs in one place. This improves the quality of operational management. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Reporting and visualization",
+    "text": "Data on dashboards is updated automatically and regularly.",
+    "why_important": "Keeps information up to date.",
+    "metrics_impact": "Data relevance",
+    "negative_for_business": "Stakeholders work with outdated data.",
+    "business_metrics": "Impact on business if the answer is “Yes”: Dashboard freshness, automated update rate and trust in data. Without dashboards being up to date, metrics cease to be a working tool. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  },
+  {
+    "category": "Data",
+    "theme": "Reporting and visualization",
+    "text": "The team uses dashboards in meetings to discuss decisions.",
+    "why_important": "Makes the discussion fact-based.",
+    "metrics_impact": "Quality of solutions",
+    "negative_for_business": "Decisions are made based on opinions.",
+    "business_metrics": "Business impact if the answer is “Yes”: Dashboard usage in meetings, decision latency and the share of decisions made based on metrics. This is a good indicator that visualization is actually being used in management. Teams that follow this practice, on average, demonstrate these effects within the product. (Using the example of data analysis from Citibank, Deutsche Bank.)"
+  }
+]

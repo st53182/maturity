@@ -1,8 +1,8 @@
 <template>
   <section class="metrics-tree-panel" :class="{ compact }">
     <header class="mtp-head">
-      <h3>{{ title }}</h3>
-      <p class="mtp-sub">PROFIT -> Revenue/Costs -> delivery and team metrics</p>
+      <h3>{{ displayTitle }}</h3>
+      <p class="mtp-sub">{{ $t('metricsTree.subtitle') }}</p>
     </header>
 
     <div class="mtp-controls">
@@ -10,16 +10,16 @@
         v-model.trim="searchQuery"
         class="mtp-input"
         type="text"
-        placeholder="Поиск метрики (например: Lead Time, MTTR, Velocity)"
+        :placeholder="$t('metricsTree.searchPlaceholder')"
       />
       <div class="mtp-filter-row">
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'all' }" @click="quickFilter = 'all'">{{ quickFilter === 'all' ? '✓ Все' : 'Все' }}</button>
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'business' }" @click="quickFilter = 'business'">{{ quickFilter === 'business' ? '✓ Бизнес' : 'Бизнес' }}</button>
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'delivery' }" @click="quickFilter = 'delivery'">{{ quickFilter === 'delivery' ? '✓ Поставка' : 'Поставка' }}</button>
-        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'org' }" @click="quickFilter = 'org'">{{ quickFilter === 'org' ? '✓ Орг' : 'Орг' }}</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'all' }" @click="quickFilter = 'all'">{{ quickFilter === 'all' ? $t('metricsTree.filterAllActive') : $t('metricsTree.filterAll') }}</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'business' }" @click="quickFilter = 'business'">{{ quickFilter === 'business' ? $t('metricsTree.filterBusinessActive') : $t('metricsTree.filterBusiness') }}</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'delivery' }" @click="quickFilter = 'delivery'">{{ quickFilter === 'delivery' ? $t('metricsTree.filterDeliveryActive') : $t('metricsTree.filterDelivery') }}</button>
+        <button type="button" class="mtp-btn" :class="{ 'mtp-btn-primary': quickFilter === 'org' }" @click="quickFilter = 'org'">{{ quickFilter === 'org' ? $t('metricsTree.filterOrgActive') : $t('metricsTree.filterOrg') }}</button>
       </div>
-      <button type="button" class="mtp-btn" @click="expandAll">Развернуть все</button>
-      <button type="button" class="mtp-btn" @click="collapseAll">Свернуть все</button>
+      <button type="button" class="mtp-btn" @click="expandAll">{{ $t('metricsTree.expandAll') }}</button>
+      <button type="button" class="mtp-btn" @click="collapseAll">{{ $t('metricsTree.collapseAll') }}</button>
     </div>
 
     <div class="mtp-tree-wrap">
@@ -120,9 +120,10 @@ export default {
   name: "MetricsTreePanel",
   components: { MetricsTreeNode },
   props: {
-    title: { type: String, default: "Древо метрик" },
+    title: { type: String, default: "" },
     surveyToken: { type: String, default: "" },
     compact: { type: Boolean, default: false },
+    uiLang: { type: String, default: "" },
   },
   data() {
     const initialExpanded = {};
@@ -181,10 +182,11 @@ export default {
           context: "metrics_tree",
         };
         if (this.surveyToken) payload.survey_token = this.surveyToken;
+        payload.lang = this.uiLang === "en" ? "en" : "ru";
         const res = await axios.post("/api/metrics-tree/explain", payload, this.surveyToken ? undefined : { headers: this.authHeaders() });
-        this.explainResult = res.data.content || "Нет данных";
+        this.explainResult = res.data.content || this.$t("metricsTree.noData");
       } catch (e) {
-        this.explainResult = `Ошибка: ${e.response?.data?.error || "Сервис недоступен"}`;
+        this.explainResult = `${this.$t("metricsTree.errorPrefix")} ${e.response?.data?.error || this.$t("metricsTree.unavailable")}`;
       } finally {
         this.aiLoadingExplain = false;
       }
@@ -205,10 +207,11 @@ export default {
           metric_b_name_ru: b.nameRu || "",
         };
         if (this.surveyToken) payload.survey_token = this.surveyToken;
+        payload.lang = this.uiLang === "en" ? "en" : "ru";
         const res = await axios.post("/api/metrics-tree/relationship", payload, this.surveyToken ? undefined : { headers: this.authHeaders() });
-        this.relationshipResult = res.data.content || "Нет данных";
+        this.relationshipResult = res.data.content || this.$t("metricsTree.noData");
       } catch (e) {
-        this.relationshipResult = `Ошибка: ${e.response?.data?.error || "Сервис недоступен"}`;
+        this.relationshipResult = `${this.$t("metricsTree.errorPrefix")} ${e.response?.data?.error || this.$t("metricsTree.unavailable")}`;
       } finally {
         this.aiLoadingRel = false;
       }

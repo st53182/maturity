@@ -4,10 +4,10 @@
     <div v-if="!createdUrl" class="form-block">
       <label>{{ $t('maturity.teamNameOptional') }}</label>
       <input v-model="teamName" type="text" class="team-input" :placeholder="$t('survey.teamName')" />
-      <label>Группа команд (стрим), опционально</label>
-      <input v-model="groupName" type="text" class="team-input" placeholder="Например: Stream A" />
+      <label>{{ $t('maturity.streamGroupOptional') }}</label>
+      <input v-model="groupName" type="text" class="team-input" :placeholder="$t('maturity.streamGroupPlaceholder')" />
       <button type="button" class="btn-create" :disabled="creating" @click="createLink">
-        {{ creating ? '...' : $t('maturity.create') }}
+        {{ creating ? $t('maturity.creatingShort') : $t('maturity.create') }}
       </button>
     </div>
     <div v-else class="result-block">
@@ -58,14 +58,14 @@ export default {
         const base = window.location.origin;
         this.createdUrl = `${base}${this.maturityPathPrefix}/${this.token}`;
       } catch (e) {
-        alert(e.response?.data?.error || 'Ошибка создания ссылки');
+        alert(e.response?.data?.error || this.$t('maturity.linkCreateError'));
       } finally {
         this.creating = false;
       }
     },
     copyLink() {
       navigator.clipboard.writeText(this.createdUrl).then(() => {
-        alert(this.$t('maturity.copyLink') + ' — скопировано');
+        alert(this.$t('maturity.copyLink') + ' — ' + this.$t('maturity.copyLinkDone'));
       }).catch(() => {});
     }
   }

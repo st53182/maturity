@@ -1,12 +1,12 @@
 <template>
   <div class="edit-maturity" :class="{ 'edit-maturity--new': variant === 'new' }">
-    <div v-if="loading" class="loading">Загрузка...</div>
+    <div v-if="loading" class="loading">{{ $t('maturity.edit.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else class="edit-form">
       <header class="edit-header">
-        <h1>Изменить ответы</h1>
+        <h1>{{ $t('maturity.edit.title') }}</h1>
         <p v-if="teamName" class="team-name">{{ teamName }}</p>
-        <p class="edit-hint">Измените нужные ответы и нажмите «Сохранить и пересчитать отчёт».</p>
+        <p class="edit-hint">{{ $t('maturity.edit.hint') }}</p>
       </header>
 
       <div class="all-questions">
@@ -65,7 +65,7 @@
 
       <div class="edit-actions">
         <button type="button" class="btn-back" @click="$router.push(`${maturityBase}/results`)">
-          ← Назад к отчёту
+          {{ $t('maturity.edit.backToReport') }}
         </button>
         <button
           type="button"
@@ -73,7 +73,7 @@
           :disabled="saving"
           @click="saveAndRecalc"
         >
-          {{ saving ? 'Сохранение...' : 'Сохранить и пересчитать отчёт' }}
+          {{ saving ? $t('maturity.edit.saving') : $t('maturity.edit.saveRecalc') }}
         </button>
       </div>
     </div>
@@ -103,6 +103,15 @@ export default {
   computed: {
     maturityBase() {
       return this.variant === 'new' ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
+    },
+    surveyLang() {
+      try {
+        const loc = this.$i18n?.locale;
+        const s = typeof loc === 'string' ? loc : loc?.value;
+        return s === 'en' ? 'en' : 'ru';
+      } catch (_e) {
+        return typeof localStorage !== 'undefined' && localStorage.getItem('language') === 'en' ? 'en' : 'ru';
+      }
     }
   },
   async mounted() {
@@ -112,12 +121,13 @@ export default {
   methods: {
     async load() {
       try {
+        const lang = { params: { lang: this.surveyLang } };
         const [surveyRes, resultsRes] = await Promise.all([
-          axios.get(`/api/maturity/${this.token}`),
-          axios.get(`/api/maturity/${this.token}/results`)
+          axios.get(`/api/maturity/${this.token}`, lang),
+          axios.get(`/api/maturity/${this.token}/results`, lang)
         ]);
         if (!surveyRes.data.completed) {
-          this.error = 'Оценка ещё не пройдена. Сначала пройдите опрос.';
+          this.error = this.$t('maturity.edit.notCompleted');
           return;
         }
         this.teamName = surveyRes.data.team_name || resultsRes.data.team_name;
@@ -136,7 +146,7 @@ export default {
           this.comments[q.id] = (comList[q.id] || '').toString();
         });
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка загрузки';
+        this.error = e.response?.data?.error || this.$t('maturity.edit.loadError');
       } finally {
         this.loading = false;
       }
@@ -160,7 +170,7 @@ export default {
         await axios.put(`/api/maturity/${this.token}/answers`, { answers: arr, comments: commentsArr });
         this.$router.push(`${this.maturityBase}/results`);
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка сохранения';
+        this.error = e.response?.data?.error || this.$t('maturity.edit.saveError');
       } finally {
         this.saving = false;
       }

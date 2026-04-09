@@ -12,7 +12,7 @@
         <p class="average-line">
           {{ $t('maturity.overallScore') }}: <strong>{{ averageScore.toFixed(2) }}</strong>
         </p>
-        <p v-if="aiUsageRemaining !== null" class="ai-usage-line">AI-запросов осталось: {{ aiUsageRemaining }}</p>
+        <p v-if="aiUsageRemaining !== null" class="ai-usage-line">{{ $t('maturity.results.aiUsageRemaining', { count: aiUsageRemaining }) }}</p>
 
         <div
           v-for="group in radarGroups"
@@ -31,7 +31,7 @@
               class="theme-row"
               @click="openDetail(cat.theme)"
             >
-              <span class="theme-name">{{ cat.theme }}</span>
+              <span class="theme-name">{{ displayThemeName(cat.theme) }}</span>
               <span class="theme-score" :class="scoreClass(cat.avg)">{{ formatScore(cat.avg) }}</span>
             </button>
           </div>
@@ -41,41 +41,41 @@
           <h2 class="rec-title">{{ $t('maturity.recommendationsTitle') }}</h2>
           <div class="rec-actions">
             <button type="button" class="btn-rec" @click="editingRecommendations = !editingRecommendations">
-              {{ editingRecommendations ? 'Отменить редактирование' : 'Редактировать' }}
+              {{ editingRecommendations ? $t('maturity.results.cancelEdit') : $t('maturity.results.edit') }}
             </button>
             <button type="button" class="btn-rec" :disabled="savingRecommendations" @click="saveRecommendations">
-              {{ savingRecommendations ? 'Сохранение…' : 'Сохранить' }}
+              {{ savingRecommendations ? $t('maturity.results.saving') : $t('maturity.results.save') }}
             </button>
           </div>
           <div v-if="editingRecommendations" class="group-plan-editor">
-            <label class="plan-label">Диагноз</label>
+            <label class="plan-label">{{ $t('maturity.results.diagnosis') }}</label>
             <textarea v-model="recommendationsPlan.diagnosis" class="plan-input" rows="3" />
 
-            <h4>Инициативы</h4>
+            <h4>{{ $t('maturity.results.initiatives') }}</h4>
             <article v-for="(item, idx) in recommendationsPlan.initiatives" :key="'team-init-' + idx" class="initiative-card">
               <div class="initiative-head">
-                <strong>Инициатива {{ idx + 1 }}</strong>
+                <strong>{{ $t('maturity.results.initiativeN', { n: idx + 1 }) }}</strong>
                 <div class="initiative-actions">
                   <button type="button" class="btn-rec" @click="toggleTeamInitiativeCollapse(idx)">
-                    {{ isTeamInitiativeCollapsed(idx) ? 'Развернуть' : 'Свернуть' }}
+                    {{ isTeamInitiativeCollapsed(idx) ? $t('maturity.results.expand') : $t('maturity.results.collapse') }}
                   </button>
-                  <button type="button" class="btn-rec" @click="removeTeamInitiative(idx)">Удалить</button>
+                  <button type="button" class="btn-rec" @click="removeTeamInitiative(idx)">{{ $t('maturity.results.delete') }}</button>
                 </div>
               </div>
               <div v-if="!isTeamInitiativeCollapsed(idx)">
-                <label class="plan-label">Название</label>
+                <label class="plan-label">{{ $t('maturity.results.fieldTitle') }}</label>
                 <input v-model="item.title" class="plan-input" />
-                <label class="plan-label">Цель</label>
+                <label class="plan-label">{{ $t('maturity.results.fieldObjective') }}</label>
                 <textarea v-model="item.objective" class="plan-input" rows="2" />
-                <label class="plan-label">Владелец / роль</label>
+                <label class="plan-label">{{ $t('maturity.results.ownerRole') }}</label>
                 <input v-model="item.owner" class="plan-input" />
-                <label class="plan-label">Метрика успеха</label>
+                <label class="plan-label">{{ $t('maturity.results.successMetricLabel') }}</label>
                 <input v-model="item.success_metric" class="plan-input" />
-                <label class="plan-label">Бизнес-эффект</label>
+                <label class="plan-label">{{ $t('maturity.results.businessEffect') }}</label>
                 <textarea v-model="item.business_impact" class="plan-input" rows="2" />
-                <label class="plan-label">Эффект для заказчиков</label>
+                <label class="plan-label">{{ $t('maturity.results.customerEffect') }}</label>
                 <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
-                <label class="plan-label">Конкретные шаги (по одному на строку)</label>
+                <label class="plan-label">{{ $t('maturity.results.stepsLabel') }}</label>
                 <textarea
                   class="plan-input"
                   rows="6"
@@ -84,61 +84,61 @@
                 />
               </div>
             </article>
-            <button type="button" class="btn-rec" @click="addTeamInitiative">+ Добавить инициативу</button>
+            <button type="button" class="btn-rec" @click="addTeamInitiative">{{ $t('maturity.results.addInitiative') }}</button>
           </div>
           <div v-html="recommendationsHtml" class="rec-html"></div>
         </div>
 
         <div v-if="hasDontKnow" class="recommendations-block dont-know-rec-block">
-          <h2 class="rec-title">Что сделать в следующем квартале (ответы «Не знаю»)</h2>
-          <p class="rec-hint">Практические шаги, чтобы команда прояснила, есть ли это у них.</p>
+          <h2 class="rec-title">{{ $t('maturity.results.dontKnowTitle') }}</h2>
+          <p class="rec-hint">{{ $t('maturity.results.dontKnowHint') }}</p>
           <button
             type="button"
             class="btn-rec btn-dont-know-rec"
             :disabled="loadingDontKnowRecs"
             @click="fetchDontKnowRecommendations"
           >
-            {{ loadingDontKnowRecs ? 'Генерация…' : 'Получить рекомендации по «Не знаю»' }}
+            {{ loadingDontKnowRecs ? $t('maturity.results.dontKnowGenerating') : $t('maturity.results.dontKnowFetch') }}
           </button>
           <div v-if="dontKnowHtml" class="rec-actions">
             <button type="button" class="btn-rec" @click="editingDontKnow = !editingDontKnow">
-              {{ editingDontKnow ? 'Отменить редактирование' : 'Редактировать' }}
+              {{ editingDontKnow ? $t('maturity.results.cancelEdit') : $t('maturity.results.edit') }}
             </button>
             <button type="button" class="btn-rec" :disabled="savingDontKnow" @click="saveDontKnowRecommendations">
-              {{ savingDontKnow ? 'Сохранение…' : 'Сохранить' }}
+              {{ savingDontKnow ? $t('maturity.results.saving') : $t('maturity.results.save') }}
             </button>
           </div>
           <div v-if="editingDontKnow" class="group-plan-editor">
-            <label class="plan-label">Диагноз</label>
+            <label class="plan-label">{{ $t('maturity.results.diagnosis') }}</label>
             <textarea v-model="dontKnowPlan.diagnosis" class="plan-input" rows="3" />
 
-            <h4>Инициативы</h4>
+            <h4>{{ $t('maturity.results.initiatives') }}</h4>
             <article v-for="(item, idx) in dontKnowPlan.initiatives" :key="'dk-init-' + idx" class="initiative-card">
               <div class="initiative-head">
-                <strong>Инициатива {{ idx + 1 }}</strong>
+                <strong>{{ $t('maturity.results.initiativeN', { n: idx + 1 }) }}</strong>
                 <div class="initiative-actions">
                   <button type="button" class="btn-rec" @click="toggleDontKnowInitiativeCollapse(idx)">
-                    {{ isDontKnowInitiativeCollapsed(idx) ? 'Развернуть' : 'Свернуть' }}
+                    {{ isDontKnowInitiativeCollapsed(idx) ? $t('maturity.results.expand') : $t('maturity.results.collapse') }}
                   </button>
-                  <button type="button" class="btn-rec" @click="removeDontKnowInitiative(idx)">Удалить</button>
+                  <button type="button" class="btn-rec" @click="removeDontKnowInitiative(idx)">{{ $t('maturity.results.delete') }}</button>
                 </div>
               </div>
               <div v-if="!isDontKnowInitiativeCollapsed(idx)">
-                <label class="plan-label">Название</label>
+                <label class="plan-label">{{ $t('maturity.results.fieldTitle') }}</label>
                 <input v-model="item.title" class="plan-input" />
-                <label class="plan-label">Цель</label>
+                <label class="plan-label">{{ $t('maturity.results.fieldObjective') }}</label>
                 <textarea v-model="item.objective" class="plan-input" rows="2" />
-                <label class="plan-label">Владелец / роль</label>
+                <label class="plan-label">{{ $t('maturity.results.ownerRole') }}</label>
                 <input v-model="item.owner" class="plan-input" />
-                <label class="plan-label">Метрика успеха</label>
+                <label class="plan-label">{{ $t('maturity.results.successMetricLabel') }}</label>
                 <input v-model="item.success_metric" class="plan-input" />
-                <label class="plan-label">Бизнес-эффект</label>
+                <label class="plan-label">{{ $t('maturity.results.businessEffect') }}</label>
                 <textarea v-model="item.business_impact" class="plan-input" rows="2" />
-                <label class="plan-label">Эффект для заказчиков</label>
+                <label class="plan-label">{{ $t('maturity.results.customerEffect') }}</label>
                 <textarea v-model="item.customer_impact" class="plan-input" rows="2" />
               </div>
             </article>
-            <button type="button" class="btn-rec" @click="addDontKnowInitiative">+ Добавить инициативу</button>
+            <button type="button" class="btn-rec" @click="addDontKnowInitiative">{{ $t('maturity.results.addInitiative') }}</button>
           </div>
           <div v-if="dontKnowHtml" v-html="dontKnowHtml" class="rec-html"></div>
         </div>
@@ -146,10 +146,10 @@
 
       <div class="actions">
         <button type="button" class="btn-edit" @click="$router.push(`${maturityBase}/edit`)">
-          Изменить ответы
+          {{ $t('maturity.results.changeAnswers') }}
         </button>
         <button type="button" class="btn-show-all" @click="showAllModal = true">
-          Показать все
+          {{ $t('maturity.results.showAll') }}
         </button>
         <button
           type="button"
@@ -169,12 +169,12 @@
         <div v-if="selectedTheme" class="detail-overlay" @click.self="selectedTheme = null">
           <div class="detail-modal">
             <div class="detail-header">
-              <h3>{{ selectedTheme }}</h3>
+              <h3>{{ displayThemeName(selectedTheme) }}</h3>
               <div class="detail-header-actions">
                 <button type="button" class="btn-pdf-modal" :disabled="modalExporting" @click="exportThemePdf">
-                  {{ modalExporting ? 'Экспорт…' : 'Скачать PDF' }}
+                  {{ modalExporting ? $t('maturity.results.exportingShort') : $t('maturity.results.downloadPdfShort') }}
                 </button>
-                <button type="button" class="detail-close" aria-label="Закрыть" @click="selectedTheme = null">×</button>
+                <button type="button" class="detail-close" :aria-label="$t('maturity.results.closeAria')" @click="selectedTheme = null">×</button>
               </div>
             </div>
             <div ref="themeModalCards" class="detail-cards">
@@ -188,20 +188,20 @@
                   {{ item.answerLabel }}
                 </div>
                 <div v-if="item.why_important" class="detail-why">
-                  <strong>Почему это важно:</strong> {{ item.why_important }}
+                  <strong>{{ $t('maturity.whyImportantLabel') }}</strong> {{ item.why_important }}
                 </div>
                 <div v-if="item.metrics_impact" class="detail-metrics">
-                  <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
+                  <strong>{{ $t('maturity.metricsImpactTitle') }}:</strong> {{ item.metrics_impact }}
                 </div>
                 <div v-if="item.negative_for_business" class="detail-negative">
-                  <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
+                  <strong>{{ $t('maturity.negativeIfWeakTitle') }}:</strong> {{ item.negative_for_business }}
                 </div>
                 <div v-if="item.business_metrics" class="detail-business-metrics">
-                  <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
+                  <strong>{{ $t('maturity.businessMetricsTitle') }}:</strong> {{ item.business_metrics }}
                   <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
                 </div>
                 <div v-if="item.comment" class="detail-comment">
-                  <strong>Комментарий:</strong> {{ item.comment }}
+                  <strong>{{ $t('maturity.commentLabel') }}:</strong> {{ item.comment }}
                 </div>
               </div>
             </div>
@@ -212,16 +212,16 @@
         <div v-if="showAllModal" class="detail-overlay" @click.self="showAllModal = false">
           <div class="detail-modal detail-modal-full">
             <div class="detail-header">
-              <h3>Все вопросы и ответы</h3>
+              <h3>{{ $t('maturity.results.allQuestionsTitle') }}</h3>
               <div class="detail-header-actions">
                 <button type="button" class="btn-pdf-modal" :disabled="modalExporting" @click="exportAllQuestionsPdf">
-                  {{ modalExporting ? 'Экспорт…' : 'Скачать PDF' }}
+                  {{ modalExporting ? $t('maturity.results.exportingShort') : $t('maturity.results.downloadPdfShort') }}
                 </button>
-                <button type="button" class="detail-close" aria-label="Закрыть" @click="showAllModal = false">×</button>
+                <button type="button" class="detail-close" :aria-label="$t('maturity.results.closeAria')" @click="showAllModal = false">×</button>
               </div>
             </div>
             <div ref="allModalCards" class="detail-cards detail-cards-full">
-              <p v-if="!allQuestionsWithAnswers.length" class="detail-empty">Нет данных о вопросах и ответах.</p>
+              <p v-if="!allQuestionsWithAnswers.length" class="detail-empty">{{ $t('maturity.results.noQuestionData') }}</p>
               <div
                 v-for="item in allQuestionsWithAnswers"
                 :key="item.id"
@@ -232,20 +232,20 @@
                   {{ item.answerLabel }}
                 </div>
                 <div v-if="item.why_important" class="detail-why">
-                  <strong>Почему это важно:</strong> {{ item.why_important }}
+                  <strong>{{ $t('maturity.whyImportantLabel') }}</strong> {{ item.why_important }}
                 </div>
                 <div v-if="item.metrics_impact" class="detail-metrics">
-                  <strong>Метрики влияния:</strong> {{ item.metrics_impact }}
+                  <strong>{{ $t('maturity.metricsImpactTitle') }}:</strong> {{ item.metrics_impact }}
                 </div>
                 <div v-if="item.negative_for_business" class="detail-negative">
-                  <strong>Если у команды проблемы в этом:</strong> {{ item.negative_for_business }}
+                  <strong>{{ $t('maturity.negativeIfWeakTitle') }}:</strong> {{ item.negative_for_business }}
                 </div>
                 <div v-if="item.business_metrics" class="detail-business-metrics">
-                  <strong>Бизнес-метрики:</strong> {{ item.business_metrics }}
+                  <strong>{{ $t('maturity.businessMetricsTitle') }}:</strong> {{ item.business_metrics }}
                   <p v-if="businessMetricsDisclaimer" class="detail-disclaimer">{{ businessMetricsDisclaimer }}</p>
                 </div>
                 <div v-if="item.comment" class="detail-comment">
-                  <strong>Комментарий:</strong> {{ item.comment }}
+                  <strong>{{ $t('maturity.commentLabel') }}:</strong> {{ item.comment }}
                 </div>
               </div>
             </div>
@@ -375,8 +375,9 @@ export default {
     },
     formattedDate() {
       if (!this.completedAt) return '';
+      const locTag = this.surveyLang === 'en' ? 'en-US' : 'ru-RU';
       try {
-        return new Date(this.completedAt).toLocaleDateString('ru-RU', {
+        return new Date(this.completedAt).toLocaleDateString(locTag, {
           day: 'numeric',
           month: 'long',
           year: 'numeric'
@@ -387,6 +388,15 @@ export default {
     },
     maturityBase() {
       return this.variant === 'new' ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
+    },
+    surveyLang() {
+      try {
+        const loc = this.$i18n?.locale;
+        const s = typeof loc === 'string' ? loc : loc?.value;
+        return s === 'en' ? 'en' : 'ru';
+      } catch (_e) {
+        return typeof localStorage !== 'undefined' && localStorage.getItem('language') === 'en' ? 'en' : 'ru';
+      }
     },
   },
   async mounted() {
@@ -406,6 +416,16 @@ export default {
     document.body.style.overflow = '';
   },
   methods: {
+    displayThemeName(ruKey) {
+      if (ruKey == null || ruKey === '') return '';
+      const tm = this.$i18n?.global?.tm;
+      if (typeof tm !== 'function') return ruKey;
+      const tl = tm('maturity.themeLabels') || {};
+      const rg = tm('maturity.radarGroupLabels') || {};
+      if (tl && typeof tl === 'object' && tl[ruKey]) return tl[ruKey];
+      if (rg && typeof rg === 'object' && rg[ruKey]) return rg[ruKey];
+      return ruKey;
+    },
     syncBodyScrollLock() {
       document.body.style.overflow = this.selectedTheme || this.showAllModal ? 'hidden' : '';
     },
@@ -420,7 +440,7 @@ export default {
         if (!subs) continue;
         const vals = Object.values(subs).map(v => parseFloat(v) || 0);
         const score = vals.reduce((a, b) => a + b, 0); // максимум 3 при трех "Да"
-        labels.push(cat);
+        labels.push(this.displayThemeName(cat));
         data.push(score);
       }
       return {
@@ -438,7 +458,9 @@ export default {
     },
     async loadResults() {
       try {
-        const res = await axios.get(`/api/maturity/${this.token}/results`);
+        const res = await axios.get(`/api/maturity/${this.token}/results`, {
+          params: { lang: this.surveyLang }
+        });
         this.teamName = res.data.team_name;
         this.completedAt = res.data.completed_at;
         this.results = res.data.results || {};
@@ -453,7 +475,7 @@ export default {
         this.dontKnowHtml = res.data.dont_know_recommendations_html || '';
         this.dontKnowPlan = normalizeTeamPlan(res.data.dont_know_recommendations_plan);
       } catch (e) {
-        this.error = e.response?.data?.error || 'Ошибка загрузки результатов';
+        this.error = e.response?.data?.error || this.$t('maturity.results.loadResultsError');
       } finally {
         this.loading = false;
       }
@@ -510,7 +532,7 @@ export default {
         this.editingRecommendations = false;
         await this.fetchAiUsage();
       } catch (e) {
-        this.recommendationsHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка загрузки рекомендаций') + '</p>';
+        this.recommendationsHtml = '<p class="rec-error">' + (e.response?.data?.error || this.$t('maturity.results.recsLoadError')) + '</p>';
       } finally {
         this.loadingRecs = false;
       }
@@ -526,7 +548,7 @@ export default {
         this.editingDontKnow = false;
         await this.fetchAiUsage();
       } catch (e) {
-        this.dontKnowHtml = '<p class="rec-error">' + (e.response?.data?.error || 'Ошибка') + '</p>';
+        this.dontKnowHtml = '<p class="rec-error">' + (e.response?.data?.error || this.$t('maturity.results.errorGeneric')) + '</p>';
       } finally {
         this.loadingDontKnowRecs = false;
       }
@@ -544,7 +566,7 @@ export default {
         this.recommendationsPlan = normalizeTeamPlan(res.data?.plan);
         this.editingRecommendations = false;
       } catch (e) {
-        alert(e.response?.data?.error || 'Ошибка сохранения рекомендаций');
+        alert(e.response?.data?.error || this.$t('maturity.results.saveRecsError'));
       } finally {
         this.savingRecommendations = false;
       }
@@ -592,7 +614,7 @@ export default {
         this.dontKnowPlan = normalizeTeamPlan(res.data?.plan);
         this.editingDontKnow = false;
       } catch (e) {
-        alert(e.response?.data?.error || 'Ошибка сохранения рекомендаций');
+        alert(e.response?.data?.error || this.$t('maturity.results.saveRecsError'));
       } finally {
         this.savingDontKnow = false;
       }
@@ -649,7 +671,8 @@ export default {
         }
         const dateStr = this.formattedDate.replace(/\s/g, '-') || 'report';
         const name = (this.teamName || 'maturity').replace(/[^\w\s-]/g, '').slice(0, 30);
-        pdf.save(`оценка-зрелости-${name}-${dateStr}.pdf`);
+        const fname = this.$t('maturity.results.pdfFilename', { name, date: dateStr });
+        pdf.save(fname);
       } catch (e) {
         console.error(e);
         alert(this.$t('maturity.pdfError'));
@@ -688,10 +711,11 @@ export default {
       }
     },
     async exportThemePdf() {
-      await this.exportElementToPdf(this.$refs.themeModalCards, `детали-темы-${(this.selectedTheme || 'theme').replace(/[^\w\s-]/g, '').trim()}`);
+      const slug = (this.selectedTheme || 'theme').replace(/[^\w\s-]/g, '').trim() || 'theme';
+      await this.exportElementToPdf(this.$refs.themeModalCards, `${this.$t('maturity.results.pdfThemePrefix')}-${slug}`);
     },
     async exportAllQuestionsPdf() {
-      await this.exportElementToPdf(this.$refs.allModalCards, 'все-вопросы');
+      await this.exportElementToPdf(this.$refs.allModalCards, this.$t('maturity.results.pdfAllPrefix'));
     },
     async fetchAiUsage() {
       try {

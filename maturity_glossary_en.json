@@ -1,0 +1,142 @@
+[
+  {
+    "id": "noi",
+    "name": "Чистый операционный доход (NOI)",
+    "description": "Доход от операционной деятельности за вычетом операционных расходов.",
+    "name_en": "Net operating income (NOI)",
+    "description_en": "Operating income less operating expenses."
+  },
+  {
+    "id": "retention",
+    "name": "Retention rate",
+    "description": "Доля клиентов, оставшихся с продуктом за период.",
+    "name_en": "retention rate",
+    "description_en": "The percentage of customers who stayed with the product during the period."
+  },
+  {
+    "id": "churn",
+    "name": "Churn rate",
+    "description": "Доля клиентов, прекративших пользоваться продуктом.",
+    "name_en": "Churn rate",
+    "description_en": "Percentage of customers who stopped using the product."
+  },
+  {
+    "id": "dau_mau",
+    "name": "DAU / MAU",
+    "description": "Соотношение дневных и месячных активных пользователей; вовлечённость.",
+    "name_en": "DAU/MAU",
+    "description_en": "Ratio of daily and monthly active users; involvement."
+  },
+  {
+    "id": "ltv",
+    "name": "LTV (Customer Lifetime Value)",
+    "description": "Совокупный доход с одного клиента за всё время пользования продуктом.",
+    "name_en": "LTV (Customer Lifetime Value)",
+    "description_en": "Total income per client for the entire time of using the product."
+  },
+  {
+    "id": "mrr_arr",
+    "name": "MRR / ARR",
+    "description": "Месячный / годовой регулярный доход (recurring revenue).",
+    "name_en": "MRR/ARR",
+    "description_en": "Monthly/annual recurring revenue."
+  },
+  {
+    "id": "cpa",
+    "name": "Cost per Application (CPA)",
+    "description": "Стоимость одной заявки на продукт.",
+    "name_en": "Cost per Application (CPA)",
+    "description_en": "The cost of one application for a product."
+  },
+  {
+    "id": "cost_approved",
+    "name": "Cost per Approved Client",
+    "description": "Стоимость привлечения одобренного клиента.",
+    "name_en": "Cost per Approved Client",
+    "description_en": "Cost of attracting an approved client."
+  },
+  {
+    "id": "conversion",
+    "name": "Application Conversion Rate",
+    "description": "Конверсия заявки в одобрение.",
+    "name_en": "Application Conversion Rate",
+    "description_en": "Conversion of application into approval."
+  },
+  {
+    "id": "activation",
+    "name": "Card Activation Rate / First Transaction Rate",
+    "description": "Доля активированных карт или первых операций.",
+    "name_en": "Card Activation Rate / First Transaction Rate",
+    "description_en": "Share of activated cards or first transactions."
+  },
+  {
+    "id": "revenue",
+    "name": "Interchange Revenue, Interest Income, Fee Income, ARPU",
+    "description": "Доходы от платежей, процентов, комиссий; доход на пользователя.",
+    "name_en": "Interchange Revenue, Interest Income, Fee Income, ARPU",
+    "description_en": "Income from payments, interest, commissions; revenue per user."
+  },
+  {
+    "id": "delinquency",
+    "name": "Delinquency Rate / Default Rate (NPL)",
+    "description": "Просрочка и доля дефолтов по кредитному портфелю.",
+    "name_en": "Delinquency Rate / Default Rate (NPL)",
+    "description_en": "Overdue and the share of defaults on the loan portfolio."
+  },
+  {
+    "id": "sprint_goal",
+    "name": "Цель спринта",
+    "description": "Короткая формулировка главного результата спринта, на который ориентируется команда при выборе и выполнении задач.",
+    "name_en": "Sprint Goal",
+    "description_en": "A short statement of the main result of the sprint, which the team focuses on when selecting and completing tasks."
+  },
+  {
+    "id": "business_value",
+    "name": "Бизнес-ценность",
+    "description": "Измеримая польза для бизнеса от функции/инициативы: рост дохода, снижение издержек, снижение рисков, ускорение time-to-market.",
+    "name_en": "Business Value",
+    "description_en": "Measurable business benefit from the function/initiative: revenue growth, cost reduction, risk reduction, time-to-market acceleration."
+  },
+  {
+    "id": "business_metrics",
+    "name": "Бизнес-метрики",
+    "description": "Показатели, по которым проверяют бизнес-эффект изменений: например конверсия, retention, ARPU, cost-to-serve, дефектность, NPS.",
+    "name_en": "Business metrics",
+    "description_en": "Indicators by which the business effect of changes is checked: for example, conversion, retention, ARPU, cost-to-serve, defectiveness, NPS."
+  },
+  {
+    "id": "skills_matrix",
+    "name": "Матрица компетенций",
+    "description": "Таблица навыков команды с уровнями владения по каждому участнику; помогает выявлять single-point-of-failure и планировать развитие.",
+    "name_en": "Competency Matrix",
+    "description_en": "Table of team skills with proficiency levels for each participant; helps identify single-point-of-failure and plan development."
+  },
+  {
+    "id": "dod",
+    "name": "Definition of Done (DoD)",
+    "description": "Общий критерий качества, при котором работа считается завершённой: код, тесты, документация, проверки и готовность к поставке.",
+    "name_en": "Definition of Done (DoD)",
+    "description_en": "The overall quality criterion at which a work is considered complete: code, tests, documentation, audits and ready for delivery."
+  },
+  {
+    "id": "increment",
+    "name": "Инкремент",
+    "description": "Рабочий, потенциально поставляемый результат спринта, который соответствует DoD и добавляет ценность пользователю/бизнесу.",
+    "name_en": "Increment",
+    "description_en": "A working, potentially deliverable sprint deliverable that is DoD compliant and adds value to the user/business."
+  },
+  {
+    "id": "nfr",
+    "name": "NFR (Нефункциональные требования)",
+    "description": "Требования к качественным характеристикам решения: производительность, безопасность, надёжность, доступность, масштабируемость и т.д.",
+    "name_en": "NFR (Non-functional requirements)",
+    "description_en": "Requirements for the quality characteristics of the solution: performance, security, reliability, availability, scalability, etc."
+  },
+  {
+    "id": "dor",
+    "name": "Definition of Ready (DoR)",
+    "description": "Критерии готовности задачи к взятию в спринт: понятный scope, критерии приёмки, зависимости, данные и оценка.",
+    "name_en": "Definition of Ready (DoR)",
+    "description_en": "Criteria for a task’s readiness to be taken into a sprint: clear scope, acceptance criteria, dependencies, data and evaluation."
+  }
+]

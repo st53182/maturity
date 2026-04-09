@@ -275,6 +275,7 @@ import { useAuthStore } from "@/stores/auth";
 import { computed, ref, watch, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { syncI18nFallback } from "@/i18n";
 import { io } from "socket.io-client";
 
 function parseJwtPayload(token) {
@@ -314,7 +315,7 @@ export default {
     const authStore = useAuthStore();
     const route = useRoute();
     const router = useRouter();
-    const { locale } = useI18n();
+    const { locale, t } = useI18n();
 
     const isAuthenticated = computed(() => authStore.isAuthenticated);
     const isNewUi = computed(() => (route.path || "").startsWith("/new"));
@@ -394,7 +395,7 @@ export default {
     // ✅ Функция создания команды
     const createTeam = async () => {
       if (!newTeamName.value.trim()) {
-        alert("Введите название команды!");
+        alert(t("common.teamNameRequired"));
         return;
       }
 
@@ -404,7 +405,7 @@ export default {
 
         if (!token) {
           console.error("❌ Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          alert(t("common.notAuthorizedShort"));
           return;
         }
 
@@ -418,7 +419,7 @@ export default {
 
 
         showTeamModal.value = false; // Закрываем pop-up
-        alert("🎉 Команда создана!");
+        alert(t("common.teamCreated"));
 
         // Можно обновить список команд через authStore (если там есть `fetchTeams`)
 
@@ -427,7 +428,7 @@ export default {
 
       } catch (error) {
         console.error("❌ Ошибка создания команды:", error.response?.data || error);
-        alert("❌ Ошибка создания команды. Убедись не занято ли имя команды");
+        alert(t("common.teamCreateFailed"));
       }
     };
 
@@ -478,6 +479,7 @@ export default {
       openExternalLinkAndClose,
       switchLanguage(lang) {
         locale.value = lang;
+        syncI18nFallback();
         localStorage.setItem("language", lang);
       },
     };

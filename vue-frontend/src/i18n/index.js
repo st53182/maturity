@@ -66,4 +66,11 @@ if (typeof localStorage !== 'undefined') {
   }
 }
 
+export function syncI18nFallback() {
+  const loc = i18n.global.locale.value
+  i18n.global.fallbackLocale.value = loc === 'en' ? 'en' : 'ru'
+}
+
+syncI18nFallback()
+
 export default i18n

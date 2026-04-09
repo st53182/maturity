@@ -5,14 +5,15 @@
     <!-- 🔹 Фильтр -->
     <div class="filter-bar">
       <button
-        v-for="s in statuses"
-        :key="s"
-        :class="{ active: filterStatus === s }"
-        @click="filterStatus = s"
+        v-for="opt in statusFilterOptions"
+        :key="opt.value"
+        :class="{ active: filterStatus === opt.value }"
+        type="button"
+        @click="filterStatus = opt.value"
       >
-        {{ s }}
+        {{ $t(opt.labelKey) }}
       </button>
-      <button @click="openModal(null)" class="add-btn">➕ {{ $t('conflicts.addConflict') }}</button>
+      <button type="button" class="add-btn" @click="openModal(null)">➕ {{ $t('conflicts.addConflict') }}</button>
     </div>
 
     <!-- 🔹 Карточки -->
@@ -23,15 +24,15 @@
         class="conflict-card"
       >
         <h3>🧠 {{ conflict.context.slice(0, 100) }}...</h3>
-        <p>👥 Участники: {{ getParticipantNames(conflict.participants) }}</p>
-        <p>🎯 Цель: {{ conflict.goal }}</p>
-        <p>📌 Статус: <strong>{{ conflict.status }}</strong></p>
+        <p>👥 {{ $t('conflicts.labelParticipants') }} {{ getParticipantNames(conflict.participants) }}</p>
+        <p>🎯 {{ $t('conflicts.labelGoal') }} {{ conflict.goal }}</p>
+        <p>📌 {{ $t('conflicts.labelStatus') }} <strong>{{ statusLabel(conflict.status) }}</strong></p>
         <div v-if="conflict.ai_analysis" class="summary-block">
-    <strong>📝 Рекомендации:</strong>
-    <p v-html="shortenAnalysis(conflict.ai_analysis)"></p>
-  </div>
-        <button @click="openModal(conflict)">✏️ Открыть или редактировать </button>
-        <button class="delete-btn" @click="deleteConflict(conflict.id)">🗑</button>
+          <strong>📝 {{ $t('conflicts.labelRecommendations') }}</strong>
+          <p v-html="shortenAnalysis(conflict.ai_analysis)"></p>
+        </div>
+        <button type="button" @click="openModal(conflict)">✏️ {{ $t('conflicts.openOrEdit') }}</button>
+        <button type="button" class="delete-btn" :aria-label="$t('conflicts.delete')" @click="deleteConflict(conflict.id)">🗑</button>
       </div>
     </div>
 
@@ -39,7 +40,7 @@
     <div class="modal-overlay" v-if="showModal">
 
       <div class="modal-content">
-        <button class="modal-close-top" @click="showModal = false" aria-label="Close">✕</button>
+        <button type="button" class="modal-close-top" @click="showModal = false" :aria-label="$t('common.close')">✕</button>
         <div v-if="form.ai_response" class="ai-analysis" v-html="form.ai_response"></div>
         <h2>{{ form.id ? $t('conflicts.editConflict') : $t('conflicts.addConflict') }}</h2>
         
@@ -98,8 +99,8 @@
               :class="{ 'has-value': form.status }"
             >
               <option value="Активен">{{ $t('conflicts.active') }}</option>
-              <option value="Закрыт">{{ $t('conflicts.resolved') }}</option>
-              <option value="Обострение">{{ $t('conflicts.active') }}</option>
+              <option value="Закрыт">{{ $t('conflicts.closed') }}</option>
+              <option value="Обострение">{{ $t('conflicts.escalation') }}</option>
             </select>
             <label class="floating-label">{{ $t('conflicts.status') }}</label>
           </div>
@@ -134,8 +135,8 @@ export default {
       saving: false,
       loading: false,
 
-      filterStatus: "Все",
-      statuses: ["Все", "Активен", "Закрыт", "Обострение"],
+      filterAll: "__ALL__",
+      filterStatus: "__ALL__",
 
       form: {
         id: null,
@@ -150,13 +151,38 @@ export default {
   },
 
   computed: {
+    statusFilterOptions() {
+      return [
+        { value: this.filterAll, labelKey: "conflicts.filterAll" },
+        { value: "Активен", labelKey: "conflicts.active" },
+        { value: "Закрыт", labelKey: "conflicts.closed" },
+        { value: "Обострение", labelKey: "conflicts.escalation" },
+      ];
+    },
     filteredConflicts() {
-      if (this.filterStatus === "Все") return this.conflicts;
-      return this.conflicts.filter(c => c.status === this.filterStatus);
-    }
+      if (this.filterStatus === this.filterAll) return this.conflicts;
+      return this.conflicts.filter((c) => this.normalizeStatus(c.status) === this.normalizeStatus(this.filterStatus));
+    },
   },
 
   methods: {
+    normalizeStatus(s) {
+      const t = (s || "").trim();
+      if (t.toLowerCase() === "активен") return "Активен";
+      if (t.toLowerCase() === "закрыт") return "Закрыт";
+      if (t.toLowerCase() === "обострение") return "Обострение";
+      return t;
+    },
+    statusLabel(status) {
+      const n = this.normalizeStatus(status);
+      const keys = {
+        Активен: "conflicts.active",
+        Закрыт: "conflicts.closed",
+        Обострение: "conflicts.escalation",
+      };
+      const k = keys[n];
+      return k ? this.$t(k) : status || "—";
+    },
     async fetchConflicts() {
       const token = localStorage.getItem("token");
 
@@ -230,6 +256,7 @@ export default {
 
         this.form.ai_response = conflict.ai_analysis || "";
         this.form.actions_taken = conflict.attempts || "";
+        this.form.status = this.normalizeStatus(this.form.status) || "Активен";
       } else {
         this.form = {
           id: null,
@@ -258,7 +285,7 @@ export default {
 
         await this.fetchConflicts();
       } catch (err) {
-        alert("Ошибка удаления");
+        alert(this.$t("conflicts.errorDelete"));
         console.error(err);
       }
     },
@@ -298,11 +325,11 @@ export default {
           this.form.ai_response = data.analysis;
           await this.fetchConflicts();
         } else {
-          alert(data.error || "Ошибка при сохранении конфликта");
+          alert(data.error || this.$t("conflicts.errorSaveConflict"));
         }
       } catch (err) {
         console.error(err);
-        alert("Ошибка при подключении.");
+        alert(this.$t("conflicts.errorConnection"));
       } finally {
         this.loading = false;
       }
@@ -336,10 +363,10 @@ export default {
           this.showModal = false;
           await this.fetchConflicts();
         } else {
-          alert(data.error || "Ошибка при сохранении");
+          alert(data.error || this.$t("conflicts.errorSave"));
         }
       } catch (err) {
-        alert("Ошибка соединения");
+        alert(this.$t("conflicts.errorConnection"));
         console.error(err);
       } finally {
         this.saving = false;

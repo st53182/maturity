@@ -3,16 +3,16 @@
   <!-- 🔹 Общая оценка -->
   <div class="team-info-card">
   <div class="info-block team">
-    <h3>🏷️ Команда</h3>
-    <p>{{ teamName || 'Ваша команда' }}</p>
+    <h3>🏷️ {{ $t('assessmentResults.team') }}</h3>
+    <p>{{ teamName || $t('assessmentResults.defaultTeam') }}</p>
   </div>
   <div class="info-block score" :class="scoreColor">
-    <h3>📊 Оценка</h3>
+    <h3>📊 {{ $t('assessmentResults.score') }}</h3>
     <p>{{ averageScore.toFixed(2) }}</p>
   </div>
 <div class="info-block level">
   <h3>
-    🏅 Уровень
+    🏅 {{ $t('assessmentResults.level') }}
     <span class="info-icon" @click="showLevelInfo = true" style="cursor: pointer;">ℹ️</span>
   </h3>
   <p>{{ teamLevel }}</p>
@@ -54,7 +54,7 @@
       :style="{ left: getTimelinePosition(timelineInfo.lastDate) + '%' }"
     >
       <div class="tooltip always-visible">
-        📍 Команда была оценена: {{ timelineInfo.lastDate }}
+        📍 {{ $t('assessmentResults.timelineLast', { date: timelineInfo.lastDate }) }}
       </div>
     </div>
 
@@ -74,11 +74,11 @@
 
   <!-- 🧾 Подпись под шкалой -->
   <div class="timeline-days-left">
-    ⏳ До следующей оценки осталось:
+    ⏳ {{ $t('assessmentResults.daysUntil') }}
     <strong>{{ timelineInfo.daysLeft }} {{ pluralDays(timelineInfo.daysLeft) }}</strong>
   </div>
   <div v-if="previousAssessmentDates.length" class="timeline-previous-dates">
-  📅 Предыдущие оценки:
+  📅 {{ $t('assessmentResults.previousAssessments') }}
   <strong>{{ previousAssessmentDates.join(', ') }}</strong>
 </div>
 
@@ -89,14 +89,14 @@
 
     <!-- 🔹 Если пользователь не авторизован, показываем предложение зарегистрироваться -->
     <div v-if="!isAuthenticated" class="auth-notice">
-      <p>Ваши результаты не сохранены. Зарегистрируйтесь, чтобы сохранить их!</p>
-      <button @click="goToRegister">🔐 Зарегистрироваться</button>
+      <p>{{ $t('assessmentResults.authNotice') }}</p>
+      <button type="button" @click="goToRegister">🔐 {{ $t('assessmentResults.register') }}</button>
     </div>
 
 
 
     <!-- 🔹 Загрузка / Ошибка -->
-    <div v-if="loading" class="loading">⏳ Загрузка данных...</div>
+    <div v-if="loading" class="loading">⏳ {{ $t('assessmentResults.loading') }}</div>
 <div v-else-if="error" class="error">❌ {{ error }}</div>
 
 <!-- 🔹 Графики по категориям -->
@@ -114,14 +114,15 @@
 <div class="improvement-plan-block">
 
  <button
+  type="button"
   @click="generateImprovementPlan"
   :disabled="loadingPlan"
   class="modern-button"
 >
-  🤖 Сгенерировать план улучшений
+  🤖 {{ $t('assessmentResults.generatePlan') }}
 </button>
 
-  <div v-if="loadingPlan">⏳ Генерируем план...</div>
+  <div v-if="loadingPlan">⏳ {{ $t('assessmentResults.generatingPlan') }}</div>
 
   <div v-if="editablePlan.length" class="plan-editable">
     <ul>
@@ -139,11 +140,11 @@
     </ul>
 
 <div class="plan-buttons">
-  <button class="modern-button blue" @click="addStep">
-    ➕ Добавить пункт в план
+  <button type="button" class="modern-button blue" @click="addStep">
+    ➕ {{ $t('assessmentResults.addStep') }}
   </button>
-  <button class="modern-button green" @click="saveImprovementPlan">
-    ✔ Сохранить
+  <button type="button" class="modern-button green" @click="saveImprovementPlan">
+    ✔ {{ $t('assessmentResults.save') }}
   </button>
 </div>
   </div>
@@ -181,7 +182,7 @@
     @click="saveRecommendations"
     class="modern-button"
   >
-    💾 Сохранить рекомендации
+    💾 {{ $t('assessmentResults.saveRecommendations') }}
   </button>
 </div>
   </div>
@@ -230,7 +231,7 @@ export default {
   methods: {
   async fetchOpenAIRecommendations() {
   if (!this.savedPlan || this.savedPlan.length === 0) {
-    alert("⚠️ Сначала нужно сгенерировать и сохранить план перед получением рекомендаций.");
+    alert(this.$t("assessmentResults.alertNeedPlan"));
     return;
   }
 
@@ -247,7 +248,7 @@ export default {
     this.recommendationsHtml = `<p>${htmlFormatted}</p>`;
   } catch (error) {
     console.error("❌ Ошибка при получении рекомендаций:", error.response?.data || error);
-    alert("🚫 Ошибка при запросе рекомендаций.");
+    alert(this.$t("assessmentResults.alertRecError"));
   } finally {
     this.loadingDetailedRecs = false;
   }
@@ -258,7 +259,7 @@ export default {
 
     if (!token) {
       console.warn("🚫 Нет токена авторизации.");
-      alert("Вы не авторизованы!");
+      alert(this.$t("assessmentResults.alertNotAuth"));
       return;
     }
 
@@ -274,10 +275,10 @@ export default {
       }
     );
 
-    alert("✅ Рекомендации успешно сохранены!");
+    alert(this.$t("assessmentResults.alertRecSaved"));
   } catch (error) {
     console.error("❌ Ошибка сохранения:", error.response?.data || error);
-    alert("❌ Не удалось сохранить рекомендации.");
+    alert(this.$t("assessmentResults.alertRecSaveFail"));
   }
 },
 
@@ -298,7 +299,7 @@ export default {
 
     this.editing = true;
   } catch (err) {
-    alert("Ошибка генерации плана");
+    alert(this.$t("assessmentResults.alertPlanGenFail"));
     console.error(err);
   } finally {
     this.loadingPlan = false;
@@ -404,12 +405,12 @@ if (sortedDates.length >= 2) {
 } else if (sortedDates.length === 1) {
   this.prepareRadarData();
 } else {
-  this.error = "Пожалуйста, пройдите опрос для вашей команды.";
+  this.error = this.$t("assessmentResults.errPassFirst");
 }
 
   } catch (error) {
     console.error("❌ Ошибка при получении истории:", error.response?.data || error);
-    this.error = "Ошибка при получении истории команды.";
+    this.error = this.$t("assessmentResults.errHistory");
   }
 },
 
@@ -440,7 +441,7 @@ if (sortedDates.length >= 2) {
         this.prepareRadarData();
       } catch (error) {
         console.error("❌ Ошибка загрузки данных:", error.response?.data || error);
-        this.error = "Ошибка загрузки данных.";
+        this.error = this.$t("assessmentResults.errLoad");
       } finally {
         this.loading = false;
       }
@@ -547,7 +548,7 @@ calculateAverageFromLatestSession(history) {
     }
 
     const dataset = {
-      label: index === 0 ? "🟢 Последняя оценка" : "🟡 Предыдущая оценка",
+      label: index === 0 ? this.$t("assessmentResults.radarLatest") : this.$t("assessmentResults.radarPrevious"),
       data: [],
       backgroundColor: index === 0 ? "rgba(75, 192, 192, 0.2)" : "rgba(255, 206, 86, 0.2)",
       borderColor: index === 0 ? "rgba(75, 192, 192, 1)" : "rgba(255, 206, 86, 1)",
@@ -593,7 +594,7 @@ calculateAverageFromLatestSession(history) {
   sortedDates.slice(0, 2).forEach((date, index) => {
     const dataMap = labelToScoreMap[date];
     const dataset = {
-      label: index === 0 ? "🟢 Последняя оценка" : "🟡 Предыдущая оценка",
+      label: index === 0 ? this.$t("assessmentResults.radarLatest") : this.$t("assessmentResults.radarPrevious"),
       data: labels.map(label => dataMap[label] || 0),
       backgroundColor: index === 0 ? "rgba(75, 192, 192, 0.2)" : "rgba(255, 206, 86, 0.2)",
       borderColor: index === 0 ? "rgba(75, 192, 192, 1)" : "rgba(255, 206, 86, 1)",
@@ -607,7 +608,7 @@ calculateAverageFromLatestSession(history) {
 buildCombinedRadarDataByCategory(history) {
   const sortedDates = Object.keys(history).sort().reverse();
   if (sortedDates.length === 0) {
-    this.error = "Недостаточно данных для отображения прогресса. Пройдите хотя бы одну оценку.";
+    this.error = this.$t("assessmentResults.errProgress");
     return;
   }
 
@@ -627,14 +628,14 @@ buildCombinedRadarDataByCategory(history) {
       labels,
       datasets: [
         {
-          label: "🟢 Последняя оценка",
+          label: this.$t("assessmentResults.radarLatest"),
           data: latestData,
           backgroundColor: "rgba(75, 192, 192, 0.2)",
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2
         },
         {
-          label: "🟡 Предыдущая оценка",
+          label: this.$t("assessmentResults.radarPrevious"),
           data: previousData,
           backgroundColor: "rgba(255, 206, 86, 0.2)",
           borderColor: "rgba(255, 206, 86, 1)",
@@ -649,6 +650,8 @@ buildCombinedRadarDataByCategory(history) {
 
 pluralDays(n) {
   const abs = Math.abs(n);
+  const loc = typeof this.$i18n.locale === "string" ? this.$i18n.locale : this.$i18n.locale.value;
+  if (loc === "en") return abs === 1 ? this.$t("assessmentResults.dayOne") : this.$t("assessmentResults.dayMany");
   if (abs % 10 === 1 && abs % 100 !== 11) return "день";
   if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) return "дня";
   return "дней";
@@ -718,10 +721,10 @@ pluralDays(n) {
     teamLevel() {
     const score = this.averageScore;
 
-    if (score < 2) return "🧱 Начинающий";
-    if (score < 3) return "🌱 Растущий";
-    if (score < 4) return "🚀 Прогрессирующий";
-    return "🏆 Высокоэффективный";
+    if (score < 2) return this.$t("assessmentResults.levelBeginner");
+    if (score < 3) return this.$t("assessmentResults.levelGrowing");
+    if (score < 4) return this.$t("assessmentResults.levelProgressing");
+    return this.$t("assessmentResults.levelHigh");
   },
     previousAssessmentDates() {
   const dates = Object.keys(this.resultsHistory).sort().reverse();

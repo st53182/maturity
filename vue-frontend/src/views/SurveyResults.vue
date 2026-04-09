@@ -1,6 +1,6 @@
 <template>
   <div class="survey-results-container">
-    <div v-if="loading" class="loading">⏳ Загрузка результатов...</div>
+    <div v-if="loading" class="loading">⏳ {{ $t('surveyResultsPage.loading') }}</div>
     
     <div v-else-if="error" class="error">❌ {{ error }}</div>
     
@@ -45,10 +45,10 @@
         </div>
         
         <div v-if="analytics.text_responses" class="text-responses">
-          <h3>Текстовые ответы</h3>
+          <h3>{{ $t('surveyResultsPage.textAnswers') }}</h3>
           <div v-for="(responses, questionKey) in analytics.text_responses" :key="questionKey" class="text-question">
             <h4>{{ getTextQuestionTitle(questionKey) }}</h4>
-            <div v-if="responses.length === 0" class="no-responses">Нет ответов</div>
+            <div v-if="responses.length === 0" class="no-responses">{{ $t('surveyResultsPage.noAnswers') }}</div>
             <div v-for="(response, index) in responses" :key="index" class="text-response">
               <div class="response-meta">
                 <span class="respondent">{{ response.respondent_name || 'Анонимный' }}</span>
@@ -75,7 +75,7 @@
               <div class="bar-fill" :style="{ width: (data.average / 5 * 100) + '%' }"></div>
             </div>
             
-            <span class="response-count">{{ data.count }} {{ data.count === 1 ? 'ответ' : 'ответов' }}</span>
+            <span class="response-count">{{ responseCountLabel(data.count) }}</span>
           </div>
         </div>
         
@@ -92,9 +92,9 @@
                class="response-card">
             <div class="response-header">
               <span v-if="showDetailedNames" class="respondent-name">
-                {{ response.respondent_name || 'Анонимный' }}
+                {{ response.respondent_name || $t('surveyResultsPage.anonymous') }}
               </span>
-              <span v-else class="respondent-anonymous">Респондент {{ index + 1 }}</span>
+              <span v-else class="respondent-anonymous">{{ $t('surveyResultsPage.respondentN', { n: index + 1 }) }}</span>
               <span class="response-date">{{ formatDate(response.submitted_at) }}</span>
             </div>
             
@@ -144,6 +144,12 @@ export default {
   },
   
   methods: {
+    responseCountLabel(count) {
+      const n = Number(count) || 0;
+      return n === 1
+        ? this.$t("surveyResultsPage.responseCountOne", { n })
+        : this.$t("surveyResultsPage.responseCountMany", { n });
+    },
     async loadResults() {
       try {
         const surveyId = this.$route.params.surveyId
@@ -158,7 +164,7 @@ export default {
         
       } catch (error) {
         console.error('Error loading results:', error)
-        this.error = error.response?.data?.error || 'Ошибка загрузки результатов'
+        this.error = error.response?.data?.error || this.$t('surveyResultsPage.errorLoad')
       } finally {
         this.loading = false
       }
@@ -170,14 +176,14 @@ export default {
       )
       if (q && q.question) return q.question
       const questionMap = {
-        '1': 'Имя',
-        '2': 'Ключевые таланты',
-        '3': 'Области развития',
-        '4': 'Примеры развития',
-        '5': 'Другие комментарии',
-        '6': 'Оценки компетенций'
+        '1': this.$t('surveyResultsPage.qName'),
+        '2': this.$t('surveyResultsPage.qTalents'),
+        '3': this.$t('surveyResultsPage.qGrowth'),
+        '4': this.$t('surveyResultsPage.qExamples'),
+        '5': this.$t('surveyResultsPage.qComments'),
+        '6': this.$t('surveyResultsPage.qMatrix')
       }
-      return questionMap[questionId] || `Вопрос ${questionId}`
+      return questionMap[questionId] || this.$t('surveyResultsPage.qFallback', { n: questionId })
     },
 
     competencyLabel(key) {
@@ -203,7 +209,9 @@ export default {
     },
     
     formatDate(dateString) {
-      return new Date(dateString).toLocaleDateString('ru-RU', {
+      const loc = this.$i18n?.locale;
+      const tag = (typeof loc === 'string' ? loc : loc?.value) === 'en' ? 'en-US' : 'ru-RU';
+      return new Date(dateString).toLocaleDateString(tag, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',

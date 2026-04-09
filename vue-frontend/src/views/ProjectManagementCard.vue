@@ -2,58 +2,58 @@
   <div class="project-card-page">
     <div class="page-actions">
       <button class="export-pdf-btn" @click="exportPdf" :disabled="exporting">
-        {{ exporting ? 'Формируем PDF…' : '📄 Скачать PDF' }}
+        {{ exporting ? $t('projectCard.downloadingPdf') : '📄 ' + $t('projectCard.downloadPdf') }}
       </button>
     </div>
 
     <div ref="pdfContent" class="project-card-a3">
       <header class="card-header">
-        <h1 class="card-title">Карта управления проектом</h1>
-        <input v-model="form.projectName" class="card-project-name" placeholder="Название проекта (например: Открытие нового филиала)" />
+        <h1 class="card-title">{{ $t('projectCard.title') }}</h1>
+        <input v-model="form.projectName" class="card-project-name" :placeholder="$t('projectCard.projectNamePh')" />
       </header>
 
       <div class="card-grid">
         <!-- ① Активные задачи + светофор -->
         <section class="card-section section-tasks">
-          <h2><span class="section-num">①</span> Активные задачи</h2>
-          <p class="section-hint">Не более 10 задач. Статус — клик по светофору.</p>
+          <h2><span class="section-num">①</span> {{ $t('projectCard.section1') }}</h2>
+          <p class="section-hint">{{ $t('projectCard.section1Hint') }}</p>
           <div class="tasks-table-wrap">
             <table class="tasks-table">
               <thead>
                 <tr>
                   <th class="col-num">№</th>
-                  <th class="col-task">Задача</th>
-                  <th class="col-status">Статус</th>
-                  <th class="col-deadline">Срок</th>
-                  <th class="col-who">Кто</th>
+                  <th class="col-task">{{ $t('projectCard.colTask') }}</th>
+                  <th class="col-status">{{ $t('projectCard.colStatus') }}</th>
+                  <th class="col-deadline">{{ $t('projectCard.colDeadline') }}</th>
+                  <th class="col-who">{{ $t('projectCard.colWho') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(task, i) in form.tasks" :key="i">
                   <td class="col-num">{{ i + 1 }}</td>
-                  <td class="col-task"><input v-model="task.name" placeholder="Задача" /></td>
+                  <td class="col-task"><input v-model="task.name" :placeholder="$t('projectCard.taskPh')" /></td>
                   <td class="col-status">
                     <div class="traffic-light" :title="statusLabel(task.status)">
-                      <button type="button" class="tl-dot tl-green" :class="{ active: task.status === 'done' }" title="Готово" @click="task.status = 'done'" />
-                      <button type="button" class="tl-dot tl-yellow" :class="{ active: task.status === 'progress' }" title="В работе" @click="task.status = 'progress'" />
-                      <button type="button" class="tl-dot tl-red" :class="{ active: task.status === 'risk' }" title="Риск" @click="task.status = 'risk'" />
-                      <button type="button" class="tl-dot tl-gray" :class="{ active: task.status === 'waiting' }" title="Ожидание" @click="task.status = 'waiting'" />
+                      <button type="button" class="tl-dot tl-green" :class="{ active: task.status === 'done' }" :title="$t('projectCard.tlDone')" @click="task.status = 'done'" />
+                      <button type="button" class="tl-dot tl-yellow" :class="{ active: task.status === 'progress' }" :title="$t('projectCard.tlProgress')" @click="task.status = 'progress'" />
+                      <button type="button" class="tl-dot tl-red" :class="{ active: task.status === 'risk' }" :title="$t('projectCard.tlRisk')" @click="task.status = 'risk'" />
+                      <button type="button" class="tl-dot tl-gray" :class="{ active: task.status === 'waiting' }" :title="$t('projectCard.tlWaiting')" @click="task.status = 'waiting'" />
                     </div>
                     <span class="status-label">{{ statusLabel(task.status) }}</span>
                   </td>
                   <td class="col-deadline"><input v-model="task.deadline" placeholder="10.04" /></td>
-                  <td class="col-who"><input v-model="task.who" placeholder="Ответственный" /></td>
+                  <td class="col-who"><input v-model="task.who" :placeholder="$t('projectCard.ownerPh')" /></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <button type="button" class="add-row-btn" @click="addTask" :disabled="form.tasks.length >= 10">+ Добавить задачу</button>
+          <button type="button" class="add-row-btn" @click="addTask" :disabled="form.tasks.length >= 10">{{ $t('projectCard.addTask') }}</button>
         </section>
 
         <!-- ② Приоритеты -->
         <section class="card-section section-priorities">
-          <h2><span class="section-num">②</span> Приоритеты</h2>
-          <p class="section-hint">MUST — критично, SHOULD — важно, NICE — желательно.</p>
+          <h2><span class="section-num">②</span> {{ $t('projectCard.section2') }}</h2>
+          <p class="section-hint">{{ $t('projectCard.section2Hint') }}</p>
           <div class="priority-block must">
             <h3>MUST</h3>
             <ul>
@@ -67,7 +67,7 @@
             <h3>SHOULD</h3>
             <ul>
               <li v-for="(item, i) in form.prioritiesShould" :key="'s'+i">
-                <input v-model="form.prioritiesShould[i]" placeholder="Задача" />
+                <input v-model="form.prioritiesShould[i]" :placeholder="$t('projectCard.taskPh')" />
               </li>
             </ul>
             <button type="button" class="add-item-btn" @click="form.prioritiesShould.push('')">+</button>
@@ -76,7 +76,7 @@
             <h3>NICE</h3>
             <ul>
               <li v-for="(item, i) in form.prioritiesNice" :key="'n'+i">
-                <input v-model="form.prioritiesNice[i]" placeholder="Задача" />
+                <input v-model="form.prioritiesNice[i]" :placeholder="$t('projectCard.taskPh')" />
               </li>
             </ul>
             <button type="button" class="add-item-btn" @click="form.prioritiesNice.push('')">+</button>
@@ -109,87 +109,87 @@
               @mousedown.prevent="onNodeMouseDown($event, node)"
               @dblclick.stop="editNodeLabel = node.id"
             >
-              <span v-if="editNodeLabel !== node.id" class="dep-node-text">{{ node.label || 'Этап ' + (i + 1) }}</span>
+              <span v-if="editNodeLabel !== node.id" class="dep-node-text">{{ node.label || $t('projectCard.stageN', { n: i + 1 }) }}</span>
               <input
                 v-else
                 ref="nodeLabelInput"
                 v-model="node.label"
                 class="dep-node-input"
-                :placeholder="'Этап ' + (i + 1)"
+                :placeholder="$t('projectCard.stageN', { n: i + 1 })"
                 @blur="editNodeLabel = null"
                 @keydown.enter="editNodeLabel = null"
               />
-              <button type="button" class="dep-node-delete" @click.stop="removeNode(node.id)" title="Удалить">×</button>
+              <button type="button" class="dep-node-delete" @click.stop="removeNode(node.id)" :title="$t('projectCard.deleteTitle')">×</button>
             </div>
           </div>
           <div class="deps-links-editor">
-            <label>Связи (или клик по двум этапам на схеме):</label>
+            <label>{{ $t('projectCard.linksLabel') }}</label>
             <div v-for="(link, idx) in form.dependencyLinks" :key="idx" class="link-row">
               <select v-model.number="link.fromId" class="link-select">
-                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (nodeIndex(n.id) + 1) }}</option>
+                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || $t('projectCard.stageN', { n: nodeIndex(n.id) + 1 }) }}</option>
               </select>
               <span class="link-arrow">→</span>
               <select v-model.number="link.toId" class="link-select">
-                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || 'Этап ' + (nodeIndex(n.id) + 1) }}</option>
+                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || $t('projectCard.stageN', { n: nodeIndex(n.id) + 1 }) }}</option>
               </select>
               <button type="button" class="chip-remove" @click="form.dependencyLinks.splice(idx, 1)">×</button>
             </div>
-            <button type="button" class="add-row-btn" @click="addDependencyLink" :disabled="form.dependencyNodes.length < 2">+ Добавить связь</button>
+            <button type="button" class="add-row-btn" @click="addDependencyLink" :disabled="form.dependencyNodes.length < 2">{{ $t('projectCard.addLink') }}</button>
           </div>
         </section>
 
         <!-- ④ Узкие места (несколько) -->
         <section class="card-section section-bottleneck">
-          <h2><span class="section-num">④</span> Узкие места</h2>
-          <p class="section-hint">Элементы, ограничивающие общий ход. Можно указать несколько.</p>
+          <h2><span class="section-num">④</span> {{ $t('projectCard.section4') }}</h2>
+          <p class="section-hint">{{ $t('projectCard.section4Hint') }}</p>
           <div v-for="(b, i) in form.bottlenecks" :key="i" class="bottleneck-item">
-            <input v-model="b.title" class="bottleneck-title" placeholder="Название (например: Подрядчик по ремонту)" />
-            <textarea v-model="b.desc" rows="2" placeholder="Почему узкое место: причины, влияние"></textarea>
-            <button type="button" class="chip-remove bottleneck-remove" @click="form.bottlenecks.splice(i, 1)" title="Удалить">×</button>
+            <input v-model="b.title" class="bottleneck-title" :placeholder="$t('projectCard.bottleneckTitlePh')" />
+            <textarea v-model="b.desc" rows="2" :placeholder="$t('projectCard.bottleneckDescPh')"></textarea>
+            <button type="button" class="chip-remove bottleneck-remove" @click="form.bottlenecks.splice(i, 1)" :title="$t('projectCard.deleteTitle')">×</button>
           </div>
-          <button type="button" class="add-row-btn" @click="form.bottlenecks.push({ title: '', desc: '' })">+ Добавить узкое место</button>
+          <button type="button" class="add-row-btn" @click="form.bottlenecks.push({ title: '', desc: '' })">{{ $t('projectCard.addBottleneck') }}</button>
         </section>
 
         <!-- ⑤ Загрузка ключевых ролей -->
         <section class="card-section section-roles">
-          <h2><span class="section-num">⑤</span> Загрузка ключевых ролей</h2>
-          <p class="section-hint">Риск перегруза: клик по индикатору.</p>
+          <h2><span class="section-num">⑤</span> {{ $t('projectCard.section5') }}</h2>
+          <p class="section-hint">{{ $t('projectCard.section5Hint') }}</p>
           <table class="roles-table">
             <thead>
               <tr>
-                <th>Роль</th>
-                <th>Задач</th>
-                <th>Риск</th>
+                <th>{{ $t('projectCard.colRole') }}</th>
+                <th>{{ $t('projectCard.colTasksCount') }}</th>
+                <th>{{ $t('projectCard.colRiskHeader') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(role, i) in form.roles" :key="i">
-                <td><input v-model="role.name" placeholder="Роль" /></td>
+                <td><input v-model="role.name" :placeholder="$t('projectCard.rolePh')" /></td>
                 <td><input v-model.number="role.tasksCount" type="number" min="0" class="input-num" /></td>
                 <td class="col-risk">
                   <div class="risk-dots">
-                    <button type="button" class="risk-dot" :class="{ active: role.overloadRisk === 'normal' }" title="Норма" @click="role.overloadRisk = 'normal'" />
-                    <button type="button" class="risk-dot medium" :class="{ active: role.overloadRisk === 'medium' }" title="Средний" @click="role.overloadRisk = 'medium'" />
-                    <button type="button" class="risk-dot high" :class="{ active: role.overloadRisk === 'high' }" title="Высокий" @click="role.overloadRisk = 'high'" />
-                    <button type="button" class="risk-dot critical" :class="{ active: role.overloadRisk === 'critical' }" title="Критический" @click="role.overloadRisk = 'critical'" />
+                    <button type="button" class="risk-dot" :class="{ active: role.overloadRisk === 'normal' }" :title="$t('projectCard.riskNormal')" @click="role.overloadRisk = 'normal'" />
+                    <button type="button" class="risk-dot medium" :class="{ active: role.overloadRisk === 'medium' }" :title="$t('projectCard.riskMedium')" @click="role.overloadRisk = 'medium'" />
+                    <button type="button" class="risk-dot high" :class="{ active: role.overloadRisk === 'high' }" :title="$t('projectCard.riskHigh')" @click="role.overloadRisk = 'high'" />
+                    <button type="button" class="risk-dot critical" :class="{ active: role.overloadRisk === 'critical' }" :title="$t('projectCard.riskCritical')" @click="role.overloadRisk = 'critical'" />
                   </div>
                   <span class="risk-label">{{ riskLabel(role.overloadRisk) }}</span>
                 </td>
               </tr>
             </tbody>
           </table>
-          <button type="button" class="add-row-btn" @click="addRole">+ Добавить роль</button>
+          <button type="button" class="add-row-btn" @click="addRole">{{ $t('projectCard.addRole') }}</button>
         </section>
 
         <!-- ⑥ Решения -->
         <section class="card-section section-decisions">
-          <h2><span class="section-num">⑥</span> Управленческие решения</h2>
-          <p class="section-hint">Вопросы, требующие решения здесь и сейчас.</p>
+          <h2><span class="section-num">⑥</span> {{ $t('projectCard.section6') }}</h2>
+          <p class="section-hint">{{ $t('projectCard.section6Hint') }}</p>
           <div v-for="(item, i) in form.decisions" :key="i" class="decision-item">
-            <input v-model="form.decisions[i].question" placeholder="Вопрос (например: Усиливать подрядчика?)" class="decision-q" />
-            <textarea v-model="form.decisions[i].context" rows="2" placeholder="Контекст / варианты" class="decision-ctx"></textarea>
+            <input v-model="form.decisions[i].question" :placeholder="$t('projectCard.decisionQPh')" class="decision-q" />
+            <textarea v-model="form.decisions[i].context" rows="2" :placeholder="$t('projectCard.decisionCtxPh')" class="decision-ctx"></textarea>
           </div>
-          <button type="button" class="add-row-btn" @click="form.decisions.push({ question: '', context: '' })">+ Добавить вопрос</button>
+          <button type="button" class="add-row-btn" @click="form.decisions.push({ question: '', context: '' })">{{ $t('projectCard.addDecision') }}</button>
         </section>
       </div>
     </div>
@@ -208,9 +208,9 @@ const DIAGRAM_H = 280;
 
 const defaultForm = () => {
   const nodes = [
-    { id: nextId++, label: 'Планирование', x: 20, y: 30 },
-    { id: nextId++, label: 'Работы', x: 150, y: 30 },
-    { id: nextId++, label: 'Запуск', x: 280, y: 30 },
+    { id: nextId++, label: '', x: 20, y: 30 },
+    { id: nextId++, label: '', x: 150, y: 30 },
+    { id: nextId++, label: '', x: 280, y: 30 },
   ];
   return {
     projectName: '',
@@ -255,6 +255,14 @@ export default {
       dragMoved: false,
     };
   },
+  mounted() {
+    const keys = ['presetStage1', 'presetStage2', 'presetStage3'];
+    this.form.dependencyNodes.slice(0, 3).forEach((n, i) => {
+      if (n && !String(n.label || '').trim()) {
+        n.label = this.$t(`projectCard.${keys[i]}`);
+      }
+    });
+  },
   computed: {
     firstNodeId() {
       const n = this.form.dependencyNodes[0];
@@ -296,7 +304,7 @@ export default {
     nodeLabel(id) {
       const n = this.form.dependencyNodes.find(x => x.id === id);
       const i = this.nodeIndex(id);
-      return (n && n.label) ? n.label : ('Этап ' + (i + 1));
+      return (n && n.label) ? n.label : this.$t('projectCard.stageN', { n: i + 1 });
     },
     onNodeMouseDown(ev, node) {
       if (this.editNodeLabel === node.id) return;
@@ -393,10 +401,11 @@ export default {
           yOff += h;
         }
         const name = (this.form.projectName || 'project-card').replace(/[^\w\s-]/g, '').slice(0, 40);
-        pdf.save(`карта-проекта-${name || 'project'}.pdf`);
+        const prefix = this.$t('projectCard.pdfFilePrefix');
+        pdf.save(`${prefix}-${name || 'project'}.pdf`);
       } catch (e) {
         console.error(e);
-        alert('Ошибка при формировании PDF. Попробуйте ещё раз.');
+        alert(this.$t('projectCard.exportPdfError'));
       } finally {
         this.exporting = false;
       }

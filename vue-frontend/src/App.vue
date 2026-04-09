@@ -28,7 +28,7 @@
         </button>
       </div>
       <div class="sidebar-buttons-container">
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/profile' : '/profile')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/profile', '/profile']) }" @click="$router.push(isNewUi ? '/new/profile' : '/profile')">
           <span>👤</span>
           <small>{{ $t('nav.profile') }}</small>
         </button>
@@ -36,15 +36,15 @@
           <span>🏠</span>
           <small>{{ $t('nav.dashboard') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/survey' : '/survey')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/survey', '/survey']) }" @click="$router.push(isNewUi ? '/new/survey' : '/survey')">
           <span>📝</span>
           <small>{{ $t('nav.survey') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/conflicts' : '/conflicts')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/conflicts', '/conflicts']) }" @click="$router.push(isNewUi ? '/new/conflicts' : '/conflicts')">
           <span>🤝</span>
           <small>{{ $t('nav.conflicts') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/motivation' : '/motivation')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/motivation', '/motivation']) }" @click="$router.push(isNewUi ? '/new/motivation' : '/motivation')">
           <span>🧠</span>
           <small>{{ $t('nav.motivation') }}</small>
         </button>
@@ -52,15 +52,15 @@
           <span>🎯</span>
           <small>{{ $t('nav.meetingDesign') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/backlog-prep', '/backlog-prep']) }" @click="$router.push(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
           <span>🧭</span>
           <small>{{ $t('nav.backlogPrep') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/system-thinking' : '/system-thinking')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/system-thinking', '/system-thinking']) }" @click="$router.push(isNewUi ? '/new/system-thinking' : '/system-thinking')">
           <span>🧊</span>
           <small>{{ $t('newHome.links.systemThinking') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/agile-kata' : '/agile-kata')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/agile-kata', '/agile-kata']) }" @click="$router.push(isNewUi ? '/new/agile-kata' : '/agile-kata')">
           <span>🔬</span>
           <small>{{ $t('nav.agileKata') }}</small>
         </button>
@@ -68,11 +68,11 @@
           <span>📚</span>
           <small>{{ $t('nav.agileTools') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/metrics-tree' : '/metrics-tree')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/metrics-tree', '/metrics-tree']) }" @click="$router.push(isNewUi ? '/new/metrics-tree' : '/metrics-tree')">
           <span>🌲</span>
           <small>{{ $t('nav.metricsTree') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/surveys' : '/surveys')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/surveys', '/surveys']) }" @click="$router.push(isNewUi ? '/new/surveys' : '/surveys')">
           <span>📋</span>
           <small>{{ $t('nav.surveys') }}</small>
         </button>
@@ -80,15 +80,15 @@
           <span>💬</span>
           <small>{{ $t('nav.communityChat') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push('/new/tests')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/tests', '/tests']) }" @click="$router.push('/new/tests')">
           <span>🧪</span>
           <small>{{ $t('nav.tests') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/maturity', '/maturity']) }" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
           <span>🔗</span>
           <small>{{ $t('nav.maturityLink') }}</small>
         </button>
-        <button class="sidebar-btn" @click="$router.push(isNewUi ? '/new/project-card' : '/project-card')">
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/project-card', '/project-card']) }" @click="$router.push(isNewUi ? '/new/project-card' : '/project-card')">
           <span>📑</span>
           <small>{{ $t('nav.projectCard') }}</small>
         </button>
@@ -133,47 +133,47 @@
           <button class="mobile-menu-close" :aria-label="$t('common.close')" @click="showMobileMenu = false">✕</button>
         </div>
         <div class="mobile-menu-items">
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/profile' : '/profile')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/profile', '/profile']) }" @click="navigateAndClose(isNewUi ? '/new/profile' : '/profile')">
             <span>👤</span>
             <span>{{ $t('nav.profile') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/dashboard' : '/dashboard')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/dashboard', '/dashboard']) }" @click="navigateAndClose(isNewUi ? '/new/dashboard' : '/dashboard')">
             <span>🏠</span>
             <span>{{ $t('nav.dashboard') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/survey' : '/survey')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/survey', '/survey']) }" @click="navigateAndClose(isNewUi ? '/new/survey' : '/survey')">
             <span>📝</span>
             <span>{{ $t('nav.survey') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/conflicts' : '/conflicts')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/conflicts', '/conflicts']) }" @click="navigateAndClose(isNewUi ? '/new/conflicts' : '/conflicts')">
             <span>🤝</span>
             <span>{{ $t('nav.conflicts') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/motivation' : '/motivation')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/motivation', '/motivation']) }" @click="navigateAndClose(isNewUi ? '/new/motivation' : '/motivation')">
             <span>🧠</span>
             <span>{{ $t('nav.motivation') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/meeting-design' : '/meeting-design')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/meeting-design', '/meeting-design']) }" @click="navigateAndClose(isNewUi ? '/new/meeting-design' : '/meeting-design')">
             <span>🎯</span>
             <span>{{ $t('nav.meetingDesign') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/backlog-prep', '/backlog-prep']) }" @click="navigateAndClose(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
             <span>🧭</span>
             <span>{{ $t('nav.backlogPrep') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/system-thinking' : '/system-thinking')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/system-thinking', '/system-thinking']) }" @click="navigateAndClose(isNewUi ? '/new/system-thinking' : '/system-thinking')">
             <span>🧊</span>
             <span>{{ $t('newHome.links.systemThinking') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/agile-kata' : '/agile-kata')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/agile-kata', '/agile-kata']) }" @click="navigateAndClose(isNewUi ? '/new/agile-kata' : '/agile-kata')">
             <span>🔬</span>
             <span>{{ $t('nav.agileKata') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/agile-tools' : '/agile-tools')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/agile-tools', '/agile-tools']) }" @click="navigateAndClose(isNewUi ? '/new/agile-tools' : '/agile-tools')">
             <span>📚</span>
             <span>{{ $t('nav.agileTools') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/metrics-tree' : '/metrics-tree')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/metrics-tree', '/metrics-tree']) }" @click="navigateAndClose(isNewUi ? '/new/metrics-tree' : '/metrics-tree')">
             <span>🌲</span>
             <span>{{ $t('nav.metricsTree') }}</span>
           </button>
@@ -181,11 +181,11 @@
             <span>📋</span>
             <span>{{ $t('nav.surveys') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/new/chat')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/chat', '/chat']) }" @click="navigateAndClose('/new/chat')">
             <span>💬</span>
             <span>{{ $t('nav.communityChat') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose('/new/tests')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/tests', '/tests']) }" @click="navigateAndClose('/new/tests')">
             <span>🧪</span>
             <span>{{ $t('nav.tests') }}</span>
           </button>
@@ -193,7 +193,7 @@
             <span>🔗</span>
             <span>{{ $t('nav.maturityLink') }}</span>
           </button>
-          <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/project-card' : '/project-card')">
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/project-card', '/project-card']) }" @click="navigateAndClose(isNewUi ? '/new/project-card' : '/project-card')">
             <span>📑</span>
             <span>{{ $t('nav.projectCard') }}</span>
           </button>
@@ -462,6 +462,11 @@ export default {
       }
     };
 
+    const navActive = (paths) => {
+      const p = route.path || "";
+      return paths.some((prefix) => p === prefix || p.startsWith(prefix + "/"));
+    };
+
     return { 
       isAuthenticated, 
       isNewUi,
@@ -482,6 +487,7 @@ export default {
         syncI18nFallback();
         localStorage.setItem("language", lang);
       },
+      navActive,
     };
   },
 };
@@ -668,6 +674,23 @@ export default {
   transform: translateY(-1px);
 }
 
+.sidebar-btn.sidebar-btn--active {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.app--new .modern-sidebar .sidebar-btn.sidebar-btn--active {
+  background: rgba(32, 90, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(32, 90, 255, 0.28);
+}
+
+.mobile-menu-btn.mobile-menu-btn--active {
+  background: rgba(102, 126, 234, 0.12);
+  border-left: 3px solid #667eea;
+  padding-left: 17px;
+}
+
 .sidebar-btn.logout {
   color: #ffcccc;
 }
@@ -778,7 +801,7 @@ export default {
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 999;
+  z-index: 1003;
   background: linear-gradient(135deg, #667eea, #764ba2);
   border: none;
   border-radius: 8px;

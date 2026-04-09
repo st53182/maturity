@@ -10,10 +10,13 @@
       <div v-for="team in teams" :key="team.id" class="team-card">
         <h2 class="team-name">{{ team.name }}</h2>
 
-        <!-- 🔹 Средняя оценка команды -->
-        <div class="team-score-card">
+        <!-- 🔹 Средняя оценка (только после завершённой оценки) -->
+        <div v-if="team.chartData" class="team-score-card">
           <h3>{{ $t('results.overallScore') }}</h3>
           <p class="score">{{ team.averageScore.toFixed(2) }}</p>
+        </div>
+        <div v-else class="team-score-card team-score-card--empty">
+          <p class="no-assessment-msg">{{ $t('dashboard.noAssessmentYet') }}</p>
         </div>
 
         <!-- 🔹 Радар-график -->
@@ -110,7 +113,7 @@ export default {
 
         if (!token) {
           console.error("❌ Нет токена авторизации!");
-          alert("🚫 Вы не авторизованы!");
+          alert(this.$t("common.notAuthorizedShort"));
           return;
         }
 
@@ -135,7 +138,7 @@ export default {
         console.log("✅ Команды загружены:", this.teams);
       } catch (error) {
         console.error("❌ Ошибка загрузки команд:", error.response?.data || error);
-        this.error = "Ошибка загрузки команд.";
+        this.error = this.$t("dashboard.errorLoadTeams");
       } finally {
         this.loading = false;
       }
@@ -189,7 +192,7 @@ export default {
       this.prepareRadarData();
     } else {
       // ❌ Нет данных вообще
-      this.error = "Пожалуйста, пройдите опрос для вашей команды.";
+      this.error = this.$t("dashboard.passSurveyFirst");
     }
 
   } catch (error) {
@@ -201,7 +204,7 @@ export default {
 
 
     async deleteTeam(teamId) {
-  if (!confirm("Вы уверены, что хотите удалить эту команду? Это действие необратимо!")) {
+  if (!confirm(this.$t("dashboard.confirmDeleteTeam"))) {
     return;
   }
 
@@ -211,7 +214,7 @@ export default {
 
     if (!token) {
       console.error("❌ Нет токена авторизации!");
-      alert("🚫 Вы не авторизованы!");
+      alert(this.$t("common.notAuthorizedShort"));
       return;
     }
 
@@ -220,7 +223,7 @@ export default {
     });
 
     console.log("✅ Команда успешно удалена!");
-    alert("✅ Команда удалена!");
+    alert(this.$t("dashboard.teamDeleted"));
 
     // 🔄 Обновляем список команд после удаления
     await this.fetchTeams();
@@ -228,7 +231,7 @@ export default {
 
   } catch (error) {
     console.error("❌ Ошибка удаления команды:", error.response?.data || error);
-    alert("❌ Ошибка удаления команды.");
+    alert(this.$t("dashboard.deleteTeamError"));
   }
 },
 
@@ -244,7 +247,7 @@ export default {
 
     if (!token) {
       console.error("❌ Нет токена авторизации!");
-      alert("🚫 Вы не авторизованы!");
+      alert(this.$t("common.notAuthorizedShort"));
       return;
     }
 
@@ -269,7 +272,7 @@ export default {
 
   } catch (error) {
     console.error("❌ Ошибка создания команды:", error.response?.data || error);
-    alert("❌ Ошибка создания команды. Убедись не занято ли имя команды.");
+    alert(this.$t("common.teamCreateFailed"));
   }
 },
 
@@ -416,6 +419,19 @@ h1 {
   font-size: 32px;
   font-weight: bold;
   margin-top: 5px;
+}
+
+.team-score-card--empty {
+  justify-content: center;
+  min-height: 88px;
+}
+
+.team-score-card--empty .no-assessment-msg {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: #64748b;
+  text-align: center;
 }
 
 /* 🔹 График */

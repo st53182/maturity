@@ -1,18 +1,16 @@
 <template>
   <div class="iceberg-container">
-    <h1>Айсберг системного мышления</h1>
-    <p v-if="aiUsageRemaining !== null" class="ai-usage-line">AI-запросов осталось: {{ aiUsageRemaining }}</p>
+    <h1>{{ $t("systemThinking.title") }}</h1>
+    <p v-if="aiUsageRemaining !== null" class="ai-usage-line">{{ $t("systemThinking.aiUsageRemaining", { count: aiUsageRemaining }) }}</p>
 
     <!-- Введение до начала работы -->
     <section class="iceberg-intro" aria-labelledby="iceberg-intro-title">
-      <h2 id="iceberg-intro-title" class="iceberg-intro__title">Зачем этот инструмент</h2>
+      <h2 id="iceberg-intro-title" class="iceberg-intro__title">{{ $t("systemThinking.introTitle") }}</h2>
       <p class="iceberg-intro__lead">
-        Айсберг помогает уйти от одного «симптома» к причинам: повторяющимся паттернам, правилам в системе,
-        убеждениям людей и опыту, из которого эти убеждения выросли. Так проще найти устойчивые точки вмешательства,
-        а не чинить только верхушку.
+        {{ $t("systemThinking.introLead") }}
       </p>
       <button type="button" class="iceberg-intro__toggle" @click="introExpanded = !introExpanded">
-        {{ introExpanded ? "Свернуть описание уровней" : "Показать описание каждого уровня с примерами" }}
+        {{ introExpanded ? $t("systemThinking.toggleCollapse") : $t("systemThinking.toggleExpand") }}
       </button>
       <div v-show="introExpanded" class="iceberg-intro__levels">
         <article v-for="lvl in levelDefinitions" :key="lvl.id" class="iceberg-intro__level-card">
@@ -20,7 +18,7 @@
             <span class="iceberg-intro__badge">{{ lvl.order }}</span>
             {{ lvl.title }}
           </h3>
-          <p class="iceberg-intro__q"><strong>Вопрос уровня:</strong> {{ lvl.question }}</p>
+          <p class="iceberg-intro__q"><strong>{{ $t("systemThinking.levelQuestion") }}</strong> {{ lvl.question }}</p>
           <p class="iceberg-intro__ex">{{ lvl.description }}</p>
         </article>
       </div>
@@ -28,7 +26,7 @@
 
     <div class="iceberg-list-section">
       <div class="filter-bar">
-        <button type="button" class="add-btn" @click="openCreateFlow">Создать новый айсберг</button>
+        <button type="button" class="add-btn" @click="openCreateFlow">{{ $t("systemThinking.createNew") }}</button>
       </div>
 
       <div class="iceberg-list">
@@ -38,14 +36,14 @@
           class="iceberg-card"
           @click="openIceberg(iceberg)"
         >
-          <h3>Айсберг #{{ iceberg.id }}</h3>
+          <h3>{{ $t("systemThinking.icebergN", { id: iceberg.id }) }}</h3>
           <p>
-            <strong>Событие:</strong>
-            {{ (iceberg.event || "Не указано").slice(0, 100) }}{{ iceberg.event && iceberg.event.length > 100 ? "..." : "" }}
+            <strong>{{ $t("systemThinking.eventLabel") }}</strong>
+            {{ (iceberg.event || $t("systemThinking.notSpecified")).slice(0, 100) }}{{ iceberg.event && iceberg.event.length > 100 ? "..." : "" }}
           </p>
-          <p><strong>Прогресс:</strong> {{ fillCount(iceberg) }} / 5 уровней</p>
-          <div v-if="iceberg.solutions" class="solutions-badge">Решения готовы</div>
-          <button type="button" class="delete-btn" @click.stop="deleteIceberg(iceberg.id)">Удалить</button>
+          <p><strong>{{ $t("systemThinking.progressLabel") }}</strong> {{ $t("systemThinking.levelsOf5", { filled: fillCount(iceberg) }) }}</p>
+          <div v-if="iceberg.solutions" class="solutions-badge">{{ $t("systemThinking.solutionsReady") }}</div>
+          <button type="button" class="delete-btn" @click.stop="deleteIceberg(iceberg.id)">{{ $t("systemThinking.delete") }}</button>
         </div>
       </div>
     </div>
@@ -53,25 +51,23 @@
     <!-- Создание: примеры + подсказка ИИ + событие -->
     <div v-if="showCreateForm" class="modal-overlay" @click.self="showCreateForm = false">
       <div class="modal-content modal-content--wide">
-        <button type="button" class="modal-close-top" @click="showCreateForm = false" aria-label="Закрыть">✕</button>
-        <h2>Создать новый айсберг</h2>
-        <p class="create-lead">
-          Сначала опишите <strong>событие</strong> — то, что видно на поверхности. Дальше вы сможете заполнять уровни в любом порядке.
-        </p>
+        <button type="button" class="modal-close-top" @click="showCreateForm = false" :aria-label="$t('systemThinking.closeAria')">✕</button>
+        <h2>{{ $t("systemThinking.createModalTitle") }}</h2>
+        <p class="create-lead" v-html="$t('systemThinking.createLead')" />
 
         <div class="create-toolbar">
           <div class="ai-assistant-badge" @mouseenter="showCreateAiPopover = true" @mouseleave="showCreateAiPopover = false" @focusin="showCreateAiPopover = true" @focusout="showCreateAiPopover = false">
             <span class="ai-assistant-badge__icon" aria-hidden="true">✨</span>
-            <span>Подсказки ИИ-ассистента</span>
+            <span>{{ $t("systemThinking.createAiBadge") }}</span>
             <div v-show="showCreateAiPopover" class="ai-popover" role="tooltip">
-              <p>На каждом уровне есть один ответ: введите его в поле ниже.</p>
-              <p>Если сложно сформулировать мысль, напишите в ответе «не знаю» и нажмите «Помощь ИИ».</p>
-              <p>Прогресс сохраняется при переключении уровней и при выходе из окна.</p>
+              <p>{{ $t("systemThinking.createAiPopover1") }}</p>
+              <p>{{ $t("systemThinking.createAiPopover2") }}</p>
+              <p>{{ $t("systemThinking.createAiPopover3") }}</p>
             </div>
           </div>
         </div>
 
-        <p class="scenarios-title">Популярные ситуации — нажмите, чтобы подставить текст в поле «Событие»:</p>
+        <p class="scenarios-title">{{ $t("systemThinking.scenariosTitle") }}</p>
         <div class="scenario-chips">
           <button v-for="(s, i) in scenarioPresets" :key="i" type="button" class="scenario-chip" @click="applyScenario(s)">
             {{ s.label }}
@@ -80,7 +76,7 @@
 
         <div class="modern-form">
           <div class="textarea-wrapper textarea-wrapper--stacked">
-            <label for="iceberg-new-event" class="stacked-field-label">Событие (видимая часть айсберга)</label>
+            <label for="iceberg-new-event" class="stacked-field-label">{{ $t("systemThinking.eventFieldLabel") }}</label>
             <div class="textarea-with-icon">
               <span class="input-icon input-icon--stacked" aria-hidden="true">📝</span>
               <textarea
@@ -88,14 +84,14 @@
                 v-model="newEvent"
                 rows="5"
                 class="modern-input modern-textarea modern-textarea--stacked"
-                placeholder="Опишите событие или проблему…"
+                :placeholder="$t('systemThinking.eventPlaceholder')"
               />
             </div>
           </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="save-btn" :disabled="!newEvent.trim() || creating" @click="createIceberg">
-            {{ creating ? "Создание…" : "Создать" }}
+            {{ creating ? $t("systemThinking.creating") : $t("systemThinking.createBtn") }}
           </button>
         </div>
       </div>
@@ -105,10 +101,10 @@
     <div v-if="showIcebergModal && currentIceberg" class="modal-overlay">
       <div class="modal-content iceberg-modal">
         <header class="iceberg-work-header">
-          <h2>Айсберг системного мышления</h2>
+          <h2>{{ $t("systemThinking.modalWorkTitle") }}</h2>
           <div class="iceberg-work-header__right">
             <div class="iceberg-work-actions">
-              <button type="button" class="toolbar-btn" title="Описание уровней и примеры" @click="showHelpModal = true">Подсказка</button>
+              <button type="button" class="toolbar-btn" :title="$t('systemThinking.hintBtnTitle')" @click="showHelpModal = true">{{ $t("systemThinking.hintBtn") }}</button>
               <div
                 class="ai-assistant-inline"
                 tabindex="0"
@@ -118,25 +114,25 @@
                 @focusout="showWorkAiPopover = false"
               >
                 <span class="ai-assistant-inline__icon" aria-hidden="true">✨</span>
-                <span class="sr-only">ИИ-ассистент</span>
+                <span class="sr-only">{{ $t("systemThinking.srAiAssistant") }}</span>
                 <div v-show="showWorkAiPopover" class="ai-popover ai-popover--work" role="tooltip">
-                  <p>Используйте кнопку «Помощь ИИ», чтобы получить варианты формулировок по <strong>текущему</strong> уровню.</p>
-                  <p>Если не знаете, что написать, введите «не знаю» в поле ответа.</p>
-                  <p>Можно переключаться между уровнями в любом порядке; черновик сохраняется автоматически.</p>
+                  <p v-html="$t('systemThinking.workAiPopover1')" />
+                  <p>{{ $t("systemThinking.workAiPopover2") }}</p>
+                  <p>{{ $t("systemThinking.workAiPopover3") }}</p>
                 </div>
               </div>
               <button type="button" class="toolbar-btn toolbar-btn--primary" :disabled="exportingPdf" @click="exportPdf">
-                {{ exportingPdf ? "PDF…" : "Сохранить PDF" }}
+                {{ exportingPdf ? $t("systemThinking.exportingPdf") : $t("systemThinking.savePdf") }}
               </button>
             </div>
-            <button type="button" class="modal-close-inline" @click="closeIcebergModal" aria-label="Закрыть">✕</button>
+            <button type="button" class="modal-close-inline" @click="closeIcebergModal" :aria-label="$t('systemThinking.closeAria')">✕</button>
           </div>
         </header>
 
         <p class="progress-line">
-          Заполнено уровней: <strong>{{ filledDraftCount }} / 5</strong>
-          <span v-if="saveStatus === 'saving'" class="save-pill">Сохранение…</span>
-          <span v-else-if="saveStatus === 'saved'" class="save-pill save-pill--ok">Сохранено</span>
+          {{ $t("systemThinking.progressFilled") }} <strong>{{ filledDraftCount }} / 5</strong>
+          <span v-if="saveStatus === 'saving'" class="save-pill">{{ $t("systemThinking.saveSaving") }}</span>
+          <span v-else-if="saveStatus === 'saved'" class="save-pill save-pill--ok">{{ $t("systemThinking.saveSaved") }}</span>
         </p>
 
         <div class="iceberg-level-nav">
@@ -167,15 +163,15 @@
               rows="6"
               class="modern-input modern-textarea"
               :class="{ 'has-value': draft[selectedLevel] }"
-              :aria-label="'Текст уровня: ' + currentLevelDef.title"
+              :aria-label="$t('systemThinking.levelTextAria', { title: currentLevelDef.title })"
               @input="scheduleSave"
             />
-            <label class="floating-label">Ответ для «{{ currentLevelDef.title }}»</label>
+            <label class="floating-label">{{ $t("systemThinking.floatingAnswerLabel", { title: currentLevelDef.title }) }}</label>
           </div>
 
           <div class="editor-actions">
             <button type="button" class="secondary-btn" :disabled="loading" @click="submitAiAnswer">
-              {{ loading ? "Обработка…" : "Помощь ИИ" }}
+              {{ loading ? $t("systemThinking.aiProcessing") : $t("systemThinking.aiHelp") }}
             </button>
           </div>
 
@@ -184,7 +180,7 @@
           </div>
 
           <div v-if="suggestions.length" class="suggestions-block">
-            <p class="suggestions-title">Предложения ИИ:</p>
+            <p class="suggestions-title">{{ $t("systemThinking.suggestionsTitle") }}</p>
             <div class="suggestions-list">
               <button v-for="(suggestion, index) in suggestions" :key="index" type="button" class="suggestion-btn" @click="applySuggestion(suggestion)">
                 {{ suggestion }}
@@ -196,15 +192,15 @@
 
         <!-- Скрытый блок для PDF / печати -->
         <div ref="pdfRoot" class="pdf-root">
-          <h1>Айсберг системного мышления</h1>
-          <p class="pdf-meta">ID: {{ currentIceberg.id }} · Экспорт: {{ pdfExportDate }}</p>
+          <h1>{{ $t("systemThinking.title") }}</h1>
+          <p class="pdf-meta">{{ $t("systemThinking.pdfMeta", { id: currentIceberg.id, date: pdfExportDate }) }}</p>
           <div v-for="lvl in levelDefinitions" :key="'p-' + lvl.id" class="pdf-section">
             <h2>{{ lvl.order }}. {{ lvl.title }}</h2>
             <p class="pdf-q">{{ lvl.question }}</p>
-            <p class="pdf-body">{{ draft[lvl.id] || "—" }}</p>
+            <p class="pdf-body">{{ draft[lvl.id] || $t("systemThinking.pdfEmpty") }}</p>
           </div>
           <template v-if="currentIceberg.solutions && currentIceberg.solutions.length">
-            <h2>Решения</h2>
+            <h2>{{ $t("systemThinking.solutionsTitle") }}</h2>
             <div v-for="(solution, index) in currentIceberg.solutions" :key="index" class="pdf-section">
               <h3>{{ solution.title }}</h3>
               <p class="pdf-body">{{ solution.text }}</p>
@@ -214,7 +210,7 @@
 
         <div v-if="currentIceberg.solutions && currentIceberg.solutions.length" class="solutions-block">
           <div class="solutions-header">
-            <h3>Решения</h3>
+            <h3>{{ $t("systemThinking.solutionsTitle") }}</h3>
           </div>
           <div v-for="(solution, index) in currentIceberg.solutions" :key="index" class="solution-card">
             <h4>{{ solution.title }}</h4>
@@ -224,9 +220,9 @@
 
         <div v-if="canGenerateSolutions" class="generate-solutions-block">
           <button type="button" class="generate-btn" :disabled="generatingSolutions" @click="generateSolutions">
-            {{ generatingSolutions ? "Генерация…" : "Сгенерировать решения" }}
+            {{ generatingSolutions ? $t("systemThinking.generatingSolutions") : $t("systemThinking.generateSolutions") }}
           </button>
-          <p class="gen-hint">Доступно, когда заполнены все пять уровней.</p>
+          <p class="gen-hint">{{ $t("systemThinking.genHint") }}</p>
         </div>
       </div>
     </div>
@@ -234,15 +230,15 @@
     <!-- Модалка «Подсказка» -->
     <div v-if="showHelpModal" class="modal-overlay" @click.self="showHelpModal = false">
       <div class="modal-content modal-content--wide">
-        <button type="button" class="modal-close-top" @click="showHelpModal = false" aria-label="Закрыть">✕</button>
-        <h2>Уровни айсберга: назначение и примеры</h2>
+        <button type="button" class="modal-close-top" @click="showHelpModal = false" :aria-label="$t('systemThinking.closeAria')">✕</button>
+        <h2>{{ $t("systemThinking.helpModalTitle") }}</h2>
         <article v-for="lvl in levelDefinitions" :key="'h-' + lvl.id" class="help-card">
           <h3>{{ lvl.order }}. {{ lvl.title }}</h3>
-          <p><strong>Вопрос:</strong> {{ lvl.question }}</p>
-          <p><strong>Пример формулировки:</strong> {{ lvl.description }}</p>
+          <p><strong>{{ $t("systemThinking.helpQuestion") }}</strong> {{ lvl.question }}</p>
+          <p><strong>{{ $t("systemThinking.helpExample") }}</strong> {{ lvl.description }}</p>
         </article>
         <div class="modal-actions">
-          <button type="button" class="save-btn" @click="showHelpModal = false">Понятно</button>
+          <button type="button" class="save-btn" @click="showHelpModal = false">{{ $t("systemThinking.helpOk") }}</button>
         </div>
       </div>
     </div>
@@ -253,73 +249,17 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
-const LEVEL_IDS = ["event", "pattern", "system_structure", "mental_model", "experience"];
-
-const LEVEL_DEFINITIONS = [
-  {
-    id: "event",
-    order: 1,
-    title: "Событие",
-    shortTitle: "Событие",
-    question: "Опишите конкретное событие или симптом: что произошло, кто участвовал, когда это заметили?",
-    description:
-      "Пример: «За день до релиза снова отложили поставку из‑за ночных багов»."
-  },
-  {
-    id: "pattern",
-    order: 2,
-    title: "Паттерн поведения",
-    shortTitle: "Паттерн",
-    question: "Какая закономерность или повторяющийся паттерн за этим стоит?",
-    description:
-      "Пример: «Третий спринт подряд срываем демо из‑за недотестированных задач»."
-  },
-  {
-    id: "system_structure",
-    order: 3,
-    title: "Системная структура",
-    shortTitle: "Структура",
-    question: "Какие структуры, процессы, правила или процедуры в системе поддерживают этот паттерн?",
-    description:
-      "Пример: «Нет отдельного слота на регресс; приёмка только по чеклисту разработчика»."
-  },
-  {
-    id: "mental_model",
-    order: 4,
-    title: "Ментальная модель",
-    shortTitle: "Ментальная модель",
-    question: "Какие убеждения или установки людей поддерживают эту конструкцию?",
-    description:
-      "Пример: «Тестирование всегда тормозит, лучше быстро выкатить и починить в бою»."
-  },
-  {
-    id: "experience",
-    order: 5,
-    title: "Опыт",
-    shortTitle: "Опыт",
-    question: "Какой прошлый опыт мог сформировать такие установки?",
-    description:
-      "Пример: «Год назад жёсткий дедлайн сорвали из‑за долгих тестов — с тех пор их недооценивают»."
-  }
+const LEVEL_META = [
+  { id: "event", order: 1 },
+  { id: "pattern", order: 2 },
+  { id: "system_structure", order: 3 },
+  { id: "mental_model", order: 4 },
+  { id: "experience", order: 5 }
 ];
 
-const SCENARIO_PRESETS = [
-  {
-    label: "Срывы сроков",
-    text:
-      "Команда регулярно не укладывается в даты релизов: дедлайн переносят в последний момент, стейкхолдеры недовольны, разработчики перерабатывают."
-  },
-  {
-    label: "Конфликты на встречах",
-    text:
-      "На ежедневных синках повторяются одни и те же споры: кто что должен был сделать и почему задачи снова «висят»."
-  },
-  {
-    label: "Качество и баги",
-    text:
-      "После релизов пользователи сообщают об однотипных ошибках, исправления выкатывают срочными патчами, но проблема возвращается."
-  }
-];
+const LEVEL_IDS = LEVEL_META.map((m) => m.id);
+
+const SCENARIO_KEYS = ["deadlines", "meetings", "quality"];
 
 function authHeaders() {
   const token = localStorage.getItem("token");
@@ -343,8 +283,6 @@ export default {
   data() {
     return {
       introExpanded: false,
-      levelDefinitions: LEVEL_DEFINITIONS,
-      scenarioPresets: SCENARIO_PRESETS,
       icebergs: [],
       showCreateForm: false,
       showCreateAiPopover: false,
@@ -368,8 +306,24 @@ export default {
     };
   },
   computed: {
+    levelDefinitions() {
+      return LEVEL_META.map(({ id, order }) => ({
+        id,
+        order,
+        title: this.$t(`systemThinking.levels.${id}.title`),
+        shortTitle: this.$t(`systemThinking.levels.${id}.shortTitle`),
+        question: this.$t(`systemThinking.levels.${id}.question`),
+        description: this.$t(`systemThinking.levels.${id}.description`)
+      }));
+    },
+    scenarioPresets() {
+      return SCENARIO_KEYS.map((key) => ({
+        label: this.$t(`systemThinking.scenarios.${key}.label`),
+        text: this.$t(`systemThinking.scenarios.${key}.text`)
+      }));
+    },
     currentLevelDef() {
-      return LEVEL_DEFINITIONS.find((l) => l.id === this.selectedLevel) || LEVEL_DEFINITIONS[0];
+      return this.levelDefinitions.find((l) => l.id === this.selectedLevel) || this.levelDefinitions[0];
     },
     filledDraftCount() {
       return LEVEL_IDS.filter((id) => (this.draft[id] || "").trim()).length;
@@ -446,7 +400,7 @@ export default {
           body: JSON.stringify({ event: this.newEvent })
         });
         if (!res.ok) {
-          alert("Ошибка при создании айсберга");
+          alert(this.$t("systemThinking.alertCreateError"));
           return;
         }
         const iceberg = await res.json();
@@ -456,7 +410,7 @@ export default {
         await this.openIceberg(iceberg);
       } catch (err) {
         console.error(err);
-        alert("Ошибка соединения");
+        alert(this.$t("systemThinking.alertConnectionError"));
       } finally {
         this.creating = false;
       }
@@ -472,7 +426,7 @@ export default {
       try {
         const res = await fetch(`/api/system-thinking/${iceberg.id}`, { headers: authHeaders() });
         if (!res.ok) {
-          alert("Ошибка загрузки айсберга");
+          alert(this.$t("systemThinking.alertLoadIcebergError"));
           return;
         }
         this.currentIceberg = await res.json();
@@ -484,7 +438,7 @@ export default {
         this.suggestions = [];
       } catch (err) {
         console.error(err);
-        alert("Ошибка загрузки");
+        alert(this.$t("systemThinking.alertLoadError"));
       }
     },
     scheduleSave() {
@@ -543,7 +497,7 @@ export default {
     },
     async submitAiAnswer() {
       if (!this.currentIceberg) return;
-      const response = (this.draft[this.selectedLevel] || "").trim() || "не знаю";
+      const response = (this.draft[this.selectedLevel] || "").trim() || this.$t("systemThinking.dontKnow");
       this.loading = true;
       try {
         const questionRes = await fetch(`/api/system-thinking/${this.currentIceberg.id}/ask-question`, {
@@ -569,7 +523,7 @@ export default {
         });
         const data = await suggestionsRes.json();
         if (!suggestionsRes.ok) {
-          alert(data.error || "Ошибка");
+          alert(data.error || this.$t("systemThinking.alertGenericError"));
           return;
         }
         if (data.suggestions && data.suggestions.length) {
@@ -583,7 +537,7 @@ export default {
         await this.fetchAiUsage();
       } catch (e) {
         console.error(e);
-        alert("Ошибка соединения");
+        alert(this.$t("systemThinking.alertConnectionError"));
       } finally {
         this.loading = false;
       }
@@ -599,7 +553,7 @@ export default {
         });
         const data = await res.json();
         if (!res.ok) {
-          alert(data.error || "Ошибка генерации");
+          alert(data.error || this.$t("systemThinking.alertGenSolutionsError"));
           return;
         }
         this.currentIceberg = data.iceberg || this.currentIceberg;
@@ -607,13 +561,13 @@ export default {
         await this.fetchAiUsage();
       } catch (e) {
         console.error(e);
-        alert("Ошибка соединения");
+        alert(this.$t("systemThinking.alertConnectionError"));
       } finally {
         this.generatingSolutions = false;
       }
     },
     async deleteIceberg(id) {
-      if (!confirm("Удалить этот айсберг?")) return;
+      if (!confirm(this.$t("systemThinking.confirmDelete"))) return;
       try {
         const res = await fetch(`/api/system-thinking/${id}`, {
           method: "DELETE",
@@ -633,7 +587,8 @@ export default {
     async exportPdf() {
       if (!this.$refs.pdfRoot || !this.currentIceberg) return;
       this.exportingPdf = true;
-      this.pdfExportDate = new Date().toLocaleString("ru-RU");
+      const loc = typeof this.$i18n.locale === "string" ? this.$i18n.locale : this.$i18n.locale.value;
+      this.pdfExportDate = new Date().toLocaleString(loc === "en" ? "en-US" : "ru-RU");
       await this.$nextTick();
       try {
         const el = this.$refs.pdfRoot;
@@ -658,7 +613,7 @@ export default {
         pdf.save(`iceberg-${this.currentIceberg.id}.pdf`);
       } catch (e) {
         console.error(e);
-        alert("Не удалось сформировать PDF. Попробуйте печать через браузер (Ctrl+P).");
+        alert(this.$t("systemThinking.alertPdfError"));
       } finally {
         this.exportingPdf = false;
       }

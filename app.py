@@ -61,7 +61,9 @@ _sock_stdlib.create_connection = _patched_create_connection
 # ---------------------------------------------------------------------------
 
 import eventlet
-eventlet.monkey_patch()
+# os=False: prevent patching os.read/os.write which breaks gunicorn's
+# arbiter signal handler (select.select → os.write → trampoline → RuntimeError)
+eventlet.monkey_patch(os=False)
 
 # Re-apply ALL patches AFTER eventlet.monkey_patch()
 import socket as _sock_green

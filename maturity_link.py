@@ -99,17 +99,25 @@ def _maturity_plan_model_chain(env_primary: str) -> list:
     )
 
 
+def _is_gpt5(model: str) -> bool:
+    return "gpt-5" in (model or "").strip().lower().split("/")[-1]
+
+
 def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
-    """Normalize kwargs for OpenAI Chat Completions (gpt-5* uses stricter parameters)."""
+    """Normalize kwargs for OpenAI Chat Completions.
+
+    gpt-5* (reasoning model family) rejects:
+      - max_tokens  (use max_completion_tokens)
+      - temperature (only default 1)
+      - top_p       (only default 1)
+    """
     out = dict(kwargs)
     if "max_tokens" in out and "max_completion_tokens" not in out:
         out["max_completion_tokens"] = out.pop("max_tokens")
 
-    m = (model or "").strip().lower()
-    tail = m.split("/")[-1]
-    if "gpt-5" in tail:
-        # gpt-5*: only default temperature (1); e.g. 0.45 -> 400 unsupported_value
+    if _is_gpt5(model):
         out.pop("temperature", None)
+        out.pop("top_p", None)
 
     return out
 

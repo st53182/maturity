@@ -61,7 +61,7 @@ def _extract_json_object(text: str) -> Optional[dict]:
     return None
 
 
-def _call_openai(user_prompt: str) -> str:
+def _call_openai(user_prompt: str, *, temperature: float = 0.4) -> str:
     from openai import OpenAI
 
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -72,7 +72,7 @@ def _call_openai(user_prompt: str) -> str:
             {"role": "system", "content": SYSTEM_BASE + "\n" + JSON_INSTRUCTION},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.4,
+        temperature=temperature,
         max_tokens=2000,
     )
     return (resp.choices[0].message.content or "").strip()
@@ -84,13 +84,27 @@ def _mock_question_payload(body: dict) -> dict:
     role = body.get("role") or "engineer"
     level = body.get("level") or "middle"
     complete = idx >= MAX_QUESTIONS_DEFAULT - 1
+    jd_templates = [
+        "[Mock Q{n}] Pick one bullet from the JD and walk through how you would de-risk it before release.",
+        "[Mock Q{n}] Choose a stack item mentioned in the JD: what failure mode worries you most and how do you detect it in prod?",
+        "[Mock Q{n}] From the JD responsibilities: describe how you would hand off work to another team without losing quality.",
+        "[Mock Q{n}] Tie one JD requirement to a concrete metric you would track for 2 weeks after launch.",
+        "[Mock Q{n}] Which JD skill is your weakest fit — and how would you close that gap in 30 days?",
+    ]
+    no_jd_templates = [
+        "[Mock Q{n}] ({r}/{l}) Tell me about a production incident: timeline, root cause, and one prevention you added.",
+        "[Mock Q{n}] ({r}/{l}) Compare two technical approaches you have used; when would you pick each?",
+        "[Mock Q{n}] ({r}/{l}) How do you decide what to test automatically vs manually for a risky change?",
+        "[Mock Q{n}] ({r}/{l}) Describe disagreeing with a teammate on design — how did you resolve it?",
+        "[Mock Q{n}] ({r}/{l}) What is the hardest performance problem you debugged? What did you measure?",
+        "[Mock Q{n}] ({r}/{l}) How do you keep scope under control when stakeholders add \"small\" requests mid-sprint?",
+    ]
     if jd:
-        q = (
-            f"[Mock Q{idx + 1}] For this role at {level} level: pick one concrete requirement from the JD "
-            "and explain how you would validate delivery quality in production."
-        )
+        tpl = jd_templates[idx % len(jd_templates)]
+        q = tpl.format(n=idx + 1)
     else:
-        q = f"[Mock Q{idx + 1}] ({role}/{level}) Describe a recent technical decision you owned and the trade-offs."
+        tpl = no_jd_templates[idx % len(no_jd_templates)]
+        q = tpl.format(n=idx + 1, r=role, l=level)
     if complete:
         return {
             "question": "Thank you — that completes the mock interview.",
@@ -188,7 +202,13 @@ def post_question():
             max_questions=max_q,
             last_evaluation_json=last_eval_json,
         )
-        raw = _call_openai(user_prompt)
+        # Slightly higher temperature + richer prompt reduces back-to-back near-duplicate questions.
+        try:
+            q_temp = float(os.getenv("INTERVIEW_SIMULATOR_QUESTION_TEMP", "0.68"))
+        except ValueError:
+            q_temp = 0.68
+        q_temp = max(0.0, min(1.5, q_temp))
+        raw = _call_openai(user_prompt, temperature=q_temp)
         data = _extract_json_object(raw)
         if not data or "question" not in data:
             logger.warning("Bad question JSON: %s", raw[:500])

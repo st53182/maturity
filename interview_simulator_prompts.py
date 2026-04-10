@@ -1,6 +1,7 @@
 # Prompt templates for AI Interview Simulator (MVP).
 # Keep role / level / job description explicit so the model anchors on JD requirements.
 
+import json
 from typing import Optional
 
 SYSTEM_BASE = """You are an expert technical interviewer. You conduct structured interviews fairly.
@@ -9,8 +10,46 @@ Rules:
 - Do not reveal scores to the candidate during the interview.
 - If a job description (JD) is provided, you MUST tie questions and follow-ups to its requirements, stack, and responsibilities.
 - Adapt difficulty to the stated seniority level.
-- If an answer is shallow, ask ONE concise follow-up that probes depth on the same topic.
+- If an answer is shallow, ask ONE concise follow-up that probes depth on the same topic — use NEW wording and a more specific angle; never repeat the previous question verbatim or as a light paraphrase.
+- Never ask two main questions in a row that target the same subtopic (e.g. two generic "tell me about testing" prompts). Vary focus across the interview.
 - Output ONLY valid JSON matching the schema requested in the user message (no markdown fences)."""
+
+# Rotating themes so consecutive questions explore different angles (reduces repetitive LLM outputs).
+_QUESTION_THEMES = [
+    "A concrete past situation (STAR-style): problem, your role, outcome, metrics.",
+    "Technical trade-offs: two valid options and how you chose in practice.",
+    "Production / incident / debugging: how you found root cause and prevented recurrence.",
+    "Quality & testing: strategy, automation, what you would not compromise on.",
+    "Collaboration: code review, disagreement with a peer or PM, how you resolved it.",
+    "Scale, performance, or reliability: bottleneck, monitoring, or capacity.",
+    "Security, privacy, or data handling relevant to the role.",
+    "Delivery & prioritization under constraints (time, scope, tech debt).",
+    "Deep dive into one specific tool, pattern, or stack item from the JD (if JD exists); else core skill for the role.",
+    "Learning & mentorship: how you stay current or helped others grow.",
+]
+
+
+def _prior_assistant_questions(transcript_json: str, limit: int = 14) -> list[str]:
+    try:
+        arr = json.loads(transcript_json)
+    except (json.JSONDecodeError, TypeError):
+        return []
+    if not isinstance(arr, list):
+        return []
+    out: list[str] = []
+    for m in arr:
+        if not isinstance(m, dict):
+            continue
+        if m.get("role") != "assistant":
+            continue
+        c = (m.get("content") or "").strip()
+        if not c:
+            continue
+        low = c.lower()
+        if "completes the interview" in low or ("thank you" in low and "interview" in low):
+            continue
+        out.append(c)
+    return out[-limit:]
 
 
 def build_question_prompt(
@@ -29,6 +68,24 @@ def build_question_prompt(
         else "(No job description provided — use a standard interview for the role and level.)"
     )
     eval_block = last_evaluation_json or "null"
+    prior_qs = _prior_assistant_questions(transcript_json)
+    if prior_qs:
+        numbered = "\n".join(f"{i + 1}. {q}" for i, q in enumerate(prior_qs))
+        anti_repeat = f"""Questions you already asked the candidate (new question must be SUBSTANTIALLY different — different primary skill, scenario, or JD bullet; not a near-duplicate):
+{numbered}
+
+Hard rules:
+- Do NOT ask the same question again or swap only a few words.
+- If the last question was broad, make this one narrow (specific constraint, metric, or artifact), or switch theme entirely.
+- If is_follow_up is true, stay on the same TOPIC as the last exchange but change the angle (e.g. numbers, failure mode, decision criteria) — still avoid repeating the previous interviewer sentence structure."""
+    else:
+        anti_repeat = "(No prior interviewer questions in transcript yet — open with a strong, role-appropriate starter.)"
+
+    theme_idx = question_index % len(_QUESTION_THEMES)
+    theme_hint = _QUESTION_THEMES[theme_idx]
+    next_theme_idx = (question_index + 1) % len(_QUESTION_THEMES)
+    next_theme = _QUESTION_THEMES[next_theme_idx]
+
     return f"""Generate the next interview step.
 
 Context:
@@ -40,6 +97,13 @@ Context:
 ---
 {jd_block}
 ---
+
+Suggested focus for THIS turn (primary angle — follow it unless last_evaluation forces a follow-up on the same topic):
+- {theme_hint}
+- If this is NOT a follow-up, prefer this angle over repeating themes from earlier questions.
+- Next turn after this one will lean toward: {next_theme} (plan ahead mentally; do not mention this to the candidate).
+
+{anti_repeat}
 
 Conversation so far (JSON array of {{\\"role\\": \\"assistant\\"|\\"user\\", \\"content\\": \\"...\\"}}):
 {transcript_json}

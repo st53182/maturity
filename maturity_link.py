@@ -100,15 +100,17 @@ def _maturity_plan_model_chain(env_primary: str) -> list:
 
 
 def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
-    """OpenAI Chat Completions: gpt-5-* returns 400 on max_tokens; use max_completion_tokens.
-
-    We map for every model in the fallback chain — current API accepts max_completion_tokens
-    for gpt-4* as well; model id may be ``gpt-5-mini``, ``provider/gpt-5-mini``, snapshots, etc.
-    """
-    _ = model  # reserved if we need per-model tweaks later
+    """Normalize kwargs for OpenAI Chat Completions (gpt-5* uses stricter parameters)."""
     out = dict(kwargs)
     if "max_tokens" in out and "max_completion_tokens" not in out:
         out["max_completion_tokens"] = out.pop("max_tokens")
+
+    m = (model or "").strip().lower()
+    tail = m.split("/")[-1]
+    if "gpt-5" in tail:
+        # gpt-5*: only default temperature (1); e.g. 0.45 -> 400 unsupported_value
+        out.pop("temperature", None)
+
     return out
 
 

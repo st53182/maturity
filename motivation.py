@@ -41,51 +41,73 @@ def get_motivation():
         db.session.add(employee)
         db.session.commit()
 
-        lang = data.get('lang', 'ru')
-        
-        # 3. Prompt к OpenAI в зависимости от языка
-        if lang == 'en':
-            prompt = f"""You are an Agile coach and DISC specialist. Analyze the employee description, determine DISC type and provide motivation and interaction recommendations. Response format: strictly HTML, use <h3>, <ul>, <li>, <strong> etc., but don't wrap in markdown ```html
+        lang = (data.get("lang") or "ru").lower()
+        if lang not in ("en", "ru"):
+            lang = "ru"
 
+        system_msg = (
+            "You are a coach, psychologist, and DISC analyst. Reply entirely in English using the structure requested."
+            if lang == "en"
+            else "Ты коуч, психолог и DISC-аналитик. Отвечай полностью на русском в запрошенной структуре."
+        )
+
+        # 3. Prompt к OpenAI в зависимости от языка
+        if lang == "en":
+            prompt = f"""You are an Agile coach and DISC specialist. Analyze the employee description, determine DISC type, and give motivation and interaction recommendations.
+
+Output strictly valid HTML only (no markdown fences). Use exactly these section headings as <h3> tags, each followed by content:
+
+<h3>DISC Type: ...</h3>
+<p>One line with the profile name and one of D, I, S, C.</p>
+
+<h3>Motivating factors:</h3>
+<ul><li>...</li></ul>
+
+<h3>Demotivators:</h3>
+<ul><li>...</li></ul>
+
+<h3>Recommendations for manager:</h3>
+<ul><li>...</li></ul>
+
+Employee data:
 Name: {employee.name}
 Role: {employee.role}
 Behavior in stressful situations: {employee.stress}
 Interaction with others: {employee.communication}
 Work behavior: {employee.behavior}
 Reactions to criticism and changes: {employee.feedback}
-
-**DISC Type:** (e.g., Analyst, must specify one of the letters D,I,S,C) Response format: strictly HTML, use <h3>, <ul>, <li>, <strong> etc. Highlight this on a separate line
-**Motivating factors:**
-... To increase employee motivation you need.....
-**Demotivators:**
-...
-**Recommendations for manager:**
-...
 """
         else:
-            prompt = f"""Ты Agile-коуч и DISC-специалист. Проанализируй описание сотрудника, определи тип по DISC и дай рекомендации по мотивации и взаимодействию , Формат ответа: строго HTML, используй <h3>, <ul>, <li>, <strong> и т.д.. , но не оборачивай в markdown ```html
+            prompt = f"""Ты Agile-коуч и DISC-специалист. Проанализируй описание сотрудника, определи тип по DISC и дай рекомендации по мотивации и взаимодействию.
 
+Ответ — только валидный HTML (без markdown-ограждений). Используй ровно такие заголовки разделов в виде <h3>, после каждого — содержимое:
+
+<h3>Тип DISC: ...</h3>
+<p>Одна строка с названием профиля и одной из букв D, I, S, C.</p>
+
+<h3>Мотивирующие факторы:</h3>
+<ul><li>...</li></ul>
+
+<h3>Демотиваторы:</h3>
+<ul><li>...</li></ul>
+
+<h3>Рекомендации для руководителя:</h3>
+<ul><li>...</li></ul>
+
+Данные сотрудника:
 Имя: {employee.name}
 Роль: {employee.role}
 Поведение в стрессовой ситуации: {employee.stress}
 Взаимодействие с другими: {employee.communication}
 Рабочее поведение: {employee.behavior}
 Реакции на критику и изменения: {employee.feedback}
-
-**Тип DISC:** (например, Аналитик, обязательно указывай одну из букв D,I,S,C) Формат ответа: строго HTML, используй <h3>, <ul>, <li>, <strong> и т.д Выдели это отдельной строчкой
-**Мотивирующие факторы:**
-... Для того что бы повысить мотивацию сотрудника нужно.....
-**Демотиваторы:**
-...
-**Рекомендации для руководителя:**
-...
 """
 
         client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4.1",
             messages=[
-                {"role": "system", "content": "Ты коуч, психолог и DISC-аналитик."},
+                {"role": "system", "content": system_msg},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,

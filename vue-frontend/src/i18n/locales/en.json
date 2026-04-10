@@ -21,7 +21,7 @@
     "agileTools": "Agile tools",
     "metricsTree": "Metrics tree",
     "communityChat": "Chat",
-    "tests": "Auto Tests"
+    "qa": "QA"
   },
   "chat": {
     "title": "Messages",
@@ -55,8 +55,7 @@
     "forgotPassword": "Forgot password?",
     "contactUs": "Contact us at",
     "weWillHelp": "and we will help you.",
-    "sessionExpired": "Your session has expired or the token is no longer valid. Sign in again to load data.",
-    "tokenLifetimeHint": "By default, your access token stays valid for 365 days after login unless the server sets a different value (JWT_ACCESS_TOKEN_DAYS)."
+    "sessionExpired": "Your session has expired or the token is no longer valid. Sign in again to load data."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -76,7 +75,8 @@
     "confirmDeleteTeam": "Delete this team? This cannot be undone.",
     "teamDeleted": "Team deleted.",
     "deleteTeamError": "Could not delete the team.",
-    "passSurveyFirst": "Please complete an assessment for your team first."
+    "passSurveyFirst": "Please complete an assessment for your team first.",
+    "radarLegend": "Average score"
   },
   "survey": {
     "title": "Team Survey",
@@ -680,7 +680,27 @@
     "employeeDeleted": "Employee deleted!",
     "errorLoading": "Error loading employees",
     "errorSaving": "Error saving",
-    "confirmDelete": "Are you sure you want to delete this employee?"
+    "confirmDelete": "Are you sure you want to delete this employee?",
+    "networkError": "Connection error",
+    "icebergModalTitle": "Observation iceberg",
+    "icebergModalLead": "Like the systems-thinking iceberg: context above the line, what you can see at the surface, and deeper patterns underneath. Describe what you notice — AI will infer DISC and motivation levers.",
+    "tierContext": "Context — who and where",
+    "tierVisible": "Above the surface — what shows up under pressure and with people",
+    "tierDeep": "Below the surface — work style and reactions to change",
+    "fieldStressBehavior": "1. Behavior in stressful situations",
+    "fieldInteraction": "2. Interaction with others",
+    "fieldWorkStyle": "3. How they work (pace, focus, habits)",
+    "fieldFeedbackReaction": "4. Reactions to criticism and change",
+    "teamLabel": "Team",
+    "discTypeLabel": "DISC type",
+    "discUnknown": "Unknown",
+    "motivatorsTitle": "Motivators",
+    "demotivatorsTitle": "Demotivators",
+    "updateRecommendations": "Refresh recommendations",
+    "generating": "Generating…",
+    "avatarPickerTitle": "Choose avatar",
+    "avatarMale": "Male",
+    "avatarFemale": "Female"
   },
   "conflicts": {
     "title": "Conflict Management",
@@ -770,6 +790,7 @@
     "username": "Username",
     "email": "Email",
     "password": "Password",
+    "inviteCode": "Invite code",
     "confirmPassword": "Confirm Password",
     "registerButton": "Register",
     "hasAccount": "Already have an account?",
@@ -777,7 +798,8 @@
     "passwordMismatch": "Passwords do not match",
     "success": "Registration successful! You can now log in.",
     "error": "Registration error",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "beforeRegisterInviteHint": "Need an invite code? Email the administrator at artjoms.grinakins@gmail.com to request access.\n\nContinue with registration?"
   },
   "profile": {
     "title": "My Profile",
@@ -1247,6 +1269,8 @@
     "userStoryDeleteConfirm": "Delete this item from the pool?",
     "puzzleSqlTitle": "SQL for QA: interactive trainer",
     "puzzleSqlDesc": "Assignment 8: 16 SQL lessons, e-commerce demo data (customers, products, orders, line items), in-browser task checks.",
+    "puzzleAutoTestsTitle": "Auto tests",
+    "puzzleAutoTestsDesc": "Run Growboard API checks from the browser (sign-in required).",
     "sqlPageTitle": "Assignment 8 — SQL in the browser",
     "sqlPageLead": "16 lessons on the left; each has theory and several checked tasks. On the right: customers, products, orders, and order_items (JOIN-friendly), editor, and the last SELECT result.",
     "sqlBrowserOnly": "Runs only on your device (SQLite in the browser); SQL is not sent to the GrowBoard server.",

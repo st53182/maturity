@@ -96,6 +96,7 @@ export default {
     return {
       results: {},
       radarData: {},
+      teams: [],
       loading: true,
       error: null,
       showTeamModal: false,
@@ -103,6 +104,19 @@ export default {
       newTeamName: "",
     };
 
+  },
+
+  watch: {
+    "$i18n.locale"() {
+      if (!Array.isArray(this.teams) || !this.teams.length) return;
+      this.teams = this.teams.map((team) => {
+        if (!team.rawResults) return team;
+        return {
+          ...team,
+          chartData: this.generateRadarData(team.rawResults),
+        };
+      });
+    },
   },
 
   methods: {
@@ -290,7 +304,7 @@ export default {
         labels: categories,
         datasets: [
           {
-            label: "Средняя оценка",
+            label: this.$t("dashboard.radarLegend"),
             data: scores,
             backgroundColor: "rgba(75, 192, 192, 0.2)",
             borderColor: "rgba(75, 192, 192, 1)",

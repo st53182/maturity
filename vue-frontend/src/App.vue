@@ -80,9 +80,9 @@
           <span>💬</span>
           <small>{{ $t('nav.communityChat') }}</small>
         </button>
-        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/tests', '/tests']) }" @click="$router.push('/new/tests')">
-          <span>🧪</span>
-          <small>{{ $t('nav.tests') }}</small>
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/qa']) }" @click="$router.push('/qa')">
+          <span>🔍</span>
+          <small>{{ $t('nav.qa') }}</small>
         </button>
         <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/maturity', '/maturity']) }" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
           <span>🔗</span>
@@ -185,9 +185,9 @@
             <span>💬</span>
             <span>{{ $t('nav.communityChat') }}</span>
           </button>
-          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/tests', '/tests']) }" @click="navigateAndClose('/new/tests')">
-            <span>🧪</span>
-            <span>{{ $t('nav.tests') }}</span>
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/qa']) }" @click="navigateAndClose('/qa')">
+            <span>🔍</span>
+            <span>{{ $t('nav.qa') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/maturity' : '/maturity/create')">
             <span>🔗</span>

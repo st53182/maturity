@@ -9,7 +9,7 @@
       <form @submit.prevent="register">
         <input type="email" v-model="email" :placeholder="$t('register.email')" required />
         <input type="password" v-model="password" :placeholder="$t('register.password')" required />
-        <input type="text" v-model="inviteCode" placeholder="Invite code / Код приглашения" required />
+        <input type="text" v-model="inviteCode" :placeholder="$t('register.inviteCode')" required />
         <button type="submit">{{ $t('register.registerButton') }}</button>
       </form>
       <p class="login-link">{{ $t('register.hasAccount') }} <router-link to="/login">{{ $t('register.login') }}</router-link></p>
@@ -33,6 +33,9 @@ export default {
       localStorage.setItem('language', lang);
     },
     async register() {
+      if (!window.confirm(this.$t('register.beforeRegisterInviteHint'))) {
+        return;
+      }
       try {
         const response = await fetch('/register', {
           method: 'POST',

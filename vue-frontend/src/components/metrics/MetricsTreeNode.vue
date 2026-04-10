@@ -40,6 +40,7 @@ export default {
     selectedIdA: { type: String, default: "" },
     selectedIdB: { type: String, default: "" },
     selectable: { type: Boolean, default: true },
+    uiLang: { type: String, default: "ru" },
   },
   emits: ["toggle", "select-a", "select-b"],
   computed: {
@@ -51,7 +52,7 @@ export default {
     },
     label() {
       if (this.uiLang === "en") return this.node.name || "";
-      return `${this.node.name}${this.node.nameRu ? ` (${this.node.nameRu})` : ""}`;
+      return (this.node.nameRu || this.node.name || "").trim();
     },
   },
 };

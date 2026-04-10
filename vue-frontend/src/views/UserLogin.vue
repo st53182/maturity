@@ -26,7 +26,6 @@
         <input type="password" v-model="password" :placeholder="$t('auth.password')" required />
         <button type="submit">{{ $t('auth.loginButton') }}</button>
       </form>
-      <p class="token-lifetime-hint">{{ $t('auth.tokenLifetimeHint') }}</p>
       <p class="register-link">{{ $t('auth.noAccount') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
       <div class="forgot-password-toggle">
   <button @click="showHelp = !showHelp" class="link-button">
@@ -121,14 +120,6 @@ export default {
   line-height: 1.45;
   text-align: left;
   border: 1px solid #ffecb5;
-}
-
-.token-lifetime-hint {
-  font-size: 12px;
-  color: #5f6368;
-  line-height: 1.4;
-  margin: 16px 0 8px;
-  text-align: left;
 }
 
 .language-switcher-login {

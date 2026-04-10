@@ -22,23 +22,23 @@
           <button class="delete-btn" @click.stop="deleteEmployee(employee.id)">🗑</button>
 
         </div>
-        <p class="team-name">🏢 Команда: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
-        <p class="disc-type-full">🧠 Тип DISC: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
+        <p class="team-name">🏢 {{ $t('motivation.teamLabel') }}: <strong>{{ getTeamName(employee.team_id) || '—' }}</strong></p>
+        <p class="disc-type-full">🧠 {{ $t('motivation.discTypeLabel') }}: <strong>{{ extractDISCFullType(employee.ai_analysis) }}</strong></p>
         <div class="employee-card-footer">
     <button class="update-btn" @click="handleEmployeeClick(employee)">
-      🔄 Обновить рекомендации
+      🔄 {{ $t('motivation.updateRecommendations') }}
     </button>
   </div>
 
         <div v-if="employee.ai_analysis" class="factors">
           <div class="column">
-            <h5>⬆️ Мотиваторы</h5>
+            <h5>⬆️ {{ $t('motivation.motivatorsTitle') }}</h5>
             <ul>
               <li v-for="item in employee.motivators" :key="item">{{ item }}</li>
             </ul>
           </div>
           <div class="column">
-            <h5>⬇️ Демотиваторы</h5>
+            <h5>⬇️ {{ $t('motivation.demotivatorsTitle') }}</h5>
             <ul>
               <li v-for="item in employee.demotivators" :key="item">{{ item }}</li>
             </ul>
@@ -67,109 +67,125 @@
 
   </div>
   <div v-if="showModal" class="modal-overlay">
-  <div class="modal-content">
-    <button class="modal-close-top" @click="showModal = false" aria-label="Close">✕</button>
+  <div class="modal-content motivation-modal-iceberg">
+    <button type="button" class="modal-close-top" @click="showModal = false" :aria-label="$t('common.close')">✕</button>
 
+    <header class="mot-iceberg-hero">
+      <h2 class="mot-iceberg-title">{{ $t('motivation.icebergModalTitle') }}</h2>
+      <p class="mot-iceberg-lead">{{ $t('motivation.icebergModalLead') }}</p>
+    </header>
 
-    <form @submit.prevent="submitMotivation" class="form-group modern-form">
+    <form @submit.prevent="submitMotivation(false)" class="form-group modern-form mot-iceberg-form">
 
-      <div class="input-wrapper">
-        <span class="input-icon">👤</span>
-        <input 
-          v-model="form.name" 
-          required 
-          class="modern-input"
-          :class="{ 'has-value': form.name }"
-        />
-        <label class="floating-label">{{ $t('motivation.employeeName') }}</label>
-      </div>
+      <section class="mot-iceberg-tier mot-iceberg-tier--identity">
+        <h3 class="mot-iceberg-tier-title">{{ $t('motivation.tierContext') }}</h3>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input
+            v-model="form.name"
+            required
+            class="modern-input"
+            :class="{ 'has-value': form.name }"
+          />
+          <label class="floating-label">{{ $t('motivation.employeeName') }}</label>
+        </div>
 
-      <div class="input-wrapper">
-        <span class="input-icon">💼</span>
-        <input 
-          v-model="form.role" 
-          required 
-          class="modern-input"
-          :class="{ 'has-value': form.role }"
-        />
-        <label class="floating-label">{{ $t('motivation.role') }}</label>
-      </div>
+        <div class="input-wrapper">
+          <span class="input-icon">💼</span>
+          <input
+            v-model="form.role"
+            required
+            class="modern-input"
+            :class="{ 'has-value': form.role }"
+          />
+          <label class="floating-label">{{ $t('motivation.role') }}</label>
+        </div>
 
-      <div class="input-wrapper">
-        <span class="input-icon">🏢</span>
-        <select 
-          v-model="form.team_id" 
-          class="modern-input modern-select"
-          :class="{ 'has-value': form.team_id }"
+        <div class="input-wrapper">
+          <span class="input-icon">🏢</span>
+          <select
+            v-model="form.team_id"
+            class="modern-input modern-select"
+            :class="{ 'has-value': form.team_id }"
+          >
+            <option value=""></option>
+            <option v-for="team in teams" :key="team.id" :value="team.id">
+              {{ team.name }}
+            </option>
+          </select>
+          <label class="floating-label">{{ $t('motivation.team') }} ({{ $t('common.select') }})</label>
+        </div>
+      </section>
+
+      <div class="mot-iceberg-waterline" aria-hidden="true" />
+
+      <section class="mot-iceberg-tier mot-iceberg-tier--surface">
+        <h3 class="mot-iceberg-tier-title">{{ $t('motivation.tierVisible') }}</h3>
+        <div class="input-wrapper textarea-wrapper">
+          <span class="input-icon">😰</span>
+          <textarea
+            v-model="form.stress"
+            required
+            class="modern-input modern-textarea"
+            :class="{ 'has-value': form.stress }"
+          />
+          <label class="floating-label">{{ $t('motivation.fieldStressBehavior') }}</label>
+        </div>
+
+        <div class="input-wrapper textarea-wrapper">
+          <span class="input-icon">🤝</span>
+          <textarea
+            v-model="form.communication"
+            required
+            class="modern-input modern-textarea"
+            :class="{ 'has-value': form.communication }"
+          />
+          <label class="floating-label">{{ $t('motivation.fieldInteraction') }}</label>
+        </div>
+      </section>
+
+      <section class="mot-iceberg-tier mot-iceberg-tier--deep">
+        <h3 class="mot-iceberg-tier-title">{{ $t('motivation.tierDeep') }}</h3>
+        <div class="input-wrapper textarea-wrapper">
+          <span class="input-icon">⚡</span>
+          <textarea
+            v-model="form.behavior"
+            required
+            class="modern-input modern-textarea"
+            :class="{ 'has-value': form.behavior }"
+          />
+          <label class="floating-label">{{ $t('motivation.fieldWorkStyle') }}</label>
+        </div>
+
+        <div class="input-wrapper textarea-wrapper">
+          <span class="input-icon">💬</span>
+          <textarea
+            v-model="form.feedback"
+            required
+            class="modern-input modern-textarea"
+            :class="{ 'has-value': form.feedback }"
+          />
+          <label class="floating-label">{{ $t('motivation.fieldFeedbackReaction') }}</label>
+        </div>
+      </section>
+
+      <div class="modal-actions mot-iceberg-actions">
+        <button
+          type="button"
+          @click="submitMotivation(false)"
+          :disabled="loading"
         >
-          <option value=""></option>
-          <option v-for="team in teams" :key="team.id" :value="team.id">
-            {{ team.name }}
-          </option>
-        </select>
-        <label class="floating-label">{{ $t('motivation.team') }} ({{ $t('common.select') }})</label>
+          💾 {{ $t('common.save') }}
+        </button>
+        <button
+          type="button"
+          @click="submitMotivation(true)"
+          :disabled="loading"
+        >
+          <span v-if="loading">⏳ {{ $t('motivation.generating') }}</span>
+          <span v-else>💬 {{ $t('motivation.analyze') }}</span>
+        </button>
       </div>
-
-      <div class="input-wrapper textarea-wrapper">
-        <span class="input-icon">😰</span>
-        <textarea 
-          v-model="form.stress" 
-          required 
-          class="modern-input modern-textarea"
-          :class="{ 'has-value': form.stress }"
-        ></textarea>
-        <label class="floating-label">1. Поведение в стрессовой ситуации</label>
-      </div>
-
-      <div class="input-wrapper textarea-wrapper">
-        <span class="input-icon">🤝</span>
-        <textarea 
-          v-model="form.communication" 
-          required 
-          class="modern-input modern-textarea"
-          :class="{ 'has-value': form.communication }"
-        ></textarea>
-        <label class="floating-label">2. Взаимодействие с другими</label>
-      </div>
-
-      <div class="input-wrapper textarea-wrapper">
-        <span class="input-icon">⚡</span>
-        <textarea 
-          v-model="form.behavior" 
-          required 
-          class="modern-input modern-textarea"
-          :class="{ 'has-value': form.behavior }"
-        ></textarea>
-        <label class="floating-label">3. Особенности в работе</label>
-      </div>
-
-      <div class="input-wrapper textarea-wrapper">
-        <span class="input-icon">💬</span>
-        <textarea 
-          v-model="form.feedback" 
-          required 
-          class="modern-input modern-textarea"
-          :class="{ 'has-value': form.feedback }"
-        ></textarea>
-        <label class="floating-label">4. Реакции на критику и изменения</label>
-      </div>
-<div class="modal-actions">
-      <button
-  @click="submitMotivation(false)"
-  :disabled="loading"
->
-  💾 {{ $t('common.save') }}
-</button>
-
-<!-- Сохранить и сгенерировать -->
-<button
-  @click="submitMotivation(true)"
-  :disabled="loading"
->
-  <span v-if="loading">⏳ Генерация...</span>
-  <span v-else>💬 {{ $t('motivation.analyze') }}</span>
-</button>
-</div>
     </form>
   </div>
 </div>
@@ -194,7 +210,7 @@
     </div>
     
     <div class="avatar-section">
-      <h3>👩 Женские</h3>
+      <h3>👩 {{ $t('motivation.avatarFemale') }}</h3>
       <div class="avatar-grid">
         <img 
           v-for="avatar in avatars.female" 
@@ -239,6 +255,12 @@ export default {
     };
   },
 
+  watch: {
+    '$i18n.locale'() {
+      this.employees = this.employees.map((e) => this.enrichEmployee(e));
+    }
+  },
+
   async mounted() {
     const token = localStorage.getItem("token");
 
@@ -261,18 +283,22 @@ export default {
         return;
       }
 
-      this.employees = rawEmployees.map(e => ({
-        ...e,
-        motivators: this.extractFactors(e.ai_analysis, "Мотивирующие"),
-        demotivators: this.extractFactors(e.ai_analysis, "Демотиваторы"),
-        managerTips: this.extractManagerTips(e.ai_analysis)
-      }));
+      this.employees = rawEmployees.map((e) => this.enrichEmployee(e));
     } catch (err) {
       console.error("Ошибка при загрузке:", err);
     }
   },
 
   methods: {
+    enrichEmployee(e) {
+      return {
+        ...e,
+        motivators: this.extractFactors(e.ai_analysis, 'motivators'),
+        demotivators: this.extractFactors(e.ai_analysis, 'demotivators'),
+        managerTips: this.extractManagerTips(e.ai_analysis)
+      };
+    },
+
     async submitMotivation(generate = false) {
   this.loading = true;
   const token = localStorage.getItem("token");
@@ -287,11 +313,20 @@ export default {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
       },
-      body: JSON.stringify({
-        ...this.form,
-        id: this.form.id, // всегда передаём id
-        team_id: this.form.team_id || null // избегаем ошибки "" в integer
-      })
+      body: JSON.stringify(
+        generate
+          ? {
+              ...this.form,
+              id: this.form.id,
+              team_id: this.form.team_id || null,
+              lang: this.$i18n.locale === 'en' ? 'en' : 'ru'
+            }
+          : {
+              ...this.form,
+              id: this.form.id,
+              team_id: this.form.team_id || null
+            }
+      )
     });
 
     const data = await res.json();
@@ -300,14 +335,15 @@ export default {
       this.result = data.analysis || data.message;
       this.form.id = data.employee_id || data.id;
 
-      const updated = {
+      const analysis =
+        data.analysis !== undefined && data.analysis !== null && String(data.analysis).trim() !== ''
+          ? data.analysis
+          : (this.form.ai_analysis || '');
+      const updated = this.enrichEmployee({
         ...this.form,
         id: this.form.id,
-        ai_analysis: data.analysis || "",
-        motivators: this.extractFactors(data.analysis, "Мотивирующие"),
-        demotivators: this.extractFactors(data.analysis, "Демотиваторы"),
-        managerTips: this.extractManagerTips(data.analysis)
-      };
+        ai_analysis: analysis
+      });
 
       const index = this.employees.findIndex(e => e.id === this.form.id);
       if (index !== -1) {
@@ -321,11 +357,11 @@ export default {
     location.reload();
   }, 300);
     } else {
-      alert(data.error || "Ошибка сохранения");
+      alert(data.error || this.$t('motivation.errorSaving'));
     }
   } catch (err) {
     console.error(err);
-    alert("Ошибка подключения");
+    alert(this.$t('motivation.networkError'));
   } finally {
     this.loading = false;
   }
@@ -372,29 +408,61 @@ export default {
     },
 
     extractDISCFullType(aiText) {
-      if (!aiText) return "Неизвестно";
-      const match = aiText.match(/Тип DISC[:-]?\s*<\/?strong>?[\s"]*([A-ZА-Я]\s*\([^)]+?\))/i)
-                 || aiText.match(/Тип DISC[:-]?\s*([A-ZА-Я]\s*\([^)]+?\))/i);
-      return match ? match[1].trim() : "Неизвестно";
+      const unknown = this.$t('motivation.discUnknown');
+      if (!aiText) return unknown;
+      const patterns = [
+        /DISC\s+Type:\s*<\/?strong>?[\s"]*([A-ZА-Я][^<]*?\([^)]+\))/i,
+        /DISC\s+Type:\s*([A-ZА-Я][^<\n]*?\([^)]+\))/i,
+        /Тип\s*DISC:\s*<\/?strong>?[\s"]*([A-ZА-Я][^<]*?\([^)]+\))/i,
+        /Тип\s*DISC:\s*([A-ZА-Я][^<\n]*?\([^)]+\))/i
+      ];
+      for (let i = 0; i < patterns.length; i++) {
+        const m = aiText.match(patterns[i]);
+        if (m) {
+          const s = m[1].replace(/<[^>]+>/g, '').trim();
+          if (s) return s;
+        }
+      }
+      return unknown;
     },
 
-    extractFactors(html, sectionTitle) {
+    extractFactors(html, kind) {
       if (!html) return [];
+      const en = this.$i18n.locale === 'en';
+      const motivPrimary = en
+        ? ['motivating factor', 'motivating', 'motivator']
+        : ['мотивирующ', 'мотиватор'];
+      const motivFallback = en
+        ? ['мотивирующ', 'мотиватор']
+        : ['motivating factor', 'motivating', 'motivator'];
+      const demPrimary = en ? ['demotivator'] : ['демотиватор'];
+      const demFallback = en ? ['демотиватор'] : ['demotivator'];
+      const needleSets =
+        kind === 'motivators' ? [motivPrimary, motivFallback] : [demPrimary, demFallback];
 
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;
-
       const headers = Array.from(tempDiv.querySelectorAll('h3, h4, strong'));
-      const header = headers.find(h =>
-        h.textContent.toLowerCase().includes(sectionTitle.toLowerCase())
-      );
 
-      if (!header) return [];
+      const findList = (needles) => {
+        const header = headers.find((h) => {
+          const t = h.textContent.toLowerCase();
+          return needles.some((n) => t.includes(n));
+        });
+        if (!header) return null;
+        let node = header.nextElementSibling;
+        while (node && node.tagName !== 'UL') {
+          node = node.nextElementSibling;
+        }
+        if (!node || node.tagName !== 'UL') return null;
+        return Array.from(node.querySelectorAll('li')).map((li) => li.textContent.trim());
+      };
 
-      const ul = header.nextElementSibling;
-      if (!ul || ul.tagName !== 'UL') return [];
-
-      return Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
+      for (let i = 0; i < needleSets.length; i++) {
+        const list = findList(needleSets[i]);
+        if (list && list.length) return list;
+      }
+      return [];
     },
 
     extractDISCType(aiText) {
@@ -410,7 +478,9 @@ export default {
 
     extractManagerTips(text) {
       if (!text) return '';
-      const match = text.match(/<h3>Рекомендации для руководителя:.*?<\/ul>/is);
+      const match = text.match(
+        /<h3>(?:Рекомендации для руководителя|Recommendations for manager):.*?<\/ul>/is
+      );
       return match ? match[0] : '';
     },
 
@@ -777,6 +847,96 @@ button:hover {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+.motivation-modal-iceberg {
+  padding: 0;
+  max-width: 760px;
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 28%, #ffffff 55%, #f8fafc 100%);
+  border: 1px solid rgba(14, 165, 233, 0.22);
+}
+
+.mot-iceberg-hero {
+  padding: 28px 40px 18px;
+  text-align: left;
+  border-bottom: 1px solid rgba(14, 165, 233, 0.22);
+  background: linear-gradient(135deg, rgba(224, 242, 254, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.motivation-modal-iceberg h2.mot-iceberg-title {
+  margin: 0 0 10px;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0c4a6e;
+  letter-spacing: -0.02em;
+}
+
+.mot-iceberg-lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.mot-iceberg-form.form-group {
+  margin: 0;
+  padding: 22px 40px 32px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  max-width: none;
+  gap: 0;
+}
+
+.mot-iceberg-tier {
+  margin-bottom: 18px;
+}
+
+.mot-iceberg-tier--identity {
+  padding: 4px 0 4px;
+}
+
+.mot-iceberg-tier-title {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #0369a1;
+}
+
+.mot-iceberg-tier--surface {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(14, 165, 233, 0.22);
+  box-shadow: 0 6px 28px rgba(14, 165, 233, 0.1);
+}
+
+.mot-iceberg-waterline {
+  height: 20px;
+  margin: 4px 0 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 40' preserveAspectRatio='none'%3E%3Cpath fill='%230ea5e9' fill-opacity='0.28' d='M0 20 C360 4 720 36 1080 20 C1260 12 1380 28 1440 20 V40 H0Z'/%3E%3C/svg%3E")
+    center / 100% 100% no-repeat;
+  opacity: 0.95;
+}
+
+.mot-iceberg-tier--deep {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(168deg, #dbeafe 0%, #cffafe 45%, #bae6fd 100%);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.mot-iceberg-tier--deep .mot-iceberg-tier-title {
+  color: #0c4a6e;
+}
+
+.mot-iceberg-actions.modal-actions {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(14, 165, 233, 0.2);
+}
+
 .modal-content h2 {
   font-size: 28px;
   font-weight: 700;
@@ -1068,6 +1228,18 @@ button:hover {
     padding: 24px 20px !important;
     margin: 0 !important;
     border-radius: 16px 16px 0 0;
+  }
+
+  .motivation-modal-iceberg {
+    padding: 0 !important;
+  }
+
+  .mot-iceberg-hero {
+    padding: 20px 20px 16px !important;
+  }
+
+  .mot-iceberg-form.form-group {
+    padding: 18px 20px 24px !important;
   }
   
   .modal-content h2 {

@@ -154,12 +154,27 @@ export default {
     metricsById() {
       return Object.fromEntries(this.metricOptions.map((m) => [m.id, m]));
     },
+    resolvedUiLang() {
+      if (this.uiLang === "en" || this.uiLang === "ru") return this.uiLang;
+      try {
+        const loc = this.$i18n?.locale;
+        const s = typeof loc === "string" ? loc : loc?.value;
+        return s === "en" ? "en" : "ru";
+      } catch {
+        return typeof localStorage !== "undefined" && localStorage.getItem("language") === "en"
+          ? "en"
+          : "ru";
+      }
+    },
+    displayTitle() {
+      return (this.title && String(this.title).trim()) || this.$t("metricsTree.pageTitleLong");
+    },
   },
   methods: {
     optionLabel(m) {
       const indent = "  ".repeat(Math.max(0, m.level - 1));
-      if (this.resolvedUiLang === "en") return `${indent}${m.name}`;
-      return `${indent}${m.name}${m.nameRu ? ` (${m.nameRu})` : ""}`;
+      if (this.resolvedUiLang === "en") return `${indent}${m.name || ""}`;
+      return `${indent}${m.nameRu || m.name || ""}`;
     },
     toggleNode(id) {
       this.expandedMap = { ...this.expandedMap, [id]: !this.expandedMap[id] };
@@ -185,7 +200,7 @@ export default {
           context: "metrics_tree",
         };
         if (this.surveyToken) payload.survey_token = this.surveyToken;
-        payload.lang = this.uiLang === "en" ? "en" : "ru";
+        payload.lang = this.resolvedUiLang === "en" ? "en" : "ru";
         const res = await axios.post("/api/metrics-tree/explain", payload, this.surveyToken ? undefined : { headers: this.authHeaders() });
         this.explainResult = res.data.content || this.$t("metricsTree.noData");
       } catch (e) {
@@ -210,7 +225,7 @@ export default {
           metric_b_name_ru: b.nameRu || "",
         };
         if (this.surveyToken) payload.survey_token = this.surveyToken;
-        payload.lang = this.uiLang === "en" ? "en" : "ru";
+        payload.lang = this.resolvedUiLang === "en" ? "en" : "ru";
         const res = await axios.post("/api/metrics-tree/relationship", payload, this.surveyToken ? undefined : { headers: this.authHeaders() });
         this.relationshipResult = res.data.content || this.$t("metricsTree.noData");
       } catch (e) {

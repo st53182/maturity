@@ -1,5 +1,8 @@
 <template>
   <div class="test-runner-page">
+    <button type="button" class="test-runner-back" @click="$router.push('/qa')">
+      ← {{ $t('qa.backToList') }}
+    </button>
     <h1>{{ $t('tests.title') }}</h1>
     <p class="test-runner-hint">{{ $t('tests.hint') }}</p>
 
@@ -236,6 +239,24 @@ export default {
   margin: 0 auto;
   padding: 32px 20px 60px;
   font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+}
+
+.test-runner-back {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.test-runner-back:hover {
+  color: #1d4ed8;
 }
 
 .test-runner-page h1 {

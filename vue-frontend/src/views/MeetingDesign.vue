@@ -1249,19 +1249,18 @@ h1 {
 
 .constraint-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   min-width: 0;
 }
 
 .constraint-checkbox {
-  margin: 2px 0 0;
+  margin: 0;
   width: 18px;
   height: 18px;
   flex-shrink: 0;
   cursor: pointer;
   accent-color: #3b82f6;
-  vertical-align: top;
 }
 
 .constraint-checkbox:focus {

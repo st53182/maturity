@@ -43,7 +43,7 @@
         {{ submitLabel }}
       </button>
     </div>
-    <p class="is-tip">Tip: Ctrl+Enter / Cmd+Enter to send</p>
+    <p class="is-tip">{{ $t('interviewSimulator.keyboardTip') }}</p>
   </div>
 </template>
 

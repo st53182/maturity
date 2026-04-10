@@ -1,29 +1,30 @@
 <template>
   <div class="is-page">
     <header class="is-page__header">
-      <router-link to="/new" class="is-page__back">← GrowBoard</router-link>
-      <h1>AI Interview Simulator</h1>
+      <router-link to="/new" class="is-page__back">{{ $t('interviewSimulator.backToGrowboard') }}</router-link>
+      <h1>{{ $t('interviewSimulator.homeTitle') }}</h1>
       <p class="is-page__lead">
-        Practice a structured technical interview for your role and level. Optionally paste a real job description so
-        questions and feedback align with that vacancy.
+        {{ $t('interviewSimulator.homeLead') }}
       </p>
       <div class="is-page__cta">
-        <router-link to="/new/interview-simulator/setup" class="is-btn is-btn--primary">Configure interview</router-link>
-        <router-link to="/new/dashboard" class="is-btn is-btn--ghost">Dashboard</router-link>
+        <router-link to="/new/interview-simulator/setup" class="is-btn is-btn--primary">{{
+          $t('interviewSimulator.configureInterview')
+        }}</router-link>
+        <router-link to="/new/dashboard" class="is-btn is-btn--ghost">{{ $t('nav.dashboard') }}</router-link>
       </div>
     </header>
     <section class="is-page__grid">
       <div class="is-card-lite">
-        <h2>How it works</h2>
+        <h2>{{ $t('interviewSimulator.howItWorks') }}</h2>
         <ol>
-          <li>Pick role & seniority (and optional JD).</li>
-          <li>Answer 7–13 interviewer turns (including follow-ups).</li>
-          <li>Receive a detailed report: strengths, gaps, vacancy fit.</li>
+          <li>{{ $t('interviewSimulator.step1') }}</li>
+          <li>{{ $t('interviewSimulator.step2') }}</li>
+          <li>{{ $t('interviewSimulator.step3') }}</li>
         </ol>
       </div>
       <div class="is-card-lite">
-        <h2>Voice</h2>
-        <p>MVP is text-first. Hooks for speech-to-text and TTS are reserved in the codebase for a later iteration.</p>
+        <h2>{{ $t('interviewSimulator.voiceSectionTitle') }}</h2>
+        <p>{{ $t('interviewSimulator.voiceSectionBody') }}</p>
       </div>
     </section>
   </div>

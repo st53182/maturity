@@ -1,8 +1,8 @@
 <template>
   <div class="is-prog">
     <div class="is-prog__labels">
-      <span>Progress</span>
-      <span>{{ completed }} / {{ max }} turns</span>
+      <span>{{ $t('interviewSimulator.progressLabel') }}</span>
+      <span>{{ $t('interviewSimulator.progressTurns', { done: completed, max }) }}</span>
     </div>
     <div class="is-prog__track" role="progressbar" :aria-valuenow="completed" :aria-valuemax="max">
       <div class="is-prog__fill" :style="{ width: pct + '%' }" />

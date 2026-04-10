@@ -1,21 +1,27 @@
 <template>
   <div class="is-page">
     <header class="is-page__head">
-      <router-link to="/new/interview-simulator" class="is-link">← Back</router-link>
-      <h1>Interview setup</h1>
+      <router-link to="/new/interview-simulator" class="is-link">{{ $t('interviewSimulator.setupBack') }}</router-link>
+      <h1>{{ $t('interviewSimulator.setupTitle') }}</h1>
     </header>
 
-    <RoleSelector v-model="role" />
-    <LevelSelector v-model="level" class="is-spaced" />
+    <RoleSelector v-model="role" :label="$t('interviewSimulator.labelRole')" />
+    <LevelSelector v-model="level" :label="$t('interviewSimulator.labelLevel')" class="is-spaced" />
 
-    <JobDescriptionInput v-model="jobDescription" class="is-spaced" />
+    <JobDescriptionInput
+      v-model="jobDescription"
+      class="is-spaced"
+      :label="$t('interviewSimulator.jdLabel')"
+      :hint="$t('interviewSimulator.jdHint')"
+      :placeholder="$t('interviewSimulator.jdPlaceholder')"
+    />
 
     <p v-if="serverHint" class="is-hint">{{ serverHint }}</p>
     <p v-if="error" class="is-error">{{ error }}</p>
 
     <div class="is-actions">
       <button type="button" class="is-btn is-btn--primary" :disabled="starting" @click="start">
-        {{ starting ? 'Starting…' : 'Start interview' }}
+        {{ starting ? $t('interviewSimulator.starting') : $t('interviewSimulator.startInterview') }}
       </button>
     </div>
   </div>
@@ -43,9 +49,7 @@ export default {
   computed: {
     serverHint() {
       const s = useInterviewSimulatorStore();
-      return s.serverMock
-        ? 'Server is running in mock mode (no OpenAI key or INTERVIEW_SIMULATOR_MOCK=1).'
-        : '';
+      return s.serverMock ? this.$t('interviewSimulator.serverMockHint') : '';
     },
   },
   async mounted() {
@@ -61,7 +65,7 @@ export default {
         jobDescription: this.jobDescription,
       };
       if (!canStartSession(state)) {
-        this.error = 'Select role and level.';
+        this.error = this.$t('interviewSimulator.errSelectRoleLevel');
         return;
       }
       this.starting = true;

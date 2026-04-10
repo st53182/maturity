@@ -2,9 +2,9 @@
   <section class="is-card" aria-live="polite">
     <div class="is-card__head">
       <div>
-        <div class="is-card__kicker">Current question</div>
+        <div class="is-card__kicker">{{ $t('interviewSimulator.currentQuestion') }}</div>
         <h2 class="is-card__title">{{ question || '—' }}</h2>
-        <div v-if="isFollowUp" class="is-badge">Follow-up</div>
+        <div v-if="isFollowUp" class="is-badge">{{ $t('interviewSimulator.followUpBadge') }}</div>
       </div>
       <button
         v-if="readAloudSupported && question"

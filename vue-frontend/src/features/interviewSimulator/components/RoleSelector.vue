@@ -1,6 +1,6 @@
 <template>
   <div class="is-field">
-    <label class="is-label">{{ label }}</label>
+    <label class="is-label">{{ effectiveLabel }}</label>
     <div class="is-chip-grid">
       <button
         v-for="r in roles"
@@ -10,7 +10,7 @@
         :class="{ 'is-chip--active': modelValue === r.id }"
         @click="$emit('update:modelValue', r.id)"
       >
-        {{ r.label }}
+        {{ $t(`interviewSimulator.roles.${r.id}`) }}
       </button>
     </div>
   </div>
@@ -23,11 +23,16 @@ export default {
   name: 'RoleSelector',
   props: {
     modelValue: { type: String, required: true },
-    label: { type: String, default: 'Role' },
+    label: { type: String, default: '' },
   },
   emits: ['update:modelValue'],
   data() {
     return { roles: INTERVIEW_ROLES };
+  },
+  computed: {
+    effectiveLabel() {
+      return this.label || this.$t('interviewSimulator.labelRole');
+    },
   },
 };
 </script>

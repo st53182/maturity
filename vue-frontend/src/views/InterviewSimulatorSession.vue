@@ -1,22 +1,22 @@
 <template>
   <div class="is-session">
     <div v-if="reportFailed" class="is-session__empty is-session__empty--err">
-      <p>{{ store.error || 'Could not generate the final report.' }}</p>
+      <p>{{ store.error || $t('interviewSimulator.sessionReportFailed') }}</p>
       <button type="button" class="is-retry" :disabled="store.loading" @click="retryReport">
-        {{ store.loading ? 'Loading…' : 'Retry report' }}
+        {{ store.loading ? $t('interviewSimulator.loading') : $t('interviewSimulator.retryReport') }}
       </button>
-      <router-link to="/new/interview-simulator/setup" class="is-a is-a--block">Back to setup</router-link>
+      <router-link to="/new/interview-simulator/setup" class="is-a is-a--block">{{ $t('interviewSimulator.backToSetup') }}</router-link>
     </div>
 
     <div v-else-if="!hasQuestion" class="is-session__empty">
-      <p>No active interview. Start from setup.</p>
-      <router-link to="/new/interview-simulator/setup" class="is-a">Go to setup</router-link>
+      <p>{{ $t('interviewSimulator.noActiveInterview') }}</p>
+      <router-link to="/new/interview-simulator/setup" class="is-a">{{ $t('interviewSimulator.goToSetup') }}</router-link>
     </div>
 
     <template v-else>
       <header class="is-session__bar">
-        <router-link to="/new/interview-simulator/setup" class="is-a" @click.prevent="confirmLeave">Exit</router-link>
-        <span class="is-session__meta">{{ store.role }} · {{ store.level }}</span>
+        <router-link to="/new/interview-simulator/setup" class="is-a" @click.prevent="confirmLeave">{{ $t('interviewSimulator.exit') }}</router-link>
+        <span class="is-session__meta">{{ roleLabel }} · {{ levelLabel }}</span>
       </header>
 
       <ProgressIndicator :completed="store.transcript.filter((m) => m.role === 'assistant').length" :max="store.maxQuestions" />
@@ -26,10 +26,11 @@
           <QuestionCard :question="store.currentQuestion" :isFollowUp="store.lastQuestionIsFollowUp" />
           <InterviewControls
             :disabled="store.loading || store.interviewComplete"
+            :submit-label="$t('interviewSimulator.submitAnswer')"
             @submit="onSubmit"
           />
           <p v-if="store.error" class="is-err">{{ store.error }}</p>
-          <p v-if="store.loading" class="is-loading">Working…</p>
+          <p v-if="store.loading" class="is-loading">{{ $t('interviewSimulator.working') }}</p>
         </div>
         <TranscriptPanel :messages="store.transcript" />
       </div>
@@ -58,8 +59,22 @@ export default {
     store() {
       return this.interviewSimulatorStore;
     },
+    reportFailed() {
+      return this.store.interviewComplete && !this.store.finalReport && !!this.store.error;
+    },
     hasQuestion() {
+      if (this.reportFailed) return false;
       return !!(this.store.currentQuestion || this.store.loading);
+    },
+    roleLabel() {
+      const k = `interviewSimulator.roles.${this.store.role}`;
+      const t = this.$t(k);
+      return t !== k ? t : this.store.role;
+    },
+    levelLabel() {
+      const k = `interviewSimulator.levels.${this.store.level}`;
+      const t = this.$t(k);
+      return t !== k ? t : this.store.level;
     },
   },
   methods: {
@@ -69,9 +84,15 @@ export default {
         this.$router.push({ name: 'InterviewSimulatorResults' });
       }
     },
+    async retryReport() {
+      await this.store.loadFinalReport();
+      if (this.store.finalReport && !this.store.error) {
+        this.$router.push({ name: 'InterviewSimulatorResults' });
+      }
+    },
     confirmLeave() {
       if (this.store.rounds.length && !this.store.interviewComplete) {
-        if (!window.confirm('Leave interview? Unsaved progress will be lost.')) return;
+        if (!window.confirm(this.$t('interviewSimulator.confirmLeave'))) return;
       }
       this.store.reset();
       this.$router.push('/new/interview-simulator/setup');

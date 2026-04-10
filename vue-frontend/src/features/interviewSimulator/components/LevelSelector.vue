@@ -1,6 +1,6 @@
 <template>
   <div class="is-field">
-    <label class="is-label">{{ label }}</label>
+    <label class="is-label">{{ effectiveLabel }}</label>
     <div class="is-seg">
       <button
         v-for="lv in levels"
@@ -10,7 +10,7 @@
         :class="{ 'is-seg__btn--active': modelValue === lv.id }"
         @click="$emit('update:modelValue', lv.id)"
       >
-        {{ lv.label }}
+        {{ $t(`interviewSimulator.levels.${lv.id}`) }}
       </button>
     </div>
   </div>
@@ -23,11 +23,16 @@ export default {
   name: 'LevelSelector',
   props: {
     modelValue: { type: String, required: true },
-    label: { type: String, default: 'Level' },
+    label: { type: String, default: '' },
   },
   emits: ['update:modelValue'],
   data() {
     return { levels: INTERVIEW_LEVELS };
+  },
+  computed: {
+    effectiveLabel() {
+      return this.label || this.$t('interviewSimulator.labelLevel');
+    },
   },
 };
 </script>

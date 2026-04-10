@@ -1,12 +1,12 @@
 <template>
   <div class="is-field">
-    <label class="is-label" for="jd-input">{{ label }}</label>
-    <p class="is-hint">{{ hint }}</p>
+    <label class="is-label" for="jd-input">{{ effectiveLabel }}</label>
+    <p class="is-hint">{{ effectiveHint }}</p>
     <textarea
       id="jd-input"
       class="is-textarea"
       :rows="rows"
-      :placeholder="placeholder"
+      :placeholder="effectivePlaceholder"
       :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
     />
@@ -18,19 +18,23 @@ export default {
   name: 'JobDescriptionInput',
   props: {
     modelValue: { type: String, default: '' },
-    label: { type: String, default: 'Job description (optional)' },
-    hint: {
-      type: String,
-      default:
-        'Paste requirements, stack, and responsibilities. The AI will anchor questions and scoring to this text.',
-    },
-    placeholder: {
-      type: String,
-      default: 'Example: We need a Middle Frontend engineer with React, TypeScript, testing (Jest/RTL), REST…',
-    },
+    label: { type: String, default: '' },
+    hint: { type: String, default: '' },
+    placeholder: { type: String, default: '' },
     rows: { type: Number, default: 8 },
   },
   emits: ['update:modelValue'],
+  computed: {
+    effectiveLabel() {
+      return this.label || this.$t('interviewSimulator.jdLabel');
+    },
+    effectiveHint() {
+      return this.hint || this.$t('interviewSimulator.jdHint');
+    },
+    effectivePlaceholder() {
+      return this.placeholder || this.$t('interviewSimulator.jdPlaceholder');
+    },
+  },
 };
 </script>
 

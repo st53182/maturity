@@ -1,6 +1,6 @@
 <template>
   <div v-if="scores && Object.keys(scores).length" class="is-scores">
-    <h3 class="is-scores__title">Scores by category</h3>
+    <h3 class="is-scores__title">{{ $t('interviewSimulator.scoresByCategory') }}</h3>
     <div v-for="(val, key) in scores" :key="key" class="is-scores__row">
       <span class="is-scores__label">{{ formatKey(key) }}</span>
       <div class="is-scores__bar">
@@ -19,6 +19,9 @@ export default {
   },
   methods: {
     formatKey(k) {
+      const tkey = `interviewSimulator.scoreCategory.${k}`;
+      const tr = this.$t(tkey);
+      if (tr !== tkey) return tr;
       return String(k)
         .replace(/_/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase());

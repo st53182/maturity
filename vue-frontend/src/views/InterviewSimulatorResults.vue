@@ -1,27 +1,27 @@
 <template>
   <div class="is-results">
     <header class="is-results__head">
-      <router-link to="/new/interview-simulator" class="is-a">← Home</router-link>
-      <h1>Interview results</h1>
-      <p v-if="store.role" class="is-results__meta">{{ store.role }} · {{ store.level }}</p>
+      <router-link to="/new/interview-simulator" class="is-a">{{ $t('interviewSimulator.resultsBackHome') }}</router-link>
+      <h1>{{ $t('interviewSimulator.resultsTitle') }}</h1>
+      <p v-if="store.role" class="is-results__meta">{{ roleLabel }} · {{ levelLabel }}</p>
     </header>
 
     <div v-if="!store.finalReport && store.error" class="is-results__empty">
       <p>{{ store.error }}</p>
-      <router-link to="/new/interview-simulator/setup" class="is-btn">Try again</router-link>
+      <router-link to="/new/interview-simulator/setup" class="is-btn">{{ $t('interviewSimulator.tryAgain') }}</router-link>
     </div>
 
     <div v-else-if="!store.finalReport" class="is-results__empty">
-      <p>No report yet. Complete an interview first.</p>
-      <router-link to="/new/interview-simulator/setup" class="is-btn">Start setup</router-link>
+      <p>{{ $t('interviewSimulator.noReportYet') }}</p>
+      <router-link to="/new/interview-simulator/setup" class="is-btn">{{ $t('interviewSimulator.startSetup') }}</router-link>
     </div>
 
     <template v-else>
       <FeedbackCard :report="store.finalReport" />
       <ScoreBreakdown :scores="store.finalReport.category_scores" />
       <div class="is-results__actions">
-        <button type="button" class="is-btn is-btn--primary" @click="newInterview">New interview</button>
-        <router-link to="/new/interview-simulator" class="is-btn is-btn--ghost">Simulator home</router-link>
+        <button type="button" class="is-btn is-btn--primary" @click="newInterview">{{ $t('interviewSimulator.newInterview') }}</button>
+        <router-link to="/new/interview-simulator" class="is-btn is-btn--ghost">{{ $t('interviewSimulator.simulatorHome') }}</router-link>
       </div>
     </template>
   </div>
@@ -40,6 +40,16 @@ export default {
     ...mapStores(useInterviewSimulatorStore),
     store() {
       return this.interviewSimulatorStore;
+    },
+    roleLabel() {
+      const k = `interviewSimulator.roles.${this.store.role}`;
+      const t = this.$t(k);
+      return t !== k ? t : this.store.role;
+    },
+    levelLabel() {
+      const k = `interviewSimulator.levels.${this.store.level}`;
+      const t = this.$t(k);
+      return t !== k ? t : this.store.level;
     },
   },
   methods: {

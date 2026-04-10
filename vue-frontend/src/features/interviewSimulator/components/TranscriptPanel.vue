@@ -1,6 +1,6 @@
 <template>
   <aside class="is-transcript">
-    <h3 class="is-transcript__title">Transcript</h3>
+    <h3 class="is-transcript__title">{{ $t('interviewSimulator.transcriptTitle') }}</h3>
     <div ref="scroll" class="is-transcript__body">
       <div
         v-for="(m, i) in messages"
@@ -11,7 +11,7 @@
         <span class="is-msg__who">{{ m.role === 'assistant' ? 'Interviewer' : 'You' }}</span>
         <p class="is-msg__text">{{ m.content }}</p>
       </div>
-      <p v-if="!messages.length" class="is-empty">The conversation will appear here.</p>
+      <p v-if="!messages.length" class="is-empty">{{ $t('interviewSimulator.transcriptEmpty') }}</p>
     </div>
   </aside>
 </template>

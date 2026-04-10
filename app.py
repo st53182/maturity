@@ -234,6 +234,26 @@ def handle_ai_limit_exceeded(e):
     return jsonify({"error": e.message}), 429
 
 
+import time as _time
+from flask import request as _flask_request, g as _flask_g
+
+@app.before_request
+def _log_api_request():
+    if _flask_request.path.startswith("/api/"):
+        _flask_g._req_start = _time.time()
+        app.logger.info(">>> %s %s", _flask_request.method, _flask_request.path)
+
+@app.after_request
+def _log_api_response(response):
+    if _flask_request.path.startswith("/api/"):
+        elapsed = _time.time() - getattr(_flask_g, "_req_start", _time.time())
+        app.logger.info("<<< %s %s %s %.1fs %s bytes",
+                        _flask_request.method, _flask_request.path,
+                        response.status_code, elapsed,
+                        response.content_length or "?")
+    return response
+
+
 def _static_root():
     root = app.static_folder
     if not root:

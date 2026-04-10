@@ -130,6 +130,7 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
         RateLimitError,
         AuthenticationError,
     )
+    import time as _t
 
     if not model_names:
         raise ValueError("model_names is empty")
@@ -137,7 +138,20 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
     for m in model_names:
         try:
             call_kwargs = _adapt_chat_kwargs_for_model(m, kwargs)
-            resp = client.chat.completions.create(model=m, **call_kwargs)
+            _log.info("OpenAI call START model=%s", m)
+            t0 = _t.time()
+
+            try:
+                import eventlet
+                resp = eventlet.tpool.execute(
+                    client.chat.completions.create,
+                    model=m,
+                    **call_kwargs,
+                )
+            except ImportError:
+                resp = client.chat.completions.create(model=m, **call_kwargs)
+
+            _log.info("OpenAI call OK model=%s %.1fs", m, _t.time() - t0)
             if m != model_names[0]:
                 _log.warning(
                     "OpenAI chat: used fallback model=%s (primary=%s)",
@@ -145,7 +159,8 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
                     model_names[0],
                 )
             return resp
-        except (RateLimitError, AuthenticationError, APIConnectionError, APITimeoutError):
+        except (RateLimitError, AuthenticationError, APIConnectionError, APITimeoutError) as e:
+            _log.error("OpenAI call FATAL model=%s [%s]: %s", m, type(e).__name__, str(e)[:240])
             raise
         except APIError as e:
             last = e
@@ -786,6 +801,7 @@ def save_maturity_recommendations(token):
 def get_maturity_recommendations(token):
     """Публично: сгенерировать рекомендации по результатам через OpenAI."""
     import os
+    _log.info("[team-rec] POST entered token=%s…", token[:8] if token else "?")
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
@@ -878,7 +894,7 @@ def get_maturity_recommendations(token):
 
     rec_models = _maturity_plan_model_chain("MATURITY_TEAM_PLAN_MODEL")
     _log.info(
-        "Maturity recommendations: model_chain=%s, token=%s",
+        "[team-rec] model_chain=%s, token=%s",
         rec_models,
         token[:8],
     )
@@ -895,6 +911,7 @@ def get_maturity_recommendations(token):
             response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or "{}"
+        _log.info("[team-rec] OpenAI returned %d chars", len(raw))
         parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
         plan_is_empty = (
@@ -904,6 +921,7 @@ def get_maturity_recommendations(token):
             and not plan.get("risks")
         )
         if plan_is_empty:
+            _log.warning("[team-rec] plan is EMPTY — using raw fallback")
             fallback = (raw or "").strip()
             content = fallback if fallback.startswith("<") else f"<p>{fallback}</p>"
         else:
@@ -911,11 +929,13 @@ def get_maturity_recommendations(token):
             session.recommendations_plan_json = plan
         session.recommendations_html = content or ''
         db.session.commit()
+        _log.info("[team-rec] saved to DB, initiatives=%d", len(plan.get("initiatives", [])))
         return jsonify({
             "content": content,
             "plan": _normalize_group_plan(session.recommendations_plan_json),
         })
     except Exception as e:
+        _log.error("[team-rec] EXCEPTION: %s: %s", type(e).__name__, str(e)[:300])
         return _openai_http_response(e)
 
 
@@ -955,6 +975,7 @@ def save_maturity_recommendations_dont_know(token):
 def get_maturity_recommendations_dont_know(token):
     """Рекомендации по вопросам, где команда ответила «не знаю» — фокус на следующий квартал."""
     import os
+    _log.info("[dk-rec] POST entered token=%s…", token[:8] if token else "?")
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
@@ -1616,8 +1637,10 @@ def maturity_admin_group_plan_save():
 def maturity_admin_group_plan_generate():
     """Сгенерировать план улучшений для группы команд (стрима)."""
     import os
+    _log.info("[group-plan] POST entered")
     user = _get_maturity_admin_user()
     if not user:
+        _log.warning("[group-plan] access denied — user not admin")
         return jsonify({'error': 'Доступ запрещён'}), 403
     _ensure_maturity_link_session_columns()
     _ensure_group_plan_table()
@@ -1626,6 +1649,7 @@ def maturity_admin_group_plan_generate():
 
     data = request.get_json() or {}
     group_name = _normalize_group_name(data.get("group_name"))
+    _log.info("[group-plan] group_name=%s", group_name)
     if not group_name:
         return jsonify({'error': 'Укажите group_name'}), 400
 
@@ -1732,6 +1756,7 @@ def maturity_admin_group_plan_generate():
 - Не выдумывай числа вне переданной сводки.
 """
     try:
+        _log.info("[group-plan] calling OpenAI for group=%s sessions=%d", group_name, len(completed))
         response = _chat_completions_with_model_fallback(
             client,
             _maturity_plan_model_chain("MATURITY_GROUP_PLAN_MODEL"),
@@ -1744,6 +1769,7 @@ def maturity_admin_group_plan_generate():
             response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content or "{}"
+        _log.info("[group-plan] OpenAI returned %d chars", len(raw))
         parsed = _safe_json_object(raw)
         plan = _normalize_group_plan(parsed)
         content = _group_plan_to_html(group_name, plan)
@@ -1757,6 +1783,7 @@ def maturity_admin_group_plan_generate():
             row.plan_html = content
             row.updated_by_user_id = user.id
         db.session.commit()
+        _log.info("[group-plan] saved to DB, initiatives=%d", len(plan.get("initiatives", [])))
         return jsonify({
             "group_name": group_name,
             "sessions": len(completed),
@@ -1766,4 +1793,5 @@ def maturity_admin_group_plan_generate():
             "updated_at": row.updated_at.isoformat() if row.updated_at else None,
         })
     except Exception as e:
+        _log.error("[group-plan] EXCEPTION: %s: %s", type(e).__name__, str(e)[:300])
         return _openai_http_response(e)

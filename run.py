@@ -4,6 +4,15 @@ flask-socketio's socketio.run() uses eventlet.wsgi directly (no gunicorn
 arbiter), so there is no master-process signal handler conflict.
 """
 import os
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    stream=sys.stderr,
+)
+
 from app import app, socketio
 
 port = int(os.environ.get("PORT", 5000))

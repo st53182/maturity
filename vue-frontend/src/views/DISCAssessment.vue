@@ -9,16 +9,16 @@
 
         <div v-if="!assessmentStarted" class="intro">
           <div class="intro-content">
-            <h2>О тестировании</h2>
-            <p>Этот опросник поможет вам:</p>
+            <h2>{{ $t('disc.introTitle') }}</h2>
+            <p>{{ $t('disc.introLead') }}</p>
             <ul>
-              <li>Определить ваш тип личности по системе DISC</li>
-              <li>Понять ваши сильные стороны как менеджера</li>
-              <li>Получить рекомендации по развитию лидерских качеств</li>
-              <li>Улучшить коммуникацию с командой</li>
+              <li>{{ $t('disc.introBullet1') }}</li>
+              <li>{{ $t('disc.introBullet2') }}</li>
+              <li>{{ $t('disc.introBullet3') }}</li>
+              <li>{{ $t('disc.introBullet4') }}</li>
             </ul>
-            <p><strong>Время прохождения:</strong> 5-7 минут</p>
-            <p><strong>Количество вопросов:</strong> 12</p>
+            <p><strong>{{ $t('disc.timeLabel') }}</strong> {{ $t('disc.timeValue') }}</p>
+            <p><strong>{{ $t('disc.questionsLabel') }}</strong> {{ $t('disc.questionsValue') }}</p>
           </div>
           <button @click="startAssessment" class="btn btn-primary btn-large">
             {{ $t('disc.startAssessment') }}
@@ -40,12 +40,12 @@
                 v-for="(option, index) in currentQuestion.options" 
                 :key="index"
                 class="option"
-                :class="{ 'selected': selectedAnswer === option.text }"
-                @click="selectAnswer(option.text)"
+                :class="{ 'selected': selectedAnswer === option.type }"
+                @click="selectAnswer(option)"
               >
                 <div class="option-content">
                   <div class="radio">
-                    <div v-if="selectedAnswer === option.text" class="radio-selected"></div>
+                    <div v-if="selectedAnswer === option.type" class="radio-selected"></div>
                   </div>
                   <span>{{ option.text }}</span>
                 </div>
@@ -59,7 +59,7 @@
               :disabled="currentQuestionIndex === 0"
               class="btn btn-secondary"
             >
-              {{ $t('common.cancel') }}
+              {{ $t('disc.previous') }}
             </button>
             <button 
               @click="nextQuestion" 
@@ -169,22 +169,32 @@ export default {
   async mounted() {
     await this.loadQuestions()
   },
+  watch: {
+    discApiLang() {
+      if (!this.assessmentStarted && !this.showResults) {
+        this.loadQuestions()
+      }
+    }
+  },
   methods: {
     async loadQuestions() {
       try {
         const token = localStorage.getItem('token')
         const response = await axios.get('/api/disc/questions', {
+          params: { lang: this.discApiLang },
           headers: { Authorization: `Bearer ${token}` }
         })
         
         if (response.data.success) {
           this.questions = response.data.questions
-        } else {
-          this.$toast.error('Ошибка при загрузке вопросов')
+        } else if (this.$toast) {
+          this.$toast.error(this.$t('disc.errorLoading'))
         }
       } catch (error) {
         console.error('Error loading questions:', error)
-        this.$toast.error('Ошибка при загрузке вопросов')
+        if (this.$toast) {
+          this.$toast.error(this.$t('disc.errorLoading'))
+        }
       }
     },
     startAssessment() {
@@ -219,7 +229,8 @@ export default {
       try {
         const token = localStorage.getItem('token')
         const response = await axios.post('/api/disc/submit', {
-          answers: this.answers
+          answers: this.answers,
+          lang: this.discApiLang
         }, {
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -228,16 +239,18 @@ export default {
           this.results = response.data.assessment
           this.showResults = true
           if (this.$toast) {
-            this.$toast.success('Оценка успешно завершена!')
+            this.$toast.success(this.$t('disc.submitSuccess'))
           }
         } else {
           if (this.$toast) {
-            this.$toast.error('Ошибка при сохранении результатов')
+            this.$toast.error(this.$t('disc.errorSubmitting'))
           }
         }
       } catch (error) {
         console.error('Error submitting assessment:', error)
-        this.$toast.error('Ошибка при сохранении результатов')
+        if (this.$toast) {
+          this.$toast.error(this.$t('disc.errorSubmitting'))
+        }
       } finally {
         this.loading = false
       }

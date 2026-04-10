@@ -18,12 +18,9 @@
   <p>{{ teamLevel }}</p>
 </div>
 
-<!-- Показываем модалку -->
-<LevelInfoModal v-if="showLevelInfo" @close="showLevelInfo = false" />
-
   <div class="info-block market">
   <h3>
-    📈 Относительно среднего по индустрии
+    📈 {{ $t('assessmentResults.vsIndustry') }}
     <span class="info-icon" @click="showMarketModal = true">ℹ️</span>
   </h3>
   <p>
@@ -35,10 +32,10 @@
     {{ performanceChangeText }}
   </small>
 </div>
-
-<MarketInfoModal v-if="showMarketModal" @close="showMarketModal = false" />
 </div>
 
+<LevelInfoModal v-if="showLevelInfo" @close="showLevelInfo = false" />
+<MarketInfoModal v-if="showMarketModal" @close="showMarketModal = false" />
 
 <div v-if="timelineInfo" class="timeline-modern">
   <div class="timeline-track">
@@ -67,7 +64,7 @@
       :style="{ left: getTimelinePosition(timelineInfo.nextDate) + '%' }"
     >
       <div class="tooltip always-visible">
-        ⏭ Рекомендуемая дата следующей оценки: {{ timelineInfo.nextDate }}
+        ⏭ {{ $t('assessmentResults.timelineNext', { date: timelineInfo.nextDate }) }}
       </div>
     </div>
   </div>
@@ -103,9 +100,9 @@
 <div v-else class="charts-container">
   <RadarChart
   v-for="(data, category) in filteredRadarData"
-  :key="category"
-  :chartData="data"
-  :title="category"
+  :key="`${category}-${currentUiLocale}`"
+  :chartData="localizeChartData(data)"
+  :title="radarCategoryTitle(category)"
   class="radar-chart"
 />
 
@@ -170,11 +167,11 @@
 </div>
    <div class="recommendations-block">
   <button @click="fetchOpenAIRecommendations" class="modern-button">
-    🤖 Получить персональные рекомендации
+    🤖 {{ $t('assessmentResults.getRecommendations') }}
   </button>
 
 
-  <div v-if="loadingDetailedRecs">⏳ Анализируем ответы...</div>
+  <div v-if="loadingDetailedRecs">⏳ {{ $t('assessmentResults.analyzing') }}</div>
 
   <div v-if="recommendationsHtml" v-html="recommendationsHtml" class="recommendation-html"></div>
      <button
@@ -193,6 +190,7 @@ import axios from "axios";
 import RadarChart from "@/components/RadarChart.vue";
 import LevelInfoModal from "@/components/LevelInfoModal.vue";
 import MarketInfoModal from "@/components/MarketInfoModal.vue";
+import enLocale from "@/i18n/locales/en.json";
 
 
 
@@ -708,7 +706,37 @@ pluralDays(n) {
 
     goToRegister() {
       this.$router.push({ name: "Register" });
-    }
+    },
+
+    isEnglishUI() {
+      return String(this.currentUiLocale || "").toLowerCase().startsWith("en");
+    },
+
+    resolveRadarLabel(text) {
+      if (text == null || text === "") return text;
+      if (!this.isEnglishUI()) return text;
+      const map = this.enRadarLabelsMap;
+      const mapped = map[text];
+      return mapped !== undefined && mapped !== "" ? mapped : text;
+    },
+
+    radarCategoryTitle(category) {
+      return this.resolveRadarLabel(category);
+    },
+
+    localizeChartData(data) {
+      if (!data || !Array.isArray(data.labels)) return data;
+      if (!this.isEnglishUI()) return data;
+      const tr = (label) => this.resolveRadarLabel(label);
+      return {
+        ...data,
+        labels: data.labels.map(tr),
+        datasets: (data.datasets || []).map((ds) => ({
+          ...ds,
+          label: tr(ds.label),
+        })),
+      };
+    },
   },
 
   mounted() {
@@ -718,6 +746,13 @@ pluralDays(n) {
     this.fetchSavedPlan();
   },
   computed: {
+    currentUiLocale() {
+      const l = this.$i18n.locale;
+      return typeof l === "string" ? l : l && l.value ? l.value : "ru";
+    },
+    enRadarLabelsMap() {
+      return enLocale.assessmentResults?.radarLabels || {};
+    },
     teamLevel() {
     const score = this.averageScore;
 
@@ -739,8 +774,8 @@ pluralDays(n) {
     const delta = this.averageScore - this.previousAverage;
     const percent = Math.abs((delta / this.previousAverage) * 100).toFixed(1);
     return delta >= 0
-      ? `⬆ Улучшение на ${percent}%`
-      : `⬇ Снижение на ${percent}%`;
+      ? this.$t("assessmentResults.perfUp", { percent })
+      : this.$t("assessmentResults.perfDown", { percent });
   },
   scoreColor() {
     const s = this.averageScore;
@@ -915,6 +950,16 @@ h1 {
   font-size: 12px;
   margin-top: 4px;
   opacity: 0.8;
+}
+
+.team-info-card .info-block.market h3 {
+  color: rgba(13, 23, 51, 0.9);
+  opacity: 1;
+}
+
+.team-info-card .info-block.market .previous-diff {
+  color: rgba(13, 23, 51, 0.78);
+  opacity: 1;
 }
 
 /* Анимация */

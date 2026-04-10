@@ -2,21 +2,25 @@
 <template>
   <div class="modal-backdrop" @click.self="$emit('close')">
     <div class="modal-content">
-      <button class="modal-close-top" @click="$emit('close')" aria-label="Close">✕</button>
-      <h2>📈 Относительно среднего по индустрии</h2>
-      <p>
-Этот показатель рассчитывается на основе данных, собранных среди более чем <strong>100 организаций</strong>, а также регулярно обновляется с учетом результатов команд, проходящих оценку на платформе GrowBoard <strong>ежеквартально</strong>.
-
-В расчет включены команды, использующие сервисы платформы и консалтинговых партнеров на территории СНГ.
-
-Он отражает усредненное значение по ключевым метрикам эффективности команд в ИТ и позволяет объективно сравнить текущий уровень вашей команды с рыночной тенденцией.      </p>
+      <button
+        type="button"
+        class="modal-close-top"
+        @click="$emit('close')"
+        :aria-label="$t('common.close')"
+      >
+        ✕
+      </button>
+      <h2>📈 {{ $t('assessmentResults.marketModalTitle') }}</h2>
+      <p>{{ $t('assessmentResults.marketModalP1') }}</p>
+      <p>{{ $t('assessmentResults.marketModalP2') }}</p>
+      <p>{{ $t('assessmentResults.marketModalP3') }}</p>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "MarketInfoModal"
+  name: "MarketInfoModal",
 };
 </script>
 
@@ -35,6 +39,7 @@ export default {
 }
 .modal-content {
   background: #ffffff;
+  color: var(--vl-text, #0d1733);
   padding: 20px 30px;
   border-radius: 16px;
   max-width: 500px;
@@ -42,6 +47,20 @@ export default {
   text-align: left;
   border: 1px solid rgba(10, 20, 45, 0.12);
   position: relative;
+}
+.modal-content h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  color: inherit;
+}
+.modal-content p {
+  margin: 0 0 12px;
+  line-height: 1.5;
+  color: inherit;
+}
+.modal-content p:last-child {
+  margin-bottom: 0;
 }
 .modal-close-top {
   position: absolute;

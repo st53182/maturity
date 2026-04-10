@@ -131,13 +131,146 @@ DISC_QUESTIONS = [
     }
 ]
 
+DISC_QUESTIONS_EN = [
+    {
+        "id": 1,
+        "question": "As a manager, I prefer to make decisions:",
+        "options": [
+            {"text": "Quickly and decisively, based on my intuition", "type": "D", "score": 3},
+            {"text": "After discussing with the team and hearing their views", "type": "I", "score": 3},
+            {"text": "After carefully weighing pros and cons, without rushing", "type": "S", "score": 3},
+            {"text": "Based on detailed analysis of data and facts", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 2,
+        "question": "In a team conflict, I:",
+        "options": [
+            {"text": "Take the initiative and address the problem directly", "type": "D", "score": 3},
+            {"text": "Try to find a compromise that works for everyone", "type": "I", "score": 3},
+            {"text": "Listen to all sides and seek a peaceful resolution", "type": "S", "score": 3},
+            {"text": "Analyze the facts and propose a logical solution", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 3,
+        "question": "When setting goals for the team, I:",
+        "options": [
+            {"text": "Set ambitious goals and expect them to be met", "type": "D", "score": 3},
+            {"text": "Inspire the team to achieve shared goals", "type": "I", "score": 3},
+            {"text": "Set realistic goals based on what the team can deliver", "type": "S", "score": 3},
+            {"text": "Define clear, measurable goals with specific criteria", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 4,
+        "question": "My communication style with direct reports:",
+        "options": [
+            {"text": "Direct and to the point", "type": "D", "score": 3},
+            {"text": "Friendly and open; I encourage dialogue", "type": "I", "score": 3},
+            {"text": "Patient and supportive", "type": "S", "score": 3},
+            {"text": "Precise and fact-based", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 5,
+        "question": "When planning projects, I:",
+        "options": [
+            {"text": "Focus on outcomes and deadlines", "type": "D", "score": 3},
+            {"text": "Take everyone's input into account", "type": "I", "score": 3},
+            {"text": "Build a stable plan with minimal risk", "type": "S", "score": 3},
+            {"text": "Develop a detailed plan with clear phases", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 6,
+        "question": "When an employee makes a mistake, I:",
+        "options": [
+            {"text": "Point it out immediately and expect a fix", "type": "D", "score": 3},
+            {"text": "Discuss it constructively and help find a solution", "type": "I", "score": 3},
+            {"text": "Patiently explain how to avoid similar mistakes later", "type": "S", "score": 3},
+            {"text": "Analyze root causes and put procedures in place to prevent recurrence", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 7,
+        "question": "In stressful situations, I:",
+        "options": [
+            {"text": "Take control and decide quickly", "type": "D", "score": 3},
+            {"text": "Support the team and look for creative options", "type": "I", "score": 3},
+            {"text": "Stay calm and stabilize the situation", "type": "S", "score": 3},
+            {"text": "Analyze the problem systematically and find the best solution", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 8,
+        "question": "How I motivate employees:",
+        "options": [
+            {"text": "Set challenges and encourage healthy competition", "type": "D", "score": 3},
+            {"text": "Create a positive atmosphere and recognize achievements", "type": "I", "score": 3},
+            {"text": "Provide stability and support", "type": "S", "score": 3},
+            {"text": "Give clear evaluation criteria and fair rewards", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 9,
+        "question": "When delegating, I:",
+        "options": [
+            {"text": "Give clear instructions and expect results", "type": "D", "score": 3},
+            {"text": "Explain why the task matters and inspire ownership", "type": "I", "score": 3},
+            {"text": "Make sure the person is ready and support them along the way", "type": "S", "score": 3},
+            {"text": "Provide detailed instructions and quality criteria", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 10,
+        "question": "How I run meetings:",
+        "options": [
+            {"text": "Efficient and outcome-focused", "type": "D", "score": 3},
+            {"text": "Interactive; I get everyone involved", "type": "I", "score": 3},
+            {"text": "Structured and calm; everyone gets heard", "type": "S", "score": 3},
+            {"text": "Organized and data-driven", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 11,
+        "question": "When driving change in the team, I:",
+        "options": [
+            {"text": "Implement necessary changes quickly", "type": "D", "score": 3},
+            {"text": "Involve the team in the change process", "type": "I", "score": 3},
+            {"text": "Roll out changes gradually to minimize stress", "type": "S", "score": 3},
+            {"text": "Plan changes in stages with clear criteria", "type": "C", "score": 3}
+        ]
+    },
+    {
+        "id": 12,
+        "question": "How I develop employees:",
+        "options": [
+            {"text": "Assign stretch goals for fast growth", "type": "D", "score": 3},
+            {"text": "Encourage learning through collaboration and sharing", "type": "I", "score": 3},
+            {"text": "Support steady growth at a comfortable pace", "type": "S", "score": 3},
+            {"text": "Build structured development programs", "type": "C", "score": 3}
+        ]
+    }
+]
+
+
+def _request_lang_en():
+    lang = (request.args.get("lang") or "").strip().lower()
+    if lang.startswith("en"):
+        return True
+    al = (request.headers.get("Accept-Language") or "").strip().lower()
+    return al.startswith("en")
+
+
 @disc_bp.route('/questions', methods=['GET'])
 @jwt_required()
 def get_disc_questions():
     try:
+        use_en = _request_lang_en()
         return jsonify({
             'success': True,
-            'questions': DISC_QUESTIONS
+            'questions': DISC_QUESTIONS_EN if use_en else DISC_QUESTIONS
         }), 200
     except Exception as e:
         logging.error(f"Error getting DISC questions: {str(e)}")
@@ -148,15 +281,16 @@ def get_disc_questions():
 def submit_disc_assessment():
     try:
         user_id = get_jwt_identity()
-        data = request.get_json()
+        data = request.get_json() or {}
         answers = data.get('answers', {})
-        
+        lang = (data.get('lang') or request.args.get('lang') or '').strip().lower()
+
         if not answers:
             return jsonify({'success': False, 'message': 'Ответы не предоставлены'}), 400
-        
+
         scores = calculate_disc_scores(answers)
         personality_type = determine_personality_type(scores)
-        recommendations = generate_recommendations(personality_type, scores)
+        recommendations = generate_recommendations(personality_type, scores, lang)
         
         assessment = DISCAssessment(
             user_id=user_id,
@@ -224,14 +358,27 @@ def get_latest_assessment():
 
 def calculate_disc_scores(answers):
     scores = {'D': 0, 'I': 0, 'S': 0, 'C': 0}
-    
-    for question_id, selected_option in answers.items():
-        question = next((q for q in DISC_QUESTIONS if q['id'] == int(question_id)), None)
-        if question:
-            option = next((opt for opt in question['options'] if opt['text'] == selected_option), None)
-            if option:
-                scores[option['type']] += option['score']
-    
+
+    for question_id, value in answers.items():
+        try:
+            qid = int(question_id)
+        except (TypeError, ValueError):
+            continue
+        question = next((q for q in DISC_QUESTIONS if q['id'] == qid), None)
+        if not question:
+            continue
+        option = None
+        if isinstance(value, str) and len(value) == 1 and value in scores:
+            option = next((opt for opt in question['options'] if opt['type'] == value), None)
+        if option is None:
+            option = next((opt for opt in question['options'] if opt['text'] == value), None)
+        if option is None and value:
+            q_en = next((q for q in DISC_QUESTIONS_EN if q['id'] == qid), None)
+            if q_en:
+                option = next((opt for opt in q_en['options'] if opt['text'] == value), None)
+        if option:
+            scores[option['type']] += option['score']
+
     return scores
 
 def determine_personality_type(scores):
@@ -253,36 +400,59 @@ def determine_personality_type(scores):
         sorted_types = tuple(sorted(dominant_types))
         return type_combinations.get(sorted_types, dominant_types[0])
 
-def generate_recommendations(personality_type, scores):
+def generate_recommendations(personality_type, scores, lang="ru"):
+    use_en = (lang or "").strip().lower().startswith("en")
     try:
         from openai import OpenAI
         client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-        
-        prompt = f"""
+
+        if use_en:
+            prompt = f"""
+You are an expert in leadership development. Analyze this manager's DISC assessment:
+
+Personality profile: {personality_type}
+Scores: Dominance={scores['D']}, Influence={scores['I']}, Steadiness={scores['S']}, Conscientiousness={scores['C']}
+
+Provide practical, structured guidance for growth as a manager in these areas:
+1. Leadership strengths
+2. Areas to develop
+3. Communication with the team
+4. Decision-making
+5. Emotional intelligence
+
+Write the answer in English, structured and actionable.
+"""
+        else:
+            prompt = f"""
         Как эксперт по развитию лидерских качеств, проанализируй результаты DISC-оценки менеджера:
-        
+
         Тип личности: {personality_type}
         Баллы: Доминирование={scores['D']}, Влияние={scores['I']}, Стабильность={scores['S']}, Добросовестность={scores['C']}
-        
+
         Предоставь общие рекомендации для развития как менеджера в следующих областях:
         1. Сильные стороны лидерства
         2. Области для развития
         3. Рекомендации по коммуникации с командой
         4. Советы по принятию решений
         5. Развитие эмоционального интеллекта
-        
+
         Ответ должен быть на русском языке, структурированным и практичным.
         """
-        
+
         response = client.chat.completions.create(
             model="gpt-4.1",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
             temperature=0.7
         )
-        
+
         return response.choices[0].message.content.strip()
-        
+
     except Exception as e:
         logging.error(f"Error generating recommendations: {str(e)}")
+        if use_en:
+            return (
+                f"Recommendations for profile {personality_type}: keep building your leadership skills, "
+                "strengthen team communication, and continue intentional self-development."
+            )
         return f"Рекомендации для типа {personality_type}: Развивайте свои лидерские качества, работайте над коммуникацией с командой и продолжайте самосовершенствование."

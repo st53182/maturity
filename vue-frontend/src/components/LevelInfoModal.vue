@@ -1,22 +1,38 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
-      <button class="modal-close-top" @click="$emit('close')" aria-label="Close">✕</button>
-      <h3>🏅 Уровни команды</h3>
+      <button
+        type="button"
+        class="modal-close-top"
+        @click="$emit('close')"
+        :aria-label="$t('common.close')"
+      >
+        ✕
+      </button>
+      <h3>🏅 {{ $t('assessmentResults.levelModalTitle') }}</h3>
       <ul>
-        <li><strong>Начинающий:</strong> до 2 баллов</li>
-        <li><strong>Растущий:</strong> от 2 до 3 баллов</li>
-        <li><strong>Прогрессирующий:</strong> от 3 до 4 баллов</li>
-        <li><strong>Высокоэффективный:</strong> от 4 до 5 баллов</li>
+        <li v-html="$t('assessmentResults.levelModalItem1')"></li>
+        <li v-html="$t('assessmentResults.levelModalItem2')"></li>
+        <li v-html="$t('assessmentResults.levelModalItem3')"></li>
+        <li v-html="$t('assessmentResults.levelModalItem4')"></li>
       </ul>
     </div>
   </div>
 </template>
 
+<script>
+export default {
+  name: "LevelInfoModal",
+};
+</script>
+
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
@@ -26,6 +42,7 @@
 
 .modal-content {
   background: #ffffff;
+  color: var(--vl-text, #0d1733);
   padding: 20px 30px;
   border-radius: 16px;
   max-width: 400px;
@@ -36,9 +53,15 @@
 }
 .modal-content h3 {
   margin-top: 0;
+  color: inherit;
 }
 .modal-content ul {
   padding-left: 20px;
+  margin: 0;
+  color: inherit;
+}
+.modal-content :deep(strong) {
+  color: inherit;
 }
 .modal-close-top {
   position: absolute;

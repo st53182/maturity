@@ -1209,6 +1209,8 @@
     "voiceUnsupported": "Голосовой ввод не поддерживается в этом браузере.",
     "readQuestion": "Прочитать вопрос вслух",
     "readQuestionStop": "Остановить",
+    "readQuestionAuto": "Автоматически озвучивать новый вопрос",
+    "readQuestionAutoHint": "Голос зависит от браузера. Часто лучше звучит Chrome/Edge с локальным или нейросетевым голосом.",
     "voiceMicDenied": "Доступ к микрофону запрещён.",
     "voiceErrorGeneric": "Ошибка распознавания речи",
     "placeholderAnswer": "Введите ответ…",

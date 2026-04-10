@@ -1281,6 +1281,8 @@
     "voiceUnsupported": "Voice input is not supported in this browser.",
     "readQuestion": "Read question aloud",
     "readQuestionStop": "Stop reading",
+    "readQuestionAuto": "Auto-read each new question",
+    "readQuestionAutoHint": "Uses your browser voice. For more natural speech, use Chrome/Edge with a neural voice if available.",
     "voiceMicDenied": "Microphone access was denied.",
     "voiceErrorGeneric": "Voice recognition error",
     "placeholderAnswer": "Type your answer…",

@@ -5,6 +5,11 @@
         <div class="is-card__kicker">{{ $t('interviewSimulator.currentQuestion') }}</div>
         <h2 class="is-card__title">{{ question || '—' }}</h2>
         <div v-if="isFollowUp" class="is-badge">{{ $t('interviewSimulator.followUpBadge') }}</div>
+        <label v-if="readAloudSupported" class="is-card__auto">
+          <input v-model="autoSpeakLocal" type="checkbox" @change="onAutoSpeakChange" />
+          <span>{{ $t('interviewSimulator.readQuestionAuto') }}</span>
+        </label>
+        <p v-if="readAloudSupported" class="is-card__auto-hint">{{ $t('interviewSimulator.readQuestionAutoHint') }}</p>
       </div>
       <button
         v-if="readAloudSupported && question"
@@ -22,14 +27,68 @@
 </template>
 
 <script>
+const AUTO_SPEAK_KEY = 'interviewSimulator.autoSpeak';
+
+function loadAutoSpeakPreference() {
+  try {
+    const v = localStorage.getItem(AUTO_SPEAK_KEY);
+    if (v === '0' || v === 'false') return false;
+    return true;
+  } catch (_e) {
+    return true;
+  }
+}
+
+function saveAutoSpeakPreference(on) {
+  try {
+    localStorage.setItem(AUTO_SPEAK_KEY, on ? '1' : '0');
+  } catch (_e) {
+    /* ignore */
+  }
+}
+
+/** Prefer clearer / neural-style voices when the browser exposes them */
+function pickPreferredVoice(voices, langTag) {
+  if (!voices || !voices.length) return null;
+  const primary = (langTag || 'en-US').split('-')[0].toLowerCase();
+  const matchLang = (v) => {
+    const L = (v.lang || '').toLowerCase().replace('_', '-');
+    return L === primary || L.startsWith(`${primary}-`);
+  };
+  let list = voices.filter(matchLang);
+  if (!list.length) {
+    list = voices.filter((v) => (v.lang || '').toLowerCase().startsWith(primary));
+  }
+  if (!list.length) return null;
+
+  const score = (v) => {
+    const n = `${v.name || ''} ${v.voiceURI || ''}`.toLowerCase();
+    let s = 0;
+    if (/neural|natural|premium|enhanced|online|google|microsoft|apple/i.test(n)) s += 40;
+    if (v.localService) s += 25;
+    if (v.default) s += 15;
+    if (/compact|embedded|low quality/i.test(n)) s -= 30;
+    return s;
+  };
+  list.sort((a, b) => score(b) - score(a));
+  return list[0];
+}
+
 export default {
   name: 'QuestionCard',
   props: {
     question: { type: String, default: '' },
     isFollowUp: { type: Boolean, default: false },
+    /** Parent can disable auto TTS (e.g. future setting page) */
+    autoSpeak: { type: Boolean, default: true },
   },
   data() {
-    return { speaking: false };
+    return {
+      speaking: false,
+      autoSpeakLocal: loadAutoSpeakPreference(),
+      voices: [],
+      autoSpeakTimerId: null,
+    };
   },
   computed: {
     readAloudSupported() {
@@ -41,16 +100,54 @@ export default {
       const s = String(loc || 'ru').toLowerCase();
       return s.startsWith('en') ? 'en-US' : 'ru-RU';
     },
-  },
-  watch: {
-    question() {
-      this.stopSpeak();
+    autoSpeakEffective() {
+      return this.autoSpeak !== false && this.autoSpeakLocal;
     },
   },
+  mounted() {
+    if (!this.readAloudSupported) return;
+    this.refreshVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', this.refreshVoices);
+    window.speechSynthesis.getVoices();
+  },
   beforeUnmount() {
-    this.stopSpeak();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.removeEventListener('voiceschanged', this.refreshVoices);
+      window.speechSynthesis.cancel();
+    }
+    if (this.autoSpeakTimerId) clearTimeout(this.autoSpeakTimerId);
+  },
+  watch: {
+    question: {
+      immediate: true,
+      handler(newQ, oldQ) {
+        this.stopSpeak();
+        if (!newQ || !String(newQ).trim()) return;
+        if (!this.autoSpeakEffective) return;
+        if (oldQ !== undefined && newQ === oldQ) return;
+        if (this.autoSpeakTimerId) clearTimeout(this.autoSpeakTimerId);
+        this.autoSpeakTimerId = setTimeout(() => {
+          this.autoSpeakTimerId = null;
+          if ((this.question || '').trim() === String(newQ).trim()) {
+            this.speakQuestion();
+          }
+        }, 100);
+      },
+    },
   },
   methods: {
+    refreshVoices() {
+      if (typeof window === 'undefined' || !window.speechSynthesis) return;
+      this.voices = window.speechSynthesis.getVoices() || [];
+    },
+    onAutoSpeakChange() {
+      saveAutoSpeakPreference(this.autoSpeakLocal);
+      if (this.autoSpeakLocal && (this.question || '').trim()) {
+        this.speakQuestion();
+      } else {
+        this.stopSpeak();
+      }
+    },
     stopSpeak() {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -62,19 +159,59 @@ export default {
         this.stopSpeak();
         return;
       }
+      this.speakQuestion(true);
+    },
+    speakQuestion() {
       const q = (this.question || '').trim();
       if (!q || typeof window === 'undefined' || !window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(q);
-      u.lang = this.utteranceLang;
-      u.onend = () => {
-        this.speaking = false;
+
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      this.refreshVoices();
+
+      const lang = this.utteranceLang;
+      const short = lang.split('-')[0].toLowerCase();
+
+      const run = () => {
+        const text = (this.question || '').trim();
+        if (!text) return;
+        synth.cancel();
+        this.refreshVoices();
+        const voiceList = this.voices.length ? this.voices : synth.getVoices() || [];
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        u.volume = 1;
+        u.pitch = 1;
+        u.rate = short === 'ru' ? 0.93 : 0.96;
+
+        const voice = pickPreferredVoice(voiceList, lang);
+        if (voice) u.voice = voice;
+
+        u.onend = () => {
+          this.speaking = false;
+        };
+        u.onerror = () => {
+          this.speaking = false;
+        };
+        this.speaking = true;
+        synth.speak(u);
       };
-      u.onerror = () => {
-        this.speaking = false;
-      };
-      this.speaking = true;
-      window.speechSynthesis.speak(u);
+
+      const voiceList = this.voices.length ? this.voices : synth.getVoices() || [];
+      if (!voiceList.length) {
+        let ran = false;
+        const kick = () => {
+          if (ran) return;
+          ran = true;
+          synth.removeEventListener('voiceschanged', kick);
+          run();
+        };
+        synth.addEventListener('voiceschanged', kick);
+        setTimeout(kick, 280);
+        return;
+      }
+
+      run();
     },
   },
 };
@@ -117,6 +254,28 @@ export default {
   background: rgba(39, 84, 199, 0.1);
   color: #2754c7;
   font-weight: 600;
+}
+.is-card__auto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--vl-text, #0d1733);
+  cursor: pointer;
+  user-select: none;
+}
+.is-card__auto input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2754c7;
+}
+.is-card__auto-hint {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--vl-muted, #5d6b8a);
+  max-width: 36rem;
 }
 .is-card__speak {
   flex-shrink: 0;

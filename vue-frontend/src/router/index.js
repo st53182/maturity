@@ -11,6 +11,7 @@ const routes = [
   { path: '/new/interview-simulator/setup', name: 'InterviewSimulatorSetup', component: () => import('@/views/InterviewSimulatorSetup.vue') },
   { path: '/new/interview-simulator/session', name: 'InterviewSimulatorSession', component: () => import('@/views/InterviewSimulatorSession.vue') },
   { path: '/new/interview-simulator/results', name: 'InterviewSimulatorResults', component: () => import('@/views/InterviewSimulatorResults.vue') },
+  { path: '/interview-simulator', redirect: '/new/interview-simulator' },
   { path: '/new/artdash', redirect: '/new/maturity/artdash' },
   { path: '/new/maturity', name: 'NewMaturity', component: () => import('@/views/NewMaturity.vue'), meta: { requiresAuth: true } },
   { path: '/new/maturity/artdash', name: 'MaturityLinkAdminNew', component: () => import('@/views/MaturityLinkAdminDashboard.vue'), meta: { requiresAuth: true, maturityLinkAdmin: true } },

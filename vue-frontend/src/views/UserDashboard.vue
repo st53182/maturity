@@ -72,6 +72,8 @@ import { useAuthStore } from "@/stores/auth"; // Импортируем хран
 import {onMounted} from "vue";
 import axios from "axios";
 import RadarChart from "@/components/RadarChart.vue";
+import enLocale from "@/i18n/locales/en.json";
+import i18n from "@/i18n";
  /* eslint-disable */
 export default {
   components: { RadarChart },
@@ -119,6 +121,30 @@ export default {
     },
   },
 
+  computed: {
+    currentUiLocale() {
+      const g = i18n.global.locale;
+      const fromGlobal = typeof g === "string" ? g : g?.value;
+      if (fromGlobal && String(fromGlobal).length) {
+        return String(fromGlobal);
+      }
+      let stored = null;
+      try {
+        stored = typeof localStorage !== "undefined" ? localStorage.getItem("language") : null;
+      } catch (_e) {
+        stored = null;
+      }
+      if (stored === "en" || stored === "ru") return stored;
+      const l = this.$i18n?.locale;
+      if (typeof l === "string") return l;
+      if (l && typeof l === "object" && "value" in l && l.value) return String(l.value);
+      return "ru";
+    },
+    enRadarLabelsMap() {
+      return enLocale.assessmentResults?.radarLabels || {};
+    },
+  },
+
   methods: {
     async fetchTeams() {
       try {
@@ -143,6 +169,7 @@ export default {
             const averageScore = rawResults ? this.calculateAverageFromResults(rawResults) : 0;
             return {
               ...team,
+              rawResults,
               chartData,
               averageScore
             };
@@ -291,17 +318,38 @@ export default {
 },
 
 
+    isEnglishUI() {
+      return String(this.currentUiLocale || "").toLowerCase().startsWith("en");
+    },
+
+    resolveRadarLabel(text) {
+      if (text == null || text === "") return text;
+      if (!this.isEnglishUI()) return text;
+      const key = typeof text === "string" ? text.trim() : text;
+      const map = this.enRadarLabelsMap;
+      const mapped = map[key];
+      return mapped !== undefined && mapped !== "" ? mapped : text;
+    },
+
+    isChartDataRenderable(chartData) {
+      return !!(chartData && Array.isArray(chartData.labels) && chartData.labels.length > 0);
+    },
+
     generateRadarData(results) {
-      if (!results) return { labels: [], datasets: [] };
+      if (!results) return null;
 
       const categories = Object.keys(results);
-      const scores = categories.map(category => {
-        const values = Object.values(results[category]).map(val => parseFloat(val) || 0);
+      if (!categories.length) return null;
+
+      const scores = categories.map((category) => {
+        const values = Object.values(results[category]).map((val) => parseFloat(val) || 0);
         return values.length ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
       });
 
+      const labels = categories.map((c) => this.resolveRadarLabel(c));
+
       return {
-        labels: categories,
+        labels,
         datasets: [
           {
             label: this.$t("dashboard.radarLegend"),

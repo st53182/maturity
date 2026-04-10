@@ -392,9 +392,19 @@ button {
   left: 3.75rem !important;
 }
 
-/* Icon is before the input in DOM; keep scale off so emoji doesn’t overlap text */
-#app .input-wrapper:has(> .input-icon):focus-within > .input-icon {
+/*
+ * Icon sits before the input in DOM. Stripping transform entirely removed translateY(-50%),
+ * so top:50% pinned the emoji by its top edge to the middle of the field (looked “stuck” bottom-left).
+ * Keep vertical centering; skip translateY only where textarea/multiselect use fixed top + transform:none above.
+ */
+#app .input-wrapper.textarea-wrapper:has(> .input-icon):focus-within > .input-icon,
+#app .input-wrapper:has(select[multiple]):has(> .input-icon):focus-within > .input-icon {
   transform: none !important;
+}
+
+#app .input-wrapper:not(.textarea-wrapper):not(:has(select[multiple])):has(> .input-icon):focus-within
+  > .input-icon {
+  transform: translateY(-50%) !important;
 }
 
 /* Админ-дашборд maturity: свои кнопки без глобальной «капсулы» */

@@ -36,6 +36,17 @@
           <span>🏠</span>
           <small>{{ $t('nav.dashboard') }}</small>
         </button>
+        <div class="sidebar-nav-divider" role="presentation" aria-hidden="true" />
+        <button
+          type="button"
+          class="sidebar-btn sidebar-btn--interview"
+          :class="{ 'sidebar-btn--active': navActive(['/new/interview-simulator']) }"
+          @click="$router.push('/new/interview-simulator')"
+        >
+          <span>🎤</span>
+          <small>{{ $t('nav.interviewSimulator') }}</small>
+        </button>
+        <div class="sidebar-nav-divider sidebar-nav-divider--after-feature" role="presentation" aria-hidden="true" />
         <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/survey', '/survey']) }" @click="$router.push(isNewUi ? '/new/survey' : '/survey')">
           <span>📝</span>
           <small>{{ $t('nav.survey') }}</small>
@@ -141,6 +152,17 @@
             <span>🏠</span>
             <span>{{ $t('nav.dashboard') }}</span>
           </button>
+          <div class="mobile-menu-divider" role="presentation" aria-hidden="true" />
+          <button
+            type="button"
+            class="mobile-menu-btn mobile-menu-btn--interview"
+            :class="{ 'mobile-menu-btn--active': navActive(['/new/interview-simulator']) }"
+            @click="navigateAndClose('/new/interview-simulator')"
+          >
+            <span>🎤</span>
+            <span>{{ $t('nav.interviewSimulator') }}</span>
+          </button>
+          <div class="mobile-menu-divider" role="presentation" aria-hidden="true" />
           <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/survey', '/survey']) }" @click="navigateAndClose(isNewUi ? '/new/survey' : '/survey')">
             <span>📝</span>
             <span>{{ $t('nav.survey') }}</span>
@@ -694,6 +716,47 @@ export default {
 .app--new .modern-sidebar .sidebar-btn.sidebar-btn--active {
   background: rgba(32, 90, 255, 0.16);
   box-shadow: inset 0 0 0 1px rgba(32, 90, 255, 0.28);
+}
+
+.sidebar-nav-divider {
+  height: 1px;
+  margin: 4px 8px;
+  background: rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+}
+
+.sidebar-nav-divider--after-feature {
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+.app--new .sidebar-nav-divider {
+  background: rgba(10, 20, 45, 0.12);
+}
+
+.modern-sidebar .sidebar-btn.sidebar-btn--interview {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  padding: 6px 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app--new .modern-sidebar .sidebar-btn.sidebar-btn--interview {
+  border-color: rgba(39, 84, 199, 0.4);
+  background: linear-gradient(180deg, rgba(39, 84, 199, 0.14), rgba(39, 84, 199, 0.05));
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  margin: 6px 14px;
+  background: rgba(10, 20, 45, 0.1);
+}
+
+.mobile-menu-btn.mobile-menu-btn--interview {
+  font-weight: 600;
+  border: 1px solid rgba(39, 84, 199, 0.28);
+  border-radius: 10px;
+  margin: 2px 10px;
 }
 
 .mobile-menu-btn.mobile-menu-btn--active {

@@ -297,7 +297,7 @@
     <!-- Модальное окно: черновик вопросов с ИИ (поверх мастера) -->
     <div v-if="showAiDraftModal" class="modal-overlay survey-ai-modal-overlay" @click.self="closeAiDraftModal">
       <div class="modal-content survey-ai-modal">
-        <button type="button" class="modal-close-top" aria-label="Закрыть" @click="closeAiDraftModal">✕</button>
+        <button type="button" class="modal-close-top" :aria-label="$t('common.close')" @click="closeAiDraftModal">✕</button>
         <h2>{{ $t('surveys.hr.aiModalTitle') }}</h2>
         <p class="survey-ai-lead">
           {{ $t('surveys.hr.aiModalLead') }}
@@ -322,45 +322,45 @@
       </div>
     </div>
 
-    <section v-if="createdLink" class="invite-card" aria-label="invite">
-      <h2 class="invite-title">Готово: ссылка и текст для email</h2>
+    <section v-if="createdLink" class="invite-card" :aria-label="$t('surveys.inviteReadyTitle')">
+      <h2 class="invite-title">{{ $t('surveys.inviteReadyTitle') }}</h2>
       <div class="invite-grid">
         <div class="invite-field">
-          <label class="invite-label">Ссылка</label>
+          <label class="invite-label">{{ $t('surveys.inviteLinkLabel') }}</label>
           <div class="invite-row">
             <input class="survey-input mono" :value="createdLink" readonly />
-            <button type="button" class="copy-btn" @click="copyText(createdLink)">Копировать</button>
+            <button type="button" class="copy-btn" @click="copyText(createdLink)">{{ $t('surveys.inviteCopy') }}</button>
           </div>
         </div>
         <div class="invite-field">
-          <label class="invite-label">Текст письма</label>
+          <label class="invite-label">{{ $t('surveys.inviteEmailBodyLabel') }}</label>
           <textarea class="survey-textarea" rows="6" :value="createdEmailText" readonly />
           <div class="invite-row">
-            <button type="button" class="copy-btn" @click="copyText(createdEmailText)">Копировать текст</button>
+            <button type="button" class="copy-btn" @click="copyText(createdEmailText)">{{ $t('surveys.inviteCopyText') }}</button>
             <span v-if="copiedMsg" class="copied-msg">{{ copiedMsg }}</span>
           </div>
         </div>
       </div>
-      <p class="invite-hint">Вставьте текст в email/мессенджер и отправьте участникам.</p>
+      <p class="invite-hint">{{ $t('surveys.invitePasteHint') }}</p>
     </section>
     
     <div class="existing-surveys">
       <div class="surveys-header">
-        <h2>Мои опросники</h2>
+        <h2>{{ $t('surveys.listTitle') }}</h2>
         <div class="filter-controls">
           <select v-model="statusFilter" class="status-filter">
-            <option value="">Все статусы</option>
-            <option value="draft">Черновик</option>
-            <option value="active">Активные</option>
-            <option value="closed">Закрытые</option>
+            <option value="">{{ $t('surveys.allStatuses') }}</option>
+            <option value="draft">{{ $t('surveys.surveyStatus.draft') }}</option>
+            <option value="active">{{ $t('surveys.surveyStatus.active') }}</option>
+            <option value="closed">{{ $t('surveys.surveyStatus.closed') }}</option>
           </select>
         </div>
       </div>
       
-      <div v-if="loading" class="loading">⏳ Загрузка...</div>
+      <div v-if="loading" class="loading">⏳ {{ $t('surveys.loadingList') }}</div>
       
       <div v-else-if="filteredSurveys.length === 0" class="no-surveys">
-        Нет опросников
+        {{ $t('surveys.noSurveysYet') }}
       </div>
       
       <div v-else class="surveys-grid">
@@ -392,7 +392,7 @@
               📊 {{ $t('surveys.analytics') }}
             </button>
             <button @click="editSurvey(survey)" class="edit-survey-btn">
-              ✏️ Редактировать
+              ✏️ {{ $t('surveys.editSurveyBtn') }}
             </button>
             <button @click="copySurveyLink(survey)" class="copy-link-btn">
               🔗 {{ $t('surveys.copyLink') }}
@@ -429,23 +429,23 @@
     <!-- Edit Survey Modal -->
     <div v-if="showEditModal && editingSurvey" class="modal-overlay" @click.self="closeEditModal">
       <div class="modal-content edit-modal">
-        <button class="modal-close-top" @click="closeEditModal" aria-label="Close">✕</button>
-        <h2>Редактировать опросник</h2>
+        <button class="modal-close-top" @click="closeEditModal" :aria-label="$t('common.close')">✕</button>
+        <h2>{{ $t('surveys.editSurveyModalTitle') }}</h2>
         <div class="edit-form">
           <div class="form-group">
-            <label>Название:</label>
+            <label>{{ $t('surveys.fieldTitle') }}:</label>
             <input v-model="editingSurvey.title" class="survey-input" />
           </div>
           <div class="form-group">
-            <label>Статус:</label>
+            <label>{{ $t('surveys.fieldStatus') }}:</label>
             <select v-model="editingSurvey.status" class="survey-select">
-              <option value="draft">Черновик</option>
-              <option value="active">Активен</option>
-              <option value="closed">Закрыт</option>
+              <option value="draft">{{ $t('surveys.surveyStatus.draft') }}</option>
+              <option value="active">{{ $t('surveys.surveyStatus.active') }}</option>
+              <option value="closed">{{ $t('surveys.surveyStatus.closed') }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Дедлайн (необязательно):</label>
+            <label>{{ $t('surveys.deadlineOptional') }}:</label>
             <input 
               type="datetime-local" 
               v-model="editingSurvey.deadline" 
@@ -455,8 +455,8 @@
           </div>
         </div>
         <div class="modal-actions">
-          <button @click="saveSurveyChanges" class="save-btn">Сохранить</button>
-          <button @click="closeEditModal" class="cancel-btn">Отмена</button>
+          <button @click="saveSurveyChanges" class="save-btn">{{ $t('common.save') }}</button>
+          <button @click="closeEditModal" class="cancel-btn">{{ $t('common.cancel') }}</button>
         </div>
       </div>
     </div>
@@ -641,7 +641,7 @@ export default {
   if (!this.canDeleteSelectedTemplate) return
 
   const tpl = this.currentTemplate
-  const ok = window.confirm(`Удалить шаблон «${tpl.name}»? Это действие необратимо.`)
+  const ok = window.confirm(this.$t('surveys.confirmDeleteTemplateNamed', { name: tpl.name }))
   if (!ok) return
 
   try {
@@ -652,14 +652,14 @@ export default {
     // сбрасываем выбор и обновляем список шаблонов
     this.selectedTemplateId = ''
     await this.fetchTemplates()
-    alert('Шаблон удалён')
+    alert(this.$t('surveys.templateDeletedOk'))
   } catch (e) {
     const status = e?.response?.status
-    const msg = e?.response?.data?.error || 'Ошибка удаления'
+    const msg = e?.response?.data?.error || this.$t('surveys.errorDeleteTemplate')
     if (status === 400 && /Default/i.test(msg)) {
-      alert('Дефолтные шаблоны удалять нельзя.')
+      alert(this.$t('surveys.templateDeleteDefaultForbidden'))
     } else if (status === 404) {
-      alert('Шаблон не найден или у вас нет прав.')
+      alert(this.$t('surveys.templateDeleteNotFound'))
     } else {
       alert(msg)
     }
@@ -772,14 +772,16 @@ export default {
     },
 
     buildInviteEmailText({ link, type, title, deadline }) {
-      const kind = type === '360' ? '360° обратная связь' : 'eNPS';
-      const dline = deadline ? `\nДедлайн: ${this.formatDate(deadline)}` : '';
+      const kind =
+        type === '360' ? this.$t('surveys.inviteEmailKind360') : this.$t('surveys.inviteEmailKindEnps');
+      const dline = deadline
+        ? this.$t('surveys.inviteEmailDeadlineLine', { date: this.formatDate(deadline) })
+        : '';
       const t = (title || '').trim();
-      const titleLine = t ? `Опрос: ${t}\n` : '';
-      return (
-        `${titleLine}Коллеги, пожалуйста, пройдите опрос (${kind}).` +
-        `${dline}\n\nСсылка:\n${link}\n\nСпасибо!`
-      );
+      const titleLine = t ? this.$t('surveys.inviteEmailSurveyLine', { title: t }) : '';
+      const opening = this.$t('surveys.inviteEmailOpening', { kind });
+      const linkSection = this.$t('surveys.inviteEmailLinkSection', { link });
+      return `${titleLine}${opening}${dline}${linkSection}`;
     },
 
     async copyText(text) {
@@ -799,8 +801,13 @@ export default {
       const base =
         (this.currentTemplate && this.currentTemplate.questions) ||
         (this.selectedType === 'enps' ? this.getDefaultEnpsQuestions() : this.getDefault360Questions());
-      const baseName = this.currentTemplate ? this.currentTemplate.name : 'Стандартный шаблон';
-      const name = window.prompt('Название нового шаблона', `Мой шаблон (копия: ${baseName})`);
+      const baseName = this.currentTemplate
+        ? this.currentTemplate.name
+        : this.$t('surveys.standardTemplateName');
+      const name = window.prompt(
+        this.$t('surveys.templatePromptName'),
+        this.$t('surveys.templateDefaultCopyName', { name: baseName })
+      );
       if (!name) return;
       try {
         const resp = await axios.post(
@@ -811,9 +818,9 @@ export default {
         await this.fetchTemplates();
         const newId = resp?.data?.id;
         if (newId != null) this.selectedTemplateId = String(newId);
-        alert('Шаблон создан');
+        alert(this.$t('surveys.templateCreated'));
       } catch (e) {
-        alert(e?.response?.data?.error || 'Ошибка создания шаблона');
+        alert(e?.response?.data?.error || this.$t('surveys.errorCreateTemplate'));
       }
     },
 
@@ -845,7 +852,7 @@ export default {
         
         try {
           await navigator.clipboard.writeText(link)
-          this.copiedMsg = 'Ссылка скопирована'
+          this.copiedMsg = this.$t('surveys.linkCopiedShort')
           window.setTimeout(() => (this.copiedMsg = ''), 2000)
         } catch (clipboardError) {
           console.error('Clipboard error:', clipboardError)
@@ -874,11 +881,11 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         })
         
-        alert('Опросник удален!')
+        alert(this.$t('surveys.surveyDeletedSuccess'))
         await this.fetchSurveys()
       } catch (error) {
         console.error('Error deleting survey:', error)
-        alert('Ошибка удаления опросника')
+        alert(this.$t('surveys.errorDeleteSurvey'))
       }
     },
     
@@ -1034,7 +1041,7 @@ export default {
     openTemplateEditor() {
       this.showQuestionPreview = false
       this.editingTemplate = {
-        name: `Кастомный ${this.selectedType.toUpperCase()} шаблон`,
+        name: this.$t('surveys.customTemplateName', { type: this.selectedType.toUpperCase() }),
         survey_type: this.selectedType,
         questions: this.previewQuestions
       }
@@ -1075,10 +1082,10 @@ export default {
         await this.fetchSurveys()
         this.showEditModal = false
         this.editingSurvey = null
-        alert('Опросник обновлен!')
+        alert(this.$t('surveys.surveyUpdatedSuccess'))
       } catch (error) {
         console.error('Error updating survey:', error)
-        alert('Ошибка обновления опросника')
+        alert(this.$t('surveys.errorUpdateSurvey'))
       }
     },
     
@@ -1094,30 +1101,27 @@ export default {
         })
         
         await this.fetchSurveys()
-        alert(`Опросник ${newStatus === 'active' ? 'активирован' : 'остановлен'}!`)
+        alert(newStatus === 'active' ? this.$t('surveys.statusActivated') : this.$t('surveys.statusPaused'))
       } catch (error) {
         console.error('Error toggling survey status:', error)
-        alert('Ошибка изменения статуса')
+        alert(this.$t('surveys.errorStatusChange'))
       }
     },
     
     getStatusLabel(status) {
-      const labels = {
-        'draft': 'Черновик',
-        'active': 'Активен',
-        'closed': 'Закрыт'
-      }
-      return labels[status] || status
+      const key = `surveys.surveyStatus.${status}`;
+      return this.$te(key) ? this.$t(key) : status;
     },
     
     formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleDateString('ru-RU', {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const loc = this.$i18n.locale === 'ru' ? 'ru-RU' : 'en-US';
+      return date.toLocaleDateString(loc, {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
-      })
+        day: 'numeric',
+      });
     },
     
     closeEditModal() {

@@ -10,6 +10,33 @@ from datetime import datetime
 
 bp_survey = Blueprint('survey', __name__)
 
+
+def _normalize_survey_lang(lang):
+    if not lang:
+        return 'ru'
+    l = str(lang).lower().strip()
+    return 'en' if l.startswith('en') else 'ru'
+
+
+def _result_display_keys(category, subcategory, category_en, subcategory_en, lang):
+    if lang == 'en' and category_en and subcategory_en:
+        ce = str(category_en).strip()
+        se = str(subcategory_en).strip()
+        if ce and se:
+            return ce, se
+    return category, subcategory
+
+
+def _question_display_keys(question, lang):
+    return _result_display_keys(
+        question.category,
+        question.subcategory,
+        getattr(question, 'category_en', None),
+        getattr(question, 'subcategory_en', None),
+        lang,
+    )
+
+
 # 🔹 Создание команды
 @bp_survey.route('/create_team', methods=['POST'])
 @jwt_required()
@@ -201,6 +228,7 @@ def get_team_average(team_id):
 @jwt_required()
 def get_team_results(team_id):
     try:
+        lang = _normalize_survey_lang(request.args.get('lang'))
         # Загружаем команду
         team = Team.query.get(team_id)
         if not team:
@@ -210,20 +238,31 @@ def get_team_results(team_id):
         assessments = db.session.query(
             Question.category,
             Question.subcategory,
+            Question.category_en,
+            Question.subcategory_en,
             db.func.avg(Assessment.score).label("average_score")
         ).join(Assessment, Question.id == Assessment.question_id) \
             .filter(Assessment.team_id == team_id) \
-            .group_by(Question.category, Question.subcategory, Assessment.created_at) \
+            .group_by(
+                Question.category,
+                Question.subcategory,
+                Question.category_en,
+                Question.subcategory_en,
+                Assessment.created_at,
+            ) \
             .order_by(Assessment.created_at.desc()) \
             .limit(35) \
             .all()
 
         # Формируем структуру данных
         results = {}
-        for category, subcategory, avg_score in assessments:
-            if category not in results:
-                results[category] = {}
-            results[category][subcategory] = round(avg_score, 2)
+        for category, subcategory, category_en, subcategory_en, avg_score in assessments:
+            ckey, skey = _result_display_keys(
+                category, subcategory, category_en, subcategory_en, lang
+            )
+            if ckey not in results:
+                results[ckey] = {}
+            results[ckey][skey] = round(avg_score, 2)
 
         # Возвращаем имя команды и результаты
         return jsonify({
@@ -285,6 +324,7 @@ def save_recommendations(assessment_id):
 @jwt_required()
 def get_team_results_history(team_id):
     user_id = get_jwt_identity()
+    lang = _normalize_survey_lang(request.args.get('lang'))
 
     # Загружаем все оценки команды (самые новые сверху)
     assessments = (
@@ -310,8 +350,7 @@ def get_team_results_history(team_id):
     for session_key, records in latest_sessions.items():
         temp_result = {}
         for a in records:
-            category = a.question.category
-            subcategory = a.question.subcategory
+            category, subcategory = _question_display_keys(a.question, lang)
             if category not in temp_result:
                 temp_result[category] = {}
             if subcategory not in temp_result[category]:

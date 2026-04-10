@@ -384,6 +384,7 @@ async fetchResultsHistory() {
       `/team_results_history/${this.team_id}`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        params: { lang: this.currentUiLocale },
       }
     );
 
@@ -432,6 +433,7 @@ if (sortedDates.length >= 2) {
 
         const res = await axios.get(endpoint, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          params: { lang: this.currentUiLocale },
         });
 
         console.log("✅ Данные загружены:", res.data);

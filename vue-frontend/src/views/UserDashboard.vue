@@ -198,7 +198,8 @@ export default {
     }
 
     const res = await axios.get(`/team_results/${teamId}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      params: { lang: this.currentUiLocale },
     });
 
     return res.data.results; // 👈 просто отдаём сырые данные
@@ -216,6 +217,7 @@ export default {
       `/team_results_history/${this.team_id}`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        params: { lang: this.currentUiLocale },
       }
     );
 

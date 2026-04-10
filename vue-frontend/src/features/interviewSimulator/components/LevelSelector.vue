@@ -62,8 +62,8 @@ export default {
 }
 .is-seg__btn--active {
   background: #fff;
-  color: var(--vl-text, #0d1733);
-  font-weight: 600;
-  box-shadow: 0 1px 0 rgba(10, 20, 45, 0.06);
+  color: #142b66;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2px rgba(39, 84, 199, 0.55), 0 2px 8px rgba(20, 43, 102, 0.12);
 }
 </style>

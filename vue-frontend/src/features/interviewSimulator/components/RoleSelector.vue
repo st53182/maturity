@@ -64,8 +64,10 @@ export default {
   border-color: rgba(39, 84, 199, 0.45);
 }
 .is-chip--active {
-  border-color: rgba(39, 84, 199, 0.55);
-  background: rgba(39, 84, 199, 0.08);
-  font-weight: 600;
+  border-color: #2754c7;
+  background: linear-gradient(180deg, rgba(39, 84, 199, 0.18), rgba(39, 84, 199, 0.1));
+  color: #142b66;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(39, 84, 199, 0.35);
 }
 </style>

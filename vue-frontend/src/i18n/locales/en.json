@@ -608,7 +608,15 @@
       "Готовность (DoR)": "Definition of Ready (DoR)",
       "НФ-требования": "Non-functional requirements (NFR)",
       "Изменения": "Changes",
-      "Демо": "Demo"
+      "Демо": "Demo",
+      "Кросс-функц": "Cross-functionality",
+      "Мотивация": "Motivation",
+      "Мышление": "Mindset",
+      "Документы": "Documentation",
+      "Запросы": "Requests",
+      "Поставка": "Delivery",
+      "Риски": "Risks",
+      "Церемонии": "Ceremonies"
     }
   },
   "systemThinking": {
@@ -1265,6 +1273,17 @@
     "dashboardInterviewCta": "Open interview simulator",
     "maturityTitle": "Maturity assessment by link",
     "maturitySubtitle": "Create a link and share it so people can complete the assessment."
+  },
+  "interviewSimulator": {
+    "voiceAnswer": "Dictate answer",
+    "voiceStop": "Stop dictation",
+    "voiceListening": "Listening… tap again to stop",
+    "voiceUnsupported": "Voice input is not supported in this browser.",
+    "readQuestion": "Read question aloud",
+    "readQuestionStop": "Stop reading",
+    "voiceMicDenied": "Microphone access was denied.",
+    "voiceErrorGeneric": "Voice recognition error",
+    "placeholderAnswer": "Type your answer…"
   },
   "qa": {
     "title": "Practice: Manual Testing",

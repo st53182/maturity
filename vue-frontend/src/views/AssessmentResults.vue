@@ -720,8 +720,16 @@ pluralDays(n) {
       if (!this.isEnglishUI()) return text;
       const key = typeof text === "string" ? text.trim() : text;
       const map = this.enRadarLabelsMap;
-      const mapped = map[key];
-      return mapped !== undefined && mapped !== "" ? mapped : text;
+      const direct = map[key];
+      if (direct !== undefined && direct !== "") return direct;
+      const candidates = Object.keys(map).sort((a, b) => b.length - a.length);
+      for (const ru of candidates) {
+        if (key.startsWith(ru) || ru.startsWith(key)) {
+          const m = map[ru];
+          if (m !== undefined && m !== "") return m;
+        }
+      }
+      return text;
     },
 
     radarCategoryTitle(category) {

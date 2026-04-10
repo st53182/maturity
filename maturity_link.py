@@ -142,13 +142,13 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
             t0 = _t.time()
 
             try:
-                import eventlet
-                resp = eventlet.tpool.execute(
+                from eventlet import tpool
+                resp = tpool.execute(
                     client.chat.completions.create,
                     model=m,
                     **call_kwargs,
                 )
-            except ImportError:
+            except (ImportError, AttributeError):
                 resp = client.chat.completions.create(model=m, **call_kwargs)
 
             _log.info("OpenAI call OK model=%s %.1fs", m, _t.time() - t0)

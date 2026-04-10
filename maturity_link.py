@@ -100,12 +100,14 @@ def _maturity_plan_model_chain(env_primary: str) -> list:
 
 
 def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
-    """gpt-5-* (and similar) reject max_tokens; API expects max_completion_tokens."""
+    """OpenAI Chat Completions: gpt-5-* returns 400 on max_tokens; use max_completion_tokens.
+
+    We map for every model in the fallback chain — current API accepts max_completion_tokens
+    for gpt-4* as well; model id may be ``gpt-5-mini``, ``provider/gpt-5-mini``, snapshots, etc.
+    """
+    _ = model  # reserved if we need per-model tweaks later
     out = dict(kwargs)
-    if "max_tokens" not in out:
-        return out
-    m = (model or "").strip().lower()
-    if m.startswith("gpt-5"):
+    if "max_tokens" in out and "max_completion_tokens" not in out:
         out["max_completion_tokens"] = out.pop("max_tokens")
     return out
 

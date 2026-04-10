@@ -89,11 +89,16 @@ def _openai_chat_model_list(
 
 
 def _maturity_plan_model_chain(env_primary: str) -> list:
-    """Цепочка для планов команды/группы: gpt-5-mini по умолчанию."""
+    """Цепочка для планов команды/группы: gpt-4.1 по умолчанию.
+
+    gpt-5-mini (reasoning model) не генерирует структурированный JSON —
+    возвращает пустой {} даже с prompt-инструкциями.  gpt-4.1 надёжно
+    выдаёт JSON при response_format=json_object.
+    """
     return _openai_chat_model_list(
         env_primary,
-        "gpt-5-mini",
         "gpt-4.1",
+        "gpt-4.1-mini",
         "gpt-4o",
         "gpt-4-turbo",
     )
@@ -125,6 +130,9 @@ def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
     return out
 
 
+_MIN_USEFUL_RESPONSE_LEN = 50
+
+
 def _chat_completions_with_model_fallback(client, model_names, **kwargs):
     from openai import (
         APIError,
@@ -138,6 +146,7 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
     if not model_names:
         raise ValueError("model_names is empty")
     last = None
+    last_resp = None
     for m in model_names:
         try:
             call_kwargs = _adapt_chat_kwargs_for_model(m, kwargs)
@@ -154,7 +163,18 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
             except (ImportError, AttributeError):
                 resp = client.chat.completions.create(model=m, **call_kwargs)
 
-            _log.info("OpenAI call OK model=%s %.1fs", m, _t.time() - t0)
+            elapsed = _t.time() - t0
+            content = (resp.choices[0].message.content or "") if resp.choices else ""
+            _log.info("OpenAI call OK model=%s %.1fs chars=%d", m, elapsed, len(content))
+
+            if len(content.strip()) < _MIN_USEFUL_RESPONSE_LEN:
+                _log.warning(
+                    "OpenAI model=%s returned too-short content (%d chars), trying next model",
+                    m, len(content.strip()),
+                )
+                last_resp = resp
+                continue
+
             if m != model_names[0]:
                 _log.warning(
                     "OpenAI chat: used fallback model=%s (primary=%s)",
@@ -174,7 +194,11 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
                 str(e)[:240],
             )
             continue
-    raise last
+    if last:
+        raise last
+    if last_resp:
+        return last_resp
+    raise ValueError("All models returned empty responses")
 
 
 # Значения ответа в JSON (строки). Устаревшие: true → yes, false → no.

@@ -106,10 +106,12 @@ def _is_gpt5(model: str) -> bool:
 def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
     """Normalize kwargs for OpenAI Chat Completions.
 
-    gpt-5* (reasoning model family) rejects:
+    gpt-5* (reasoning model family) rejects or mishandles:
       - max_tokens  (use max_completion_tokens)
       - temperature (only default 1)
       - top_p       (only default 1)
+      - response_format {"type":"json_object"} (returns empty {} — rely on
+        prompt instructions + _safe_json_object parser instead)
     """
     out = dict(kwargs)
     if "max_tokens" in out and "max_completion_tokens" not in out:
@@ -118,6 +120,7 @@ def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
     if _is_gpt5(model):
         out.pop("temperature", None)
         out.pop("top_p", None)
+        out.pop("response_format", None)
 
     return out
 

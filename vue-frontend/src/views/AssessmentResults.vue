@@ -191,6 +191,7 @@ import RadarChart from "@/components/RadarChart.vue";
 import LevelInfoModal from "@/components/LevelInfoModal.vue";
 import MarketInfoModal from "@/components/MarketInfoModal.vue";
 import enLocale from "@/i18n/locales/en.json";
+import i18n from "@/i18n";
 
 
 
@@ -715,8 +716,9 @@ pluralDays(n) {
     resolveRadarLabel(text) {
       if (text == null || text === "") return text;
       if (!this.isEnglishUI()) return text;
+      const key = typeof text === "string" ? text.trim() : text;
       const map = this.enRadarLabelsMap;
-      const mapped = map[text];
+      const mapped = map[key];
       return mapped !== undefined && mapped !== "" ? mapped : text;
     },
 
@@ -747,8 +749,22 @@ pluralDays(n) {
   },
   computed: {
     currentUiLocale() {
-      const l = this.$i18n.locale;
-      return typeof l === "string" ? l : l && l.value ? l.value : "ru";
+      const g = i18n.global.locale;
+      const fromGlobal = typeof g === "string" ? g : g?.value;
+      if (fromGlobal && String(fromGlobal).length) {
+        return String(fromGlobal);
+      }
+      let stored = null;
+      try {
+        stored = typeof localStorage !== "undefined" ? localStorage.getItem("language") : null;
+      } catch (_e) {
+        stored = null;
+      }
+      if (stored === "en" || stored === "ru") return stored;
+      const l = this.$i18n?.locale;
+      if (typeof l === "string") return l;
+      if (l && typeof l === "object" && "value" in l && l.value) return String(l.value);
+      return "ru";
     },
     enRadarLabelsMap() {
       return enLocale.assessmentResults?.radarLabels || {};

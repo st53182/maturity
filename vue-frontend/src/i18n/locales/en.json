@@ -501,6 +501,8 @@
       "Управление": "Management",
       "Процесс": "Process",
       "Инженерия": "Engineering",
+      "Инжиниринг": "Engineering",
+      "Критерии": "Criteria",
       "Delivery": "Delivery",
       "Engineering": "Engineering",
       "Transparency": "Transparency",
@@ -1081,7 +1083,8 @@
       "survey": "Assessment survey",
       "usabilityReport": "Usability report",
       "agileKata": "Agile Kata canvas",
-      "agileTools": "Agile tools library"
+      "agileTools": "Agile tools library",
+      "interviewSimulator": "AI Interview Simulator"
     }
   },
   "agileKata": {

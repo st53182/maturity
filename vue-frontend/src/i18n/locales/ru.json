@@ -1019,7 +1019,8 @@
       "survey": "Диагностика (опрос)",
       "usabilityReport": "Отчёт по удобству",
       "agileKata": "Agile Kata — канвас",
-      "agileTools": "Agile инструменты — справочник"
+      "agileTools": "Agile инструменты — справочник",
+      "interviewSimulator": "AI-симулятор интервью"
     }
   },
   "agileKata": {

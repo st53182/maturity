@@ -61,11 +61,9 @@ _sock_stdlib.create_connection = _patched_create_connection
 # ---------------------------------------------------------------------------
 
 import eventlet
-# os=False: prevent patching os.read/os.write which breaks gunicorn's
-# arbiter signal handler (select.select → os.write → trampoline → RuntimeError)
-eventlet.monkey_patch(os=False)
+eventlet.monkey_patch()
 
-# Re-apply ALL patches AFTER eventlet.monkey_patch()
+# Re-apply DNS patches on the monkey-patched socket module.
 import socket as _sock_green
 _sock_green.getaddrinfo = _patched_getaddrinfo
 _sock_green.create_connection = _patched_create_connection
@@ -341,7 +339,11 @@ def ai_health():
                          "error_type": type(exc).__name__, "detail": str(exc)[:400]}
         return jsonify(result), 502
 
-# Экспортируем socketio для использования в gunicorn
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+else:
+    # Under Render / production: use eventlet WSGI via socketio.run() as well
+    # (invoked from Procfile via `python app.py`, NOT gunicorn, to avoid the
+    #  gunicorn arbiter crash with eventlet monkey_patch).
+    pass
 

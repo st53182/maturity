@@ -19,7 +19,7 @@
         <span class="is-session__meta">{{ roleLabel }} · {{ levelLabel }}</span>
       </header>
 
-      <ProgressIndicator :completed="store.transcript.filter((m) => m.role === 'assistant').length" :max="store.maxQuestions" />
+      <ProgressIndicator :completed="store.interviewerTurnsCount" :max="store.maxQuestions" />
 
       <div class="is-session__layout">
         <div class="is-session__main">

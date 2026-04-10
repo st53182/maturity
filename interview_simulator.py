@@ -32,6 +32,21 @@ logger = logging.getLogger(__name__)
 
 bp_interview_simulator = Blueprint("interview_simulator", __name__, url_prefix="/api/interview-simulator")
 
+
+def _normalize_locale(raw: Any) -> str:
+    if not raw or not isinstance(raw, str):
+        return "en"
+    s = raw.strip().lower().split("-", 1)[0]
+    return "ru" if s == "ru" else "en"
+
+
+def _closing_line(locale: str) -> str:
+    return (
+        "Спасибо, на этом интервью завершено."
+        if locale == "ru"
+        else "Thank you — that completes the interview."
+    )
+
 MIN_QUESTIONS_DEFAULT = 7
 MAX_QUESTIONS_DEFAULT = 13
 
@@ -80,10 +95,13 @@ def _call_openai(user_prompt: str, *, temperature: float = 0.4) -> str:
 
 def _mock_question_payload(body: dict) -> dict:
     idx = int(body.get("questionIndex") or 0)
+    max_q = int(body.get("maxQuestions") or MAX_QUESTIONS_DEFAULT)
+    loc = _normalize_locale(body.get("locale"))
     jd = (body.get("jobDescription") or "").strip()
     role = body.get("role") or "engineer"
     level = body.get("level") or "middle"
-    complete = idx >= MAX_QUESTIONS_DEFAULT - 1
+    # questionIndex = completed Q&A rounds; at idx >= max_q there must be no next question
+    complete = idx >= max_q
     jd_templates = [
         "[Mock Q{n}] Pick one bullet from the JD and walk through how you would de-risk it before release.",
         "[Mock Q{n}] Choose a stack item mentioned in the JD: what failure mode worries you most and how do you detect it in prod?",
@@ -106,13 +124,24 @@ def _mock_question_payload(body: dict) -> dict:
         tpl = no_jd_templates[idx % len(no_jd_templates)]
         q = tpl.format(n=idx + 1, r=role, l=level)
     if complete:
+        done_msg = (
+            "Спасибо — мок-интервью завершено." if loc == "ru" else "Thank you — that completes the mock interview."
+        )
         return {
-            "question": "Thank you — that completes the mock interview.",
+            "question": done_msg,
             "is_follow_up": False,
             "interview_complete": True,
             "question_id": str(uuid.uuid4()),
             "mock": True,
         }
+    if loc == "ru":
+        if jd:
+            q = f"[Мок В{idx + 1}] Возьмите один пункт из описания вакансии и кратко опишите, как вы снизите риски перед релизом."
+        else:
+            q = (
+                f"[Мок В{idx + 1}] Опишите недавний инцидент в проде: что измеряли и какой сделали вывод. "
+                f"({role}/{level})"
+            )
     return {
         "question": q,
         "is_follow_up": idx % 3 == 2,
@@ -122,7 +151,21 @@ def _mock_question_payload(body: dict) -> dict:
     }
 
 
-def _mock_evaluate_payload() -> dict:
+def _mock_evaluate_payload(locale: str = "en") -> dict:
+    if locale == "ru":
+        return {
+            "relevance": 7,
+            "clarity": 7,
+            "technical_depth": 6,
+            "communication": 8,
+            "job_alignment": 6,
+            "summary": "Мок-оценка: ответ правдоподобен, но не хватает конкретики и метрик.",
+            "strengths": ["Структурированный ответ", "Понятная коммуникация"],
+            "gaps": ["Мало глубины по краевым случаям", "Нет конкретных метрик"],
+            "needs_follow_up": True,
+            "follow_up_hint": "Попросите пример с измеримым результатом.",
+            "mock": True,
+        }
     return {
         "relevance": 7,
         "clarity": 7,
@@ -140,6 +183,39 @@ def _mock_evaluate_payload() -> dict:
 
 def _mock_report_payload(body: dict) -> dict:
     jd = (body.get("jobDescription") or "").strip()
+    loc = _normalize_locale(body.get("locale"))
+    if loc == "ru":
+        return {
+            "overall_score": 72,
+            "category_scores": {
+                "technical_depth": 68,
+                "communication": 80,
+                "job_fit": 70 if jd else 65,
+                "problem_solving": 72,
+            },
+            "summary": "Мок-отчёт: хорошая коммуникация; углубите системный дизайн и темы из вакансии.",
+            "strengths": ["Понятные объяснения", "Совместный тон"],
+            "weaknesses": ["Мало глубины по масштабированию", "Мало конкретных примеров"],
+            "recommendations": [
+                "Потренируйте STAR-истории под пункты вакансии.",
+                "Проработайте один глубокий разбор основного стека из вакансии.",
+            ],
+            "vacancy_fit": {
+                "match_percent": 68 if jd else 60,
+                "summary": (
+                    "Умеренное соответствие роли; мок-данные — связывайте ответы с каждым пунктом вакансии."
+                    if jd
+                    else "Общее соответствие уровню; добавьте описание вакансии для точной оценки."
+                ),
+                "requirements_covered_well": ["Коммуникация", "Ответственность"] if jd else ["База"],
+                "requirements_gaps": ["Глубина по стеку из вакансии", "Эксплуатация в проде"] if jd else ["Глубина"],
+                "topics_to_study": ["Системный дизайн", "Стратегия тестирования", "Наблюдаемость"],
+            },
+            "example_strong_answer": (
+                "Я бы назвал конкретный сервис, SLA, сценарий отказа, метрики, которые смотрели, и план отката."
+            ),
+            "mock": True,
+        }
     return {
         "overall_score": 72,
         "category_scores": {
@@ -185,6 +261,19 @@ def post_question():
         min_q = int(body.get("minQuestions") or MIN_QUESTIONS_DEFAULT)
         max_q = int(body.get("maxQuestions") or MAX_QUESTIONS_DEFAULT)
         last_eval = body.get("lastEvaluation")
+        locale = _normalize_locale(body.get("locale"))
+
+        # Hard cap: client sends questionIndex = len(completed rounds); no further questions past max_q
+        if question_index >= max_q:
+            return jsonify(
+                {
+                    "success": True,
+                    "question": _closing_line(locale),
+                    "is_follow_up": False,
+                    "interview_complete": True,
+                    "question_id": str(uuid.uuid4()),
+                }
+            ), 200
 
         if _mock_mode():
             out = _mock_question_payload(body)
@@ -235,8 +324,10 @@ def post_evaluate():
         if not question or not answer:
             return jsonify({"success": False, "error": "question and answer required"}), 400
 
+        locale = _normalize_locale(body.get("locale"))
+
         if _mock_mode():
-            return jsonify({"success": True, "evaluation": _mock_evaluate_payload()}), 200
+            return jsonify({"success": True, "evaluation": _mock_evaluate_payload(locale)}), 200
 
         user_prompt = build_evaluate_prompt(
             role=role,
@@ -244,6 +335,7 @@ def post_evaluate():
             job_description=job_description if isinstance(job_description, str) else None,
             question=question,
             answer=answer,
+            locale=locale,
         )
         raw = _call_openai(user_prompt)
         data = _extract_json_object(raw)
@@ -268,6 +360,8 @@ def post_report():
         if not isinstance(rounds, list) or not rounds:
             return jsonify({"success": False, "error": "rounds array required"}), 400
 
+        locale = _normalize_locale(body.get("locale"))
+
         if _mock_mode():
             return jsonify({"success": True, "report": _mock_report_payload(body)}), 200
 
@@ -277,6 +371,7 @@ def post_report():
             level=level,
             job_description=job_description if isinstance(job_description, str) else None,
             qa_block=qa_block,
+            locale=locale,
         )
         raw = _call_openai(user_prompt)
         data = _extract_json_object(raw)

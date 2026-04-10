@@ -14,6 +14,8 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
     jobDescription: '',
     minQuestions: DEFAULT_MIN_QUESTIONS,
     maxQuestions: DEFAULT_MAX_QUESTIONS,
+    /** UI locale for interview language ('ru' | 'en') */
+    locale: 'en',
     transcript: /** @type {{role: 'assistant'|'user', content: string}[]} */ ([]),
     rounds: /** @type {import('@/features/interviewSimulator/types').InterviewRound[]} */ ([]),
     currentQuestion: '',
@@ -33,15 +35,18 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
       this.finalReport = null;
       this.error = null;
       this.loading = false;
+      this.locale = 'en';
     },
 
     /**
-     * @param {{ role: string, level: string, jobDescription?: string }} cfg
+     * @param {{ role: string, level: string, jobDescription?: string, locale?: string }} cfg
      */
     setConfig(cfg) {
       this.role = cfg.role;
       this.level = cfg.level;
       this.jobDescription = cfg.jobDescription || '';
+      const raw = (cfg.locale || 'en').toString().toLowerCase();
+      this.locale = raw.startsWith('ru') ? 'ru' : 'en';
     },
 
     async checkHealth() {
@@ -60,6 +65,7 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
         jobDescription: this.jobDescription.trim() || undefined,
         minQuestions: this.minQuestions,
         maxQuestions: this.maxQuestions,
+        locale: this.locale,
       };
     },
 
@@ -110,6 +116,16 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
           answer,
           evaluation,
         });
+
+        if (this.rounds.length >= this.maxQuestions) {
+          this.interviewComplete = true;
+          this.currentQuestion = '';
+          await this.loadFinalReport();
+          if (this.error || !this.finalReport) {
+            return { done: false, error: true };
+          }
+          return { done: true };
+        }
 
         const qRes = await ai.fetchNextQuestion({
           ...this._basePayload(),

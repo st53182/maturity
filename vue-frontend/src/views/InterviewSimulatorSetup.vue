@@ -59,10 +59,13 @@ export default {
   methods: {
     async start() {
       this.error = null;
+      const loc =
+        typeof this.$i18n.locale === 'string' ? this.$i18n.locale : this.$i18n.locale.value;
       const state = {
         role: this.role,
         level: this.level,
         jobDescription: this.jobDescription,
+        locale: loc,
       };
       if (!canStartSession(state)) {
         this.error = this.$t('interviewSimulator.errSelectRoleLevel');

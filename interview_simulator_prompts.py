@@ -4,6 +4,19 @@
 import json
 from typing import Optional
 
+def interview_language_block(locale: str) -> str:
+    """Natural language for questions, closings, evaluations, and report must match UI locale."""
+    lc = (locale or "en").strip().lower()
+    if lc.startswith("ru"):
+        return """Language (mandatory):
+- The candidate uses the Russian UI. The entire interview must be in natural Russian.
+- Every candidate-facing string in your JSON ("question", closings, "summary", "strengths", "gaps", "follow_up_hint", report text fields, etc.) MUST be in Russian.
+- JSON keys must remain exactly as in the schema (English).
+- Technical terms: use English where it is standard in Russian IT speech (API, Docker, CI/CD); otherwise prefer Russian."""
+    return """Language:
+- Conduct the interview in clear English; all candidate-facing strings in English."""
+
+
 SYSTEM_BASE = """You are an expert technical interviewer. You conduct structured interviews fairly.
 Rules:
 - Ask ONE clear question at a time (no bullet lists of multiple unrelated questions).
@@ -86,12 +99,17 @@ Hard rules:
     next_theme_idx = (question_index + 1) % len(_QUESTION_THEMES)
     next_theme = _QUESTION_THEMES[next_theme_idx]
 
+    lang = interview_language_block(locale)
+
     return f"""Generate the next interview step.
+
+{lang}
 
 Context:
 - Role: {role}
 - Level: {level}
-- Progress: main+follow-up rounds so far (0-based index next): {question_index}
+- Progress: question_index is the number of COMPLETED Q&A rounds the client already has (same as questionIndex in the request). The next JSON you return is for the following turn only.
+- CRITICAL: If question_index >= {max_questions}, you MUST set "interview_complete": true and set "question" to a short closing line only — do NOT ask another interview question. (The server also enforces this.)
 - Target length: between {min_questions} and {max_questions} total interviewer turns (questions + follow-ups count as turns).
 - Job description (verbatim; you MUST reference it when present):
 ---
@@ -122,7 +140,7 @@ Return JSON with this exact shape:
 Set interview_complete to true ONLY if:
 - You already asked at least {min_questions} meaningful turns AND further questions add little value, OR
 - You reached ~{max_questions} turns (do not exceed {max_questions}).
-When interview_complete is true, set question to a short closing line like "Thank you, this completes the interview." """
+When interview_complete is true, set question to a short closing line in the interview language (Russian UI: e.g. "Спасибо, на этом интервью завершено."; English: "Thank you, this completes the interview."). """
 
 
 def build_evaluate_prompt(
@@ -131,13 +149,18 @@ def build_evaluate_prompt(
     job_description: str | None,
     question: str,
     answer: str,
+    locale: str = "en",
 ) -> str:
     jd_block = (
         job_description.strip()
         if job_description and job_description.strip()
         else "(No job description — evaluate against typical expectations for the role/level.)"
     )
+    lang = interview_language_block(locale)
+
     return f"""Evaluate the candidate's answer.
+
+{lang}
 
 Role: {role}
 Level: {level}
@@ -180,7 +203,11 @@ def build_report_prompt(
         if job_description and job_description.strip()
         else "(No job description — report should focus on role/level generically.)"
     )
+    lang = interview_language_block(locale)
+
     return f"""Produce the FINAL interview report for the hiring manager (not shown during the interview).
+
+{lang}
 
 Role: {role}
 Level: {level}

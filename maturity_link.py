@@ -99,6 +99,17 @@ def _maturity_plan_model_chain(env_primary: str) -> list:
     )
 
 
+def _adapt_chat_kwargs_for_model(model: str, kwargs: dict) -> dict:
+    """gpt-5-* (and similar) reject max_tokens; API expects max_completion_tokens."""
+    out = dict(kwargs)
+    if "max_tokens" not in out:
+        return out
+    m = (model or "").strip().lower()
+    if m.startswith("gpt-5"):
+        out["max_completion_tokens"] = out.pop("max_tokens")
+    return out
+
+
 def _chat_completions_with_model_fallback(client, model_names, **kwargs):
     from openai import (
         APIError,
@@ -113,7 +124,8 @@ def _chat_completions_with_model_fallback(client, model_names, **kwargs):
     last = None
     for m in model_names:
         try:
-            resp = client.chat.completions.create(model=m, **kwargs)
+            call_kwargs = _adapt_chat_kwargs_for_model(m, kwargs)
+            resp = client.chat.completions.create(model=m, **call_kwargs)
             if m != model_names[0]:
                 _log.warning(
                     "OpenAI chat: used fallback model=%s (primary=%s)",

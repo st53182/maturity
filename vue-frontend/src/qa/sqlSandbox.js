@@ -434,29 +434,29 @@ export const SQL_LESSONS = [
     id: 'l01',
     title: 'Таблицы и первый SELECT',
     theory:
-      'Данные интернет-магазина: покупатели (customers), товары (products), заказы (orders) и позиции заказа (order_items). Имена таблиц в SQL — латиницей, как на вкладках превью справа. SELECT читает строки; * — все колонки. Запросы выполняются только в браузере. Порядок строк в ответе для проверки не важен, если в задании не сказано иное.',
+      'Данные интернет-магазина: покупатели (customers), товары (products), заказы (orders) и позиции заказа (order_items). Имена таблиц в SQL — латиницей, как на вкладках превью справа. SELECT читает строки; * — все колонки. Запросы выполняются только в браузере. Задания сформулированы как вопросы к данным — вы сами выбираете нужный SQL. Порядок строк в ответе для проверки не важен, если в условии не сказано иное.',
     tasks: [
       {
         id: 'l01-t1',
-        hint: 'Таблица customers. Вывести: все колонки всех строк (SELECT *). Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Хочу просто увидеть всех покупателей в базе — полностью, со всеми полями.',
         exampleSql: 'SELECT * FROM customers;',
         checkSql: 'SELECT * FROM customers;',
       },
       {
         id: 'l01-t2',
-        hint: 'Таблица products. Вывести: все колонки всех строк (SELECT *). Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Нужен полный список товаров — каждая строка каталога со всеми колонками.',
         exampleSql: 'SELECT * FROM products;',
         checkSql: 'SELECT * FROM products;',
       },
       {
         id: 'l01-t3',
-        hint: 'Таблица orders. Вывести: все колонки всех строк (SELECT *). Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Покажи все заказы целиком — вся информация по каждому.',
         exampleSql: 'SELECT * FROM orders;',
         checkSql: 'SELECT * FROM orders;',
       },
       {
         id: 'l01-t4',
-        hint: 'Таблица order_items. Вывести: все колонки всех строк (SELECT *). Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Интересуют все строки заказов (позиции в корзине) — со всеми деталями по каждой.',
         exampleSql: 'SELECT * FROM order_items;',
         checkSql: 'SELECT * FROM order_items;',
       },
@@ -466,29 +466,29 @@ export const SQL_LESSONS = [
     id: 'l02',
     title: 'Выбор колонок',
     theory:
-      'Вместо * перечисляют нужные поля через запятую. В подсказке к заданию указаны колонки для вывода и что не нужно (WHERE, GROUP BY, ORDER BY). Имена полей — как в схеме таблицы.',
+      'Вместо * перечисляют только нужные поля через запятую. Имена полей — как в схеме таблицы на вкладках превью.',
     tasks: [
       {
         id: 'l02-t1',
-        hint: 'Таблица customers. Вывести колонки: full_name, email, city. Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Из покупателей мне достаточно ФИО, email и города — остальное не нужно.',
         exampleSql: 'SELECT full_name, email, city FROM customers;',
         checkSql: 'SELECT full_name, email, city FROM customers;',
       },
       {
         id: 'l02-t2',
-        hint: 'Таблица products. Вывести колонки: sku, name, price_cents. Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Для товаров хочу артикул, название и цену в центах.',
         exampleSql: 'SELECT sku, name, price_cents FROM products;',
         checkSql: 'SELECT sku, name, price_cents FROM products;',
       },
       {
         id: 'l02-t3',
-        hint: 'Таблица orders. Вывести колонки: id, order_date, status. Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'По заказам интересуют номер, дата и статус.',
         exampleSql: 'SELECT id, order_date, status FROM orders;',
         checkSql: 'SELECT id, order_date, status FROM orders;',
       },
       {
         id: 'l02-t4',
-        hint: 'Таблица order_items. Вывести колонки: order_id, product_id, quantity. Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'По позициям в заказах: к какому заказу относится строка, какой товар и сколько штук.',
         exampleSql: 'SELECT order_id, product_id, quantity FROM order_items;',
         checkSql: 'SELECT order_id, product_id, quantity FROM order_items;',
       },
@@ -498,31 +498,31 @@ export const SQL_LESSONS = [
     id: 'l03',
     title: 'WHERE: фильтр строк',
     theory:
-      'WHERE оставляет только строки, для которых условие истинно. Строковые значения из базы (категории, города, статусы) берите в кавычках точно как в данных: категории часто на русском («Электроника»), города в демо — латиницей (Berlin, Prague). Числа — без кавычек. Каждое задание ссылается на таблицу products, orders, customers или order_items.',
+      'WHERE оставляет только строки, для которых условие истинно. Строковые значения из базы (категории, города, статусы) — в кавычках точно как в данных: категории часто на русском («Электроника»), города в демо — латиницей (Berlin, Prague). Числа — без кавычек.',
     tasks: [
       {
         id: 'l03-t1',
-        hint: "Таблица products. Вывести: все колонки (*). Фильтр WHERE: category = 'Электроника'. Без GROUP BY, без ORDER BY.",
+        hint: "Нужны только товары из категории «Электроника» — по ним хочу полную строку из каталога.",
         exampleSql: "SELECT * FROM products WHERE category = 'Электроника';",
         checkSql:
           "SELECT * FROM products WHERE category = 'Электроника';",
       },
       {
         id: 'l03-t2',
-        hint: "Таблица orders. Вывести: все колонки (*). Фильтр WHERE: status = 'paid'. Без GROUP BY, без ORDER BY.",
+        hint: "Покажи заказы, которые уже оплачены (статус paid) — со всеми полями.",
         exampleSql: "SELECT * FROM orders WHERE status = 'paid';",
         checkSql: "SELECT * FROM orders WHERE status = 'paid';",
       },
       {
         id: 'l03-t3',
-        hint: "Таблица customers. Вывести колонки: full_name, email. Фильтр WHERE: city = 'Berlin'. Без GROUP BY, без ORDER BY.",
+        hint: "Кто из покупателей в Берлине — достаточно имени и email.",
         exampleSql: "SELECT full_name, email FROM customers WHERE city = 'Berlin';",
         checkSql:
           "SELECT full_name, email FROM customers WHERE city = 'Berlin';",
       },
       {
         id: 'l03-t4',
-        hint: 'Таблица order_items. Вывести: все колонки (*). Фильтр WHERE: quantity >= 3. Без GROUP BY, без ORDER BY.',
+        hint: 'Интересуют позиции заказов, где заказали 3 штуки или больше — полные строки.',
         exampleSql: 'SELECT * FROM order_items WHERE quantity >= 3;',
         checkSql: 'SELECT * FROM order_items WHERE quantity >= 3;',
       },
@@ -532,11 +532,11 @@ export const SQL_LESSONS = [
     id: 'l04',
     title: 'AND, OR и IN',
     theory:
-      'AND и OR объединяют условия. IN (список) удобен, когда поле должно быть одним из нескольких значений. В подсказках к заданиям указана нужная таблица.',
+      'AND и OR объединяют условия. IN (список) удобен, когда поле должно быть одним из нескольких значений.',
     tasks: [
       {
         id: 'l04-t1',
-        hint: "Таблица products. Вывести колонки: name, category. Фильтр WHERE: category IN ('Книги', 'Спорт'). Без GROUP BY, без ORDER BY.",
+        hint: "Нужны название и категория товаров, которые относятся к «Книги» или «Спорт».",
         exampleSql:
           "SELECT name, category FROM products WHERE category IN ('Книги', 'Спорт');",
         checkSql:
@@ -544,7 +544,7 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l04-t2',
-        hint: "Таблица orders. Вывести колонки: id, status. Фильтр WHERE: status IN ('pending', 'shipped') (допустим и эквивалент с OR). Без GROUP BY, без ORDER BY.",
+        hint: "Заказы в ожидании или уже отправленные (pending или shipped) — достаточно номера и статуса.",
         exampleSql:
           "SELECT id, status FROM orders WHERE status IN ('pending', 'shipped');",
         checkSql:
@@ -552,7 +552,7 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l04-t3',
-        hint: 'Таблица products: электроника дешевле 2000 руб (в центах: 200000).',
+        hint: 'Хочу электронику дешевле 2000 руб.: в базе цена в центах, значит меньше 200000.',
         exampleSql:
           "SELECT name, price_cents FROM products WHERE category = 'Электроника' AND price_cents < 200000;",
         checkSql:
@@ -560,7 +560,7 @@ export const SQL_LESSONS = [
       },
       {
         id: 'l04-t4',
-        hint: "Таблица customers. Вывести колонки: full_name, city. Фильтр WHERE: city IN ('Prague', 'Lisbon'). Без GROUP BY, без ORDER BY.",
+        hint: "Покупатели из Праги или Лиссабона — имя и город.",
         exampleSql:
           "SELECT full_name, city FROM customers WHERE city IN ('Prague', 'Lisbon');",
         checkSql:
@@ -572,29 +572,29 @@ export const SQL_LESSONS = [
     id: 'l05',
     title: 'ORDER BY и LIMIT',
     theory:
-      'ORDER BY сортирует строки (ASC по умолчанию, DESC — по убыванию). LIMIT n ограничивает число строк. Сначала ORDER BY, потом LIMIT. Таблица в каждом задании названа явно. Для «топа» или «первых N» в условии всегда нужны и сортировка, и LIMIT — иначе СУБД вернёт произвольное подмножество строк.',
+      'ORDER BY сортирует строки (ASC по умолчанию, DESC — по убыванию). LIMIT n ограничивает число строк. Сначала ORDER BY, потом LIMIT. Для «топа» или «первых N» обычно нужны и сортировка, и LIMIT — иначе набор строк может быть произвольным.',
     tasks: [
       {
         id: 'l05-t1',
-        hint: 'Таблица products: три самых дорогих товара по price_cents. Нужны ORDER BY price_cents DESC и LIMIT 3.',
+        hint: 'Какие три самых дорогих товара в каталоге (по цене в центах)?',
         exampleSql: 'SELECT name, price_cents FROM products ORDER BY price_cents DESC LIMIT 3;',
         checkSql: 'SELECT name, price_cents FROM products ORDER BY price_cents DESC LIMIT 3;',
       },
       {
         id: 'l05-t2',
-        hint: 'Таблица customers. Вывести колонку: full_name. Сортировка: ORDER BY full_name ASC (по алфавиту). Лимит: LIMIT 5. Без WHERE, без GROUP BY.',
+        hint: 'Пять имён покупателей в алфавитном порядке (первые пять после сортировки по имени).',
         exampleSql: 'SELECT full_name FROM customers ORDER BY full_name LIMIT 5;',
         checkSql: 'SELECT full_name FROM customers ORDER BY full_name LIMIT 5;',
       },
       {
         id: 'l05-t3',
-        hint: 'Таблица orders. Вывести колонки: id, order_date, total_cents. Сортировка: ORDER BY order_date DESC (сначала самые поздние даты). Лимит: LIMIT 3. Без WHERE, без GROUP BY.',
+        hint: 'Три самых «свежих» заказа по дате — номер, дата и сумма.',
         exampleSql: 'SELECT id, order_date, total_cents FROM orders ORDER BY order_date DESC LIMIT 3;',
         checkSql: 'SELECT id, order_date, total_cents FROM orders ORDER BY order_date DESC LIMIT 3;',
       },
       {
         id: 'l05-t4',
-        hint: 'Таблица order_items. Вывести колонки: id, order_id, line_total_cents. Сортировка: ORDER BY line_total_cents DESC. Лимит: LIMIT 2. Без WHERE, без GROUP BY.',
+        hint: 'Две позиции в заказах с наибольшей суммой строки (в центах) — id строки, заказ и сумма.',
         exampleSql:
           'SELECT id, order_id, line_total_cents FROM order_items ORDER BY line_total_cents DESC LIMIT 2;',
         checkSql:
@@ -606,11 +606,11 @@ export const SQL_LESSONS = [
     id: 'l06',
     title: 'JOIN: заказы и покупатели',
     theory:
-      'INNER JOIN связывает строки двух таблиц по условию в ON, например: FROM orders o JOIN customers c ON c.id = o.customer_id. Задания используют только orders и customers.',
+      'INNER JOIN связывает строки двух таблиц по условию в ON, например: FROM orders o JOIN customers c ON c.id = o.customer_id.',
     tasks: [
       {
         id: 'l06-t1',
-        hint: 'Таблицы orders и customers. Вывести колонки: id заказа, order_date, full_name покупателя (например o.id, o.order_date, c.full_name). JOIN: customers.id = orders.customer_id. Все строки заказов. Без GROUP BY, без ORDER BY.',
+        hint: 'По каждому заказу хочу видеть номер заказа, дату и ФИО покупателя (данные нужно связать).',
         exampleSql: `SELECT o.id, o.order_date, c.full_name
 FROM orders o
 JOIN customers c ON c.id = o.customer_id;`,
@@ -620,13 +620,13 @@ JOIN customers c ON c.id = o.customer_id;`,
       },
       {
         id: 'l06-t2',
-        hint: 'Таблица orders. Вывести колонки: order_date, total_cents. Фильтр WHERE: customer_id = 1. Без JOIN (достаточно одной таблицы), без GROUP BY, без ORDER BY.',
+        hint: 'Все заказы покупателя с id 1 — даты и суммы (достаточно одной таблицы заказов).',
         exampleSql: `SELECT order_date, total_cents FROM orders WHERE customer_id = 1;`,
         checkSql: `SELECT order_date, total_cents FROM orders WHERE customer_id = 1;`,
       },
       {
         id: 'l06-t3',
-        hint: 'Таблицы orders и customers. Вывести колонки: full_name покупателя, total_cents заказа. JOIN: customers.id = orders.customer_id. Фильтр WHERE: orders.id = 5. Без GROUP BY, без ORDER BY.',
+        hint: 'По заказу №5: кто покупатель (ФИО) и на какую сумму оформлен заказ.',
         exampleSql: `SELECT c.full_name, o.total_cents
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -638,7 +638,7 @@ WHERE o.id = 5;`,
       },
       {
         id: 'l06-t4',
-        hint: "Таблица orders. Вывести одну строку: число заказов (COUNT(*), можно алиас cnt). Фильтр WHERE: status = 'paid'. Без GROUP BY, без ORDER BY.",
+        hint: "Сколько всего оплаченных заказов (статус paid)? Нужно одно число в результате.",
         exampleSql: "SELECT COUNT(*) AS cnt FROM orders WHERE status = 'paid';",
         checkSql: "SELECT COUNT(*) AS cnt FROM orders WHERE status = 'paid';",
       },
@@ -648,11 +648,11 @@ WHERE o.id = 5;`,
     id: 'l07',
     title: 'JOIN: позиции и товары',
     theory:
-      'Связываем order_items с products по order_items.product_id = products.id (JOIN ... ON p.id = oi.product_id). Задание l07-t4 — только таблица order_items, без JOIN к products.',
+      'Связываем позиции заказа с товарами по product_id. В одном задании достаточно только order_items.',
     tasks: [
       {
         id: 'l07-t1',
-        hint: 'Таблицы order_items и products. Вывести колонки: name товара, quantity (например p.name, oi.quantity). JOIN: products.id = order_items.product_id. Все строки order_items. Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'По каждой строке заказа хочу название товара и сколько штук заказали.',
         exampleSql: `SELECT p.name, oi.quantity
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id;`,
@@ -662,7 +662,7 @@ JOIN products p ON p.id = oi.product_id;`,
       },
       {
         id: 'l07-t2',
-        hint: 'Таблицы order_items и products. Вывести колонки: sku, line_total_cents. JOIN: products.id = order_items.product_id. Фильтр WHERE: order_items.order_id = 3. Без GROUP BY, без ORDER BY.',
+        hint: 'В заказе №3 — артикулы товаров и сумма по каждой строке позиции.',
         exampleSql: `SELECT p.sku, oi.line_total_cents
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
@@ -674,7 +674,7 @@ WHERE oi.order_id = 3;`,
       },
       {
         id: 'l07-t3',
-        hint: 'Таблицы order_items и products. Вывести колонки: category товара, line_total_cents позиции. JOIN: products.id = order_items.product_id. Фильтр WHERE: order_items.id = 7. Без GROUP BY, без ORDER BY.',
+        hint: 'По строке позиции с id 7: категория товара и сумма этой строки.',
         exampleSql: `SELECT p.category, oi.line_total_cents
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
@@ -686,7 +686,7 @@ WHERE oi.id = 7;`,
       },
       {
         id: 'l07-t4',
-        hint: 'Таблица order_items. Вывести колонки: order_id, quantity. Фильтр WHERE: product_id = 2. Без JOIN, без GROUP BY, без ORDER BY.',
+        hint: 'Где в заказах встречается товар с product_id = 2 — номер заказа и количество (без join к каталогу).',
         exampleSql:
           'SELECT order_id, quantity FROM order_items WHERE product_id = 2;',
         checkSql: 'SELECT order_id, quantity FROM order_items WHERE product_id = 2;',
@@ -697,11 +697,11 @@ WHERE oi.id = 7;`,
     id: 'l08',
     title: 'Несколько таблиц',
     theory:
-      'Цепочка JOIN: order_items → orders → customers и order_items → products. В заданиях перечислены нужные таблицы.',
+      'Цепочка JOIN: позиции заказа → заказы → покупатели и позиции → товары.',
     tasks: [
       {
         id: 'l08-t1',
-        hint: 'Таблицы order_items, orders, customers, products. Вывести колонки: full_name покупателя, name товара. JOIN: order_items.order_id = orders.id, orders.customer_id = customers.id, order_items.product_id = products.id. Фильтр WHERE: order_items.order_id = 1. Без GROUP BY, без ORDER BY.',
+        hint: 'Для заказа №1: ФИО покупателя и название каждого товара в позициях этого заказа.',
         exampleSql: `SELECT c.full_name, p.name
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
@@ -717,7 +717,7 @@ WHERE oi.order_id = 1;`,
       },
       {
         id: 'l08-t2',
-        hint: 'Таблицы orders и customers. Вывести колонки: email покупателя, total_cents заказа. JOIN: customers.id = orders.customer_id. Фильтр WHERE: orders.id = 4. Без GROUP BY, без ORDER BY.',
+        hint: 'По заказу №4: email покупателя и сумма заказа.',
         exampleSql: `SELECT c.email, o.total_cents
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -729,7 +729,7 @@ WHERE o.id = 4;`,
       },
       {
         id: 'l08-t3',
-        hint: 'Таблицы order_items, orders, products. Вывести колонки: order_date (из orders), sku (из products), quantity (из order_items). JOIN: order_items.order_id = orders.id, order_items.product_id = products.id. Все строки order_items. Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'По всем позициям в заказах: дата заказа, артикул товара и заказанное количество.',
         exampleSql: `SELECT o.order_date, p.sku, oi.quantity
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
@@ -741,7 +741,7 @@ JOIN products p ON p.id = oi.product_id;`,
       },
       {
         id: 'l08-t4',
-        hint: 'Таблицы order_items, orders, customers. Вывести колонки: city покупателя, status заказа. JOIN: order_items.order_id = orders.id, orders.customer_id = customers.id. Фильтр WHERE: order_items.id = 10. Без GROUP BY, без ORDER BY.',
+        hint: 'По строке позиции с id 10: город покупателя и статус заказа.',
         exampleSql: `SELECT c.city, o.status
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
@@ -759,29 +759,29 @@ WHERE oi.id = 10;`,
     id: 'l09',
     title: 'COUNT и GROUP BY',
     theory:
-      'COUNT(*) считает строки в группе. GROUP BY задаёт поле группировки. Обычно в SELECT идут то же поле (или поля), по которым группируете, и COUNT(*) — вторую колонку удобно назвать алиасом (например cnt). Каждое задание указывает таблицу: products, orders, customers или order_items.',
+      'COUNT(*) считает строки в группе. GROUP BY задаёт поле группировки. Вторую колонку с числом удобно назвать алиасом (например cnt).',
     tasks: [
       {
         id: 'l09-t1',
-        hint: 'Таблица products: сколько товаров в каждой category.',
+        hint: 'Сколько товаров в каждой категории?',
         exampleSql: `SELECT category, COUNT(*) AS cnt FROM products GROUP BY category;`,
         checkSql: `SELECT category, COUNT(*) AS cnt FROM products GROUP BY category;`,
       },
       {
         id: 'l09-t2',
-        hint: 'Таблица orders. Вывести колонки: status, COUNT(*) (алиас cnt). Группировка: GROUP BY status. Без WHERE, без HAVING, без ORDER BY.',
+        hint: 'Сколько заказов в каждом статусе?',
         exampleSql: `SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status;`,
         checkSql: `SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status;`,
       },
       {
         id: 'l09-t3',
-        hint: 'Таблица customers. Вывести колонки: city, COUNT(*) (алиас cnt). Группировка: GROUP BY city. Без WHERE, без HAVING, без ORDER BY.',
+        hint: 'Сколько покупателей приходится на каждый город?',
         exampleSql: `SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city;`,
         checkSql: `SELECT city, COUNT(*) AS cnt FROM customers GROUP BY city;`,
       },
       {
         id: 'l09-t4',
-        hint: 'Таблица order_items. Вывести колонки: order_id, COUNT(*) (алиас cnt). Группировка: GROUP BY order_id. Без WHERE, без HAVING, без ORDER BY.',
+        hint: 'Сколько строк позиций в каждом заказе (по order_id)?',
         exampleSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id;`,
         checkSql: `SELECT order_id, COUNT(*) AS cnt FROM order_items GROUP BY order_id;`,
       },
@@ -791,11 +791,11 @@ WHERE oi.id = 10;`,
     id: 'l10',
     title: 'HAVING',
     theory:
-      'HAVING фильтрует группы после GROUP BY (в отличие от WHERE, который фильтрует строки до группировки). Задания используют customers, products или order_items.',
+      'HAVING фильтрует группы после GROUP BY (в отличие от WHERE, который отбирает строки до группировки).',
     tasks: [
       {
         id: 'l10-t1',
-        hint: 'Таблица customers. Вывести колонки: city, COUNT(*) (алиас cnt). Группировка: GROUP BY city. Отбор групп: HAVING COUNT(*) > 1. Без ORDER BY.',
+        hint: 'Города, где зарегистрировано больше одного покупателя, и сколько в каждом таком городе.',
         exampleSql: `SELECT city, COUNT(*) AS cnt
 FROM customers
 GROUP BY city
@@ -807,7 +807,7 @@ HAVING COUNT(*) > 1;`,
       },
       {
         id: 'l10-t2',
-        hint: 'Таблица products. Вывести колонки: category, COUNT(*) (алиас cnt). Группировка: GROUP BY category. Отбор групп: HAVING COUNT(*) > 2. Без ORDER BY.',
+        hint: 'Категории, в которых больше двух товаров, и сколько товаров в каждой из них.',
         exampleSql: `SELECT category, COUNT(*) AS cnt
 FROM products
 GROUP BY category
@@ -819,7 +819,7 @@ HAVING COUNT(*) > 2;`,
       },
       {
         id: 'l10-t3',
-        hint: 'Таблица order_items. Вывести колонки: order_id, COUNT(*) (алиас cnt). Группировка: GROUP BY order_id. Отбор групп: HAVING COUNT(*) > 1. Без ORDER BY.',
+        hint: 'Заказы, в которых больше одной строки позиции, и сколько строк в каждом таком заказе.',
         exampleSql: `SELECT order_id, COUNT(*) AS cnt
 FROM order_items
 GROUP BY order_id
@@ -835,23 +835,23 @@ HAVING COUNT(*) > 1;`,
     id: 'l11',
     title: 'DISTINCT',
     theory:
-      'DISTINCT убирает дубликаты строк в результате. В подсказках указано: customers, orders или products.',
+      'DISTINCT убирает дубликаты строк в результате.',
     tasks: [
       {
         id: 'l11-t1',
-        hint: 'Таблица customers. Вывести уникальные значения колонки city (SELECT DISTINCT city). Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Список городов, откуда у нас покупатели, без повторов.',
         exampleSql: 'SELECT DISTINCT city FROM customers;',
         checkSql: 'SELECT DISTINCT city FROM customers;',
       },
       {
         id: 'l11-t2',
-        hint: 'Таблица orders: уникальные status; порядок строк не важен.',
+        hint: 'Какие вообще встречаются статусы заказов — каждый статус один раз.',
         exampleSql: 'SELECT DISTINCT status FROM orders;',
         checkSql: 'SELECT DISTINCT status FROM orders;',
       },
       {
         id: 'l11-t3',
-        hint: 'Таблица products. Вывести уникальные пары колонок category, name (SELECT DISTINCT) при фильтре WHERE price_cents > 50000. Без GROUP BY, без ORDER BY.',
+        hint: 'Среди товаров дороже 50 000 копеек — уникальные пары «категория + название».',
         exampleSql: `SELECT DISTINCT category, name FROM products WHERE price_cents > 50000;`,
         checkSql: `SELECT DISTINCT category, name FROM products WHERE price_cents > 50000;`,
       },
@@ -861,23 +861,23 @@ HAVING COUNT(*) > 1;`,
     id: 'l12',
     title: 'LIKE',
     theory:
-      'LIKE сопоставляет строки с шаблоном: % — любая последовательность символов, _ — один символ. Задания по таблицам products и customers.',
+      'LIKE сопоставляет строки с шаблоном: % — любая последовательность символов, _ — один символ.',
     tasks: [
       {
         id: 'l12-t1',
-        hint: "Таблица products. Вывести колонку: name. Фильтр WHERE: name LIKE '%Bluetooth%'. Без GROUP BY, без ORDER BY.",
+        hint: "Товары, в названии которых встречается «Bluetooth» — достаточно названия.",
         exampleSql: "SELECT name FROM products WHERE name LIKE '%Bluetooth%';",
         checkSql: "SELECT name FROM products WHERE name LIKE '%Bluetooth%';",
       },
       {
         id: 'l12-t2',
-        hint: "Таблица customers. Вывести колонку: email. Фильтр WHERE: email LIKE 'user1%'. Без GROUP BY, без ORDER BY.",
+        hint: "Email покупателей, которые начинаются на «user1».",
         exampleSql: "SELECT email FROM customers WHERE email LIKE 'user1%';",
         checkSql: "SELECT email FROM customers WHERE email LIKE 'user1%';",
       },
       {
         id: 'l12-t3',
-        hint: "Таблица products. Вывести колонку: sku. Фильтр WHERE: sku LIKE '__U%' (третий символ U). Без GROUP BY, без ORDER BY.",
+        hint: "Артикулы, у которых на третьей позиции буква U (как в эталонном шаблоне).",
         exampleSql: "SELECT sku FROM products WHERE sku LIKE '__U%';",
         checkSql: "SELECT sku FROM products WHERE sku LIKE '__U%';",
       },
@@ -887,23 +887,23 @@ HAVING COUNT(*) > 1;`,
     id: 'l13',
     title: 'Даты и сравнения',
     theory:
-      'Даты в формате ISO (YYYY-MM-DD) можно сравнивать как строки — лексикографический порядок совпадает с хронологическим. Для «в году» или «в месяце» допустимы сравнение >= / <= или шаблон LIKE (например дата начинается с 2024-). Задания: orders и customers.',
+      'Даты в формате ISO (YYYY-MM-DD) можно сравнивать как строки — лексикографический порядок совпадает с хронологическим. Для «в году» или «в месяце» допустимы сравнение >= / <= или шаблон LIKE.',
     tasks: [
       {
         id: 'l13-t1',
-        hint: "Таблица orders. Вывести колонки: id, order_date. Фильтр WHERE: order_date >= '2025-06-01'. Без GROUP BY, без ORDER BY.",
+        hint: "Заказы не раньше 1 июня 2025 — номер и дата.",
         exampleSql: "SELECT id, order_date FROM orders WHERE order_date >= '2025-06-01';",
         checkSql: "SELECT id, order_date FROM orders WHERE order_date >= '2025-06-01';",
       },
       {
         id: 'l13-t2',
-        hint: "Таблица customers. Вывести колонки: full_name, signup_date. Фильтр WHERE: signup_date LIKE '2024-%'. Без GROUP BY, без ORDER BY.",
+        hint: "Покупатели, зарегистрированные в 2024 году — имя и дата регистрации.",
         exampleSql: "SELECT full_name, signup_date FROM customers WHERE signup_date LIKE '2024-%';",
         checkSql: "SELECT full_name, signup_date FROM customers WHERE signup_date LIKE '2024-%';",
       },
       {
         id: 'l13-t3',
-        hint: "Таблица orders. Вывести колонки: id, order_date, total_cents. Фильтр WHERE: order_date LIKE '2025-03-%'. Без GROUP BY, без ORDER BY.",
+        hint: "Заказы за март 2025 — номер, дата и сумма.",
         exampleSql: "SELECT id, order_date, total_cents FROM orders WHERE order_date LIKE '2025-03-%';",
         checkSql: "SELECT id, order_date, total_cents FROM orders WHERE order_date LIKE '2025-03-%';",
       },
@@ -913,11 +913,11 @@ HAVING COUNT(*) > 1;`,
     id: 'l14',
     title: 'Подзапрос',
     theory:
-      'Подзапрос в скобках возвращает набор значений или одно значение; часто используется с IN. Задания: products, orders + customers, order_items + products.',
+      'Подзапрос в скобках возвращает набор значений или одно значение; часто используется с IN.',
     tasks: [
       {
         id: 'l14-t1',
-        hint: 'Таблица products. Вывести колонки: name, price_cents. Фильтр WHERE: price_cents > (SELECT AVG(price_cents) FROM products). Без GROUP BY, без ORDER BY.',
+        hint: 'Товары дороже средней цены по всему каталогу — название и цена.',
         exampleSql: `SELECT name, price_cents FROM products
 WHERE price_cents > (SELECT AVG(price_cents) FROM products);`,
         checkSql: `SELECT name, price_cents FROM products
@@ -925,7 +925,7 @@ WHERE price_cents > (SELECT AVG(price_cents) FROM products);`,
       },
       {
         id: 'l14-t2',
-        hint: "Таблица orders. Вывести колонки: id, order_date. Фильтр WHERE: customer_id IN (SELECT id FROM customers WHERE city = 'Berlin'). Без GROUP BY, без ORDER BY.",
+        hint: "Заказы только тех покупателей, кто из Берлина — номер и дата.",
         exampleSql: `SELECT id, order_date FROM orders
 WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin');`,
         checkSql: `SELECT id, order_date FROM orders
@@ -933,7 +933,7 @@ WHERE customer_id IN (SELECT id FROM customers WHERE city = 'Berlin');`,
       },
       {
         id: 'l14-t3',
-        hint: "Таблица order_items (без JOIN к products во внешнем запросе). Вывести колонки: id позиции, quantity. Фильтр WHERE: product_id IN (SELECT id FROM products WHERE category = 'Дом'). Без GROUP BY, без ORDER BY.",
+        hint: "Строки заказов только по товарам категории «Дом» — id позиции и количество (во внешнем запросе без join к каталогу).",
         exampleSql: `SELECT oi.id, oi.quantity FROM order_items oi
 WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом');`,
         checkSql: `SELECT oi.id, oi.quantity FROM order_items oi
@@ -945,11 +945,11 @@ WHERE oi.product_id IN (SELECT id FROM products WHERE category = 'Дом');`,
     id: 'l15',
     title: 'Агрегаты и JOIN',
     theory:
-      'Суммы и средние по группам: SUM, AVG, JOIN orders с customers или order_items с products, затем GROUP BY. Для «топа по сумме» после группировки нужны ORDER BY по агрегату и LIMIT. В подсказках перечислены таблицы.',
+      'Суммы и средние по группам: SUM, AVG, при необходимости JOIN, затем GROUP BY. Для рейтинга по сумме обычно сортируют по агрегату и ограничивают LIMIT.',
     tasks: [
       {
         id: 'l15-t1',
-        hint: 'Таблица order_items. Вывести колонки: order_id, SUM(line_total_cents) (алиас sum_lines). Группировка: GROUP BY order_id. Без WHERE, без HAVING, без ORDER BY.',
+        hint: 'Хочу по каждому заказу общую сумму по строкам позиций (в центах), сгруппировать по заказу; порядок строк в ответе не важен. Колонку с суммой назовите sum_lines, как в эталоне.',
         exampleSql: `SELECT order_id, SUM(line_total_cents) AS sum_lines
 FROM order_items
 GROUP BY order_id;`,
@@ -959,7 +959,7 @@ GROUP BY order_id;`,
       },
       {
         id: 'l15-t2',
-        hint: 'Таблицы orders и customers. Вывести колонки: full_name, сумма total_cents по заказам (SUM, алиас spent). JOIN: customers.id = orders.customer_id. Группировка: GROUP BY customers.id, full_name. Сортировка: ORDER BY spent DESC. Лимит: LIMIT 8.',
+        hint: 'Кто сколько всего потратил по суммам своих заказов — топ-8 покупателей по убыванию суммы (алиас spent).',
         exampleSql: `SELECT c.full_name, SUM(o.total_cents) AS spent
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -975,7 +975,7 @@ LIMIT 8;`,
       },
       {
         id: 'l15-t3',
-        hint: 'Таблицы order_items и products. Вывести колонки: category, SUM(quantity) (алиас units). JOIN: products.id = order_items.product_id. Группировка: GROUP BY p.category. Без WHERE, без HAVING, без ORDER BY.',
+        hint: 'Сколько единиц товара продано в разрезе категорий (сумма quantity по категории, алиас units).',
         exampleSql: `SELECT p.category, SUM(oi.quantity) AS units
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
@@ -987,7 +987,7 @@ GROUP BY p.category;`,
       },
       {
         id: 'l15-t4',
-        hint: "Таблица orders. Вывести одну строку: AVG(total_cents) (алиас avg_total). Фильтр WHERE: status = 'paid'. Без GROUP BY, без ORDER BY.",
+        hint: "Средняя сумма заказа среди оплаченных (статус paid) — одно число, алиас avg_total.",
         exampleSql: "SELECT AVG(total_cents) AS avg_total FROM orders WHERE status = 'paid';",
         checkSql: "SELECT AVG(total_cents) AS avg_total FROM orders WHERE status = 'paid';",
       },
@@ -1001,7 +1001,7 @@ GROUP BY p.category;`,
     tasks: [
       {
         id: 'l16-t1',
-        hint: "Таблицы orders и customers. Вывести колонки: full_name, order_date, total_cents. JOIN: customers.id = orders.customer_id. Фильтр WHERE: orders.status = 'shipped'. Без GROUP BY, без ORDER BY.",
+        hint: "Отправленные заказы (shipped): ФИО покупателя, дата заказа и сумма.",
         exampleSql: `SELECT c.full_name, o.order_date, o.total_cents
 FROM orders o
 JOIN customers c ON c.id = o.customer_id
@@ -1013,7 +1013,7 @@ WHERE o.status = 'shipped';`,
       },
       {
         id: 'l16-t2',
-        hint: 'Таблицы order_items и products. Вывести колонки: name товара, SUM(line_total_cents) (алиас revenue). JOIN: products.id = order_items.product_id. Группировка: GROUP BY id товара и name (как в эталоне: p.id, p.name). Сортировка: ORDER BY revenue DESC. Лимит: LIMIT 5.',
+        hint: 'Пять товаров с наибольшей выручкой по суммам строк позиций (алиас revenue; группировка по товару как в эталоне).',
         exampleSql: `SELECT p.name, SUM(oi.line_total_cents) AS revenue
 FROM order_items oi
 JOIN products p ON p.id = oi.product_id
@@ -1029,7 +1029,7 @@ LIMIT 5;`,
       },
       {
         id: 'l16-t3',
-        hint: 'Таблицы customers и orders. Вывести колонки: full_name, COUNT(o.id) (алиас order_cnt). JOIN: orders.customer_id = customers.id. Группировка: GROUP BY customers.id, full_name. Отбор групп: HAVING COUNT(o.id) > 1. Без ORDER BY.',
+        hint: 'Покупатели, у которых больше одного заказа, и сколько у каждого заказов (алиас order_cnt).',
         exampleSql: `SELECT c.full_name, COUNT(o.id) AS order_cnt
 FROM customers c
 JOIN orders o ON o.customer_id = c.id
@@ -1043,7 +1043,7 @@ HAVING COUNT(o.id) > 1;`,
       },
       {
         id: 'l16-t4',
-        hint: 'Таблица order_items. Вывести одну строку с двумя числами: COUNT(*) и COUNT(DISTINCT product_id) (алиасы positions и unique_products по желанию). Без WHERE, без GROUP BY, без ORDER BY.',
+        hint: 'Сколько всего строк позиций в заказах и сколько разных товаров среди них (два числа в одной строке; алиасы как в эталоне).',
         exampleSql: `SELECT COUNT(*) AS positions, COUNT(DISTINCT product_id) AS unique_products FROM order_items;`,
         checkSql: `SELECT COUNT(*) AS positions, COUNT(DISTINCT product_id) AS unique_products FROM order_items;`,
       },

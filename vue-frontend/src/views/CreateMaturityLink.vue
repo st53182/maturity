@@ -6,16 +6,28 @@
       <input v-model="teamName" type="text" class="team-input" :placeholder="$t('survey.teamName')" />
       <label>{{ $t('maturity.streamGroupOptional') }}</label>
       <input v-model="groupName" type="text" class="team-input" :placeholder="$t('maturity.streamGroupPlaceholder')" />
+      <label class="check-row">
+        <input v-model="withTeamSelfLink" type="checkbox" />
+        <span>{{ $t('maturity.withTeamSelfLink') }}</span>
+      </label>
       <button type="button" class="btn-create" :disabled="creating" @click="createLink">
         {{ creating ? $t('maturity.creatingShort') : $t('maturity.create') }}
       </button>
     </div>
     <div v-else class="result-block">
       <p class="success-msg">{{ $t('maturity.linkCreated') }}</p>
+      <p class="url-label">{{ $t('maturity.createLink') }}</p>
       <div class="url-row">
         <input :value="createdUrl" readonly class="url-input" />
         <button type="button" class="btn-copy" @click="copyLink">{{ $t('maturity.copyLink') }}</button>
       </div>
+      <template v-if="createdTeamUrl">
+        <p class="url-label">{{ $t('maturity.teamLinkLabel') }}</p>
+        <div class="url-row">
+          <input :value="createdTeamUrl" readonly class="url-input" />
+          <button type="button" class="btn-copy" @click="copyTeamLink">{{ $t('maturity.copyLink') }}</button>
+        </div>
+      </template>
       <router-link :to="`${maturityPathPrefix}/${token}`" class="btn-start">{{ $t('maturity.startAssessment') }}</router-link>
     </div>
   </div>
@@ -38,25 +50,35 @@ export default {
     return {
       teamName: '',
       groupName: '',
+      withTeamSelfLink: false,
       creating: false,
       token: '',
-      createdUrl: ''
+      createdUrl: '',
+      createdTeamUrl: ''
     };
   },
   methods: {
     async createLink() {
       if (this.creating) return;
+      if (this.withTeamSelfLink && !localStorage.getItem('token')) {
+        alert(this.$t('maturity.needLoginTeamLink'));
+        return;
+      }
       this.creating = true;
       try {
         const res = await axios.post('/api/maturity-link', {
           team_name: this.teamName || null,
-          group_name: this.groupName || null
+          group_name: this.groupName || null,
+          with_team_self_link: this.withTeamSelfLink
         }, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.token = res.data.token;
         const base = window.location.origin;
         this.createdUrl = `${base}${this.maturityPathPrefix}/${this.token}`;
+        this.createdTeamUrl = res.data.team_url
+          ? `${base}/new/maturity/team/${res.data.team_token}`
+          : '';
       } catch (e) {
         alert(e.response?.data?.error || this.$t('maturity.linkCreateError'));
       } finally {
@@ -65,6 +87,12 @@ export default {
     },
     copyLink() {
       navigator.clipboard.writeText(this.createdUrl).then(() => {
+        alert(this.$t('maturity.copyLink') + ' — ' + this.$t('maturity.copyLinkDone'));
+      }).catch(() => {});
+    },
+    copyTeamLink() {
+      if (!this.createdTeamUrl) return;
+      navigator.clipboard.writeText(this.createdTeamUrl).then(() => {
         alert(this.$t('maturity.copyLink') + ' — ' + this.$t('maturity.copyLinkDone'));
       }).catch(() => {});
     }
@@ -83,6 +111,17 @@ export default {
 .create-maturity h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
 
 .form-block label { display: block; margin-bottom: 0.5rem; color: #374151; }
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.4;
+}
+.check-row input { margin-top: 0.2rem; }
+.url-label { font-size: 0.85rem; color: #6b7280; margin: 0.75rem 0 0.35rem; }
 .team-input {
   width: 100%;
   padding: 0.75rem 1rem;

@@ -10,10 +10,11 @@ from collections import defaultdict
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
-from sqlalchemy import inspect, text
+from flask_jwt_extended.exceptions import NoAuthorizationError
+from sqlalchemy import inspect, text, func
 
 from database import db
-from models import MaturityLinkSession, MaturityGroupPlan, User
+from models import MaturityLinkSession, MaturityGroupPlan, MaturityTeamSelfSubmission, User
 from maturity_questions import (
     MATURITY_QUESTIONS,
     RADAR_GROUPS,
@@ -332,6 +333,62 @@ def _results_from_answers(answers):
     return results
 
 
+def _results_from_question_scores(scores_by_question):
+    """Те же оси радара, что у менеджера; scores_by_question — N значений 0..1 (уже усреднённые по команде)."""
+    if not scores_by_question or len(scores_by_question) != QUESTIONS_COUNT:
+        return {}
+    results = {}
+    for theme, indices in THEME_INDICES.items():
+        results[theme] = {}
+        for sub_one_based, q_idx in enumerate(indices[:QUESTIONS_PER_THEME], 1):
+            results[theme][str(sub_one_based)] = float(scores_by_question[q_idx])
+    return results
+
+
+def _resolve_maturity_session_by_any_token(token):
+    """Менеджерский access_token или командный team_access_token (для метрик, clarify и т.п.)."""
+    if not token or not str(token).strip():
+        return None
+    t = str(token).strip()
+    s = MaturityLinkSession.query.filter_by(access_token=t).first()
+    if s:
+        return s
+    return MaturityLinkSession.query.filter_by(team_access_token=t).first()
+
+
+def _team_comparison_payload(session):
+    """Сводка для графика: результаты менеджера (если завершил) и среднее по командным анкетам."""
+    manager_results = None
+    if session.completed_at:
+        raw_ans, _ = _extract_answers_and_comments(session.answers)
+        row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
+        if row:
+            manager_results = _results_from_answers(row)
+    subs = MaturityTeamSelfSubmission.query.filter_by(session_id=session.id).all()
+    valid_rows = []
+    for sub in subs:
+        raw_ans, _ = _extract_answers_and_comments(sub.answers)
+        row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
+        if row:
+            valid_rows.append(row)
+    n = len(valid_rows)
+    team_results = None
+    if n > 0:
+        sums = [0.0] * QUESTIONS_COUNT
+        for row in valid_rows:
+            for i, a in enumerate(row):
+                sums[i] += float(MATURITY_ANSWER_SCORE.get(a, 0.0))
+        avgs = [sums[i] / n for i in range(QUESTIONS_COUNT)]
+        team_results = _results_from_question_scores(avgs)
+    return {
+        'submission_count': n,
+        'manager_results': manager_results,
+        'team_results': team_results,
+        'radar_groups': RADAR_GROUPS,
+        'has_team_self_link': bool(getattr(session, 'team_access_token', None)),
+    }
+
+
 def _repair_truncated_json(text: str) -> str:
     """Close unclosed brackets/braces in truncated JSON from the LLM."""
     open_braces = 0
@@ -552,7 +609,24 @@ def _ensure_maturity_link_session_columns():
         columns = {c["name"] for c in inspector.get_columns("maturity_link_session")}
         if "group_name" not in columns:
             db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN group_name VARCHAR(255)"))
+        if "team_access_token" not in columns:
+            db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN team_access_token VARCHAR(36)"))
+        if "created_by_user_id" not in columns:
+            db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN created_by_user_id INTEGER"))
         db.session.commit()
+        inspector = inspect(db.engine)
+        idx_names = {i["name"] for i in inspector.get_indexes("maturity_link_session")}
+        if "ix_maturity_link_session_team_access_token" not in idx_names:
+            try:
+                db.session.execute(
+                    text(
+                        "CREATE UNIQUE INDEX ix_maturity_link_session_team_access_token "
+                        "ON maturity_link_session (team_access_token)"
+                    )
+                )
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
     except Exception:
         db.session.rollback()
 
@@ -583,8 +657,7 @@ def _normalize_comments_list(comments):
 def _metrics_tree_access_allowed(survey_token=None):
     token = (survey_token or "").strip()
     if token:
-        session = MaturityLinkSession.query.filter_by(access_token=token).first()
-        if session:
+        if _resolve_maturity_session_by_any_token(token):
             return True
     try:
         verify_jwt_in_request(optional=True)
@@ -597,22 +670,130 @@ def _metrics_tree_access_allowed(survey_token=None):
 @maturity_bp.route('/api/maturity-link', methods=['POST'])
 @jwt_required(optional=True)
 def create_maturity_link():
-    """Создать сессию оценки по ссылке. Тело: { "team_name": "опционально" }. Возвращает token и url."""
+    """Создать сессию оценки по ссылке. Тело: team_name, group_name, with_team_self_link (нужен JWT)."""
     _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
     data = request.get_json() or {}
     team_name = data.get('team_name', '').strip() or None
     group_name = _normalize_group_name(data.get('group_name'))
+    with_team_self_link = bool(data.get('with_team_self_link'))
+    created_by_user_id = None
+    team_access_token = None
+    if with_team_self_link:
+        try:
+            verify_jwt_in_request(optional=False)
+        except NoAuthorizationError:
+            return jsonify({
+                'error': 'Войдите в систему, чтобы включить дополнительную ссылку для самооценки команды',
+            }), 400
+        except Exception:
+            return jsonify({'error': 'Недействительный токен авторизации'}), 401
+        uid = get_jwt_identity()
+        try:
+            uid = int(uid)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Некорректный пользователь'}), 400
+        if not User.query.get(uid):
+            return jsonify({'error': 'Пользователь не найден'}), 400
+        created_by_user_id = uid
+        team_access_token = str(uuid.uuid4())
     token = str(uuid.uuid4())
-    session = MaturityLinkSession(access_token=token, team_name=team_name, group_name=group_name)
+    session = MaturityLinkSession(
+        access_token=token,
+        team_name=team_name,
+        group_name=group_name,
+        created_by_user_id=created_by_user_id,
+        team_access_token=team_access_token,
+    )
     db.session.add(session)
     db.session.commit()
     base = request.host_url.rstrip('/')
-    return jsonify({
+    out = {
         'token': token,
         'url': f'{base}/new/maturity/{token}',
         'team_name': session.team_name,
-        'group_name': session.group_name
-    }), 201
+        'group_name': session.group_name,
+    }
+    if team_access_token:
+        out['team_token'] = team_access_token
+        out['team_url'] = f'{base}/new/maturity/team/{team_access_token}'
+    return jsonify(out), 201
+
+
+@maturity_bp.route('/api/maturity/team/<team_token>', methods=['GET'])
+def get_maturity_team_survey(team_token):
+    """Публично: опрос для самооценки команды (без JWT). Форма доступна всегда, пока ссылка жива."""
+    _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
+    lang = resolve_survey_lang(request)
+    session = MaturityLinkSession.query.filter_by(team_access_token=team_token).first()
+    if not session:
+        err = (
+            'Link not found or invalid'
+            if lang == 'en'
+            else 'Ссылка не найдена или недействительна'
+        )
+        return jsonify({'error': err}), 404
+    questions = []
+    for i, q in enumerate(MATURITY_QUESTIONS):
+        base = {
+            'id': i,
+            'category': q['category'],
+            'theme': q['theme'],
+            'text': q['text'],
+            'why_important': q.get('why_important', ''),
+            'metrics_impact': q.get('metrics_impact', ''),
+            'negative_for_business': q.get('negative_for_business', ''),
+            'business_metrics': q.get('business_metrics') or DEFAULT_BUSINESS_METRICS,
+            'related_roles': ROLE_BY_THEME.get(q['theme'], []),
+        }
+        base = localize_question_dict(i, base, lang)
+        base['related_roles'] = localize_related_roles(base['related_roles'], lang)
+        questions.append(base)
+    return jsonify({
+        'team_name': session.team_name,
+        'group_name': session.group_name,
+        'completed': False,
+        'team_self_survey': True,
+        'questions': questions,
+        'lang': lang,
+        'business_metrics_disclaimer': localized_business_metrics_disclaimer(lang),
+        'business_metrics_glossary': localized_business_metrics_glossary(
+            BUSINESS_METRICS_GLOSSARY, lang
+        ),
+    })
+
+
+@maturity_bp.route('/api/maturity/team/<team_token>/submit', methods=['POST'])
+def submit_maturity_team_self(team_token):
+    """Сохранить одну анкету самооценки команды (не трогает ответы менеджера)."""
+    _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
+    session = MaturityLinkSession.query.filter_by(team_access_token=team_token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    data = request.get_json() or {}
+    answers = data.get('answers')
+    comments = data.get('comments')
+    normalized, err = _validate_answers_list(answers)
+    if err:
+        return jsonify({
+            'error': (
+                f'Нужен массив из {QUESTIONS_COUNT} ответов: '
+                '"no", "rather_no", "dont_know", "rather_yes", "yes" '
+                '(или устаревшие true/false)'
+            ),
+        }), 400
+    if comments is not None:
+        if not isinstance(comments, list) or len(comments) != QUESTIONS_COUNT:
+            return jsonify({'error': f'Поле comments должно быть массивом из {QUESTIONS_COUNT} элементов (или отсутствовать)'}), 400
+        payload = {"answers": normalized, "comments": _normalize_comments_list(comments)}
+    else:
+        payload = normalized
+    row = MaturityTeamSelfSubmission(session_id=session.id, answers=payload)
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({'message': 'Ответы команды сохранены', 'ok': True}), 200
 
 
 @maturity_bp.route('/api/maturity/<token>', methods=['GET'])
@@ -774,6 +955,25 @@ def get_maturity_results(token):
         'dont_know_recommendations_html': session.dont_know_recommendations_html or '',
         'dont_know_recommendations_plan': _normalize_group_plan(session.dont_know_recommendations_plan_json),
     })
+
+
+@maturity_bp.route('/api/maturity/<token>/team-comparison', methods=['GET'])
+@jwt_required()
+def get_maturity_team_comparison_for_creator(token):
+    """Сравнение менеджер / среднее по команде — только создатель ссылки (JWT)."""
+    _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    uid = get_jwt_identity()
+    try:
+        uid = int(uid)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    if session.created_by_user_id is None or session.created_by_user_id != uid:
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    return jsonify(_team_comparison_payload(session)), 200
 
 
 @maturity_bp.route('/api/maturity/<token>/recommendations', methods=['GET'])
@@ -1079,7 +1279,7 @@ def clarify_question(token):
     data = request.get_json() or {}
     lang_raw = str(data.get('lang') or '').strip().lower()
     lang = 'en' if lang_raw == 'en' else 'ru'
-    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    session = _resolve_maturity_session_by_any_token(token)
     if not session:
         err = 'Link not found' if lang == 'en' else 'Ссылка не найдена'
         return jsonify({'error': err}), 404
@@ -1344,6 +1544,13 @@ def maturity_admin_overview():
     if selected_group:
         rows = [r for r in rows if _normalize_group_name(getattr(r, "group_name", None)) == selected_group]
     groups = sorted({(_normalize_group_name(getattr(s, "group_name", None)) or "Без группы") for s in MaturityLinkSession.query.all()})
+    _ensure_group_plan_table()
+    sub_counts = dict(
+        db.session.query(
+            MaturityTeamSelfSubmission.session_id,
+            func.count(MaturityTeamSelfSubmission.id),
+        ).group_by(MaturityTeamSelfSubmission.session_id).all()
+    )
     return jsonify({
         'selected_group': selected_group,
         'groups': groups,
@@ -1357,6 +1564,8 @@ def maturity_admin_overview():
                 'created_at': s.created_at.isoformat() if s.created_at else None,
                 'completed_at': s.completed_at.isoformat() if s.completed_at else None,
                 'completed': s.completed_at is not None,
+                'has_team_self_link': bool(getattr(s, 'team_access_token', None)),
+                'team_submission_count': int(sub_counts.get(s.id, 0)),
             }
             for s in rows
         ]
@@ -1391,9 +1600,24 @@ def maturity_admin_delete_session(session_id):
     s = MaturityLinkSession.query.get(session_id)
     if not s:
         return jsonify({'error': 'Сессия не найдена'}), 404
+    MaturityTeamSelfSubmission.query.filter_by(session_id=s.id).delete()
     db.session.delete(s)
     db.session.commit()
     return jsonify({'message': 'Удалено'})
+
+
+@maturity_bp.route('/api/maturity-admin/session/<int:session_id>/team-comparison', methods=['GET'])
+@jwt_required()
+def maturity_admin_team_comparison(session_id):
+    user = _get_maturity_admin_user()
+    if not user:
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
+    s = MaturityLinkSession.query.get(session_id)
+    if not s:
+        return jsonify({'error': 'Сессия не найдена'}), 404
+    return jsonify(_team_comparison_payload(s)), 200
 
 
 @maturity_bp.route('/api/maturity-admin/aggregates', methods=['GET'])

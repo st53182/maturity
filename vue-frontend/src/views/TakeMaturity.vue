@@ -2,13 +2,16 @@
   <div class="take-maturity" :class="{ 'take-maturity--new': variant === 'new' }">
     <div v-if="loading" class="loading">{{ $t('maturity.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="survey.completed" class="already-done">
+    <div v-else-if="teamSelfMode && teamSubmitDone" class="already-done team-self-done">
+      <p>{{ $t('maturity.teamSelfThanks') }}</p>
+    </div>
+    <div v-else-if="!teamSelfMode && survey.completed" class="already-done">
       <p>{{ $t('maturity.alreadyCompleted') }}</p>
       <router-link :to="`${maturityBase}/results`" class="link-results">{{ $t('maturity.viewResults') }}</router-link>
     </div>
     <div v-else class="maturity-form">
       <header class="maturity-header">
-        <h1>{{ $t('maturity.title') }}</h1>
+        <h1>{{ teamSelfMode ? $t('maturity.teamSelfTitle') : $t('maturity.title') }}</h1>
         <p v-if="survey.team_name" class="team-name">{{ survey.team_name }}</p>
         <div class="header-tools">
           <button v-if="survey.business_metrics_glossary && survey.business_metrics_glossary.length" type="button" class="glossary-toggle" @click="showGlossary = !showGlossary">
@@ -152,10 +155,10 @@
           v-if="currentPage === totalPages - 1"
           type="button"
           class="btn-nav submit"
-          :disabled="!allFilled"
+          :disabled="!allFilled || submitting"
           @click="submit"
         >
-          {{ $t('maturity.submit') }}
+          {{ teamSelfMode ? $t('maturity.teamSelfSubmit') : $t('maturity.submit') }}
         </button>
       </div>
     </div>
@@ -173,10 +176,12 @@ export default {
   components: { MetricsTreePanel },
   props: {
     variant: { type: String, default: 'legacy' },
+    teamSelfMode: { type: Boolean, default: false },
   },
   data() {
     return {
       token: '',
+      teamSubmitDone: false,
       survey: { team_name: null, questions: [], completed: false },
       answers: {},
       comments: {},
@@ -233,13 +238,18 @@ export default {
     }
   },
   async mounted() {
-    this.token = this.$route.params.token;
+    this.token = this.teamSelfMode
+      ? this.$route.params.teamToken
+      : this.$route.params.token;
     await this.loadSurvey();
   },
   methods: {
     async loadSurvey() {
       try {
-        const res = await axios.get(`/api/maturity/${this.token}`, { params: { lang: this.surveyLang } });
+        const path = this.teamSelfMode
+          ? `/api/maturity/team/${this.token}`
+          : `/api/maturity/${this.token}`;
+        const res = await axios.get(path, { params: { lang: this.surveyLang } });
         this.survey = res.data;
         this.survey.business_metrics_disclaimer = res.data.business_metrics_disclaimer || '';
         this.survey.business_metrics_glossary = res.data.business_metrics_glossary || [];
@@ -288,8 +298,16 @@ export default {
           const c = (this.comments[i] || '').toString().trim();
           commentsArr.push(c ? c : null);
         }
-        await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr, comments: commentsArr });
-        this.$router.push(`${this.maturityBase}/results`);
+        if (this.teamSelfMode) {
+          await axios.post(`/api/maturity/team/${this.token}/submit`, {
+            answers: arr,
+            comments: commentsArr
+          });
+          this.teamSubmitDone = true;
+        } else {
+          await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr, comments: commentsArr });
+          this.$router.push(`${this.maturityBase}/results`);
+        }
       } catch (e) {
         this.error = e.response?.data?.error || this.$t('maturity.submitSurveyError');
       } finally {

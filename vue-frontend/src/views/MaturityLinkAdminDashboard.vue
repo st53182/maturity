@@ -145,7 +145,7 @@
                   </div>
                 </td>
                 <td class="mono">…{{ s.token_suffix }}</td>
-                <td>
+                <td class="report-cell">
                   <router-link
                     v-if="s.completed && s.token"
                     class="report-link"
@@ -154,6 +154,14 @@
                     Открыть
                   </router-link>
                   <span v-else class="muted">—</span>
+                  <button
+                    v-if="s.has_team_self_link || s.team_submission_count > 0"
+                    type="button"
+                    class="dash-btn dash-btn-block"
+                    @click="openTeamComparison(s)"
+                  >
+                    {{ $t('maturity.adminManagerVsTeam') }}
+                  </button>
                 </td>
                 <td>{{ formatDt(s.created_at) }}</td>
                 <td>{{ s.completed ? formatDt(s.completed_at) : '—' }}</td>
@@ -194,6 +202,33 @@
         </div>
       </section>
     </template>
+
+    <Teleport to="body">
+      <div v-if="comparisonModal" class="comparison-overlay" @click.self="closeTeamComparison">
+        <div class="comparison-modal">
+          <div class="comparison-head">
+            <h3>{{ $t('maturity.adminManagerVsTeam') }} — {{ comparisonSessionLabel }}</h3>
+            <button type="button" class="dash-btn" @click="closeTeamComparison">Закрыть</button>
+          </div>
+          <div v-if="comparisonLoading" class="comparison-loading">Загрузка…</div>
+          <div v-else-if="comparisonError" class="dash-error">{{ comparisonError }}</div>
+          <div v-else-if="comparisonData" class="comparison-body">
+            <p v-if="comparisonData.submission_count > 0" class="muted small">
+              Ответов команды: {{ comparisonData.submission_count }}
+            </p>
+            <p v-else class="muted small">Пока нет ответов команды по ссылке самооценки.</p>
+            <div
+              v-for="group in comparisonRadarGroups"
+              :key="group.title"
+              v-show="chartDataComparisonGroup(group).labels.length"
+              class="comparison-radar-wrap"
+            >
+              <RadarChart :chart-data="chartDataComparisonGroup(group)" :title="group.title" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -212,6 +247,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'vue-chartjs';
+import RadarChart from '@/components/RadarChart.vue';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -259,7 +295,7 @@ function normalizeGroupPlan(plan) {
 
 export default {
   name: 'MaturityLinkAdminDashboard',
-  components: { Bar, MetricsTreePanel },
+  components: { Bar, MetricsTreePanel, RadarChart },
   data() {
     return {
       loading: true,
@@ -281,10 +317,19 @@ export default {
       groupPlan: emptyGroupPlan(),
       risksText: '',
       initiativeCollapsed: {},
-      aiUsageRemaining: null
+      aiUsageRemaining: null,
+      comparisonModal: false,
+      comparisonLoading: false,
+      comparisonError: null,
+      comparisonData: null,
+      comparisonSessionLabel: ''
     };
   },
   computed: {
+    comparisonRadarGroups() {
+      const g = this.comparisonData && this.comparisonData.radar_groups;
+      return Array.isArray(g) ? g : [];
+    },
     aggregateQuestions() {
       const qs = this.aggregates.questions;
       if (!Array.isArray(qs)) return [];
@@ -598,6 +643,76 @@ export default {
       } catch {
         this.aiUsageRemaining = null;
       }
+    },
+    closeTeamComparison() {
+      this.comparisonModal = false;
+      this.comparisonData = null;
+      this.comparisonError = null;
+    },
+    async openTeamComparison(s) {
+      this.comparisonModal = true;
+      this.comparisonLoading = true;
+      this.comparisonError = null;
+      this.comparisonData = null;
+      this.comparisonSessionLabel = `${s.team_name || 'Сессия'} #${s.id}`;
+      try {
+        const res = await axios.get(`/api/maturity-admin/session/${s.id}/team-comparison`, {
+          headers: authHeaders()
+        });
+        this.comparisonData = res.data;
+      } catch (e) {
+        this.comparisonError = e.response?.data?.error || e.message || 'Ошибка загрузки';
+      } finally {
+        this.comparisonLoading = false;
+      }
+    },
+    chartDataComparisonGroup(group) {
+      if (!this.comparisonData || !group || !group.categories) {
+        return { labels: [], datasets: [] };
+      }
+      const mgr = this.comparisonData.manager_results;
+      const team = this.comparisonData.team_results;
+      const labels = [];
+      const managerData = [];
+      const teamData = [];
+      for (const cat of group.categories) {
+        const hasM = mgr && mgr[cat];
+        const hasT = team && team[cat];
+        if (!hasM && !hasT) continue;
+        labels.push(cat);
+        if (hasM) {
+          const vals = Object.values(mgr[cat]).map((v) => parseFloat(v) || 0);
+          managerData.push(vals.reduce((a, b) => a + b, 0));
+        } else {
+          managerData.push(0);
+        }
+        if (hasT) {
+          const vals = Object.values(team[cat]).map((v) => parseFloat(v) || 0);
+          teamData.push(vals.reduce((a, b) => a + b, 0));
+        } else {
+          teamData.push(0);
+        }
+      }
+      const datasets = [];
+      if (mgr) {
+        datasets.push({
+          label: 'Менеджер',
+          data: managerData,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2
+        });
+      }
+      if (team && this.comparisonData.submission_count > 0) {
+        datasets.push({
+          label: 'Команда (среднее)',
+          data: teamData,
+          backgroundColor: 'rgba(153, 102, 255, 0.2)',
+          borderColor: 'rgba(153, 102, 255, 1)',
+          borderWidth: 2
+        });
+      }
+      return { labels, datasets };
     }
   }
 };
@@ -932,5 +1047,70 @@ export default {
 
 .admin-metrics-tree {
   margin-top: 12px;
+}
+
+.report-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.dash-btn-block {
+  width: 100%;
+  max-width: 200px;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.comparison-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 12px;
+  overflow-y: auto;
+}
+
+.comparison-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 720px;
+  width: 100%;
+  padding: 16px 20px 28px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+}
+
+.comparison-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.comparison-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.comparison-loading {
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.comparison-body {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.comparison-radar-wrap {
+  margin-bottom: 8px;
 }
 </style>

@@ -12,6 +12,9 @@
         <p class="average-line">
           {{ $t('maturity.overallScore') }}: <strong>{{ averageScore.toFixed(2) }}</strong>
         </p>
+        <p v-if="teamComparison && teamComparison.submission_count > 0" class="team-comparison-hint">
+          {{ $t('maturity.teamComparisonHint', { count: teamComparison.submission_count }) }}
+        </p>
         <p v-if="aiUsageRemaining !== null" class="ai-usage-line">{{ $t('maturity.results.aiUsageRemaining', { count: aiUsageRemaining }) }}</p>
 
         <div
@@ -322,7 +325,8 @@ export default {
       modalExporting: false,
       businessMetricsDisclaimer: '',
       businessMetricsGlossary: [],
-      aiUsageRemaining: null
+      aiUsageRemaining: null,
+      teamComparison: null
     };
   },
   computed: {
@@ -402,6 +406,7 @@ export default {
   async mounted() {
     this.token = this.$route.params.token;
     await this.loadResults();
+    await this.loadTeamComparison();
     await this.fetchAiUsage();
   },
   watch: {
@@ -434,27 +439,42 @@ export default {
         return { labels: [], datasets: [] };
       }
       const labels = [];
-      const data = [];
+      const managerData = [];
+      const teamRes = this.teamComparison && this.teamComparison.team_results;
+      const teamData = [];
       for (const cat of group.categories) {
         const subs = this.results[cat];
         if (!subs) continue;
         const vals = Object.values(subs).map(v => parseFloat(v) || 0);
-        const score = vals.reduce((a, b) => a + b, 0); // максимум 3 при трех "Да"
+        const score = vals.reduce((a, b) => a + b, 0);
         labels.push(this.displayThemeName(cat));
-        data.push(score);
+        managerData.push(score);
+        if (teamRes && teamRes[cat]) {
+          const tv = Object.values(teamRes[cat]).map(v => parseFloat(v) || 0);
+          teamData.push(tv.reduce((a, b) => a + b, 0));
+        } else {
+          teamData.push(0);
+        }
       }
-      return {
-        labels,
-        datasets: [
-          {
-            label: this.$t('maturity.radarDataset'),
-            data,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 2
-          }
-        ]
-      };
+      const datasets = [
+        {
+          label: this.$t('maturity.radarDatasetManager'),
+          data: managerData,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2
+        }
+      ];
+      if (teamRes && this.teamComparison.submission_count > 0) {
+        datasets.push({
+          label: this.$t('maturity.radarDatasetTeam'),
+          data: teamData,
+          backgroundColor: 'rgba(153, 102, 255, 0.2)',
+          borderColor: 'rgba(153, 102, 255, 1)',
+          borderWidth: 2
+        });
+      }
+      return { labels, datasets };
     },
     async loadResults() {
       try {
@@ -478,6 +498,19 @@ export default {
         this.error = e.response?.data?.error || this.$t('maturity.results.loadResultsError');
       } finally {
         this.loading = false;
+      }
+    },
+    async loadTeamComparison() {
+      const auth = localStorage.getItem('token');
+      if (!auth) return;
+      try {
+        const res = await axios.get(`/api/maturity/${this.token}/team-comparison`, {
+          headers: { Authorization: `Bearer ${auth}` },
+          params: { lang: this.surveyLang }
+        });
+        this.teamComparison = res.data;
+      } catch (_e) {
+        this.teamComparison = null;
       }
     },
     themesInGroup(group) {
@@ -768,6 +801,12 @@ export default {
 .average-line {
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
+}
+
+.team-comparison-hint {
+  margin: -0.75rem 0 1.25rem;
+  font-size: 0.95rem;
+  color: #5b21b6;
 }
 
 .ai-usage-line {

@@ -300,6 +300,8 @@ class SurveyTemplate(db.Model):
 class MaturityLinkSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     access_token = db.Column(db.String(36), unique=True, nullable=False)
+    team_access_token = db.Column(db.String(36), unique=True, nullable=True, index=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     team_name = db.Column(db.String(255), nullable=True)
     group_name = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -309,6 +311,19 @@ class MaturityLinkSession(db.Model):
     dont_know_recommendations_html = db.Column(db.Text, nullable=True)
     recommendations_plan_json = db.Column(JSON, nullable=True)
     dont_know_recommendations_plan_json = db.Column(JSON, nullable=True)
+
+    link_creator = db.relationship('User', foreign_keys=[created_by_user_id], backref=db.backref('maturity_link_sessions_created', lazy='dynamic'))
+
+
+class MaturityTeamSelfSubmission(db.Model):
+    """Анонимные самооценки команды по общей ссылке (несколько строк на одну менеджерскую сессию)."""
+    __tablename__ = 'maturity_team_self_submission'
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('maturity_link_session.id', ondelete='CASCADE'), nullable=False, index=True)
+    answers = db.Column(JSON, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    session = db.relationship('MaturityLinkSession', backref=db.backref('team_self_submissions', lazy='dynamic'))
 
 
 class MaturityGroupPlan(db.Model):

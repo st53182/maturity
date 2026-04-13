@@ -495,18 +495,8 @@ def _normalize_group_plan(payload):
                 "steps": [str(s).strip() for s in (item.get("steps") or []) if str(s).strip()][:8],
             })
 
-    roadmap = src.get("roadmap")
-    if isinstance(roadmap, list):
-        for row in roadmap[:20]:
-            if not isinstance(row, dict):
-                continue
-            plan["roadmap"].append({
-                "period": str(row.get("period") or "").strip(),
-                "start_date": str(row.get("start_date") or "").strip(),
-                "end_date": str(row.get("end_date") or "").strip(),
-                "initiative": str(row.get("initiative") or "").strip(),
-                "milestone": str(row.get("milestone") or "").strip(),
-            })
+    # Roadmap убран из генераций планов; ключ оставлен пустым для совместимости API/БД.
+    plan["roadmap"] = []
 
     risks = src.get("risks")
     if isinstance(risks, list):
@@ -542,15 +532,6 @@ def _group_plan_to_html(group_name, plan):
                 f"Бизнес-эффект: {i['business_impact'] or '—'}<br>"
                 f"Эффект для заказчиков: {i['customer_impact'] or '—'}"
                 f"{steps_html}</li>"
-            )
-        html.append("</ul>")
-    if p["roadmap"]:
-        html.append("<h4>Roadmap (12 недель)</h4><ul>")
-        for r in p["roadmap"]:
-            html.append(
-                f"<li><strong>{r['period'] or 'Период'}</strong> "
-                f"({r['start_date'] or '—'} - {r['end_date'] or '—'}): "
-                f"{r['initiative'] or '—'} — {r['milestone'] or '—'}</li>"
             )
         html.append("</ul>")
     if p["risks"]:
@@ -906,15 +887,6 @@ def get_maturity_recommendations(token):
       "steps": ["5–7 исполнимых шагов по правилам выше"]
     }}
   ],
-  "roadmap": [
-    {{
-      "period": "Недели 1-2",
-      "start_date": "YYYY-MM-DD",
-      "end_date": "YYYY-MM-DD",
-      "initiative": "...",
-      "milestone": "..."
-    }}
-  ],
   "risks": ["..."]
 }}
 - Пиши по-русски; при необходимости допустимы англоязычные термины с кратким русским пояснением в скобках при первом упоминании (согласно блоку «Язык и термины» выше)."""
@@ -1057,15 +1029,6 @@ customer_impact: что получит заказчик, когда команд
       "business_impact": "...",
       "customer_impact": "...",
       "steps": ["5–7 исполнимых шагов по правилам выше"]
-    }}
-  ],
-  "roadmap": [
-    {{
-      "period": "Недели 1-2",
-      "start_date": "YYYY-MM-DD",
-      "end_date": "YYYY-MM-DD",
-      "initiative": "...",
-      "milestone": "..."
     }}
   ],
   "risks": ["..."]
@@ -1753,20 +1716,10 @@ def maturity_admin_group_plan_generate():
       "steps": ["5–7 исполнимых шагов по правилам выше"]
     }}
   ],
-  "roadmap": [
-    {{
-      "period": "Недели 1-2",
-      "start_date": "YYYY-MM-DD",
-      "end_date": "YYYY-MM-DD",
-      "initiative": "...",
-      "milestone": "..."
-    }}
-  ],
   "risks": ["..."]
 }}
 Условия:
 - Ровно 5 инициатив уровня стрима (не больше и не меньше).
-- Roadmap на 12 недель с конкретными вехами.
 - В каждой инициативе steps: 5–7 исполнимых шагов (глагол + объект/артефакт + срок или частота + роль ответственного). Запрещены размытые формулировки без места, времени и результата.
 - objective и owner: чётко и на уровне стрима (роль/функция, не ФИО).
 - success_metric: «база → цель за 2–4 недели» или явный порог; связь с T2M, Lead Time или бизнес-метрикой. Не выдумывай числа вне переданной сводки.

@@ -75,33 +75,6 @@
           </article>
           <button type="button" class="dash-btn" @click="addInitiative">+ Добавить инициативу</button>
 
-          <h4>Roadmap (визуализация по датам)</h4>
-          <div class="roadmap-grid">
-            <div v-for="(r, idx) in groupPlan.roadmap" :key="'rm-' + idx" class="roadmap-card">
-              <div class="initiative-head">
-                <strong>{{ r.period || `Этап ${idx + 1}` }}</strong>
-                <button type="button" class="dash-btn dash-btn-danger" @click="removeRoadmapItem(idx)">Удалить</button>
-              </div>
-              <label class="plan-label">Период</label>
-              <input v-model="r.period" class="plan-input" placeholder="Недели 1-2" />
-              <div class="roadmap-dates">
-                <div>
-                  <label class="plan-label">Старт</label>
-                  <input v-model="r.start_date" type="date" class="plan-input" />
-                </div>
-                <div>
-                  <label class="plan-label">Финиш</label>
-                  <input v-model="r.end_date" type="date" class="plan-input" />
-                </div>
-              </div>
-              <label class="plan-label">Инициатива</label>
-              <input v-model="r.initiative" class="plan-input" />
-              <label class="plan-label">Ключевая веха</label>
-              <textarea v-model="r.milestone" class="plan-input" rows="2" />
-            </div>
-          </div>
-          <button type="button" class="dash-btn" @click="addRoadmapItem">+ Добавить этап roadmap</button>
-
           <h4>Риски и меры снижения</h4>
           <textarea v-model="risksText" class="plan-input" rows="5" placeholder="Каждый риск/мера с новой строки" />
         </div>
@@ -500,6 +473,7 @@ export default {
           { headers: authHeaders() }
         );
         this.groupPlan = normalizeGroupPlan(res.data.plan);
+        this.groupPlan.roadmap = [];
         this.risksText = (this.groupPlan.risks || []).join('\n');
         this.groupPlanHtml = res.data.content || '';
         this.groupPlanUpdatedAt = res.data.updated_at || null;
@@ -519,6 +493,7 @@ export default {
           params: { group_name: this.selectedGroup }
         });
         this.groupPlan = normalizeGroupPlan(res.data.plan);
+        this.groupPlan.roadmap = [];
         this.risksText = (this.groupPlan.risks || []).join('\n');
         this.groupPlanHtml = res.data.content || '';
         this.groupPlanUpdatedAt = res.data.updated_at || null;
@@ -561,24 +536,13 @@ export default {
           .map(([k, v]) => [Number(k) > idx ? Number(k) - 1 : Number(k), v])
       );
     },
-    addRoadmapItem() {
-      this.groupPlan.roadmap.push({
-        period: '',
-        start_date: '',
-        end_date: '',
-        initiative: '',
-        milestone: ''
-      });
-    },
-    removeRoadmapItem(idx) {
-      this.groupPlan.roadmap.splice(idx, 1);
-    },
     async saveGroupPlan() {
       if (!this.selectedGroup) return;
       this.savingGroupPlan = true;
       try {
         const plan = normalizeGroupPlan({
           ...this.groupPlan,
+          roadmap: [],
           risks: this.risksText.split('\n').map((x) => x.trim()).filter(Boolean)
         });
         const res = await axios.put('/api/maturity-admin/group-plan', {
@@ -587,6 +551,7 @@ export default {
           content: ''
         }, { headers: authHeaders() });
         this.groupPlan = normalizeGroupPlan(res.data.plan);
+        this.groupPlan.roadmap = [];
         this.groupPlanHtml = res.data.content || '';
         this.groupPlanUpdatedAt = res.data.updated_at || null;
         this.risksText = (this.groupPlan.risks || []).join('\n');
@@ -943,26 +908,6 @@ export default {
 
 .initiative-preview {
   margin-top: 10px;
-}
-
-.roadmap-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
-}
-
-.roadmap-card {
-  border: 1px solid #bfd3ff;
-  border-radius: 16px;
-  padding: 12px;
-  background: linear-gradient(155deg, #edf4ff 0%, #ffffff 100%);
-  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.16);
-}
-
-.roadmap-dates {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
 }
 
 .dash-btn {

@@ -957,6 +957,89 @@ def get_maturity_results(token):
     })
 
 
+def _maturity_team_self_base_url():
+    return request.host_url.rstrip('/')
+
+
+def _team_self_link_public_url(session):
+    tok = getattr(session, 'team_access_token', None)
+    if not tok:
+        return None
+    return f'{_maturity_team_self_base_url()}/new/maturity/team/{tok}'
+
+
+@maturity_bp.route('/api/maturity/<token>/team-self-link', methods=['GET'])
+@jwt_required()
+def get_maturity_team_self_link_status(token):
+    """Статус командной ссылки: только JWT. Опрос менеджера должен быть завершён."""
+    _ensure_maturity_link_session_columns()
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    uid = get_jwt_identity()
+    try:
+        uid = int(uid)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Доступ запрещён'}), 403
+    completed = session.completed_at is not None
+    has = bool(getattr(session, 'team_access_token', None))
+    creator_id = getattr(session, 'created_by_user_id', None)
+    team_url = None
+    locked = False
+    if has:
+        if creator_id is None or creator_id == uid:
+            team_url = _team_self_link_public_url(session)
+        else:
+            locked = True
+    return jsonify({
+        'manager_completed': completed,
+        'has_team_self_link': has,
+        'team_url': team_url,
+        'can_enable': completed and not has,
+        'locked_for_other_creator': locked,
+    }), 200
+
+
+@maturity_bp.route('/api/maturity/<token>/team-self-link', methods=['POST'])
+@jwt_required()
+def create_or_reveal_maturity_team_self_link(token):
+    """Включить командную самооценку после прохождения опроса менеджером (или вернуть существующую ссылку создателю)."""
+    _ensure_maturity_link_session_columns()
+    _ensure_group_plan_table()
+    session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    if not session:
+        return jsonify({'error': 'Ссылка не найдена'}), 404
+    if not session.completed_at:
+        return jsonify({'error': 'Сначала завершите опрос менеджером'}), 400
+    uid = get_jwt_identity()
+    try:
+        uid = int(uid)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Некорректный пользователь'}), 400
+
+    if session.team_access_token:
+        cid = getattr(session, 'created_by_user_id', None)
+        if cid is not None and cid != uid:
+            return jsonify({'error': 'Командная ссылка уже создана другим пользователем'}), 403
+        if cid is None:
+            session.created_by_user_id = uid
+            db.session.commit()
+        return jsonify({
+            'team_token': session.team_access_token,
+            'team_url': _team_self_link_public_url(session),
+            'created': False,
+        }), 200
+
+    session.team_access_token = str(uuid.uuid4())
+    session.created_by_user_id = uid
+    db.session.commit()
+    return jsonify({
+        'team_token': session.team_access_token,
+        'team_url': _team_self_link_public_url(session),
+        'created': True,
+    }), 201
+
+
 @maturity_bp.route('/api/maturity/<token>/team-comparison', methods=['GET'])
 @jwt_required()
 def get_maturity_team_comparison_for_creator(token):

@@ -26,6 +26,10 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
     error: /** @type {string|null} */ (null),
     serverMock: false,
   }),
+  getters: {
+    /** Завершённые ответы кандидата (для полосы «X / max»); совпадает с длиной `rounds`. */
+    interviewerTurnsCount: (state) => state.rounds.length,
+  },
   actions: {
     reset() {
       this.transcript = [];

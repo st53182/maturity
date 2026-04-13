@@ -15,6 +15,35 @@
         <p v-if="teamComparison && teamComparison.submission_count > 0" class="team-comparison-hint">
           {{ $t('maturity.teamComparisonHint', { count: teamComparison.submission_count }) }}
         </p>
+
+        <div v-if="showTeamSelfLinkBlock" class="team-self-link-card">
+          <h3 class="team-self-link-title">{{ $t('maturity.teamSelfLinkCardTitle') }}</h3>
+          <p v-if="teamSelfLoading" class="team-self-link-muted">{{ $t('maturity.loading') }}</p>
+          <template v-else-if="teamSelfStatus">
+            <p v-if="!teamSelfStatus.manager_completed" class="team-self-link-muted">{{ $t('maturity.teamSelfLinkNotCompleted') }}</p>
+            <p v-else-if="teamSelfStatus.locked_for_other_creator" class="team-self-link-muted">{{ $t('maturity.teamSelfLinkLocked') }}</p>
+            <template v-else-if="teamSelfStatus.team_url">
+              <p class="team-self-link-muted">{{ $t('maturity.teamSelfLinkShareHint') }}</p>
+              <div class="team-self-link-row">
+                <input :value="teamSelfStatus.team_url" readonly class="team-self-link-input" />
+                <button type="button" class="btn-rec" @click="copyTeamSelfSurveyLink">{{ $t('maturity.copyLink') }}</button>
+              </div>
+            </template>
+            <template v-else-if="teamSelfStatus.can_enable">
+              <p class="team-self-link-muted">{{ $t('maturity.teamSelfLinkEnableHint') }}</p>
+              <button
+                type="button"
+                class="btn-rec"
+                :disabled="teamSelfEnabling"
+                @click="enableTeamSelfLink"
+              >
+                {{ teamSelfEnabling ? $t('maturity.creatingShort') : $t('maturity.teamSelfLinkEnableButton') }}
+              </button>
+            </template>
+          </template>
+          <p v-if="teamSelfError" class="team-self-link-err">{{ teamSelfError }}</p>
+        </div>
+
         <p v-if="aiUsageRemaining !== null" class="ai-usage-line">{{ $t('maturity.results.aiUsageRemaining', { count: aiUsageRemaining }) }}</p>
 
         <div
@@ -326,10 +355,18 @@ export default {
       businessMetricsDisclaimer: '',
       businessMetricsGlossary: [],
       aiUsageRemaining: null,
-      teamComparison: null
+      teamComparison: null,
+      hasAuthToken: false,
+      teamSelfStatus: null,
+      teamSelfLoading: false,
+      teamSelfEnabling: false,
+      teamSelfError: null
     };
   },
   computed: {
+    showTeamSelfLinkBlock() {
+      return !this.loading && !this.error && !!this.completedAt && this.hasAuthToken;
+    },
     hasDontKnow() {
       if (!Array.isArray(this.answers)) return false;
       return this.answers.some((a) => a === 'dont_know');
@@ -405,7 +442,11 @@ export default {
   },
   async mounted() {
     this.token = this.$route.params.token;
+    this.hasAuthToken = !!localStorage.getItem('token');
     await this.loadResults();
+    if (this.showTeamSelfLinkBlock) {
+      await this.loadTeamSelfLinkStatus();
+    }
     await this.loadTeamComparison();
     await this.fetchAiUsage();
   },
@@ -512,6 +553,54 @@ export default {
       } catch (_e) {
         this.teamComparison = null;
       }
+    },
+    authHeaders() {
+      const t = localStorage.getItem('token');
+      return t ? { Authorization: `Bearer ${t}` } : {};
+    },
+    async loadTeamSelfLinkStatus() {
+      this.teamSelfLoading = true;
+      this.teamSelfError = null;
+      try {
+        const res = await axios.get(`/api/maturity/${this.token}/team-self-link`, {
+          headers: this.authHeaders()
+        });
+        this.teamSelfStatus = res.data;
+      } catch (e) {
+        this.teamSelfStatus = null;
+        this.teamSelfError = e.response?.data?.error || this.$t('maturity.teamSelfLinkLoadError');
+      } finally {
+        this.teamSelfLoading = false;
+      }
+    },
+    async enableTeamSelfLink() {
+      if (this.teamSelfEnabling) return;
+      this.teamSelfEnabling = true;
+      this.teamSelfError = null;
+      try {
+        const res = await axios.post(`/api/maturity/${this.token}/team-self-link`, {}, {
+          headers: this.authHeaders()
+        });
+        this.teamSelfStatus = {
+          manager_completed: true,
+          has_team_self_link: true,
+          team_url: res.data.team_url,
+          can_enable: false,
+          locked_for_other_creator: false
+        };
+        await this.loadTeamComparison();
+      } catch (e) {
+        this.teamSelfError = e.response?.data?.error || this.$t('maturity.teamSelfLinkEnableError');
+      } finally {
+        this.teamSelfEnabling = false;
+      }
+    },
+    copyTeamSelfSurveyLink() {
+      const u = this.teamSelfStatus && this.teamSelfStatus.team_url;
+      if (!u) return;
+      navigator.clipboard.writeText(u).then(() => {
+        alert(this.$t('maturity.copyLink') + ' — ' + this.$t('maturity.copyLinkDone'));
+      }).catch(() => {});
     },
     themesInGroup(group) {
       if (!group || !group.categories || !this.results) return [];
@@ -807,6 +896,45 @@ export default {
   margin: -0.75rem 0 1.25rem;
   font-size: 0.95rem;
   color: #5b21b6;
+}
+
+.team-self-link-card {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  background: #faf5ff;
+}
+.team-self-link-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  color: #4c1d95;
+}
+.team-self-link-muted {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+.team-self-link-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.team-self-link-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d8b4fe;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+.team-self-link-err {
+  margin: 0.75rem 0 0;
+  font-size: 0.88rem;
+  color: #b91c1c;
 }
 
 .ai-usage-line {

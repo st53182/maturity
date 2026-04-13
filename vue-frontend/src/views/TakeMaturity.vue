@@ -13,6 +13,23 @@
       <header class="maturity-header">
         <h1>{{ teamSelfMode ? $t('maturity.teamSelfTitle') : $t('maturity.title') }}</h1>
         <p v-if="survey.team_name" class="team-name">{{ survey.team_name }}</p>
+        <p class="survey-lang-hint">{{ $t('maturity.surveyLangHint') }}</p>
+        <div class="survey-lang-toggle" role="group" :aria-label="$t('maturity.surveyLangAria')">
+          <button
+            type="button"
+            :class="['lang-btn', { 'lang-btn--active': activeSurveyLang === 'ru' }]"
+            @click="setSurveyLang('ru')"
+          >
+            {{ $t('maturity.surveyLangRu') }}
+          </button>
+          <button
+            type="button"
+            :class="['lang-btn', { 'lang-btn--active': activeSurveyLang === 'en' }]"
+            @click="setSurveyLang('en')"
+          >
+            {{ $t('maturity.surveyLangEn') }}
+          </button>
+        </div>
         <div class="header-tools">
           <button v-if="survey.business_metrics_glossary && survey.business_metrics_glossary.length" type="button" class="glossary-toggle" @click="showGlossary = !showGlossary">
             {{ showGlossary ? $t('maturity.hideGlossary') : $t('maturity.showGlossary') }}
@@ -30,7 +47,7 @@
           v-if="showMetricsTree"
           :title="$t('maturity.metricsTreeInlineTitle')"
           :survey-token="token"
-          :ui-lang="surveyLang"
+          :ui-lang="activeSurveyLang"
           compact
           class="survey-metrics-tree"
         />
@@ -168,6 +185,7 @@
 <script>
 import axios from 'axios';
 import MetricsTreePanel from "@/components/metrics/MetricsTreePanel.vue";
+import { maturitySurveyLangParams, setMaturitySurveyLangPreference } from '@/utils/maturitySurveyLang';
 
 const QUESTIONS_PER_PAGE = 10;
 
@@ -194,7 +212,8 @@ export default {
       clarifyLoading: null,
       clarifyResult: null,
       showGlossary: false,
-      showMetricsTree: false
+      showMetricsTree: false,
+      i18nLocaleSnapshot: null
     };
   },
   computed: {
@@ -227,32 +246,87 @@ export default {
     maturityBase() {
       return this.variant === "new" ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
     },
-    surveyLang() {
+    activeSurveyLang() {
+      const q = this.$route.query.lang;
+      if (q === 'ru' || q === 'en') return q;
+      try {
+        const s = sessionStorage.getItem(`maturitySurveyLang:${this.token}`);
+        if (s === 'ru' || s === 'en') return s;
+      } catch (_e) {
+        /* ignore */
+      }
+      const fromApi = this.survey.lang;
+      if (fromApi === 'ru' || fromApi === 'en') return fromApi;
       try {
         const loc = this.$i18n?.locale;
-        const s = typeof loc === "string" ? loc : loc?.value;
-        return s === "en" ? "en" : "ru";
+        const z = typeof loc === 'string' ? loc : loc?.value;
+        return z === 'en' ? 'en' : 'ru';
       } catch (_e) {
-        return typeof localStorage !== "undefined" && localStorage.getItem("language") === "en" ? "en" : "ru";
+        return typeof localStorage !== 'undefined' && localStorage.getItem('language') === 'en' ? 'en' : 'ru';
       }
     }
   },
   async mounted() {
+    try {
+      const loc = this.$i18n?.locale;
+      this.i18nLocaleSnapshot = typeof loc === 'string' ? loc : loc?.value;
+    } catch (_e) {
+      this.i18nLocaleSnapshot = null;
+    }
     this.token = this.teamSelfMode
       ? this.$route.params.teamToken
       : this.$route.params.token;
     await this.loadSurvey();
   },
+  beforeUnmount() {
+    if (this.i18nLocaleSnapshot == null || !this.$i18n) return;
+    const prev = this.i18nLocaleSnapshot;
+    try {
+      if (typeof this.$i18n.locale === 'string') {
+        this.$i18n.locale = prev;
+      } else if (this.$i18n.locale && typeof this.$i18n.locale === 'object' && 'value' in this.$i18n.locale) {
+        this.$i18n.locale.value = prev;
+      }
+    } catch (_e) {
+      /* ignore */
+    }
+  },
   methods: {
+    _setI18nLocale(code) {
+      if (!this.$i18n || (code !== 'ru' && code !== 'en')) return;
+      try {
+        if (typeof this.$i18n.locale === 'string') {
+          this.$i18n.locale = code;
+        } else if (this.$i18n.locale && typeof this.$i18n.locale === 'object' && 'value' in this.$i18n.locale) {
+          this.$i18n.locale.value = code;
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+    },
+    setSurveyLang(code) {
+      if (code !== 'ru' && code !== 'en') return;
+      setMaturitySurveyLangPreference(this.token, code);
+      this.$router.replace({
+        path: this.$route.path,
+        query: { ...this.$route.query, lang: code }
+      }).then(() => {
+        this._setI18nLocale(code);
+        this.loadSurvey();
+      }).catch(() => {});
+    },
     async loadSurvey() {
       try {
         const path = this.teamSelfMode
           ? `/api/maturity/team/${this.token}`
           : `/api/maturity/${this.token}`;
-        const res = await axios.get(path, { params: { lang: this.surveyLang } });
+        const res = await axios.get(path, { params: maturitySurveyLangParams(this.token, this.$route) });
         this.survey = res.data;
         this.survey.business_metrics_disclaimer = res.data.business_metrics_disclaimer || '';
         this.survey.business_metrics_glossary = res.data.business_metrics_glossary || [];
+        if (res.data.lang) {
+          this._setI18nLocale(res.data.lang);
+        }
         this.survey.questions.forEach(q => {
           if (this.answers[q.id] === undefined) this.answers[q.id] = null;
           if (this.comments[q.id] === undefined) this.comments[q.id] = '';
@@ -275,7 +349,7 @@ export default {
       try {
         const res = await axios.post(`/api/maturity/${this.token}/clarify`, {
           question_text: q.text,
-          lang: this.surveyLang,
+          lang: this.survey.lang || this.activeSurveyLang,
         });
         this.clarifyResult = { id: q.id, content: res.data.content || '' };
       } catch (e) {
@@ -298,14 +372,22 @@ export default {
           const c = (this.comments[i] || '').toString().trim();
           commentsArr.push(c ? c : null);
         }
+        const langPayload = this.survey.lang === 'ru' || this.survey.lang === 'en'
+          ? this.survey.lang
+          : this.activeSurveyLang;
         if (this.teamSelfMode) {
           await axios.post(`/api/maturity/team/${this.token}/submit`, {
             answers: arr,
-            comments: commentsArr
+            comments: commentsArr,
+            lang: langPayload
           });
           this.teamSubmitDone = true;
         } else {
-          await axios.post(`/api/maturity/${this.token}/submit`, { answers: arr, comments: commentsArr });
+          await axios.post(`/api/maturity/${this.token}/submit`, {
+            answers: arr,
+            comments: commentsArr,
+            lang: langPayload
+          });
           this.$router.push(`${this.maturityBase}/results`);
         }
       } catch (e) {
@@ -346,6 +428,34 @@ export default {
 
 .maturity-header h1 { font-size: 1.5rem; color: #111; }
 .team-name { color: #555; margin-top: 0.5rem; }
+.survey-lang-hint {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0.5rem 0 0.35rem;
+  line-height: 1.35;
+}
+.survey-lang-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.lang-btn {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+}
+.lang-btn--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
 .glossary-toggle {
   margin-top: 0.5rem;
   font-size: 0.85rem;

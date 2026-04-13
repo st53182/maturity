@@ -306,6 +306,7 @@ class MaturityLinkSession(db.Model):
     group_name = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
+    survey_locale = db.Column(db.String(5), nullable=True)  # 'ru' | 'en' — язык текста вопросов (после менеджера — для командной ссылки)
     answers = db.Column(JSON, nullable=True)  # список ответов по индексу (строки no/rather_no/dont_know/rather_yes/yes)
     recommendations_html = db.Column(db.Text, nullable=True)
     dont_know_recommendations_html = db.Column(db.Text, nullable=True)

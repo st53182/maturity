@@ -82,6 +82,7 @@
 
 <script>
 import axios from 'axios';
+import { maturitySurveyLangParams } from '@/utils/maturitySurveyLang';
 
 export default {
   name: 'EditMaturity',
@@ -97,21 +98,13 @@ export default {
       comments: {},
       loading: true,
       error: null,
-      saving: false
+      saving: false,
+      lastSurveyLang: 'ru'
     };
   },
   computed: {
     maturityBase() {
       return this.variant === 'new' ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
-    },
-    surveyLang() {
-      try {
-        const loc = this.$i18n?.locale;
-        const s = typeof loc === 'string' ? loc : loc?.value;
-        return s === 'en' ? 'en' : 'ru';
-      } catch (_e) {
-        return typeof localStorage !== 'undefined' && localStorage.getItem('language') === 'en' ? 'en' : 'ru';
-      }
     }
   },
   async mounted() {
@@ -121,15 +114,16 @@ export default {
   methods: {
     async load() {
       try {
-        const lang = { params: { lang: this.surveyLang } };
+        const params = { params: maturitySurveyLangParams(this.token, this.$route) };
         const [surveyRes, resultsRes] = await Promise.all([
-          axios.get(`/api/maturity/${this.token}`, lang),
-          axios.get(`/api/maturity/${this.token}/results`, lang)
+          axios.get(`/api/maturity/${this.token}`, params),
+          axios.get(`/api/maturity/${this.token}/results`, params)
         ]);
         if (!surveyRes.data.completed) {
           this.error = this.$t('maturity.edit.notCompleted');
           return;
         }
+        this.lastSurveyLang = surveyRes.data.lang || resultsRes.data.lang || 'ru';
         this.teamName = surveyRes.data.team_name || resultsRes.data.team_name;
         this.questions = surveyRes.data.questions || [];
         const ansList = resultsRes.data.answers || [];
@@ -167,7 +161,11 @@ export default {
       });
       this.saving = true;
       try {
-        await axios.put(`/api/maturity/${this.token}/answers`, { answers: arr, comments: commentsArr });
+        await axios.put(`/api/maturity/${this.token}/answers`, {
+          answers: arr,
+          comments: commentsArr,
+          lang: this.lastSurveyLang
+        });
         this.$router.push(`${this.maturityBase}/results`);
       } catch (e) {
         this.error = e.response?.data?.error || this.$t('maturity.edit.saveError');

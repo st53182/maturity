@@ -115,6 +115,10 @@
   "maturity": {
     "title": "Maturity Assessment by Link",
     "loading": "Loading...",
+    "surveyLangHint": "Language of the question text. By default it matches the manager’s survey language; switch if you need the other language.",
+    "surveyLangRu": "Russian",
+    "surveyLangEn": "English",
+    "surveyLangAria": "Survey language",
     "alreadyCompleted": "This assessment has already been completed.",
     "viewResults": "View results",
     "progress": "Questions: {current} of {total}",

@@ -54,10 +54,15 @@ def load_glossary_en_rows():
     return _GLOSSARY_EN_ROWS
 
 
-def resolve_survey_lang(request):
+def resolve_survey_lang(request, session=None):
+    """Язык текста вопросов: ?lang= → сохранённый в сессии survey_locale → Accept-Language → ru."""
     q = (request.args.get("lang") or "").strip().lower()
     if q in ("en", "ru"):
         return q
+    if session is not None:
+        sl = getattr(session, "survey_locale", None)
+        if isinstance(sl, str) and sl.lower() in ("en", "ru"):
+            return sl.lower()
     accept = (request.headers.get("Accept-Language") or "").lower()
     if accept.startswith("en") or ",en" in accept:
         return "en"

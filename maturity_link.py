@@ -613,6 +613,8 @@ def _ensure_maturity_link_session_columns():
             db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN team_access_token VARCHAR(36)"))
         if "created_by_user_id" not in columns:
             db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN created_by_user_id INTEGER"))
+        if "survey_locale" not in columns:
+            db.session.execute(text("ALTER TABLE maturity_link_session ADD COLUMN survey_locale VARCHAR(5)"))
         db.session.commit()
         inspector = inspect(db.engine)
         idx_names = {i["name"] for i in inspector.get_indexes("maturity_link_session")}
@@ -652,6 +654,24 @@ def _normalize_comments_list(comments):
             continue
         out.append(s[:2000])
     return out
+
+
+def _normalize_client_lang(value):
+    if value is None:
+        return None
+    v = str(value).strip().lower()
+    return v if v in ("en", "ru") else None
+
+
+def _lang_from_submitted_payload(request, data_dict):
+    """Язык из JSON/query при submit; иначе Accept-Language (без привязки к survey_locale)."""
+    lg = _normalize_client_lang((data_dict or {}).get("lang"))
+    if lg:
+        return lg
+    lg = _normalize_client_lang(request.args.get("lang"))
+    if lg:
+        return lg
+    return resolve_survey_lang(request, None)
 
 
 def _metrics_tree_access_allowed(survey_token=None):
@@ -725,8 +745,8 @@ def get_maturity_team_survey(team_token):
     """Публично: опрос для самооценки команды (без JWT). Форма доступна всегда, пока ссылка жива."""
     _ensure_maturity_link_session_columns()
     _ensure_group_plan_table()
-    lang = resolve_survey_lang(request)
     session = MaturityLinkSession.query.filter_by(team_access_token=team_token).first()
+    lang = resolve_survey_lang(request, session)
     if not session:
         err = (
             'Link not found or invalid'
@@ -799,8 +819,8 @@ def submit_maturity_team_self(team_token):
 @maturity_bp.route('/api/maturity/<token>', methods=['GET'])
 def get_maturity_survey(token):
     """Публично: получить опрос по токену (вопросы с id 0..N-1, по 10 на страницу)."""
-    lang = resolve_survey_lang(request)
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
+    lang = resolve_survey_lang(request, session)
     if not session:
         err = (
             'Link not found or invalid'
@@ -863,6 +883,7 @@ def submit_maturity_answers(token):
         session.answers = {"answers": normalized, "comments": _normalize_comments_list(comments)}
     else:
         session.answers = normalized
+    session.survey_locale = _lang_from_submitted_payload(request, data)
     session.completed_at = datetime.utcnow()
     db.session.commit()
     return jsonify({
@@ -901,6 +922,7 @@ def update_maturity_answers(token):
             session.answers = {"answers": normalized, "comments": prev_comments}
         else:
             session.answers = normalized
+    session.survey_locale = _lang_from_submitted_payload(request, data)
     db.session.commit()
     return jsonify({
         'message': 'Ответы обновлены',
@@ -914,7 +936,7 @@ def get_maturity_results(token):
     session = MaturityLinkSession.query.filter_by(access_token=token).first()
     if not session:
         return jsonify({'error': 'Ссылка не найдена'}), 404
-    lang = resolve_survey_lang(request)
+    lang = resolve_survey_lang(request, session)
     answers_list, comments_list = _extract_answers_and_comments(session.answers)
     if not session.completed_at or not answers_list:
         return jsonify({'error': 'Оценка ещё не пройдена'}), 400
@@ -954,6 +976,7 @@ def get_maturity_results(token):
         'recommendations_plan': _normalize_group_plan(session.recommendations_plan_json),
         'dont_know_recommendations_html': session.dont_know_recommendations_html or '',
         'dont_know_recommendations_plan': _normalize_group_plan(session.dont_know_recommendations_plan_json),
+        'lang': lang,
     })
 
 
@@ -965,7 +988,11 @@ def _team_self_link_public_url(session):
     tok = getattr(session, 'team_access_token', None)
     if not tok:
         return None
-    return f'{_maturity_team_self_base_url()}/new/maturity/team/{tok}'
+    base = f'{_maturity_team_self_base_url()}/new/maturity/team/{tok}'
+    sl = getattr(session, 'survey_locale', None)
+    if isinstance(sl, str) and sl.lower() in ('en', 'ru'):
+        return f'{base}?lang={sl.lower()}'
+    return base
 
 
 @maturity_bp.route('/api/maturity/<token>/team-self-link', methods=['GET'])
@@ -1360,9 +1387,14 @@ def clarify_question(token):
     """Разъяснение вопроса нейросетью с примерами для банковской сферы (продуктовые, платформенные, сервисные команды)."""
     import os
     data = request.get_json() or {}
-    lang_raw = str(data.get('lang') or '').strip().lower()
-    lang = 'en' if lang_raw == 'en' else 'ru'
     session = _resolve_maturity_session_by_any_token(token)
+    lang_raw = str(data.get('lang') or '').strip().lower()
+    if lang_raw == 'en':
+        lang = 'en'
+    elif lang_raw == 'ru':
+        lang = 'ru'
+    else:
+        lang = resolve_survey_lang(request, session)
     if not session:
         err = 'Link not found' if lang == 'en' else 'Ссылка не найдена'
         return jsonify({'error': err}), 404

@@ -291,6 +291,7 @@
 <script>
 import axios from 'axios';
 import RadarChart from '@/components/RadarChart.vue';
+import { maturitySurveyLangParams } from '@/utils/maturitySurveyLang';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -431,6 +432,17 @@ export default {
       return this.variant === 'new' ? `/new/maturity/${this.token}` : `/maturity/${this.token}`;
     },
     surveyLang() {
+      const q = this.$route?.query?.lang;
+      if (q === 'ru' || q === 'en') return q;
+      if (this.token) {
+        try {
+          const s = window.sessionStorage.getItem(`maturitySurveyLang:${this.token}`);
+          if (s === 'ru' || s === 'en') return s;
+        } catch (_e) {
+          /* ignore */
+        }
+      }
+      if (this.resultPageLang === 'ru' || this.resultPageLang === 'en') return this.resultPageLang;
       try {
         const loc = this.$i18n?.locale;
         const s = typeof loc === 'string' ? loc : loc?.value;
@@ -517,11 +529,26 @@ export default {
       }
       return { labels, datasets };
     },
+    _setI18nLocale(code) {
+      if (!this.$i18n || (code !== 'ru' && code !== 'en')) return;
+      try {
+        if (typeof this.$i18n.locale === 'string') {
+          this.$i18n.locale = code;
+        } else if (this.$i18n.locale && typeof this.$i18n.locale === 'object' && 'value' in this.$i18n.locale) {
+          this.$i18n.locale.value = code;
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+    },
     async loadResults() {
       try {
         const res = await axios.get(`/api/maturity/${this.token}/results`, {
-          params: { lang: this.surveyLang }
+          params: maturitySurveyLangParams(this.token, this.$route)
         });
+        const apiLang = res.data.lang === 'en' ? 'en' : 'ru';
+        this.resultPageLang = apiLang;
+        this._setI18nLocale(apiLang);
         this.teamName = res.data.team_name;
         this.completedAt = res.data.completed_at;
         this.results = res.data.results || {};
@@ -547,7 +574,7 @@ export default {
       try {
         const res = await axios.get(`/api/maturity/${this.token}/team-comparison`, {
           headers: { Authorization: `Bearer ${auth}` },
-          params: { lang: this.surveyLang }
+          params: { lang: this.surveyLang },
         });
         this.teamComparison = res.data;
       } catch (_e) {

@@ -76,20 +76,27 @@ def _extract_json_object(text: str) -> Optional[dict]:
     return None
 
 
-def _call_openai(user_prompt: str, *, temperature: float = 0.4) -> str:
+def _is_gpt5_model(model: str) -> bool:
+    return "gpt-5" in (model or "").strip().lower().split("/")[-1]
+
+
+def _call_openai(user_prompt: str, *, temperature: float = 0.4, max_out_tokens: int = 2000) -> str:
     from openai import OpenAI
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    model = os.getenv("INTERVIEW_SIMULATOR_MODEL", "gpt-4.1-mini")
-    resp = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_BASE + "\n" + JSON_INSTRUCTION},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=temperature,
-        max_tokens=2000,
-    )
+    timeout = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "120"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=timeout)
+    model = (os.getenv("INTERVIEW_SIMULATOR_MODEL", "gpt-4.1-mini") or "gpt-4.1-mini").strip()
+    messages = [
+        {"role": "system", "content": SYSTEM_BASE + "\n" + JSON_INSTRUCTION},
+        {"role": "user", "content": user_prompt},
+    ]
+    kwargs: dict = {"model": model, "messages": messages}
+    if _is_gpt5_model(model):
+        kwargs["max_completion_tokens"] = max_out_tokens
+    else:
+        kwargs["temperature"] = temperature
+        kwargs["max_tokens"] = max_out_tokens
+    resp = client.chat.completions.create(**kwargs)
     return (resp.choices[0].message.content or "").strip()
 
 
@@ -290,6 +297,7 @@ def post_question():
             min_questions=min_q,
             max_questions=max_q,
             last_evaluation_json=last_eval_json,
+            locale=locale,
         )
         # Slightly higher temperature + richer prompt reduces back-to-back near-duplicate questions.
         try:

@@ -74,6 +74,7 @@ def build_question_prompt(
     min_questions: int,
     max_questions: int,
     last_evaluation_json: str | None,
+    locale: str = "en",
 ) -> str:
     jd_block = (
         job_description.strip()
@@ -197,6 +198,7 @@ def build_report_prompt(
     level: str,
     job_description: Optional[str],
     qa_block: str,
+    locale: str = "en",
 ) -> str:
     jd_block = (
         job_description.strip()

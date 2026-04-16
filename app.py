@@ -104,6 +104,7 @@ from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
 from interview_simulator import bp_interview_simulator
+from business_value import bp_business_value
 
 app = Flask(__name__, static_folder="static")
 mimetypes.add_type("application/wasm", ".wasm")
@@ -227,6 +228,7 @@ app.register_blueprint(bp_qa_test_docs)
 app.register_blueprint(bp_ai_limits)
 app.register_blueprint(bp_tests)
 app.register_blueprint(bp_interview_simulator)
+app.register_blueprint(bp_business_value)
 
 
 @app.errorhandler(AiLimitExceeded)

@@ -1165,7 +1165,38 @@
       "usabilityReport": "Usability report",
       "agileKata": "Agile Kata canvas",
       "agileTools": "Agile tools library",
-      "interviewSimulator": "AI Interview Simulator"
+      "interviewSimulator": "AI Interview Simulator",
+      "businessValue": "Business value scoring (stories / epics)"
+    }
+  },
+  "businessValue": {
+    "backHome": "Home",
+    "title": "Quick business value assessment",
+    "lead": "Pick factors from the pool, rate each 1–5, and get a total score with a priority hint. Add backlog items manually, from pasted text, or extract them via AI from text or a screenshot.",
+    "formulaHint": "Score = sum of “+” factors minus sum of “−” factors (e.g. profit + urgency + regulatory − delivery risk). Bands: 12+ do now, 7–11 plan this quarter, ≤6 defer/reject.",
+    "factorsTitle": "Scoring factors",
+    "factorsHint": "Choose which criteria count. “−” means a higher rating increases the penalty in the formula (risk).",
+    "loadTitle": "Load items to score",
+    "pasteLabel": "Text (Jira export, chat, notes)",
+    "pastePlaceholder": "One line per item, or paste a block and use “Parse with AI”.",
+    "addLines": "Add each line as an item",
+    "parseAi": "Parse text with AI",
+    "imageLabel": "Screenshot (PNG / JPEG / WebP)",
+    "parseImage": "Parse screenshot",
+    "tableTitle": "Scores ({n} items)",
+    "colItem": "Item",
+    "colScore": "Score",
+    "colDecision": "Decision",
+    "emptyState": "Add items: paste one per line, parse a text block, or upload a screenshot.",
+    "copyJira": "Copy Jira wiki table",
+    "downloadCsv": "Download CSV",
+    "downloadTxt": "Download TXT",
+    "copied": "Table copied to clipboard.",
+    "copyFallback": "Could not copy automatically — use CSV/TXT export instead.",
+    "band": {
+      "immediate": "Do immediately",
+      "quarter": "Plan this quarter",
+      "defer": "Defer / reject"
     }
   },
   "agileKata": {

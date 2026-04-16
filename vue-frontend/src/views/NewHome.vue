@@ -100,6 +100,7 @@
             <router-link to="/new/agile-kata" class="area-link">{{ $t('newHome.links.agileKata') }}</router-link>
             <router-link to="/new/agile-tools" class="area-link">{{ $t('newHome.links.agileTools') }}</router-link>
             <router-link to="/new/backlog-prep" class="area-link">{{ $t('newHome.links.backlogPrep') }}</router-link>
+            <router-link to="/new/business-value" class="area-link">{{ $t('newHome.links.businessValue') }}</router-link>
             <router-link to="/new/interview-simulator" class="area-link">{{ $t('newHome.links.interviewSimulator') }}</router-link>
           </div>
         </article>

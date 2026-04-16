@@ -134,6 +134,7 @@ AI_LIMITED_POST_PATHS = {
     "/api/qa-test-docs/case/ai-help",
     "/api/qa-test-docs/case/evaluate",
     "/api/survey-templates/ai-draft",
+    "/api/business-value/parse-items",
 }
 
 

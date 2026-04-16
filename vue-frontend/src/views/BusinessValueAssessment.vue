@@ -10,17 +10,63 @@
     <section class="bv-card">
       <h2>{{ $t('businessValue.factorsTitle') }}</h2>
       <p class="muted small">{{ $t('businessValue.factorsHint') }}</p>
-      <div class="bv-factor-grid">
-        <label
-          v-for="f in factors"
+      <p class="bv-scale-legend muted small">{{ $t('businessValue.scaleLegend') }}</p>
+      <div class="bv-factor-list">
+        <div
+          v-for="f in allFactors"
           :key="f.id"
-          class="bv-factor-chip"
-          :class="{ 'bv-factor-chip--on': selectedFactorIds.includes(f.id) }"
+          class="bv-factor-block"
+          :class="{ 'bv-factor-block--on': selectedFactorIds.includes(f.id) }"
         >
-          <input v-model="selectedFactorIds" type="checkbox" :value="f.id" />
-          <span class="bv-factor-label">{{ factorLabel(f) }}</span>
-          <span class="bv-factor-pol">{{ f.polarity < 0 ? '−' : '+' }}</span>
-        </label>
+          <div class="bv-factor-block-head">
+            <label class="bv-factor-check">
+              <input v-model="selectedFactorIds" type="checkbox" :value="f.id" />
+              <span class="bv-factor-label">{{ factorLabel(f) }}</span>
+              <span class="bv-factor-pol">{{ f.polarity < 0 ? '−' : '+' }}</span>
+            </label>
+            <button
+              v-if="f.custom"
+              type="button"
+              class="bv-remove-criterion"
+              :title="$t('businessValue.removeCriterion')"
+              @click.prevent="removeCustomFactor(f.id)"
+            >
+              ×
+            </button>
+          </div>
+          <div class="bv-factor-hints">
+            <p><span class="bv-hint-tag">{{ $t('businessValue.hint1Short') }}</span> {{ hint1(f) }}</p>
+            <p><span class="bv-hint-tag">{{ $t('businessValue.hint5Short') }}</span> {{ hint5(f) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bv-custom-block">
+        <h3 class="bv-custom-title">{{ $t('businessValue.customBlockTitle') }}</h3>
+        <div class="bv-custom-grid">
+          <div>
+            <label class="bv-label">{{ $t('businessValue.customName') }}</label>
+            <input v-model="customDraft.name" type="text" class="bv-input" maxlength="120" />
+          </div>
+          <div>
+            <label class="bv-label">{{ $t('businessValue.customPolarity') }}</label>
+            <select v-model.number="customDraft.polarity" class="bv-input">
+              <option :value="1">{{ $t('businessValue.customAdds') }}</option>
+              <option :value="-1">{{ $t('businessValue.customSubtracts') }}</option>
+            </select>
+          </div>
+          <div class="bv-custom-span2">
+            <label class="bv-label">{{ $t('businessValue.customHintLow') }}</label>
+            <input v-model="customDraft.hint1" type="text" class="bv-input" maxlength="240" />
+          </div>
+          <div class="bv-custom-span2">
+            <label class="bv-label">{{ $t('businessValue.customHintHigh') }}</label>
+            <input v-model="customDraft.hint5" type="text" class="bv-input" maxlength="240" />
+          </div>
+        </div>
+        <button type="button" class="bv-btn bv-btn-primary bv-add-custom" @click="addCustomFactor">
+          {{ $t('businessValue.addCustom') }}
+        </button>
       </div>
     </section>
 
@@ -63,7 +109,14 @@
             <tr>
               <th>#</th>
               <th>{{ $t('businessValue.colItem') }}</th>
-              <th v-for="fid in selectedFactorIds" :key="fid">{{ shortFactorLabel(fid) }}</th>
+              <th
+                v-for="fid in selectedFactorIds"
+                :key="fid"
+                class="bv-th-factor"
+                :title="columnTooltip(fid)"
+              >
+                <span class="bv-th-name">{{ shortFactorLabel(fid) }}</span>
+              </th>
               <th>{{ $t('businessValue.colScore') }}</th>
               <th>{{ $t('businessValue.colDecision') }}</th>
             </tr>
@@ -75,10 +128,11 @@
                 <div class="bv-item-title">{{ row.title }}</div>
                 <div v-if="row.description" class="bv-item-desc muted small">{{ row.description }}</div>
               </td>
-              <td v-for="fid in selectedFactorIds" :key="row.id + fid">
-                <select v-model.number="row.scores[fid]" class="bv-select">
+              <td v-for="fid in selectedFactorIds" :key="row.id + fid" class="bv-score-cell">
+                <select v-model.number="row.scores[fid]" class="bv-select" :title="columnTooltip(fid)">
                   <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
                 </select>
+                <div class="bv-cell-hints muted tiny">{{ cellHintLine(fid) }}</div>
               </td>
               <td><strong>{{ scoreRow(row).toFixed(0) }}</strong></td>
               <td>
@@ -104,24 +158,34 @@ function authHeaders() {
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
+/** Выбранные критерии и свои факторы — последнее состояние в этом браузере. */
+const BV_SELECTION_STORAGE_KEY = 'growboard_business_value_selection_v1';
+const MAX_CUSTOM_FACTORS_STORED = 15;
+
 export default {
   name: 'BusinessValueAssessment',
   data() {
     return {
       factors: [],
+      customFactors: [],
+      customDraft: { name: '', hint1: '', hint5: '', polarity: 1 },
       selectedFactorIds: ['profit', 'urgency', 'regulatory', 'delivery_risk'],
       items: [],
       pasteText: '',
       imageFile: null,
       parseTextLoading: false,
       parseImageLoading: false,
-      parseError: null
+      parseError: null,
+      persistBvReady: false
     };
   },
   computed: {
+    allFactors() {
+      return [...(this.factors || []), ...(this.customFactors || [])];
+    },
     factorById() {
       const m = {};
-      for (const f of this.factors) m[f.id] = f;
+      for (const f of this.allFactors) m[f.id] = f;
       return m;
     }
   },
@@ -132,8 +196,140 @@ export default {
     } catch {
       this.factors = [];
     }
+    this._loadBvPersisted();
+    this.persistBvReady = true;
+    this._persistBvSelection();
   },
   methods: {
+    _normalizeStoredCustom(cf) {
+      if (!cf || typeof cf !== 'object') return null;
+      const id = String(cf.id || '');
+      if (!id.startsWith('custom:')) return null;
+      const pol = Number(cf.polarity) < 0 ? -1 : 1;
+      const lr = String(cf.label_ru || cf.label || '').trim().slice(0, 120);
+      if (!lr) return null;
+      const le = String(cf.label_en || lr).trim().slice(0, 120);
+      const defLo = this.$t('businessValue.defaultHintLow');
+      const defHi = this.$t('businessValue.defaultHintHigh');
+      const h1r = String(cf.hint1_ru || cf.hint1 || '').trim().slice(0, 240);
+      const h5r = String(cf.hint5_ru || cf.hint5 || '').trim().slice(0, 240);
+      return {
+        id,
+        polarity: pol,
+        label_ru: lr,
+        label_en: le,
+        hint1_ru: h1r || defLo,
+        hint5_ru: h5r || defHi,
+        hint1_en: String(cf.hint1_en || h1r || '').trim().slice(0, 240) || defLo,
+        hint5_en: String(cf.hint5_en || h5r || '').trim().slice(0, 240) || defHi,
+        custom: true
+      };
+    },
+    _loadBvPersisted() {
+      try {
+        const raw = localStorage.getItem(BV_SELECTION_STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.customFactors)) {
+          const list = data.customFactors.map((x) => this._normalizeStoredCustom(x)).filter(Boolean);
+          this.customFactors = list.slice(0, MAX_CUSTOM_FACTORS_STORED);
+        }
+        const builtInIds = new Set((this.factors || []).map((f) => f.id));
+        const customIds = new Set(this.customFactors.map((f) => f.id));
+        if (Array.isArray(data.selectedFactorIds) && data.selectedFactorIds.length) {
+          const picked = data.selectedFactorIds.filter(
+            (id) => typeof id === 'string' && (builtInIds.has(id) || customIds.has(id))
+          );
+          if (picked.length) {
+            this.selectedFactorIds = picked;
+          }
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+    },
+    _persistBvSelection() {
+      if (!this.persistBvReady) return;
+      try {
+        localStorage.setItem(
+          BV_SELECTION_STORAGE_KEY,
+          JSON.stringify({
+            selectedFactorIds: this.selectedFactorIds,
+            customFactors: this.customFactors
+          })
+        );
+      } catch (_e) {
+        /* ignore */
+      }
+    },
+    _newCustomId() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return `custom:${crypto.randomUUID()}`;
+      return `custom:${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    },
+    hint1(f) {
+      if (!f) return '';
+      const en = this.$i18n?.locale === 'en';
+      return en ? (f.hint1_en || f.hint1_ru || '') : (f.hint1_ru || f.hint1_en || '');
+    },
+    hint5(f) {
+      if (!f) return '';
+      const en = this.$i18n?.locale === 'en';
+      return en ? (f.hint5_en || f.hint5_ru || '') : (f.hint5_ru || f.hint5_en || '');
+    },
+    columnTooltip(fid) {
+      const f = this.factorById[fid];
+      if (!f) return '';
+      const a = this.hint1(f);
+      const b = this.hint5(f);
+      return `1 — ${a}\n5 — ${b}`;
+    },
+    cellHintLine(fid) {
+      const f = this.factorById[fid];
+      if (!f) return '';
+      const a = this.shortHint(this.hint1(f), 42);
+      const b = this.shortHint(this.hint5(f), 42);
+      return `${this.$t('businessValue.hint1Short')}: ${a} · ${this.$t('businessValue.hint5Short')}: ${b}`;
+    },
+    shortHint(s, maxLen) {
+      if (!s) return '—';
+      return s.length <= maxLen ? s : `${s.slice(0, maxLen - 1)}…`;
+    },
+    addCustomFactor() {
+      const name = (this.customDraft.name || '').trim();
+      if (!name) return;
+      const h1 = (this.customDraft.hint1 || '').trim() || this.$t('businessValue.defaultHintLow');
+      const h5 = (this.customDraft.hint5 || '').trim() || this.$t('businessValue.defaultHintHigh');
+      const pol = Number(this.customDraft.polarity) < 0 ? -1 : 1;
+      const id = this._newCustomId();
+      this.customFactors.push({
+        id,
+        polarity: pol,
+        label_ru: name,
+        label_en: name,
+        hint1_ru: h1,
+        hint5_ru: h5,
+        hint1_en: h1,
+        hint5_en: h5,
+        custom: true
+      });
+      if (!this.selectedFactorIds.includes(id)) {
+        this.selectedFactorIds = [...this.selectedFactorIds, id];
+      }
+      this.customDraft = { name: '', hint1: '', hint5: '', polarity: 1 };
+      for (const row of this.items) this.ensureScores(row);
+      this._persistBvSelection();
+    },
+    removeCustomFactor(id) {
+      if (!id || !String(id).startsWith('custom:')) return;
+      this.customFactors = this.customFactors.filter((f) => f.id !== id);
+      this.selectedFactorIds = this.selectedFactorIds.filter((x) => x !== id);
+      for (const row of this.items) {
+        if (row.scores && Object.prototype.hasOwnProperty.call(row.scores, id)) {
+          delete row.scores[id];
+        }
+      }
+      this._persistBvSelection();
+    },
     factorLabel(f) {
       const en = this.$i18n?.locale === 'en';
       return en ? (f.label_en || f.label_ru) : (f.label_ru || f.label_en);
@@ -308,9 +504,18 @@ export default {
       deep: true,
       handler(ids) {
         if (!ids || !ids.length) {
-          this.selectedFactorIds = ['profit'];
+          const first = (this.allFactors && this.allFactors[0] && this.allFactors[0].id) || 'profit';
+          this.selectedFactorIds = [first];
+          return;
         }
         for (const row of this.items) this.ensureScores(row);
+        this._persistBvSelection();
+      }
+    },
+    customFactors: {
+      deep: true,
+      handler() {
+        this._persistBvSelection();
       }
     }
   }
@@ -384,37 +589,158 @@ export default {
   color: #0f172a;
 }
 
-.bv-factor-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.bv-scale-legend {
+  margin: 0 0 14px;
+  max-width: 820px;
+  line-height: 1.45;
 }
 
-.bv-factor-chip {
+.bv-factor-list {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  cursor: pointer;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bv-factor-block {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
   background: #f8fafc;
 }
 
-.bv-factor-chip--on {
+.bv-factor-block--on {
   border-color: #2563eb;
   background: #eff6ff;
 }
 
+.bv-factor-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bv-factor-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.bv-remove-criterion {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.bv-remove-criterion:hover {
+  color: #b91c1c;
+}
+
+.bv-factor-hints {
+  margin: 10px 0 0 26px;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.bv-factor-hints p {
+  margin: 4px 0;
+}
+
+.bv-hint-tag {
+  display: inline-block;
+  min-width: 1.25rem;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.bv-custom-block {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.bv-custom-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.bv-custom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.bv-custom-span2 {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .bv-custom-grid {
+    grid-template-columns: 1fr;
+  }
+  .bv-custom-span2 {
+    grid-column: auto;
+  }
+}
+
+.bv-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.bv-add-custom {
+  margin-top: 12px;
+}
+
 .bv-factor-label {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: #1e293b;
+  font-weight: 600;
 }
 
 .bv-factor-pol {
   font-weight: 800;
   color: #64748b;
   font-size: 0.85rem;
+}
+
+.tiny {
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.bv-th-factor {
+  max-width: 140px;
+  vertical-align: bottom;
+}
+
+.bv-th-name {
+  display: inline-block;
+  max-width: 120px;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.bv-score-cell {
+  max-width: 130px;
+}
+
+.bv-cell-hints {
+  margin-top: 4px;
 }
 
 .bv-load-grid {

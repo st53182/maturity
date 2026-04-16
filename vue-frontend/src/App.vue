@@ -67,6 +67,10 @@
           <span>🧭</span>
           <small>{{ $t('nav.backlogPrep') }}</small>
         </button>
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/business-value', '/business-value']) }" @click="$router.push(isNewUi ? '/new/business-value' : '/business-value')">
+          <span>📊</span>
+          <small>{{ $t('nav.businessValue') }}</small>
+        </button>
         <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/system-thinking', '/system-thinking']) }" @click="$router.push(isNewUi ? '/new/system-thinking' : '/system-thinking')">
           <span>🧊</span>
           <small>{{ $t('newHome.links.systemThinking') }}</small>
@@ -182,6 +186,10 @@
           <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/backlog-prep', '/backlog-prep']) }" @click="navigateAndClose(isNewUi ? '/new/backlog-prep' : '/backlog-prep')">
             <span>🧭</span>
             <span>{{ $t('nav.backlogPrep') }}</span>
+          </button>
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/business-value', '/business-value']) }" @click="navigateAndClose(isNewUi ? '/new/business-value' : '/business-value')">
+            <span>📊</span>
+            <span>{{ $t('nav.businessValue') }}</span>
           </button>
           <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/system-thinking', '/system-thinking']) }" @click="navigateAndClose(isNewUi ? '/new/system-thinking' : '/system-thinking')">
             <span>🧊</span>

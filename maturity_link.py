@@ -333,6 +333,23 @@ def _results_from_answers(answers):
     return results
 
 
+def _overall_maturity_average_from_results(results):
+    """Средний балл как на странице результатов: среднее по темам суммы трёх подвопросов (0..3)."""
+    if not results:
+        return None
+    total = 0.0
+    count = 0
+    for cat in results.values():
+        vals = [float(x) for x in cat.values()]
+        total += sum(vals)
+        count += 1
+    return (total / count) if count else None
+
+
+def _overall_maturity_average_from_row(row):
+    return _overall_maturity_average_from_results(_results_from_answers(row))
+
+
 def _results_from_question_scores(scores_by_question):
     """Те же оси радара, что у менеджера; scores_by_question — N значений 0..1 (уже усреднённые по команде)."""
     if not scores_by_question or len(scores_by_question) != QUESTIONS_COUNT:
@@ -1802,7 +1819,13 @@ def maturity_admin_aggregates():
 
     counts = [_empty_counts() for _ in range(QUESTIONS_COUNT)]
     valid_sessions = 0
-    by_group = defaultdict(lambda: {"sessions": 0, **_empty_counts()})
+
+    def _new_group_bucket():
+        d = {"sessions": 0, "manager_score_sum": 0.0, "manager_score_sessions": 0}
+        d.update(_empty_counts())
+        return d
+
+    by_group = defaultdict(_new_group_bucket)
     for s in completed:
         raw_ans, _ = _extract_answers_and_comments(s.answers)
         row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
@@ -1811,6 +1834,10 @@ def maturity_admin_aggregates():
         valid_sessions += 1
         gname = _normalize_group_name(getattr(s, "group_name", None)) or "Без группы"
         by_group[gname]["sessions"] += 1
+        avg_m = _overall_maturity_average_from_row(row)
+        if avg_m is not None:
+            by_group[gname]["manager_score_sum"] += float(avg_m)
+            by_group[gname]["manager_score_sessions"] += 1
         for i, a in enumerate(row):
             if a == "yes":
                 counts[i]["yes"] += 1
@@ -1871,6 +1898,11 @@ def maturity_admin_aggregates():
                 "no": v["no"],
                 "rather_no": v["rather_no"],
                 "dont_know": v["dont_know"],
+                "manager_average": (
+                    round(v["manager_score_sum"] / v["manager_score_sessions"], 2)
+                    if v.get("manager_score_sessions")
+                    else None
+                ),
             }
             for g, v in sorted(by_group.items(), key=lambda item: item[0].lower())
         ],

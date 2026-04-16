@@ -34,11 +34,19 @@
         <div v-if="groupRadarChartsVisible" class="group-radar-section">
           <h3 class="group-radar-heading">Радар по выборке (менеджер vs команда)</h3>
           <p class="muted small group-radar-meta">{{ groupRadarSubtitle }}</p>
+          <p v-if="groupRadarChartsVisible" class="group-radar-scores">
+            Средняя оценка по выборке: менеджеры
+            <strong>{{ groupRadarAverageManager.toFixed(2) }}</strong>
+            <template v-if="groupRadarTeamSubmissionCount > 0">
+              · самооценка команд <strong>{{ groupRadarAverageTeam.toFixed(2) }}</strong>
+            </template>
+            <span v-else class="muted"> (нет анкет самооценки — на радаре только менеджеры)</span>
+          </p>
           <p class="muted small">
             Те же оси и легенда, что в окне «{{ $t('maturity.adminManagerVsTeam') }}» для одной сессии: бирюзовый —
             среднее по менеджерским опросам, фиолетовый — среднее по всем анкетам самооценки в выборке.
           </p>
-          <div class="group-radar-charts">
+          <div class="group-radar-charts radar-grid-two">
             <div
               v-for="group in groupRadarGroups"
               :key="'gr-' + group.title"
@@ -105,6 +113,9 @@
           <article v-for="g in groupSummaries" :key="g.group_name" class="group-card">
             <h3>{{ g.group_name }}</h3>
             <p>Сессий: <strong>{{ g.sessions }}</strong></p>
+            <p v-if="g.manager_average != null" class="group-card-avg">
+              Средняя оценка (менеджеры): <strong>{{ Number(g.manager_average).toFixed(2) }}</strong>
+            </p>
             <p>
               Да: {{ g.yes }} · Скорее да: {{ g.rather_yes ?? 0 }} · Нет: {{ g.no }} · Скорее нет:
               {{ g.rather_no ?? 0 }} · Не знаю: {{ g.dont_know }}
@@ -235,13 +246,21 @@
               Ответов команды: {{ comparisonData.submission_count }}
             </p>
             <p v-else class="muted small">Пока нет ответов команды по ссылке самооценки.</p>
-            <div
-              v-for="group in comparisonRadarGroups"
-              :key="group.title"
-              v-show="chartDataComparisonGroup(group).labels.length"
-              class="comparison-radar-wrap"
-            >
-              <RadarChart :chart-data="chartDataComparisonGroup(group)" :title="group.title" />
+            <p v-if="comparisonData.manager_results" class="comparison-scores muted small">
+              Средняя оценка: менеджер <strong>{{ comparisonAverageManager.toFixed(2) }}</strong>
+              <template v-if="comparisonData.submission_count > 0">
+                · команда <strong>{{ comparisonAverageTeam.toFixed(2) }}</strong>
+              </template>
+            </p>
+            <div class="radar-grid-two">
+              <div
+                v-for="group in comparisonRadarGroups"
+                :key="group.title"
+                v-show="chartDataComparisonGroup(group).labels.length"
+                class="comparison-radar-wrap"
+              >
+                <RadarChart :chart-data="chartDataComparisonGroup(group)" :title="group.title" />
+              </div>
             </div>
           </div>
         </div>
@@ -268,6 +287,20 @@ import { Bar } from 'vue-chartjs';
 import RadarChart from '@/components/RadarChart.vue';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+/** Как `averageScore` в MaturityResults: среднее по темам суммы трёх подбаллов (0…3). */
+function averageMaturityRadarScore(results) {
+  if (!results || typeof results !== 'object' || !Object.keys(results).length) return 0;
+  let total = 0;
+  let count = 0;
+  for (const cat of Object.values(results)) {
+    if (!cat || typeof cat !== 'object') continue;
+    const vals = Object.values(cat).map((v) => parseFloat(v) || 0);
+    total += vals.reduce((a, b) => a + b, 0);
+    count++;
+  }
+  return count ? total / count : 0;
+}
 
 function authHeaders() {
   const t = localStorage.getItem('token');
@@ -432,6 +465,21 @@ export default {
         ? `Группа «${this.selectedGroup}».`
         : 'Все группы (завершённые сессии в выборке).';
       return `${scope} Среднее по опросам менеджеров: ${m} сессий. Ответов по ссылке самооценки: ${t}.`;
+    },
+    groupRadarAverageManager() {
+      return averageMaturityRadarScore(this.groupRadar && this.groupRadar.manager_results);
+    },
+    groupRadarAverageTeam() {
+      return averageMaturityRadarScore(this.groupRadar && this.groupRadar.team_results);
+    },
+    groupRadarTeamSubmissionCount() {
+      return (this.groupRadar && this.groupRadar.submission_count) || 0;
+    },
+    comparisonAverageManager() {
+      return averageMaturityRadarScore(this.comparisonData && this.comparisonData.manager_results);
+    },
+    comparisonAverageTeam() {
+      return averageMaturityRadarScore(this.comparisonData && this.comparisonData.team_results);
     }
   },
   mounted() {
@@ -860,6 +908,11 @@ export default {
   color: #334155;
 }
 
+.group-card-avg {
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
 .chart-box {
   height: 280px;
   max-width: 620px;
@@ -1109,11 +1162,32 @@ export default {
   margin-bottom: 6px;
 }
 
+.group-radar-scores {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
 .group-radar-charts {
   margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+}
+
+/* Два радара в ряд (на узком экране — один). */
+.radar-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  align-items: start;
+}
+
+.comparison-radar-wrap {
+  min-height: 240px;
+}
+
+@media (max-width: 720px) {
+  .radar-grid-two {
+    grid-template-columns: 1fr;
+  }
 }
 
 .report-cell {
@@ -1145,7 +1219,7 @@ export default {
 .comparison-modal {
   background: #fff;
   border-radius: 16px;
-  max-width: 720px;
+  max-width: min(1040px, calc(100vw - 24px));
   width: 100%;
   padding: 16px 20px 28px;
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
@@ -1177,7 +1251,7 @@ export default {
   overflow-y: auto;
 }
 
-.comparison-radar-wrap {
+.comparison-scores {
   margin-bottom: 8px;
 }
 </style>

@@ -389,6 +389,55 @@ def _team_comparison_payload(session):
     }
 
 
+def _admin_aggregate_radar_payload(sessions):
+    """Средние баллы по радару для списка завершённых сессий (фильтр «все» или по группе).
+
+    Формат как у `_team_comparison_payload`: manager_results / team_results / radar_groups /
+    submission_count (число анкет самооценки), плюс manager_session_count для подписи в UI.
+    """
+    manager_rows = []
+    for s in sessions:
+        raw_ans, _ = _extract_answers_and_comments(s.answers)
+        row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
+        if row:
+            manager_rows.append(row)
+    manager_session_count = len(manager_rows)
+    manager_results = None
+    if manager_session_count:
+        sums = [0.0] * QUESTIONS_COUNT
+        for row in manager_rows:
+            for i, a in enumerate(row):
+                sums[i] += float(MATURITY_ANSWER_SCORE.get(a, 0.0))
+        avgs = [sums[i] / manager_session_count for i in range(QUESTIONS_COUNT)]
+        manager_results = _results_from_question_scores(avgs)
+
+    team_row_list = []
+    for s in sessions:
+        subs = MaturityTeamSelfSubmission.query.filter_by(session_id=s.id).all()
+        for sub in subs:
+            raw_ans, _ = _extract_answers_and_comments(sub.answers)
+            row = _normalize_stored_answers_row(raw_ans) if raw_ans else None
+            if row:
+                team_row_list.append(row)
+    n_team = len(team_row_list)
+    team_results = None
+    if n_team > 0:
+        sums = [0.0] * QUESTIONS_COUNT
+        for row in team_row_list:
+            for i, a in enumerate(row):
+                sums[i] += float(MATURITY_ANSWER_SCORE.get(a, 0.0))
+        avgs = [sums[i] / n_team for i in range(QUESTIONS_COUNT)]
+        team_results = _results_from_question_scores(avgs)
+
+    return {
+        'radar_groups': RADAR_GROUPS,
+        'manager_results': manager_results,
+        'team_results': team_results,
+        'submission_count': n_team,
+        'manager_session_count': manager_session_count,
+    }
+
+
 def _repair_truncated_json(text: str) -> str:
     """Close unclosed brackets/braces in truncated JSON from the LLM."""
     open_braces = 0
@@ -1808,6 +1857,8 @@ def maturity_admin_aggregates():
                 "dont_know_pct": round(100.0 * c["dont_know"] / t, 1),
             })
 
+    group_radar = _admin_aggregate_radar_payload(completed)
+
     return jsonify({
         "selected_group": selected_group,
         "completed_sessions": valid_sessions,
@@ -1824,6 +1875,7 @@ def maturity_admin_aggregates():
             for g, v in sorted(by_group.items(), key=lambda item: item[0].lower())
         ],
         "questions": questions_out,
+        "group_radar": group_radar,
     })
 
 

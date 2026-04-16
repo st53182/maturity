@@ -31,6 +31,24 @@
           </button>
         </div>
         <MetricsTreePanel v-if="showMetricsTree" title="Древо метрик (админ)" class="admin-metrics-tree" />
+        <div v-if="groupRadarChartsVisible" class="group-radar-section">
+          <h3 class="group-radar-heading">Радар по выборке (менеджер vs команда)</h3>
+          <p class="muted small group-radar-meta">{{ groupRadarSubtitle }}</p>
+          <p class="muted small">
+            Те же оси и легенда, что в окне «{{ $t('maturity.adminManagerVsTeam') }}» для одной сессии: бирюзовый —
+            среднее по менеджерским опросам, фиолетовый — среднее по всем анкетам самооценки в выборке.
+          </p>
+          <div class="group-radar-charts">
+            <div
+              v-for="group in groupRadarGroups"
+              :key="'gr-' + group.title"
+              v-show="chartDataGroupRadar(group).labels.length"
+              class="comparison-radar-wrap"
+            >
+              <RadarChart :chart-data="chartDataGroupRadar(group)" :title="group.title" />
+            </div>
+          </div>
+        </div>
         <p v-if="groupPlanUpdatedAt" class="muted small">Обновлено: {{ formatDt(groupPlanUpdatedAt) }}</p>
         <div ref="groupPlanExportRoot" class="group-plan-editor" v-if="selectedGroup">
           <h3>План улучшений стрима: {{ selectedGroup }}</h3>
@@ -394,6 +412,26 @@ export default {
           y: { stacked: true, display: false }
         }
       };
+    },
+    groupRadar() {
+      return this.aggregates.group_radar || null;
+    },
+    groupRadarGroups() {
+      const g = this.groupRadar && this.groupRadar.radar_groups;
+      return Array.isArray(g) ? g : [];
+    },
+    groupRadarChartsVisible() {
+      return !this.loading && !!this.groupRadar && !!this.groupRadar.manager_results;
+    },
+    groupRadarSubtitle() {
+      const p = this.groupRadar;
+      if (!p) return '';
+      const m = p.manager_session_count ?? 0;
+      const t = p.submission_count ?? 0;
+      const scope = this.selectedGroup
+        ? `Группа «${this.selectedGroup}».`
+        : 'Все группы (завершённые сессии в выборке).';
+      return `${scope} Среднее по опросам менеджеров: ${m} сессий. Ответов по ссылке самооценки: ${t}.`;
     }
   },
   mounted() {
@@ -666,12 +704,12 @@ export default {
         this.comparisonLoading = false;
       }
     },
-    chartDataComparisonGroup(group) {
-      if (!this.comparisonData || !group || !group.categories) {
+    buildRadarChartData(payload, group) {
+      if (!payload || !group || !group.categories) {
         return { labels: [], datasets: [] };
       }
-      const mgr = this.comparisonData.manager_results;
-      const team = this.comparisonData.team_results;
+      const mgr = payload.manager_results;
+      const team = payload.team_results;
       const labels = [];
       const managerData = [];
       const teamData = [];
@@ -703,7 +741,7 @@ export default {
           borderWidth: 2
         });
       }
-      if (team && this.comparisonData.submission_count > 0) {
+      if (team && payload.submission_count > 0) {
         datasets.push({
           label: 'Команда (среднее)',
           data: teamData,
@@ -713,6 +751,12 @@ export default {
         });
       }
       return { labels, datasets };
+    },
+    chartDataComparisonGroup(group) {
+      return this.buildRadarChartData(this.comparisonData, group);
+    },
+    chartDataGroupRadar(group) {
+      return this.buildRadarChartData(this.groupRadar, group);
     }
   }
 };
@@ -1047,6 +1091,29 @@ export default {
 
 .admin-metrics-tree {
   margin-top: 12px;
+}
+
+.group-radar-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.group-radar-heading {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.group-radar-meta {
+  margin-bottom: 6px;
+}
+
+.group-radar-charts {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .report-cell {

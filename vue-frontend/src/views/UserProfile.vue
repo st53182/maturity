@@ -59,7 +59,7 @@
       <p>{{ $t('profile.discDescription') }}</p>
       
       <div class="disc-actions">
-        <router-link to="/disc-assessment" class="modern-button purple">
+        <router-link to="/new/disc-assessment" class="modern-button purple">
           {{ profile.personality_type ? $t('profile.retakeAssessment') : $t('profile.takeAssessment') }}
         </router-link>
         <div v-if="assessmentHistory.length > 0" class="history-summary">

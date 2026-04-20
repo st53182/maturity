@@ -1,10 +1,14 @@
 <template>
   <div class="project-card-page">
     <div class="page-actions">
-      <button class="export-pdf-btn" @click="exportPdf" :disabled="exporting">
+      <button type="button" class="pcard-load-example" @click="loadFullExample">
+        {{ $t('projectCard.loadExample') }}
+      </button>
+      <button type="button" class="export-pdf-btn" @click="exportPdf" :disabled="exporting">
         {{ exporting ? $t('projectCard.downloadingPdf') : '📄 ' + $t('projectCard.downloadPdf') }}
       </button>
     </div>
+    <p v-if="aiError" class="pcard-ai-error" role="alert">{{ aiError }}</p>
 
     <div ref="pdfContent" class="project-card-a3">
       <header class="card-header">
@@ -13,9 +17,19 @@
       </header>
 
       <div class="card-grid">
-        <!-- ① Активные задачи + светофор -->
+        <!-- ① -->
         <section class="card-section section-tasks">
-          <h2><span class="section-num">①</span> {{ $t('projectCard.section1') }}</h2>
+          <div class="pcard-section-head">
+            <h2><span class="section-num">①</span> {{ $t('projectCard.section1') }}</h2>
+            <button
+              type="button"
+              class="pcard-ai-btn"
+              :disabled="!!aiLoading"
+              @click="runAi('tasks')"
+            >
+              {{ aiLoading === 'tasks' ? $t('projectCard.aiThinking') : $t('projectCard.aiHelp') }}
+            </button>
+          </div>
           <p class="section-hint">{{ $t('projectCard.section1Hint') }}</p>
           <div class="tasks-table-wrap">
             <table class="tasks-table">
@@ -34,14 +48,38 @@
                   <td class="col-task"><input v-model="task.name" :placeholder="$t('projectCard.taskPh')" /></td>
                   <td class="col-status">
                     <div class="traffic-light" :title="statusLabel(task.status)">
-                      <button type="button" class="tl-dot tl-green" :class="{ active: task.status === 'done' }" :title="$t('projectCard.tlDone')" @click="task.status = 'done'" />
-                      <button type="button" class="tl-dot tl-yellow" :class="{ active: task.status === 'progress' }" :title="$t('projectCard.tlProgress')" @click="task.status = 'progress'" />
-                      <button type="button" class="tl-dot tl-red" :class="{ active: task.status === 'risk' }" :title="$t('projectCard.tlRisk')" @click="task.status = 'risk'" />
-                      <button type="button" class="tl-dot tl-gray" :class="{ active: task.status === 'waiting' }" :title="$t('projectCard.tlWaiting')" @click="task.status = 'waiting'" />
+                      <button
+                        type="button"
+                        class="pcard-tl tl-green"
+                        :class="{ 'pcard-tl--on': task.status === 'done' }"
+                        :title="$t('projectCard.tlDone')"
+                        @click="task.status = 'done'"
+                      />
+                      <button
+                        type="button"
+                        class="pcard-tl tl-yellow"
+                        :class="{ 'pcard-tl--on': task.status === 'progress' }"
+                        :title="$t('projectCard.tlProgress')"
+                        @click="task.status = 'progress'"
+                      />
+                      <button
+                        type="button"
+                        class="pcard-tl tl-red"
+                        :class="{ 'pcard-tl--on': task.status === 'risk' }"
+                        :title="$t('projectCard.tlRisk')"
+                        @click="task.status = 'risk'"
+                      />
+                      <button
+                        type="button"
+                        class="pcard-tl tl-gray"
+                        :class="{ 'pcard-tl--on': task.status === 'waiting' }"
+                        :title="$t('projectCard.tlWaiting')"
+                        @click="task.status = 'waiting'"
+                      />
                     </div>
                     <span class="status-label">{{ statusLabel(task.status) }}</span>
                   </td>
-                  <td class="col-deadline"><input v-model="task.deadline" placeholder="10.04" /></td>
+                  <td class="col-deadline"><input v-model="task.deadline" :placeholder="$t('projectCard.dateExample')" /></td>
                   <td class="col-who"><input v-model="task.who" :placeholder="$t('projectCard.ownerPh')" /></td>
                 </tr>
               </tbody>
@@ -50,9 +88,14 @@
           <button type="button" class="add-row-btn" @click="addTask" :disabled="form.tasks.length >= 10">{{ $t('projectCard.addTask') }}</button>
         </section>
 
-        <!-- ② Приоритеты -->
+        <!-- ② -->
         <section class="card-section section-priorities">
-          <h2><span class="section-num">②</span> {{ $t('projectCard.section2') }}</h2>
+          <div class="pcard-section-head">
+            <h2><span class="section-num">②</span> {{ $t('projectCard.section2') }}</h2>
+            <button type="button" class="pcard-ai-btn" :disabled="!!aiLoading" @click="runAi('priorities')">
+              {{ aiLoading === 'priorities' ? $t('projectCard.aiThinking') : $t('projectCard.aiHelp') }}
+            </button>
+          </div>
           <p class="section-hint">{{ $t('projectCard.section2Hint') }}</p>
           <div class="priority-block must">
             <h3>MUST</h3>
@@ -83,76 +126,48 @@
           </div>
         </section>
 
-        <!-- ③ Зависимости — рисуемая схема как в draw.io -->
+        <!-- ③ текстовые зависимости -->
         <section class="card-section section-deps">
-          <h2><span class="section-num">③</span> {{ $t('projectCard.section3') }}</h2>
+          <div class="pcard-section-head">
+            <h2><span class="section-num">③</span> {{ $t('projectCard.section3') }}</h2>
+            <button type="button" class="pcard-ai-btn" :disabled="!!aiLoading" @click="runAi('dependencies')">
+              {{ aiLoading === 'dependencies' ? $t('projectCard.aiThinking') : $t('projectCard.aiHelp') }}
+            </button>
+          </div>
           <p class="section-hint">{{ $t('projectCard.section3Hint') }}</p>
-          <div class="deps-toolbar">
-            <button type="button" class="add-row-btn" @click="addDependencyNode">{{ $t('projectCard.addStage') }}</button>
-            <span class="deps-mode-hint" v-if="linkFromId">{{ $t('projectCard.linkHint') }}</span>
-          </div>
-          <div ref="depsDiagram" class="deps-diagram-canvas" @click.self="linkFromId = null">
-            <svg class="deps-arrows-layer" :viewBox="depsSvgViewBox" preserveAspectRatio="none">
-              <defs>
-                <marker id="dep-arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-                  <polygon points="0 0, 10 4, 0 8" fill="#475569" />
-                </marker>
-              </defs>
-              <path v-for="(path, i) in depsArrowPaths" :key="'p'+i" :d="path.d" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#dep-arrowhead)" />
-            </svg>
-            <div
-              v-for="(node, i) in form.dependencyNodes"
-              :key="node.id"
-              class="dep-node-box"
-              :class="{ selected: linkFromId === node.id }"
-              :style="nodeStyle(node)"
-              @mousedown.prevent="onNodeMouseDown($event, node)"
-              @dblclick.stop="editNodeLabel = node.id"
-            >
-              <span v-if="editNodeLabel !== node.id" class="dep-node-text">{{ node.label || $t('projectCard.stageN', { n: i + 1 }) }}</span>
-              <input
-                v-else
-                ref="nodeLabelInput"
-                v-model="node.label"
-                class="dep-node-input"
-                :placeholder="$t('projectCard.stageN', { n: i + 1 })"
-                @blur="editNodeLabel = null"
-                @keydown.enter="editNodeLabel = null"
-              />
-              <button type="button" class="dep-node-delete" @click.stop="removeNode(node.id)" :title="$t('projectCard.deleteTitle')">×</button>
-            </div>
-          </div>
-          <div class="deps-links-editor">
-            <label>{{ $t('projectCard.linksLabel') }}</label>
-            <div v-for="(link, idx) in form.dependencyLinks" :key="idx" class="link-row">
-              <select v-model.number="link.fromId" class="link-select">
-                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || $t('projectCard.stageN', { n: nodeIndex(n.id) + 1 }) }}</option>
-              </select>
-              <span class="link-arrow">→</span>
-              <select v-model.number="link.toId" class="link-select">
-                <option v-for="n in form.dependencyNodes" :key="n.id" :value="n.id">{{ n.label || $t('projectCard.stageN', { n: nodeIndex(n.id) + 1 }) }}</option>
-              </select>
-              <button type="button" class="chip-remove" @click="form.dependencyLinks.splice(idx, 1)">×</button>
-            </div>
-            <button type="button" class="add-row-btn" @click="addDependencyLink" :disabled="form.dependencyNodes.length < 2">{{ $t('projectCard.addLink') }}</button>
-          </div>
+          <textarea
+            v-model="form.dependenciesText"
+            class="deps-textarea"
+            rows="6"
+            :placeholder="$t('projectCard.dependenciesPlaceholder')"
+          />
         </section>
 
-        <!-- ④ Узкие места (несколько) -->
+        <!-- ④ -->
         <section class="card-section section-bottleneck">
-          <h2><span class="section-num">④</span> {{ $t('projectCard.section4') }}</h2>
+          <div class="pcard-section-head">
+            <h2><span class="section-num">④</span> {{ $t('projectCard.section4') }}</h2>
+            <button type="button" class="pcard-ai-btn" :disabled="!!aiLoading" @click="runAi('bottlenecks')">
+              {{ aiLoading === 'bottlenecks' ? $t('projectCard.aiThinking') : $t('projectCard.aiHelp') }}
+            </button>
+          </div>
           <p class="section-hint">{{ $t('projectCard.section4Hint') }}</p>
           <div v-for="(b, i) in form.bottlenecks" :key="i" class="bottleneck-item">
             <input v-model="b.title" class="bottleneck-title" :placeholder="$t('projectCard.bottleneckTitlePh')" />
-            <textarea v-model="b.desc" rows="2" :placeholder="$t('projectCard.bottleneckDescPh')"></textarea>
+            <textarea v-model="b.desc" rows="2" :placeholder="$t('projectCard.bottleneckDescPh')" />
             <button type="button" class="chip-remove bottleneck-remove" @click="form.bottlenecks.splice(i, 1)" :title="$t('projectCard.deleteTitle')">×</button>
           </div>
           <button type="button" class="add-row-btn" @click="form.bottlenecks.push({ title: '', desc: '' })">{{ $t('projectCard.addBottleneck') }}</button>
         </section>
 
-        <!-- ⑤ Загрузка ключевых ролей -->
+        <!-- ⑤ -->
         <section class="card-section section-roles">
-          <h2><span class="section-num">⑤</span> {{ $t('projectCard.section5') }}</h2>
+          <div class="pcard-section-head">
+            <h2><span class="section-num">⑤</span> {{ $t('projectCard.section5') }}</h2>
+            <button type="button" class="pcard-ai-btn" :disabled="!!aiLoading" @click="runAi('roles')">
+              {{ aiLoading === 'roles' ? $t('projectCard.aiThinking') : $t('projectCard.aiHelp') }}
+            </button>
+          </div>
           <p class="section-hint">{{ $t('projectCard.section5Hint') }}</p>
           <table class="roles-table">
             <thead>
@@ -168,10 +183,34 @@
                 <td><input v-model.number="role.tasksCount" type="number" min="0" class="input-num" /></td>
                 <td class="col-risk">
                   <div class="risk-dots">
-                    <button type="button" class="risk-dot" :class="{ active: role.overloadRisk === 'normal' }" :title="$t('projectCard.riskNormal')" @click="role.overloadRisk = 'normal'" />
-                    <button type="button" class="risk-dot medium" :class="{ active: role.overloadRisk === 'medium' }" :title="$t('projectCard.riskMedium')" @click="role.overloadRisk = 'medium'" />
-                    <button type="button" class="risk-dot high" :class="{ active: role.overloadRisk === 'high' }" :title="$t('projectCard.riskHigh')" @click="role.overloadRisk = 'high'" />
-                    <button type="button" class="risk-dot critical" :class="{ active: role.overloadRisk === 'critical' }" :title="$t('projectCard.riskCritical')" @click="role.overloadRisk = 'critical'" />
+                    <button
+                      type="button"
+                      class="pcard-risk pcard-risk--normal"
+                      :class="{ 'pcard-risk--on': role.overloadRisk === 'normal' }"
+                      :title="$t('projectCard.riskNormal')"
+                      @click="role.overloadRisk = 'normal'"
+                    />
+                    <button
+                      type="button"
+                      class="pcard-risk pcard-risk--medium"
+                      :class="{ 'pcard-risk--on': role.overloadRisk === 'medium' }"
+                      :title="$t('projectCard.riskMedium')"
+                      @click="role.overloadRisk = 'medium'"
+                    />
+                    <button
+                      type="button"
+                      class="pcard-risk pcard-risk--high"
+                      :class="{ 'pcard-risk--on': role.overloadRisk === 'high' }"
+                      :title="$t('projectCard.riskHigh')"
+                      @click="role.overloadRisk = 'high'"
+                    />
+                    <button
+                      type="button"
+                      class="pcard-risk pcard-risk--critical"
+                      :class="{ 'pcard-risk--on': role.overloadRisk === 'critical' }"
+                      :title="$t('projectCard.riskCritical')"
+                      @click="role.overloadRisk = 'critical'"
+                    />
                   </div>
                   <span class="risk-label">{{ riskLabel(role.overloadRisk) }}</span>
                 </td>
@@ -181,13 +220,18 @@
           <button type="button" class="add-row-btn" @click="addRole">{{ $t('projectCard.addRole') }}</button>
         </section>
 
-        <!-- ⑥ Решения -->
+        <!-- ⑥ -->
         <section class="card-section section-decisions">
-          <h2><span class="section-num">⑥</span> {{ $t('projectCard.section6') }}</h2>
+          <div class="pcard-section-head">
+            <h2><span class="section-num">⑥</span> {{ $t('projectCard.section6') }}</h2>
+            <button type="button" class="pcard-ai-btn" :disabled="!!aiLoading" @click="runAi('decisions')">
+              {{ aiLoading === 'decisions' ? $t('projectCard.aiThinking') : $t('projectCard.aiHelp') }}
+            </button>
+          </div>
           <p class="section-hint">{{ $t('projectCard.section6Hint') }}</p>
           <div v-for="(item, i) in form.decisions" :key="i" class="decision-item">
             <input v-model="form.decisions[i].question" :placeholder="$t('projectCard.decisionQPh')" class="decision-q" />
-            <textarea v-model="form.decisions[i].context" rows="2" :placeholder="$t('projectCard.decisionCtxPh')" class="decision-ctx"></textarea>
+            <textarea v-model="form.decisions[i].context" rows="2" :placeholder="$t('projectCard.decisionCtxPh')" class="decision-ctx" />
           </div>
           <button type="button" class="add-row-btn" @click="form.decisions.push({ question: '', context: '' })">{{ $t('projectCard.addDecision') }}</button>
         </section>
@@ -197,47 +241,28 @@
 </template>
 
 <script>
+import axios from 'axios';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getProjectCardExampleEn, getProjectCardExampleRu } from '@/data/projectCardExamples.js';
 
-let nextId = 1;
-const NODE_W = 110;
-const NODE_H = 40;
-const DIAGRAM_W = 600;
-const DIAGRAM_H = 280;
-
-const defaultForm = () => {
-  const nodes = [
-    { id: nextId++, label: '', x: 20, y: 30 },
-    { id: nextId++, label: '', x: 150, y: 30 },
-    { id: nextId++, label: '', x: 280, y: 30 },
-  ];
-  return {
-    projectName: '',
-    tasks: [
-      { name: '', status: 'progress', deadline: '', who: '' },
-      { name: '', status: 'progress', deadline: '', who: '' },
-    ],
-    prioritiesMust: ['', ''],
-    prioritiesShould: [''],
-    prioritiesNice: [''],
-    dependencyNodes: nodes,
-    dependencyLinks: [
-      { fromId: nodes[0].id, toId: nodes[1].id },
-      { fromId: nodes[1].id, toId: nodes[2].id },
-    ],
-    bottlenecks: [
-      { title: '', desc: '' },
-    ],
-    roles: [
-      { name: '', tasksCount: 0, overloadRisk: 'normal' },
-      { name: '', tasksCount: 0, overloadRisk: 'normal' },
-    ],
-    decisions: [
-      { question: '', context: '' },
-    ],
-  };
-};
+const defaultForm = () => ({
+  projectName: '',
+  tasks: [
+    { name: '', status: 'progress', deadline: '', who: '' },
+    { name: '', status: 'progress', deadline: '', who: '' },
+  ],
+  prioritiesMust: ['', ''],
+  prioritiesShould: [''],
+  prioritiesNice: [''],
+  dependenciesText: '',
+  bottlenecks: [{ title: '', desc: '' }],
+  roles: [
+    { name: '', tasksCount: 0, overloadRisk: 'normal' },
+    { name: '', tasksCount: 0, overloadRisk: 'normal' },
+  ],
+  decisions: [{ question: '', context: '' }],
+});
 
 export default {
   name: 'ProjectManagementCard',
@@ -245,106 +270,108 @@ export default {
     return {
       form: defaultForm(),
       exporting: false,
-      linkFromId: null,
-      editNodeLabel: null,
-      dragNode: null,
-      dragStartX: 0,
-      dragStartY: 0,
-      dragStartNodeX: 0,
-      dragStartNodeY: 0,
-      dragMoved: false,
+      aiLoading: null,
+      aiError: '',
     };
   },
-  mounted() {
-    const keys = ['presetStage1', 'presetStage2', 'presetStage3'];
-    this.form.dependencyNodes.slice(0, 3).forEach((n, i) => {
-      if (n && !String(n.label || '').trim()) {
-        n.label = this.$t(`projectCard.${keys[i]}`);
-      }
-    });
-  },
-  computed: {
-    firstNodeId() {
-      const n = this.form.dependencyNodes[0];
-      return n ? n.id : 0;
-    },
-    depsSvgViewBox() {
-      return `0 0 ${DIAGRAM_W} ${DIAGRAM_H}`;
-    },
-    depsArrowPaths() {
-      const nodes = this.form.dependencyNodes;
-      const paths = [];
-      this.form.dependencyLinks.forEach(link => {
-        const from = nodes.find(n => n.id === link.fromId);
-        const to = nodes.find(n => n.id === link.toId);
-        if (!from || !to || from.id === to.id) return;
-        const x1 = (from.x ?? 0) + NODE_W;
-        const y1 = (from.y ?? 0) + NODE_H / 2;
-        const x2 = to.x ?? 0;
-        const y2 = (to.y ?? 0) + NODE_H / 2;
-        const mid = (x1 + x2) / 2;
-        const d = `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`;
-        paths.push({ d });
-      });
-      return paths;
-    },
-  },
   methods: {
-    nodeStyle(node) {
-      return {
-        left: (node.x ?? 0) + 'px',
-        top: (node.y ?? 0) + 'px',
-        width: NODE_W + 'px',
-        minHeight: NODE_H + 'px',
-      };
+    localeCode() {
+      const g = this.$i18n?.locale;
+      const s = typeof g === 'string' ? g : g?.value || 'ru';
+      return String(s).toLowerCase().startsWith('en') ? 'en' : 'ru';
     },
-    nodeIndex(id) {
-      return this.form.dependencyNodes.findIndex(n => n.id === id);
+    snapshotForm() {
+      return JSON.parse(JSON.stringify(this.form));
     },
-    nodeLabel(id) {
-      const n = this.form.dependencyNodes.find(x => x.id === id);
-      const i = this.nodeIndex(id);
-      return (n && n.label) ? n.label : this.$t('projectCard.stageN', { n: i + 1 });
-    },
-    onNodeMouseDown(ev, node) {
-      if (this.editNodeLabel === node.id) return;
-      this.dragMoved = false;
-      if (this.linkFromId !== null) {
-        if (this.linkFromId === node.id) {
-          this.linkFromId = null;
+    async runAi(section) {
+      this.aiError = '';
+      this.aiLoading = section;
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.post(
+          '/api/project-card/ai-suggest',
+          {
+            section,
+            locale: this.localeCode(),
+            projectName: this.form.projectName,
+            form: this.snapshotForm(),
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!data.success || !data.data) {
+          this.aiError = this.$t('projectCard.aiFailed');
           return;
         }
-        const from = this.form.dependencyNodes.find(n => n.id === this.linkFromId);
-        if (from) {
-          const exists = this.form.dependencyLinks.some(l => l.fromId === this.linkFromId && l.toId === node.id);
-          if (!exists) this.form.dependencyLinks.push({ fromId: this.linkFromId, toId: node.id });
-        }
-        this.linkFromId = null;
-        return;
+        this.applyAiPayload(section, data.data);
+      } catch (e) {
+        console.error(e);
+        const msg = e.response?.data?.error;
+        this.aiError = msg === 'OpenAI API is not configured' ? this.$t('projectCard.aiFailed') : this.$t('projectCard.aiFailed');
+      } finally {
+        this.aiLoading = null;
       }
-      this.dragNode = node;
-      this.dragStartX = ev.clientX;
-      this.dragStartY = ev.clientY;
-      this.dragStartNodeX = node.x ?? 0;
-      this.dragStartNodeY = node.y ?? 0;
-      document.addEventListener('mousemove', this.onDiagramMouseMove);
-      document.addEventListener('mouseup', this.onDiagramMouseUp);
     },
-    onDiagramMouseMove(ev) {
-      if (!this.dragNode) return;
-      const dx = ev.clientX - this.dragStartX;
-      const dy = ev.clientY - this.dragStartY;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) this.dragMoved = true;
-      this.dragNode.x = Math.max(0, Math.min(DIAGRAM_W - NODE_W, this.dragStartNodeX + dx));
-      this.dragNode.y = Math.max(0, Math.min(DIAGRAM_H - NODE_H, this.dragStartNodeY + dy));
-    },
-    onDiagramMouseUp() {
-      if (!this.dragMoved && this.dragNode && this.linkFromId === null) {
-        this.linkFromId = this.dragNode.id;
+    applyAiPayload(section, payload) {
+      if (section === 'tasks' && Array.isArray(payload.tasks)) {
+        const rows = payload.tasks
+          .filter((t) => t && String(t.name || '').trim())
+          .slice(0, 10)
+          .map((t) => ({
+            name: String(t.name || '').slice(0, 500),
+            status: ['done', 'progress', 'risk', 'waiting'].includes(t.status) ? t.status : 'progress',
+            deadline: String(t.deadline || '').slice(0, 80),
+            who: String(t.who || '').slice(0, 120),
+          }));
+        if (rows.length) this.form.tasks = rows;
+      } else if (section === 'priorities') {
+        const must = Array.isArray(payload.must) ? payload.must.map((x) => String(x || '').slice(0, 400)).filter(Boolean) : [];
+        const should = Array.isArray(payload.should) ? payload.should.map((x) => String(x || '').slice(0, 400)).filter(Boolean) : [];
+        const nice = Array.isArray(payload.nice) ? payload.nice.map((x) => String(x || '').slice(0, 400)).filter(Boolean) : [];
+        if (must.length) this.form.prioritiesMust = must;
+        if (should.length) this.form.prioritiesShould = should;
+        if (nice.length) this.form.prioritiesNice = nice;
+      } else if (section === 'dependencies' && typeof payload.text === 'string') {
+        this.form.dependenciesText = payload.text.slice(0, 8000);
+      } else if (section === 'bottlenecks' && Array.isArray(payload.items)) {
+        const items = payload.items
+          .filter((b) => b && (String(b.title || '').trim() || String(b.desc || '').trim()))
+          .map((b) => ({
+            title: String(b.title || '').slice(0, 300),
+            desc: String(b.desc || '').slice(0, 2000),
+          }));
+        if (items.length) this.form.bottlenecks = items;
+      } else if (section === 'roles' && Array.isArray(payload.roles)) {
+        const roles = payload.roles
+          .filter((r) => r && String(r.name || '').trim())
+          .map((r) => ({
+            name: String(r.name || '').slice(0, 200),
+            tasksCount: Math.max(0, Math.min(999, parseInt(String(r.tasksCount ?? 0), 10) || 0)),
+            overloadRisk: ['normal', 'medium', 'high', 'critical'].includes(r.overloadRisk) ? r.overloadRisk : 'normal',
+          }));
+        if (roles.length) this.form.roles = roles;
+      } else if (section === 'decisions' && Array.isArray(payload.decisions)) {
+        const dec = payload.decisions
+          .filter((d) => d && (String(d.question || '').trim() || String(d.context || '').trim()))
+          .map((d) => ({
+            question: String(d.question || '').slice(0, 400),
+            context: String(d.context || '').slice(0, 4000),
+          }));
+        if (dec.length) this.form.decisions = dec;
       }
-      this.dragNode = null;
-      document.removeEventListener('mousemove', this.onDiagramMouseMove);
-      document.removeEventListener('mouseup', this.onDiagramMouseUp);
+    },
+    loadFullExample() {
+      const ex = this.localeCode() === 'en' ? getProjectCardExampleEn() : getProjectCardExampleRu();
+      this.form = {
+        projectName: ex.projectName,
+        tasks: ex.tasks.map((t) => ({ ...t })),
+        prioritiesMust: [...ex.prioritiesMust],
+        prioritiesShould: [...ex.prioritiesShould],
+        prioritiesNice: [...ex.prioritiesNice],
+        dependenciesText: ex.dependenciesText,
+        bottlenecks: ex.bottlenecks.map((b) => ({ ...b })),
+        roles: ex.roles.map((r) => ({ ...r })),
+        decisions: ex.decisions.map((d) => ({ ...d })),
+      };
     },
     statusLabel(s) {
       const l = {
@@ -369,23 +396,6 @@ export default {
     },
     addRole() {
       this.form.roles.push({ name: '', tasksCount: 0, overloadRisk: 'normal' });
-    },
-    addDependencyNode() {
-      const nodes = this.form.dependencyNodes;
-      const last = nodes[nodes.length - 1];
-      const x = last ? (last.x + NODE_W + 30) : 20;
-      const y = last ? last.y : 30;
-      this.form.dependencyNodes.push({ id: nextId++, label: '', x, y });
-    },
-    removeNode(id) {
-      this.form.dependencyNodes = this.form.dependencyNodes.filter(n => n.id !== id);
-      this.form.dependencyLinks = this.form.dependencyLinks.filter(l => l.fromId !== id && l.toId !== id);
-    },
-    addDependencyLink() {
-      const nodes = this.form.dependencyNodes;
-      const a = nodes[0]?.id;
-      const b = nodes[1]?.id ?? a;
-      this.form.dependencyLinks.push({ fromId: a, toId: b });
     },
     async exportPdf() {
       this.exporting = true;
@@ -433,6 +443,30 @@ export default {
 
 .page-actions {
   margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.pcard-load-example {
+  padding: 12px 24px;
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pcard-load-example:hover {
+  background: #e2e8f0;
+}
+
+.pcard-ai-error {
+  color: #b91c1c;
+  font-size: 0.9rem;
+  margin: 0 0 12px;
 }
 
 .export-pdf-btn {
@@ -455,12 +489,46 @@ export default {
   cursor: not-allowed;
 }
 
+.pcard-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.pcard-section-head h2 {
+  margin: 0;
+}
+
+.pcard-ai-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(37, 99, 235, 0.45);
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pcard-ai-btn:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.pcard-ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .project-card-a3 {
   background: linear-gradient(180deg, #fafbfc 0%, #fff 80px);
   padding: 28px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .card-header {
@@ -498,7 +566,7 @@ export default {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 18px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   min-width: 0;
 }
 
@@ -531,35 +599,64 @@ export default {
   line-height: 1.4;
 }
 
-.section-tasks { grid-column: 1; }
-.section-priorities { grid-column: 2; }
-.section-deps { grid-column: 1 / -1; }
-.section-bottleneck { grid-column: 1 / -1; }
-.section-roles { grid-column: 1; }
-.section-decisions { grid-column: 2; }
+.section-tasks {
+  grid-column: 1;
+}
+.section-priorities {
+  grid-column: 2;
+}
+.section-deps {
+  grid-column: 1 / -1;
+}
+.section-bottleneck {
+  grid-column: 1 / -1;
+}
+.section-roles {
+  grid-column: 1;
+}
+.section-decisions {
+  grid-column: 2;
+}
 
-/* Таблица задач + светофор */
-.tasks-table, .roles-table {
+.deps-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.tasks-table,
+.roles-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
 
-.tasks-table th, .tasks-table td,
-.roles-table th, .roles-table td {
+.tasks-table th,
+.tasks-table td,
+.roles-table th,
+.roles-table td {
   border: 1px solid #e2e8f0;
   padding: 8px 10px;
   text-align: left;
 }
 
-.tasks-table th, .roles-table th {
+.tasks-table th,
+.roles-table th {
   background: #f1f5f9;
   font-weight: 600;
   color: #475569;
 }
 
-.tasks-table input, .roles-table input,
-.tasks-table select, .roles-table select {
+.tasks-table input,
+.roles-table input,
+.tasks-table select,
+.roles-table select {
   width: 100%;
   padding: 6px 8px;
   border: 1px solid #e2e8f0;
@@ -572,12 +669,28 @@ export default {
   margin: 0 -4px;
 }
 
-.col-num { width: 40px; min-width: 40px; text-align: center; }
-.col-task { min-width: 260px; }
-.col-status { width: 1%; white-space: nowrap; min-width: 140px; }
-.col-deadline { min-width: 100px; }
-.col-who { min-width: 160px; }
-.col-risk { white-space: nowrap; }
+.col-num {
+  width: 40px;
+  min-width: 40px;
+  text-align: center;
+}
+.col-task {
+  min-width: 260px;
+}
+.col-status {
+  width: 1%;
+  white-space: nowrap;
+  min-width: 140px;
+}
+.col-deadline {
+  min-width: 100px;
+}
+.col-who {
+  min-width: 160px;
+}
+.col-risk {
+  white-space: nowrap;
+}
 
 .tasks-table .col-task input,
 .tasks-table .col-who input,
@@ -594,28 +707,42 @@ export default {
   vertical-align: middle;
 }
 
-.tl-dot {
+.pcard-tl {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #cbd5e1;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+  background: #e2e8f0;
+  box-sizing: border-box;
 }
 
-.tl-dot:hover {
-  transform: scale(1.1);
+.pcard-tl:hover {
+  filter: brightness(1.05);
 }
 
-.tl-green { background: #94a3b8; }
-.tl-green.active { background: #22c55e; border-color: #16a34a; box-shadow: 0 0 0 2px #22c55e; }
-.tl-yellow { background: #94a3b8; }
-.tl-yellow.active { background: #eab308; border-color: #ca8a04; box-shadow: 0 0 0 2px #eab308; }
-.tl-red { background: #94a3b8; }
-.tl-red.active { background: #ef4444; border-color: #dc2626; box-shadow: 0 0 0 2px #ef4444; }
-.tl-gray { background: #94a3b8; }
-.tl-gray.active { background: #64748b; border-color: #475569; box-shadow: 0 0 0 2px #64748b; }
+.pcard-tl.tl-green.pcard-tl--on {
+  background: #22c55e;
+  border-color: #15803d;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35);
+}
+.pcard-tl.tl-yellow.pcard-tl--on {
+  background: #eab308;
+  border-color: #a16207;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.35);
+}
+.pcard-tl.tl-red.pcard-tl--on {
+  background: #ef4444;
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
+.pcard-tl.tl-gray.pcard-tl--on {
+  background: #64748b;
+  border-color: #334155;
+  box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.35);
+}
 
 .status-label {
   margin-left: 8px;
@@ -623,9 +750,10 @@ export default {
   color: #64748b;
 }
 
-.input-num { max-width: 56px; }
+.input-num {
+  max-width: 56px;
+}
 
-/* Приоритеты */
 .priority-block {
   margin-bottom: 14px;
   padding: 10px 12px;
@@ -633,9 +761,18 @@ export default {
   border-left: 4px solid #cbd5e1;
 }
 
-.priority-block.must { border-left-color: #dc2626; background: #fef2f2; }
-.priority-block.should { border-left-color: #eab308; background: #fefce8; }
-.priority-block.nice { border-left-color: #22c55e; background: #f0fdf4; }
+.priority-block.must {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+.priority-block.should {
+  border-left-color: #eab308;
+  background: #fefce8;
+}
+.priority-block.nice {
+  border-left-color: #22c55e;
+  background: #f0fdf4;
+}
 
 .priority-block h3 {
   margin: 0 0 8px;
@@ -644,8 +781,14 @@ export default {
   color: #334155;
 }
 
-.priority-block ul { list-style: none; padding: 0; margin: 0; }
-.priority-block li { margin-bottom: 6px; }
+.priority-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.priority-block li {
+  margin-bottom: 6px;
+}
 
 .priority-block input {
   width: 100%;
@@ -657,7 +800,8 @@ export default {
   box-sizing: border-box;
 }
 
-.add-row-btn, .add-item-btn {
+.add-row-btn,
+.add-item-btn {
   margin-top: 10px;
   padding: 8px 14px;
   background: #f1f5f9;
@@ -669,158 +813,20 @@ export default {
   font-weight: 500;
 }
 
-.add-row-btn:hover:not(:disabled), .add-item-btn:hover {
+.add-row-btn:hover:not(:disabled),
+.add-item-btn:hover {
   background: #e2e8f0;
 }
 
-.add-row-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.add-item-btn { padding: 4px 12px; font-size: 0.9rem; }
-
-/* Зависимости — рисуемый холст */
-.deps-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+.add-row-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.add-item-btn {
+  padding: 4px 12px;
+  font-size: 0.9rem;
 }
 
-.deps-mode-hint {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-style: italic;
-}
-
-.deps-diagram-canvas {
-  position: relative;
-  width: 600px;
-  max-width: 100%;
-  height: 280px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  margin-bottom: 14px;
-  overflow: hidden;
-}
-
-.deps-arrows-layer {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.dep-node-box {
-  position: absolute;
-  padding: 8px 28px 8px 10px;
-  background: #fff;
-  border: 2px solid #334155;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1e293b;
-  cursor: move;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.dep-node-box.selected {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
-}
-
-.dep-node-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dep-node-input {
-  flex: 1;
-  min-width: 0;
-  padding: 2px 4px;
-  border: 1px solid #94a3b8;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-
-.dep-node-delete {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: #e2e8f0;
-  color: #475569;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.dep-node-delete:hover {
-  background: #f87171;
-  color: #fff;
-}
-
-.deps-links-editor {
-  margin-top: 8px;
-}
-
-.deps-links-editor label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 6px;
-}
-
-.chip-remove {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  background: #e2e8f0;
-  color: #475569;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.chip-remove:hover {
-  background: #f87171;
-  color: #fff;
-}
-
-.link-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.link-select {
-  padding: 6px 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  min-width: 100px;
-}
-
-.link-arrow {
-  color: #64748b;
-  font-weight: 700;
-}
-
-/* Узкие места (несколько) */
 .section-bottleneck {
   border-left: 4px solid #dc2626;
   background: #fef2f2;
@@ -862,30 +868,48 @@ export default {
   right: 8px;
 }
 
-/* Роли — индикаторы риска */
 .risk-dots {
   display: inline-flex;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
 }
 
-.risk-dot {
-  width: 18px;
-  height: 18px;
+.pcard-risk {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #cbd5e1;
   padding: 0;
   cursor: pointer;
-  background: #94a3b8;
-  transition: transform 0.15s;
+  flex-shrink: 0;
+  background: #e2e8f0;
+  box-sizing: border-box;
 }
 
-.risk-dot:hover { transform: scale(1.15); }
-.risk-dot.active { box-shadow: 0 0 0 2px currentColor; }
-.risk-dot.active { background: #22c55e; border-color: #16a34a; }
-.risk-dot.medium.active { background: #eab308; border-color: #ca8a04; }
-.risk-dot.high.active { background: #f97316; border-color: #ea580c; }
-.risk-dot.critical.active { background: #ef4444; border-color: #dc2626; }
+.pcard-risk:hover {
+  filter: brightness(1.08);
+}
+
+.pcard-risk--normal.pcard-risk--on {
+  background: #22c55e;
+  border-color: #15803d;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35);
+}
+.pcard-risk--medium.pcard-risk--on {
+  background: #eab308;
+  border-color: #a16207;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.35);
+}
+.pcard-risk--high.pcard-risk--on {
+  background: #f97316;
+  border-color: #c2410c;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.35);
+}
+.pcard-risk--critical.pcard-risk--on {
+  background: #ef4444;
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
 
 .risk-label {
   margin-left: 8px;
@@ -893,7 +917,24 @@ export default {
   color: #64748b;
 }
 
-/* Решения */
+.chip-remove {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: #e2e8f0;
+  color: #475569;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.chip-remove:hover {
+  background: #f87171;
+  color: #fff;
+}
+
 .decision-item {
   margin-bottom: 14px;
   padding: 12px;
@@ -927,16 +968,25 @@ export default {
   .card-grid {
     grid-template-columns: 1fr;
   }
-  .section-tasks, .section-priorities, .section-deps,
-  .section-bottleneck, .section-roles, .section-decisions {
+  .section-tasks,
+  .section-priorities,
+  .section-deps,
+  .section-bottleneck,
+  .section-roles,
+  .section-decisions {
     grid-column: 1;
   }
-  .deps-diagram-canvas { max-width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .project-card-page { padding: 16px; }
-  .col-task { min-width: 180px; }
-  .col-who { min-width: 120px; }
+  .project-card-page {
+    padding: 16px;
+  }
+  .col-task {
+    min-width: 180px;
+  }
+  .col-who {
+    min-width: 120px;
+  }
 }
 </style>

@@ -454,3 +454,81 @@ button {
   color: #b91c1c !important;
   border-color: #fecaca !important;
 }
+
+/* Project card: traffic-light & role risk dots — not global blue CTA */
+#app .project-card-page button.pcard-tl,
+#app .project-card-page button.pcard-risk {
+  min-height: unset !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background-image: none !important;
+  color: transparent !important;
+  box-shadow: none !important;
+  line-height: 1;
+}
+
+#app .project-card-page button.pcard-ai-btn {
+  min-height: unset !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.45) !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+}
+
+#app .project-card-page button.pcard-ai-btn:hover:not(:disabled) {
+  background: #dbeafe !important;
+  transform: none;
+}
+
+#app .project-card-page button.pcard-load-example {
+  min-height: unset !important;
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+}
+
+#app .project-card-page button.pcard-load-example:hover {
+  background: #e2e8f0 !important;
+  transform: none;
+}
+
+#app .project-card-page button.export-pdf-btn {
+  border-radius: 8px !important;
+}
+
+#app .project-card-page button.add-row-btn,
+#app .project-card-page button.add-item-btn {
+  min-height: unset !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  transform: none !important;
+}
+
+#app .project-card-page button.add-row-btn:hover:not(:disabled),
+#app .project-card-page button.add-item-btn:hover {
+  background: #e2e8f0 !important;
+}
+
+#app .project-card-page button.chip-remove {
+  min-height: unset !important;
+  width: 22px;
+  height: 22px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+#app .project-card-page button.chip-remove:hover {
+  background: #f87171 !important;
+  color: #fff !important;
+}

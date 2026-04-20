@@ -34,6 +34,7 @@ const routes = [
   { path: '/new/meeting-design', name: 'NewMeetingDesign', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'meeting-design' }, meta: { requiresAuth: true } },
   { path: '/new/motivation', name: 'NewMotivation', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'motivation' } },
   { path: '/new/project-card', name: 'NewProjectCard', component: () => import('@/views/NewWrappedTool.vue'), props: { toolId: 'project-card' }, meta: { requiresAuth: true } },
+  { path: '/new/disc-assessment', name: 'DISCAssessment', component: () => import('@/views/DISCAssessment.vue'), meta: { requiresAuth: true } },
   { path: '/new/metrics-tree', name: 'MetricsTreeNew', component: () => import('@/views/MetricsTreeView.vue'), meta: { requiresAuth: true } },
   { path: '/new/project-dashboard', name: 'ProjectDashboardDemo', component: () => import('@/views/ProjectDashboardDemo.vue') },
   /* Канон /new: редиректы со старых URL */
@@ -56,7 +57,7 @@ const routes = [
   { path: '/login', component: UserLogin },
   { path: '/register', component: UserRegister },
   { path: "/assessment-results/:team_id/:assessment_id", name: "AssessmentResults", component: AssessmentResults, props: true },
-  {path: '/disc-assessment', name: 'DISCAssessment', component: () => import('@/views/DISCAssessment.vue'), meta: { requiresAuth: true }},
+  { path: '/disc-assessment', redirect: '/new/disc-assessment' },
   {path: '/survey/:token', name: 'TakeSurvey', component: () => import('@/views/TakeSurvey.vue')},
   {path: '/survey/:surveyId/results', name: 'SurveyResults', component: () => import('@/views/SurveyResults.vue'), meta: { requiresAuth: true }},
   {path: '/planning-poker/:roomId', name: 'PlanningPoker', component: () => import('@/views/PlanningPoker.vue')},

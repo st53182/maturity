@@ -1,147 +1,115 @@
 <template>
-  <div class="disc-assessment">
-    <div class="container">
-      <div v-if="!showResults" class="assessment-container">
-        <div class="header">
-          <h1>{{ $t('disc.title') }}</h1>
-          <p class="subtitle">{{ $t('disc.description') }}</p>
+  <div class="disc-page">
+    <div class="disc-page__bg" aria-hidden="true">
+      <div class="disc-page__orb disc-page__orb--1" />
+      <div class="disc-page__orb disc-page__orb--2" />
+    </div>
+    <NewToolShell :title="$t('disc.title')" :subtitle="$t('disc.description')">
+      <div v-if="!showResults" class="disc-body">
+        <div v-if="!assessmentStarted" class="disc-card disc-card--intro">
+          <h2 class="disc-card__h">{{ $t('disc.introTitle') }}</h2>
+          <p class="disc-card__lead">{{ $t('disc.introLead') }}</p>
+          <ul class="disc-list">
+            <li>{{ $t('disc.introBullet1') }}</li>
+            <li>{{ $t('disc.introBullet2') }}</li>
+            <li>{{ $t('disc.introBullet3') }}</li>
+            <li>{{ $t('disc.introBullet4') }}</li>
+          </ul>
+          <p class="disc-meta">
+            <strong>{{ $t('disc.timeLabel') }}</strong> {{ $t('disc.timeValue') }}
+          </p>
+          <p class="disc-meta">
+            <strong>{{ $t('disc.questionsLabel') }}</strong> {{ $t('disc.questionsValue') }}
+          </p>
+          <div class="disc-actions">
+            <button type="button" class="disc-btn disc-btn--primary" @click="startAssessment">
+              {{ $t('disc.startAssessment') }}
+            </button>
+          </div>
         </div>
 
-        <div v-if="!assessmentStarted" class="intro">
-          <div class="intro-content">
-            <h2>{{ $t('disc.introTitle') }}</h2>
-            <p>{{ $t('disc.introLead') }}</p>
-            <ul>
-              <li>{{ $t('disc.introBullet1') }}</li>
-              <li>{{ $t('disc.introBullet2') }}</li>
-              <li>{{ $t('disc.introBullet3') }}</li>
-              <li>{{ $t('disc.introBullet4') }}</li>
-            </ul>
-            <p><strong>{{ $t('disc.timeLabel') }}</strong> {{ $t('disc.timeValue') }}</p>
-            <p><strong>{{ $t('disc.questionsLabel') }}</strong> {{ $t('disc.questionsValue') }}</p>
+        <div v-else class="disc-card disc-card--quiz">
+          <div class="disc-progress">
+            <div class="disc-progress__bar" :style="{ width: progressPercentage + '%' }" />
           </div>
-          <button @click="startAssessment" class="btn btn-primary btn-large">
-            {{ $t('disc.startAssessment') }}
-          </button>
-        </div>
-
-        <div v-else class="question-container">
-          <div class="progress-bar">
-            <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
-          </div>
-          <div class="progress-text">
+          <p class="disc-progress__text">
             {{ $t('disc.question') }} {{ currentQuestionIndex + 1 }} {{ $t('disc.of') }} {{ questions.length }}
-          </div>
+          </p>
 
-          <div class="question-card">
-            <h3>{{ currentQuestion.question }}</h3>
-            <div class="options">
-              <div 
-                v-for="(option, index) in currentQuestion.options" 
+          <div class="disc-question">
+            <h3 class="disc-question__title">{{ currentQuestion.question }}</h3>
+            <div class="disc-options">
+              <button
+                v-for="(option, index) in currentQuestion.options"
                 :key="index"
-                class="option"
-                :class="{ 'selected': selectedAnswer === option.type }"
+                type="button"
+                class="disc-option"
+                :class="{ 'disc-option--selected': selectedAnswer === option.type }"
                 @click="selectAnswer(option)"
               >
-                <div class="option-content">
-                  <div class="radio">
-                    <div v-if="selectedAnswer === option.type" class="radio-selected"></div>
-                  </div>
-                  <span>{{ option.text }}</span>
-                </div>
-              </div>
+                <span class="disc-option__radio" :class="{ 'disc-option__radio--on': selectedAnswer === option.type }" />
+                <span class="disc-option__text">{{ option.text }}</span>
+              </button>
             </div>
           </div>
 
-          <div class="navigation">
-            <button 
-              @click="previousQuestion" 
-              :disabled="currentQuestionIndex === 0"
-              class="btn btn-secondary"
-            >
+          <div class="disc-nav">
+            <button type="button" class="disc-btn disc-btn--ghost" :disabled="currentQuestionIndex === 0" @click="previousQuestion">
               {{ $t('disc.previous') }}
             </button>
-            <button 
-              @click="nextQuestion" 
-              :disabled="!selectedAnswer"
-              class="btn btn-primary"
-            >
+            <button type="button" class="disc-btn disc-btn--primary" :disabled="!selectedAnswer" @click="nextQuestion">
               {{ currentQuestionIndex === questions.length - 1 ? $t('disc.finish') : $t('disc.next') }}
             </button>
           </div>
         </div>
       </div>
 
-      <div v-else class="results-container">
-        <div class="results-header">
-          <h1>{{ $t('disc.results') }}</h1>
-          <div class="personality-type">
-            <h2>{{ $t('disc.personalityType') }}: <span class="type-badge">{{ results.personality_type }}</span></h2>
+      <div v-else class="disc-body">
+        <div class="disc-card disc-card--results">
+          <h2 class="disc-results__title">{{ $t('disc.results') }}</h2>
+          <div class="disc-results__type">
+            {{ $t('disc.personalityType') }}:
+            <span class="disc-results__badge">{{ results.personality_type }}</span>
           </div>
-        </div>
 
-        <div class="scores-section">
-          <h3>{{ $t('disc.results') }}</h3>
-          <div class="scores-grid">
-            <div class="score-item">
-              <div class="score-label">{{ $t('disc.dominance') }} (D)</div>
-              <div class="score-bar">
-                <div class="score-fill" :style="{ width: (results.dominance_score / 36 * 100) + '%' }"></div>
+          <h3 class="disc-results__h">{{ $t('disc.scoresTitle') }}</h3>
+          <div class="disc-scores">
+            <div v-for="row in scoreRows" :key="row.key" class="disc-score-row">
+              <div class="disc-score-row__label">{{ row.label }} ({{ row.letter }})</div>
+              <div class="disc-score-row__bar">
+                <div class="disc-score-row__fill" :style="{ width: row.pct + '%' }" />
               </div>
-              <div class="score-value">{{ results.dominance_score }}/36</div>
-            </div>
-            <div class="score-item">
-              <div class="score-label">{{ $t('disc.influence') }} (I)</div>
-              <div class="score-bar">
-                <div class="score-fill" :style="{ width: (results.influence_score / 36 * 100) + '%' }"></div>
-              </div>
-              <div class="score-value">{{ results.influence_score }}/36</div>
-            </div>
-            <div class="score-item">
-              <div class="score-label">{{ $t('disc.steadiness') }} (S)</div>
-              <div class="score-bar">
-                <div class="score-fill" :style="{ width: (results.steadiness_score / 36 * 100) + '%' }"></div>
-              </div>
-              <div class="score-value">{{ results.steadiness_score }}/36</div>
-            </div>
-            <div class="score-item">
-              <div class="score-label">{{ $t('disc.conscientiousness') }} (C)</div>
-              <div class="score-bar">
-                <div class="score-fill" :style="{ width: (results.conscientiousness_score / 36 * 100) + '%' }"></div>
-              </div>
-              <div class="score-value">{{ results.conscientiousness_score }}/36</div>
+              <div class="disc-score-row__val">{{ row.val }}/36</div>
             </div>
           </div>
-        </div>
 
-        <div class="recommendations-section">
-          <h3>{{ $t('disc.recommendations') }}</h3>
-          <div class="recommendations-content" v-html="formattedRecommendations"></div>
-        </div>
+          <h3 class="disc-results__h">{{ $t('disc.recommendations') }}</h3>
+          <div class="disc-rec" v-html="formattedRecommendations" />
 
-        <div class="actions">
-          <button @click="retakeAssessment" class="btn btn-secondary">
-            {{ $t('disc.startAssessment') }}
-          </button>
-          <router-link to="/profile" class="btn btn-primary">
-            {{ $t('nav.dashboard') }}
-          </router-link>
+          <div class="disc-actions disc-actions--footer">
+            <button type="button" class="disc-btn disc-btn--ghost" @click="retakeAssessment">
+              {{ $t('disc.startAssessment') }}
+            </button>
+            <router-link to="/new/profile" class="disc-btn disc-btn--primary disc-btn--link">{{ $t('disc.backProfile') }}</router-link>
+          </div>
         </div>
       </div>
 
-      <div v-if="loading" class="loading-overlay">
-        <div class="loading-spinner"></div>
+      <div v-if="loading" class="disc-loading">
+        <div class="disc-loading__spinner" />
         <p>{{ $t('common.loading') }}</p>
       </div>
-    </div>
+    </NewToolShell>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import axios from 'axios';
+import NewToolShell from '@/views/NewToolShell.vue';
 
 export default {
   name: 'DISCAssessment',
+  components: { NewToolShell },
   data() {
     return {
       assessmentStarted: false,
@@ -151,479 +119,500 @@ export default {
       selectedAnswer: null,
       showResults: false,
       results: null,
-      loading: false
-    }
+      loading: false,
+    };
   },
   computed: {
+    discApiLang() {
+      const loc = this.$i18n.locale;
+      const s = typeof loc === 'string' ? loc : loc?.value || 'ru';
+      return String(s).toLowerCase().startsWith('en') ? 'en' : 'ru';
+    },
     currentQuestion() {
-      return this.questions[this.currentQuestionIndex] || {}
+      return this.questions[this.currentQuestionIndex] || {};
     },
     progressPercentage() {
-      return ((this.currentQuestionIndex + 1) / this.questions.length) * 100
+      if (!this.questions.length) return 0;
+      return ((this.currentQuestionIndex + 1) / this.questions.length) * 100;
     },
     formattedRecommendations() {
-      if (!this.results?.recommendations) return ''
-      return this.results.recommendations.replace(/\n/g, '<br>')
-    }
-  },
-  async mounted() {
-    await this.loadQuestions()
+      if (!this.results?.recommendations) return '';
+      return this.results.recommendations.replace(/\n/g, '<br>');
+    },
+    scoreRows() {
+      if (!this.results) return [];
+      const r = this.results;
+      const mk = (key, letter, labelKey) => {
+        const val = r[`${key}_score`] ?? 0;
+        return {
+          key,
+          letter,
+          label: this.$t(labelKey),
+          val,
+          pct: Math.min(100, (val / 36) * 100),
+        };
+      };
+      return [
+        mk('dominance', 'D', 'disc.dominance'),
+        mk('influence', 'I', 'disc.influence'),
+        mk('steadiness', 'S', 'disc.steadiness'),
+        mk('conscientiousness', 'C', 'disc.conscientiousness'),
+      ];
+    },
   },
   watch: {
     discApiLang() {
       if (!this.assessmentStarted && !this.showResults) {
-        this.loadQuestions()
+        this.loadQuestions();
       }
-    }
+    },
+  },
+  async mounted() {
+    await this.loadQuestions();
   },
   methods: {
     async loadQuestions() {
       try {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('token');
         const response = await axios.get('/api/disc/questions', {
           params: { lang: this.discApiLang },
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         if (response.data.success) {
-          this.questions = response.data.questions
+          this.questions = response.data.questions;
         } else if (this.$toast) {
-          this.$toast.error(this.$t('disc.errorLoading'))
+          this.$toast.error(this.$t('disc.errorLoading'));
         }
       } catch (error) {
-        console.error('Error loading questions:', error)
+        console.error('Error loading questions:', error);
         if (this.$toast) {
-          this.$toast.error(this.$t('disc.errorLoading'))
+          this.$toast.error(this.$t('disc.errorLoading'));
         }
       }
     },
     startAssessment() {
-      this.assessmentStarted = true
-      this.currentQuestionIndex = 0
-      this.answers = {}
-      this.selectedAnswer = this.answers[this.currentQuestion.id] || null
+      this.assessmentStarted = true;
+      this.currentQuestionIndex = 0;
+      this.answers = {};
+      this.selectedAnswer = this.answers[this.currentQuestion.id] || null;
     },
-    selectAnswer(answer) {
-      this.selectedAnswer = answer
+    selectAnswer(option) {
+      this.selectedAnswer = option.type;
     },
     nextQuestion() {
-      if (!this.selectedAnswer) return
-      
-      this.answers[this.currentQuestion.id] = this.selectedAnswer
-      
+      if (!this.selectedAnswer) return;
+
+      this.answers[this.currentQuestion.id] = this.selectedAnswer;
+
       if (this.currentQuestionIndex === this.questions.length - 1) {
-        this.submitAssessment()
+        this.submitAssessment();
       } else {
-        this.currentQuestionIndex++
-        this.selectedAnswer = this.answers[this.currentQuestion.id] || null
+        this.currentQuestionIndex++;
+        this.selectedAnswer = this.answers[this.currentQuestion.id] || null;
       }
     },
     previousQuestion() {
       if (this.currentQuestionIndex > 0) {
-        this.currentQuestionIndex--
-        this.selectedAnswer = this.answers[this.currentQuestion.id] || null
+        this.currentQuestionIndex--;
+        this.selectedAnswer = this.answers[this.currentQuestion.id] || null;
       }
     },
     async submitAssessment() {
-      this.loading = true
+      this.loading = true;
       try {
-        const token = localStorage.getItem('token')
-        const response = await axios.post('/api/disc/submit', {
-          answers: this.answers,
-          lang: this.discApiLang
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        
+        const token = localStorage.getItem('token');
+        const response = await axios.post(
+          '/api/disc/submit',
+          {
+            answers: this.answers,
+            lang: this.discApiLang,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         if (response.data.success) {
-          this.results = response.data.assessment
-          this.showResults = true
+          this.results = response.data.assessment;
+          this.showResults = true;
           if (this.$toast) {
-            this.$toast.success(this.$t('disc.submitSuccess'))
+            this.$toast.success(this.$t('disc.submitSuccess'));
           }
-        } else {
-          if (this.$toast) {
-            this.$toast.error(this.$t('disc.errorSubmitting'))
-          }
+        } else if (this.$toast) {
+          this.$toast.error(this.$t('disc.errorSubmitting'));
         }
       } catch (error) {
-        console.error('Error submitting assessment:', error)
+        console.error('Error submitting assessment:', error);
         if (this.$toast) {
-          this.$toast.error(this.$t('disc.errorSubmitting'))
+          this.$toast.error(this.$t('disc.errorSubmitting'));
         }
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     retakeAssessment() {
-      this.assessmentStarted = false
-      this.showResults = false
-      this.answers = {}
-      this.selectedAnswer = null
-      this.currentQuestionIndex = 0
-      this.results = null
-    }
-  }
-}
+      this.assessmentStarted = false;
+      this.showResults = false;
+      this.answers = {};
+      this.selectedAnswer = null;
+      this.currentQuestionIndex = 0;
+      this.results = null;
+    },
+  },
+};
 </script>
 
 <style scoped>
-.disc-assessment {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px 0;
+.disc-page {
+  position: relative;
+  min-height: calc(100vh - 24px);
+  color: rgba(10, 20, 45, 0.92);
 }
 
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.assessment-container, .results-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+.disc-page__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   overflow: hidden;
+  z-index: 0;
 }
 
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 40px;
+.disc-page__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.55;
+}
+
+.disc-page__orb--1 {
+  width: 420px;
+  height: 420px;
+  left: -120px;
+  top: -80px;
+  background: radial-gradient(circle at 30% 30%, rgba(98, 70, 255, 0.35), transparent 62%);
+}
+
+.disc-page__orb--2 {
+  width: 380px;
+  height: 380px;
+  right: -100px;
+  top: 40px;
+  background: radial-gradient(circle at 35% 35%, rgba(0, 194, 255, 0.28), transparent 60%);
+}
+
+.disc-page :deep(.new-tool-shell) {
+  position: relative;
+  z-index: 1;
+}
+
+.disc-body {
+  margin-top: 4px;
+}
+
+.disc-card {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 255, 0.88));
+  box-shadow: 0 22px 70px rgba(10, 20, 45, 0.1);
+  padding: 22px 20px 24px;
+}
+
+.disc-card--intro {
   text-align: center;
 }
 
-.header h1 {
-  margin: 0 0 10px 0;
-  font-size: 2.5rem;
+.disc-card__h {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
   font-weight: 700;
+  color: rgba(10, 20, 45, 0.94);
 }
 
-.subtitle {
+.disc-card__lead {
   margin: 0;
-  font-size: 1.2rem;
-  opacity: 0.9;
+  color: rgba(10, 20, 45, 0.68);
+  font-size: 15px;
 }
 
-.intro {
-  padding: 40px;
-  text-align: center;
-}
-
-.intro-content {
-  margin-bottom: 30px;
-}
-
-.intro-content h2 {
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.intro-content ul {
+.disc-list {
   text-align: left;
-  max-width: 500px;
-  margin: 20px auto;
+  max-width: 520px;
+  margin: 16px auto;
+  padding-left: 1.2rem;
+  color: rgba(10, 20, 45, 0.78);
+  line-height: 1.5;
+  font-size: 14px;
 }
 
-.intro-content li {
-  margin-bottom: 8px;
-  color: #666;
+.disc-meta {
+  margin: 8px 0;
+  font-size: 14px;
+  color: rgba(10, 20, 45, 0.72);
 }
 
-.question-container {
-  padding: 40px;
+.disc-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
-.progress-bar {
-  width: 100%;
+.disc-actions--footer {
+  justify-content: center;
+}
+
+.disc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(10, 20, 45, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(10, 20, 45, 0.9);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.disc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.disc-btn--primary {
+  border-color: rgba(32, 90, 255, 0.55);
+  color: #fff;
+  background: linear-gradient(135deg, #365cff 0%, #2a7dff 55%, #14b8ff 100%);
+  box-shadow: 0 12px 28px rgba(41, 84, 255, 0.22);
+}
+
+.disc-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(41, 84, 255, 0.28);
+}
+
+.disc-btn--ghost:hover:not(:disabled) {
+  border-color: rgba(32, 90, 255, 0.28);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.disc-btn--link {
+  box-sizing: border-box;
+}
+
+.disc-progress {
   height: 8px;
-  background: #e0e0e0;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  border-radius: 999px;
   overflow: hidden;
+  margin-bottom: 10px;
 }
 
-.progress {
+.disc-progress__bar {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #365cff, #14b8ff);
   transition: width 0.3s ease;
 }
 
-.progress-text {
+.disc-progress__text {
   text-align: center;
-  color: #666;
-  margin-bottom: 30px;
-  font-weight: 500;
+  color: rgba(10, 20, 45, 0.58);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 18px;
 }
 
-.question-card {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 30px;
-  margin-bottom: 30px;
+.disc-question__title {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: rgba(10, 20, 45, 0.92);
 }
 
-.question-card h3 {
-  color: #333;
-  margin-bottom: 25px;
-  font-size: 1.3rem;
-  line-height: 1.5;
-}
-
-.options {
+.disc-options {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
-.option {
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
+.disc-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  width: 100%;
+  padding: 14px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(10, 20, 45, 0.1);
+  background: rgba(255, 255, 255, 0.88);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  color: inherit;
+  font: inherit;
 }
 
-.option:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+.disc-option:hover {
+  border-color: rgba(32, 90, 255, 0.28);
 }
 
-.option.selected {
-  border-color: #667eea;
-  background: #f0f4ff;
+.disc-option--selected {
+  border-color: rgba(32, 90, 255, 0.45);
+  background: rgba(239, 246, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(32, 90, 255, 0.12);
 }
 
-.option-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.radio {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #ddd;
+.disc-option__radio {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 2px solid rgba(10, 20, 45, 0.2);
+  margin-top: 2px;
   flex-shrink: 0;
+  position: relative;
 }
 
-.option.selected .radio {
-  border-color: #667eea;
+.disc-option__radio--on {
+  border-color: rgba(32, 90, 255, 0.75);
 }
 
-.radio-selected {
-  width: 10px;
-  height: 10px;
-  background: #667eea;
+.disc-option__radio--on::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
   border-radius: 50%;
+  background: linear-gradient(135deg, #365cff, #14b8ff);
 }
 
-.navigation {
+.disc-option__text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(10, 20, 45, 0.88);
+}
+
+.disc-nav {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  gap: 12px;
+  margin-top: 22px;
 }
 
-.results-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 40px;
-  text-align: center;
+.disc-results__title {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
 }
 
-.results-header h1 {
-  margin: 0 0 20px 0;
-  font-size: 2.2rem;
+.disc-results__type {
+  font-size: 1rem;
+  margin-bottom: 18px;
+  color: rgba(10, 20, 45, 0.78);
 }
 
-.personality-type h2 {
-  margin: 0;
-  font-size: 1.5rem;
+.disc-results__badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  background: rgba(32, 90, 255, 0.12);
+  color: #1d4ed8;
 }
 
-.type-badge {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 700;
+.disc-results__h {
+  margin: 18px 0 12px;
+  font-size: 1.05rem;
 }
 
-.scores-section, .recommendations-section {
-  padding: 40px;
-  border-bottom: 1px solid #eee;
+.disc-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.scores-section h3, .recommendations-section h3 {
-  color: #333;
-  margin-bottom: 25px;
-  font-size: 1.4rem;
-}
-
-.scores-grid {
+.disc-score-row {
   display: grid;
-  gap: 20px;
-}
-
-.score-item {
-  display: grid;
-  grid-template-columns: 150px 1fr 80px;
+  grid-template-columns: minmax(100px, 140px) 1fr 52px;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
+  font-size: 13px;
 }
 
-.score-label {
+.disc-score-row__label {
   font-weight: 600;
-  color: #333;
+  color: rgba(10, 20, 45, 0.82);
 }
 
-.score-bar {
-  height: 12px;
-  background: #e0e0e0;
-  border-radius: 6px;
+.disc-score-row__bar {
+  height: 10px;
+  background: rgba(10, 20, 45, 0.08);
+  border-radius: 999px;
   overflow: hidden;
 }
 
-.score-fill {
+.disc-score-row__fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #365cff, #14b8ff);
+  border-radius: 999px;
   transition: width 0.5s ease;
 }
 
-.score-value {
-  font-weight: 600;
-  color: #667eea;
+.disc-score-row__val {
   text-align: right;
+  font-weight: 700;
+  color: #2563eb;
 }
 
-.recommendations-content {
-  background: #f8f9fa;
-  padding: 25px;
-  border-radius: 8px;
-  line-height: 1.6;
-  color: #333;
+.disc-rec {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(10, 20, 45, 0.04);
+  line-height: 1.55;
+  font-size: 14px;
+  color: rgba(10, 20, 45, 0.85);
 }
 
-.actions {
-  padding: 40px;
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
-  transform: translateY(-2px);
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-large {
-  padding: 16px 32px;
-  font-size: 1.1rem;
-}
-
-.loading-overlay {
+.disc-loading {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  inset: 0;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  color: white;
+  background: rgba(10, 20, 45, 0.35);
+  color: #fff;
 }
 
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top: 4px solid white;
+.disc-loading__spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  animation: disc-spin 0.9s linear infinite;
+  margin-bottom: 12px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes disc-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding: 0 15px;
-  }
-  
-  .header {
-    padding: 30px 20px;
-  }
-  
-  .header h1 {
-    font-size: 2rem;
-  }
-  
-  .question-container, .intro, .scores-section, .recommendations-section, .actions {
-    padding: 30px 20px;
-  }
-  
-  .score-item {
+@media (max-width: 640px) {
+  .disc-score-row {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 4px;
   }
-  
-  .actions {
-    flex-direction: column;
+  .disc-score-row__val {
+    text-align: left;
   }
-  
-  .navigation {
+  .disc-nav {
     flex-direction: column;
   }
 }

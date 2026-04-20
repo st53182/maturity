@@ -777,7 +777,12 @@
     "section2": "Priorities",
     "section2Hint": "MUST — critical, SHOULD — important, NICE — nice to have.",
     "section3": "Dependencies",
-    "section3Hint": "Add stages, drag blocks on the canvas. Links: pick From and To, or click two stages in a row to draw an arrow.",
+    "section3Hint": "Describe in words what delivery depends on (like in a Scrum discussion): teams, vendors, approvals, infrastructure.",
+    "dependenciesPlaceholder": "E.g. Waiting on Legal for the contract; billing integration blocks release; IT must provision prod access…",
+    "loadExample": "Load example",
+    "aiHelp": "AI: suggest",
+    "aiThinking": "…",
+    "aiFailed": "Could not get an AI response. Check limits or configuration.",
     "addStage": "+ Add stage",
     "linkHint": "Click the target stage to connect",
     "stageN": "Stage {n}",
@@ -914,6 +919,7 @@
     "previous": "Back",
     "finish": "Finish",
     "results": "Results",
+    "scoresTitle": "Scores by dimension",
     "personalityType": "Personality Type",
     "dominance": "Dominance",
     "influence": "Influence",
@@ -922,7 +928,8 @@
     "recommendations": "Recommendations",
     "errorLoading": "Error loading questions",
     "errorSubmitting": "Error saving results",
-    "submitSuccess": "Assessment completed successfully!"
+    "submitSuccess": "Assessment completed successfully!",
+    "backProfile": "Back to profile"
   },
   "common": {
     "loading": "Loading...",

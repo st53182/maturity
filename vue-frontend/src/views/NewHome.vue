@@ -96,11 +96,8 @@
             <router-link to="/new/conflicts" class="area-link">{{ $t('newHome.links.conflicts') }}</router-link>
             <router-link to="/new/meeting-design" class="area-link">{{ $t('newHome.links.meetingDesign') }}</router-link>
             <router-link to="/new/system-thinking" class="area-link">{{ $t('newHome.links.systemThinking') }}</router-link>
-            <router-link to="/new/metrics-tree" class="area-link">{{ $t('newHome.links.metricsTree') }}</router-link>
             <router-link to="/new/agile-kata" class="area-link">{{ $t('newHome.links.agileKata') }}</router-link>
             <router-link to="/new/agile-tools" class="area-link">{{ $t('newHome.links.agileTools') }}</router-link>
-            <router-link to="/new/backlog-prep" class="area-link">{{ $t('newHome.links.backlogPrep') }}</router-link>
-            <router-link to="/new/business-value" class="area-link">{{ $t('newHome.links.businessValue') }}</router-link>
             <router-link to="/new/interview-simulator" class="area-link">{{ $t('newHome.links.interviewSimulator') }}</router-link>
           </div>
         </article>
@@ -111,7 +108,8 @@
             <p class="area-card__desc">{{ $t('newHome.areas.pmDesc') }}</p>
           </div>
           <div class="area-card__links">
-            <router-link to="/roadmap" class="area-link">{{ $t('newHome.links.roadmap') }}</router-link>
+            <router-link to="/new/metrics-tree" class="area-link">{{ $t('newHome.links.metricsTree') }}</router-link>
+            <router-link to="/new/backlog-prep" class="area-link">{{ $t('newHome.links.backlogPrep') }}</router-link>
             <router-link to="/new/project-dashboard" class="area-link">{{ $t('newHome.links.projectDashboard') }}</router-link>
             <router-link to="/new/project-card" class="area-link">{{ $t('newHome.links.projectCard') }}</router-link>
             <a class="area-link" href="https://poker.growboard.ru" target="_blank" rel="noopener noreferrer">{{ $t('newHome.links.planningPoker') }}</a>
@@ -125,6 +123,7 @@
           </div>
           <div class="area-card__links">
             <router-link to="/new/maturity" class="area-link">{{ $t('newHome.links.maturityLink') }}</router-link>
+            <router-link to="/new/business-value" class="area-link">{{ $t('newHome.links.businessValue') }}</router-link>
             <router-link to="/new/surveys" class="area-link">{{ $t('newHome.links.surveys') }}</router-link>
           </div>
         </article>
@@ -142,13 +141,59 @@
         </article>
       </section>
 
+      <section id="feedback" class="testimonials" :class="{ 'is-ready': isReady }" aria-labelledby="feedback-heading">
+        <div class="testimonials__inner">
+          <h2 id="feedback-heading" class="testimonials__title">{{ $t('newHome.feedback.title') }}</h2>
+          <p class="testimonials__lead">{{ $t('newHome.feedback.lead') }}</p>
+          <div class="testimonials__grid">
+            <blockquote v-for="(item, i) in testimonialKeys" :key="i" class="testimonial-card">
+              <p class="testimonial-card__quote">«{{ $t(`newHome.feedback.items.${item}.quote`) }}»</p>
+              <footer class="testimonial-card__meta">
+                <span class="testimonial-card__author">{{ $t(`newHome.feedback.items.${item}.author`) }}</span>
+                <span class="testimonial-card__role">{{ $t(`newHome.feedback.items.${item}.role`) }}</span>
+              </footer>
+            </blockquote>
+          </div>
+        </div>
+      </section>
+
+      <section class="legal-blocks" :class="{ 'is-ready': isReady }" aria-label="Information">
+        <div id="about" class="legal-card legal-card--span">
+          <h2 class="legal-card__title">{{ $t('newHome.about.title') }}</h2>
+          <p v-for="(k, idx) in aboutParagraphKeys" :key="'ab-' + idx" class="legal-card__p">
+            {{ $t(`newHome.about.p${k}`) }}
+          </p>
+        </div>
+        <div class="legal-blocks__row">
+          <div id="security" class="legal-card">
+            <h2 class="legal-card__title">{{ $t('newHome.security.title') }}</h2>
+            <p v-for="(k, idx) in securityParagraphKeys" :key="'sec-' + idx" class="legal-card__p">
+              {{ $t(`newHome.security.p${k}`) }}
+            </p>
+          </div>
+          <div id="pricing" class="legal-card">
+            <h2 class="legal-card__title">{{ $t('newHome.pricing.title') }}</h2>
+            <p v-for="(k, idx) in pricingParagraphKeys" :key="'pr-' + idx" class="legal-card__p">
+              {{ $t(`newHome.pricing.p${k}`) }}
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="new-footer">
-      <div class="new-footer__inner">
-        <span>GrowBoard</span>
-        <span class="dot">•</span>
-        <span class="footer-copy">{{ $t('home.footer') }}</span>
+      <div class="new-footer__inner new-footer__inner--cols">
+        <div class="new-footer__brand">
+          <span>GrowBoard</span>
+          <span class="dot">•</span>
+          <span class="footer-copy">{{ $t('home.footer') }}</span>
+        </div>
+        <nav class="new-footer__nav" aria-label="Footer">
+          <a href="#feedback" class="footer-nav-link">{{ $t('newHome.footerNav.feedback') }}</a>
+          <a href="#about" class="footer-nav-link">{{ $t('newHome.footerNav.about') }}</a>
+          <a href="#security" class="footer-nav-link">{{ $t('newHome.footerNav.security') }}</a>
+          <a href="#pricing" class="footer-nav-link">{{ $t('newHome.footerNav.pricing') }}</a>
+        </nav>
       </div>
     </footer>
   </div>
@@ -159,6 +204,10 @@ export default {
   data() {
     return {
       isReady: false,
+      testimonialKeys: ['a', 'b', 'c'],
+      aboutParagraphKeys: [1, 2, 3],
+      securityParagraphKeys: [1, 2, 3],
+      pricingParagraphKeys: [1, 2, 3],
       trustedCompanies: [
         { name: "Mastercard" },
         { name: "TUI" },
@@ -597,6 +646,155 @@ export default {
   gap: 10px;
 }
 
+.new-footer__inner--cols {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.new-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.new-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: center;
+}
+
+.footer-nav-link {
+  color: rgba(10, 20, 45, 0.72);
+  text-decoration: none;
+  font-size: 13px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-nav-link:hover {
+  color: rgba(32, 90, 255, 0.95);
+  border-bottom-color: rgba(32, 90, 255, 0.35);
+}
+
+.testimonials {
+  margin-top: 28px;
+  scroll-margin-top: 88px;
+}
+
+.testimonials__inner {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 255, 0.78));
+  box-shadow: 0 18px 60px rgba(10, 20, 45, 0.1);
+  padding: 22px 20px 24px;
+}
+
+.testimonials__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.testimonials__lead {
+  margin: 10px 0 0;
+  color: rgba(10, 20, 45, 0.65);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.testimonials__grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.testimonial-card {
+  margin: 0;
+  padding: 16px 16px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.testimonial-card__quote {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(10, 20, 45, 0.88);
+}
+
+.testimonial-card__meta {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: rgba(10, 20, 45, 0.55);
+}
+
+.testimonial-card__author {
+  font-weight: 600;
+  color: rgba(10, 20, 45, 0.72);
+}
+
+.legal-blocks {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.legal-blocks__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.legal-card {
+  border-radius: 18px;
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.88), rgba(246, 249, 255, 0.72));
+  box-shadow: 0 14px 48px rgba(10, 20, 45, 0.08);
+  padding: 20px 18px 22px;
+  scroll-margin-top: 88px;
+}
+
+.legal-card--span {
+  scroll-margin-top: 88px;
+}
+
+.legal-card__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.legal-card__p {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(10, 20, 45, 0.72);
+}
+
+.legal-card__p:first-of-type {
+  margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  .testimonials__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .legal-blocks__row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dot {
   opacity: 0.6;
 }
@@ -615,7 +813,8 @@ export default {
 .new-nav__btn:focus-visible,
 .cta-btn:focus-visible,
 .area-link:focus-visible,
-.back-link:focus-visible {
+.back-link:focus-visible,
+.footer-nav-link:focus-visible {
   outline: 3px solid rgba(32, 90, 255, 0.55);
   outline-offset: 2px;
 }
@@ -641,7 +840,9 @@ export default {
 
 .hero,
 .trusted,
-.areas {
+.areas,
+.testimonials,
+.legal-blocks {
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 420ms ease, transform 420ms ease;
@@ -649,7 +850,9 @@ export default {
 
 .hero.is-ready,
 .trusted.is-ready,
-.areas.is-ready {
+.areas.is-ready,
+.testimonials.is-ready,
+.legal-blocks.is-ready {
   opacity: 1;
   transform: translateY(0);
 }
@@ -660,6 +863,14 @@ export default {
 
 .areas.is-ready {
   transition-delay: 110ms;
+}
+
+.testimonials.is-ready {
+  transition-delay: 140ms;
+}
+
+.legal-blocks.is-ready {
+  transition-delay: 170ms;
 }
 
 @keyframes float {
@@ -690,6 +901,8 @@ export default {
   .hero,
   .trusted,
   .areas,
+  .testimonials,
+  .legal-blocks,
   .cta-btn,
   .new-nav__btn,
   .area-link,

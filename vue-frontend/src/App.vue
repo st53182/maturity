@@ -95,10 +95,6 @@
           <span>💬</span>
           <small>{{ $t('nav.communityChat') }}</small>
         </button>
-        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/qa']) }" @click="$router.push('/qa')">
-          <span>🔍</span>
-          <small>{{ $t('nav.qa') }}</small>
-        </button>
         <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/maturity', '/maturity']) }" @click="$router.push(isNewUi ? '/new/maturity' : '/maturity/create')">
           <span>🔗</span>
           <small>{{ $t('nav.maturityLink') }}</small>
@@ -214,10 +210,6 @@
           <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/chat', '/chat']) }" @click="navigateAndClose('/new/chat')">
             <span>💬</span>
             <span>{{ $t('nav.communityChat') }}</span>
-          </button>
-          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/qa']) }" @click="navigateAndClose('/qa')">
-            <span>🔍</span>
-            <span>{{ $t('nav.qa') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="navigateAndClose(isNewUi ? '/new/maturity' : '/maturity/create')">
             <span>🔗</span>

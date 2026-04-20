@@ -1154,13 +1154,11 @@
       "backlogPrep": "Backlog prep",
       "flowMetrics": "Flow Metrics",
       "metricsTree": "Metrics tree",
-      "roadmap": "Dependency roadmap",
       "projectDashboard": "Project dashboard (demo)",
       "projectCard": "Project card",
       "planningPoker": "Planning Poker",
       "maturityLink": "Team maturity assessment (by link)",
       "surveys": "Surveys and results",
-      "qaPractice": "QA practice",
       "dashboard": "Dashboard",
       "survey": "Assessment survey",
       "usabilityReport": "Usability report",
@@ -1168,6 +1166,51 @@
       "agileTools": "Agile tools library",
       "interviewSimulator": "AI Interview Simulator",
       "businessValue": "Business value scoring (stories / epics)"
+    },
+    "feedback": {
+      "title": "What people say",
+      "lead": "Short notes from teams and leaders using GrowBoard.",
+      "items": {
+        "a": {
+          "quote": "Maturity surveys by link removed our coordination pain—people take the survey and we see trends in one place.",
+          "author": "Helena K.",
+          "role": "IT director"
+        },
+        "b": {
+          "quote": "The agile practice library and meeting design tools save time explaining what a good retro looks like to new facilitators.",
+          "author": "Michael T.",
+          "role": "Scrum Master"
+        },
+        "c": {
+          "quote": "The dashboard and usability views help show the business where we lose speed—without extra slide decks.",
+          "author": "Anna R.",
+          "role": "Product Owner"
+        }
+      }
+    },
+    "about": {
+      "title": "About us",
+      "p1": "GrowBoard is a platform for mature teams and product organizations: surveys, maturity assessment, facilitation tools, and analytics in one place.",
+      "p2": "We combine proven agile practices with clear flows for Scrum Masters, product owners, PMs, and business stakeholders—so you spend less time debating process and more time shipping value.",
+      "p3": "The product evolves with our users: we ship features where pain is real—from backlog prep to delivery transparency."
+    },
+    "security": {
+      "title": "Security",
+      "p1": "Access to workspace data is protected by authentication; sensitive actions require a signed-in account.",
+      "p2": "Use HTTPS in production; passwords and tokens are not shown in the UI.",
+      "p3": "AI features send the minimum context needed for the task; for full data-processing details, check with your org admin and the privacy policy."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "p1": "Core flows (home, many tools and guides) are available to registered users under the current product model.",
+      "p2": "Advanced capabilities (team surveys, integrations, enterprise reporting) may be offered separately—contact GrowBoard for up-to-date plans.",
+      "p3": "Special terms may apply for education and non-profits—reach out via the site or in-product contacts."
+    },
+    "footerNav": {
+      "feedback": "Feedback",
+      "about": "About",
+      "security": "Security",
+      "pricing": "Pricing"
     }
   },
   "businessValue": {

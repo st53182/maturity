@@ -462,9 +462,61 @@ button {
   padding: 0 !important;
   border-radius: 999px !important;
   background-image: none !important;
+  background-color: #e2e8f0 !important;
   color: transparent !important;
   box-shadow: none !important;
+  border: 2px solid #cbd5e1 !important;
   line-height: 1;
+}
+
+/* Traffic-light (task status) active colors — beat global CTA gradient */
+#app .project-card-page button.pcard-tl.tl-green.pcard-tl--on {
+  background-color: #22c55e !important;
+  border-color: #15803d !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35) !important;
+}
+#app .project-card-page button.pcard-tl.tl-yellow.pcard-tl--on {
+  background-color: #eab308 !important;
+  border-color: #a16207 !important;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.35) !important;
+}
+#app .project-card-page button.pcard-tl.tl-red.pcard-tl--on {
+  background-color: #ef4444 !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35) !important;
+}
+#app .project-card-page button.pcard-tl.tl-gray.pcard-tl--on {
+  background-color: #64748b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.35) !important;
+}
+
+/* Role-load risk dots — active colors */
+#app .project-card-page button.pcard-risk.pcard-risk--normal.pcard-risk--on {
+  background-color: #22c55e !important;
+  border-color: #15803d !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35) !important;
+}
+#app .project-card-page button.pcard-risk.pcard-risk--medium.pcard-risk--on {
+  background-color: #eab308 !important;
+  border-color: #a16207 !important;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.35) !important;
+}
+#app .project-card-page button.pcard-risk.pcard-risk--high.pcard-risk--on {
+  background-color: #f97316 !important;
+  border-color: #c2410c !important;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.35) !important;
+}
+#app .project-card-page button.pcard-risk.pcard-risk--critical.pcard-risk--on {
+  background-color: #ef4444 !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35) !important;
+}
+
+#app .project-card-page button.pcard-tl:hover,
+#app .project-card-page button.pcard-risk:hover {
+  filter: brightness(1.08);
+  transform: none;
 }
 
 #app .project-card-page button.pcard-ai-btn {
@@ -757,4 +809,41 @@ button {
 #app .sb-page button.sb-chip--add:hover {
   background: rgba(32, 90, 255, 0.08) !important;
   border-color: rgba(32, 90, 255, 0.55) !important;
+}
+
+/* Ghost secondary button */
+#app .sb-page button.sb-btn.sb-btn--ghost {
+  background: transparent !important;
+  border: 1px solid rgba(32, 90, 255, 0.35) !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+  box-shadow: none !important;
+}
+#app .sb-page button.sb-btn.sb-btn--ghost:hover:not(:disabled) {
+  background: rgba(32, 90, 255, 0.08) !important;
+  border-color: rgba(32, 90, 255, 0.55) !important;
+  color: rgba(24, 70, 200, 1) !important;
+}
+#app .sb-page button.sb-btn.sb-btn--block {
+  width: 100% !important;
+  justify-content: center;
+}
+
+/* Modal close "×" */
+#app .sb-page button.sb-modal__close {
+  min-height: unset !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  border: none !important;
+  background: rgba(10, 20, 45, 0.06) !important;
+  color: rgba(10, 20, 45, 0.7) !important;
+  box-shadow: none !important;
+  font-size: 20px;
+  line-height: 1;
+}
+#app .sb-page button.sb-modal__close:hover {
+  background: rgba(10, 20, 45, 0.12) !important;
+  color: rgba(10, 20, 45, 0.95) !important;
+  transform: none;
 }

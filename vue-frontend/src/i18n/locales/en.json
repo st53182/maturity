@@ -1470,6 +1470,15 @@
     "aiThinking": "AI is thinking…",
     "aiFailed": "Could not get an AI suggestion. Please try again.",
     "add": "Add",
+    "edit": "Edit",
+    "close": "Close",
+    "done": "Done",
+    "preview": {
+      "pillars": "pillars: {n}",
+      "bets": "bets: {n}",
+      "metrics": "metrics: {n}",
+      "okrs": "objectives: {o}, KRs: {k}"
+    },
     "vision": {
       "title": "Vision",
       "hint": "A short, vivid picture of the future in 3–5 years. One sentence.",
@@ -1510,7 +1519,7 @@
       "objectivePlaceholder": "Qualitative Objective",
       "krPlaceholder": "Measurable Key Result",
       "addKr": "KR",
-      "addObjective": "objective",
+      "addObjective": "add objective",
       "removeObjective": "Remove objective"
     }
   },

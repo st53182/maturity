@@ -1398,6 +1398,15 @@
     "aiThinking": "AI думает…",
     "aiFailed": "Не удалось получить подсказку AI. Попробуйте ещё раз.",
     "add": "Добавить",
+    "edit": "Изменить",
+    "close": "Закрыть",
+    "done": "Готово",
+    "preview": {
+      "pillars": "пиларов: {n}",
+      "bets": "ставок: {n}",
+      "metrics": "метрик: {n}",
+      "okrs": "целей: {o}, KR: {k}"
+    },
     "vision": {
       "title": "Видение",
       "hint": "Короткое, яркое описание будущего через 3–5 лет. Одно предложение.",
@@ -1438,7 +1447,7 @@
       "objectivePlaceholder": "Качественная цель (Objective)",
       "krPlaceholder": "Измеримый Key Result",
       "addKr": "KR",
-      "addObjective": "цель",
+      "addObjective": "добавить цель",
       "removeObjective": "Удалить цель"
     }
   },

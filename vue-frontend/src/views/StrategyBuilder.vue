@@ -42,135 +42,172 @@
         </div>
       </section>
 
+      <div class="sb-industry">
+        <label class="sb-field__label" for="sb-industry">{{ $t('strategyBuilder.industryLabel') }}</label>
+        <input id="sb-industry" v-model="industry" class="sb-input" :placeholder="$t('strategyBuilder.industryPlaceholder')" />
+      </div>
+
       <p v-if="aiError" class="sb-error">{{ aiError }}</p>
 
       <section class="sb-grid">
-        <article class="sb-card">
-          <header class="sb-card__head">
-            <h3 class="sb-card__h">{{ $t('strategyBuilder.vision.title') }}</h3>
-            <button class="sb-ai-btn" :disabled="aiLoading.vision" @click="runAi('vision')">
-              <span v-if="!aiLoading.vision">{{ $t('strategyBuilder.aiHelp') }}</span>
-              <span v-else>…</span>
-            </button>
+        <article class="sb-summary" @click="openEditor('vision')">
+          <header class="sb-summary__head">
+            <h3 class="sb-summary__h">{{ $t('strategyBuilder.vision.title') }}</h3>
+            <span class="sb-summary__edit">{{ $t('strategyBuilder.edit') }}</span>
           </header>
-          <p class="sb-card__hint">{{ $t('strategyBuilder.vision.hint') }}</p>
-          <textarea v-model="form.vision" class="sb-textarea" rows="3" :placeholder="$t('strategyBuilder.vision.placeholder')" />
+          <p v-if="form.vision" class="sb-summary__body">{{ form.vision }}</p>
+          <p v-else class="sb-summary__empty">{{ $t('strategyBuilder.vision.hint') }}</p>
         </article>
 
-        <article class="sb-card">
-          <header class="sb-card__head">
-            <h3 class="sb-card__h">{{ $t('strategyBuilder.mission.title') }}</h3>
-            <button class="sb-ai-btn" :disabled="aiLoading.mission" @click="runAi('mission')">
-              <span v-if="!aiLoading.mission">{{ $t('strategyBuilder.aiHelp') }}</span>
-              <span v-else>…</span>
-            </button>
+        <article class="sb-summary" @click="openEditor('mission')">
+          <header class="sb-summary__head">
+            <h3 class="sb-summary__h">{{ $t('strategyBuilder.mission.title') }}</h3>
+            <span class="sb-summary__edit">{{ $t('strategyBuilder.edit') }}</span>
           </header>
-          <p class="sb-card__hint">{{ $t('strategyBuilder.mission.hint') }}</p>
-          <textarea v-model="form.mission" class="sb-textarea" rows="3" :placeholder="$t('strategyBuilder.mission.placeholder')" />
+          <p v-if="form.mission" class="sb-summary__body">{{ form.mission }}</p>
+          <p v-else class="sb-summary__empty">{{ $t('strategyBuilder.mission.hint') }}</p>
         </article>
 
-        <article class="sb-card">
-          <header class="sb-card__head">
-            <h3 class="sb-card__h">{{ $t('strategyBuilder.purpose.title') }}</h3>
-            <button class="sb-ai-btn" :disabled="aiLoading.purpose" @click="runAi('purpose')">
-              <span v-if="!aiLoading.purpose">{{ $t('strategyBuilder.aiHelp') }}</span>
-              <span v-else>…</span>
-            </button>
+        <article class="sb-summary" @click="openEditor('purpose')">
+          <header class="sb-summary__head">
+            <h3 class="sb-summary__h">{{ $t('strategyBuilder.purpose.title') }}</h3>
+            <span class="sb-summary__edit">{{ $t('strategyBuilder.edit') }}</span>
           </header>
-          <p class="sb-card__hint">{{ $t('strategyBuilder.purpose.hint') }}</p>
-          <textarea v-model="form.purpose" class="sb-textarea" rows="3" :placeholder="$t('strategyBuilder.purpose.placeholder')" />
+          <p v-if="form.purpose" class="sb-summary__body">{{ form.purpose }}</p>
+          <p v-else class="sb-summary__empty">{{ $t('strategyBuilder.purpose.hint') }}</p>
         </article>
 
-        <article class="sb-card">
-          <header class="sb-card__head">
-            <h3 class="sb-card__h">{{ $t('strategyBuilder.values.title') }}</h3>
-            <button class="sb-ai-btn" :disabled="aiLoading.values" @click="runAi('values')">
-              <span v-if="!aiLoading.values">{{ $t('strategyBuilder.aiHelp') }}</span>
-              <span v-else>…</span>
-            </button>
+        <article class="sb-summary" @click="openEditor('values')">
+          <header class="sb-summary__head">
+            <h3 class="sb-summary__h">{{ $t('strategyBuilder.values.title') }}</h3>
+            <span class="sb-summary__edit">{{ $t('strategyBuilder.edit') }}</span>
           </header>
-          <p class="sb-card__hint">{{ $t('strategyBuilder.values.hint') }}</p>
-          <div class="sb-chips">
-            <span v-for="(v, idx) in form.values" :key="`v-${idx}`" class="sb-chip">
-              <input v-model="form.values[idx]" class="sb-chip__input" :placeholder="$t('strategyBuilder.values.placeholder')" />
-              <button type="button" class="sb-chip__x" @click="removeValue(idx)" aria-label="remove">×</button>
-            </span>
-            <button type="button" class="sb-chip sb-chip--add" @click="addValue">
-              + {{ $t('strategyBuilder.values.add') }}
-            </button>
+          <div v-if="valuesFilled.length" class="sb-summary__chips">
+            <span v-for="(v, i) in valuesFilled" :key="`v-${i}`" class="sb-summary__chip">{{ v }}</span>
           </div>
+          <p v-else class="sb-summary__empty">{{ $t('strategyBuilder.values.hint') }}</p>
         </article>
 
-        <article class="sb-card sb-card--wide">
-          <header class="sb-card__head">
-            <h3 class="sb-card__h">{{ $t('strategyBuilder.strategy.title') }}</h3>
-            <button class="sb-ai-btn" :disabled="aiLoading.strategy" @click="runAi('strategy')">
-              <span v-if="!aiLoading.strategy">{{ $t('strategyBuilder.aiHelp') }}</span>
-              <span v-else>…</span>
-            </button>
+        <article class="sb-summary sb-summary--wide" @click="openEditor('strategy')">
+          <header class="sb-summary__head">
+            <h3 class="sb-summary__h">{{ $t('strategyBuilder.strategy.title') }}</h3>
+            <span class="sb-summary__edit">{{ $t('strategyBuilder.edit') }}</span>
           </header>
-          <p class="sb-card__hint">{{ $t('strategyBuilder.strategy.hint') }}</p>
-
-          <label class="sb-field__label">{{ $t('strategyBuilder.strategy.horizon') }}</label>
-          <input v-model="form.strategy.horizon" class="sb-input" :placeholder="$t('strategyBuilder.strategy.horizonPlaceholder')" />
-
-          <div class="sb-subhead">
-            <h4>{{ $t('strategyBuilder.strategy.pillars') }}</h4>
-            <button type="button" class="sb-link-btn" @click="addPillar">+ {{ $t('strategyBuilder.add') }}</button>
-          </div>
-          <div v-for="(p, idx) in form.strategy.pillars" :key="`p-${idx}`" class="sb-pillar">
-            <input v-model="p.name" class="sb-input" :placeholder="$t('strategyBuilder.strategy.pillarName')" />
-            <textarea v-model="p.description" class="sb-textarea sb-textarea--tight" rows="2" :placeholder="$t('strategyBuilder.strategy.pillarDesc')" />
-            <button type="button" class="sb-row-x" @click="removePillar(idx)" aria-label="remove">×</button>
-          </div>
-
-          <div class="sb-subhead">
-            <h4>{{ $t('strategyBuilder.strategy.bets') }}</h4>
-            <button type="button" class="sb-link-btn" @click="form.strategy.bets.push('')">+ {{ $t('strategyBuilder.add') }}</button>
-          </div>
-          <div v-for="(b, idx) in form.strategy.bets" :key="`b-${idx}`" class="sb-row">
-            <input v-model="form.strategy.bets[idx]" class="sb-input" :placeholder="$t('strategyBuilder.strategy.betPlaceholder')" />
-            <button type="button" class="sb-row-x" @click="form.strategy.bets.splice(idx, 1)">×</button>
-          </div>
-
-          <div class="sb-subhead">
-            <h4>{{ $t('strategyBuilder.strategy.metrics') }}</h4>
-            <button type="button" class="sb-link-btn" @click="form.strategy.metrics.push('')">+ {{ $t('strategyBuilder.add') }}</button>
-          </div>
-          <div v-for="(m, idx) in form.strategy.metrics" :key="`m-${idx}`" class="sb-row">
-            <input v-model="form.strategy.metrics[idx]" class="sb-input" :placeholder="$t('strategyBuilder.strategy.metricPlaceholder')" />
-            <button type="button" class="sb-row-x" @click="form.strategy.metrics.splice(idx, 1)">×</button>
-          </div>
+          <p v-if="strategyPreview" class="sb-summary__body">{{ strategyPreview }}</p>
+          <p v-else class="sb-summary__empty">{{ $t('strategyBuilder.strategy.hint') }}</p>
         </article>
 
-        <article class="sb-card sb-card--wide">
-          <header class="sb-card__head">
-            <h3 class="sb-card__h">{{ $t('strategyBuilder.okrs.title') }}</h3>
-            <button class="sb-ai-btn" :disabled="aiLoading.okrs" @click="runAi('okrs')">
-              <span v-if="!aiLoading.okrs">{{ $t('strategyBuilder.aiHelp') }}</span>
-              <span v-else>…</span>
-            </button>
+        <article class="sb-summary sb-summary--wide" @click="openEditor('okrs')">
+          <header class="sb-summary__head">
+            <h3 class="sb-summary__h">{{ $t('strategyBuilder.okrs.title') }}</h3>
+            <span class="sb-summary__edit">{{ $t('strategyBuilder.edit') }}</span>
           </header>
-          <p class="sb-card__hint">{{ $t('strategyBuilder.okrs.hint') }}</p>
-          <div v-for="(o, idx) in form.okrs" :key="`o-${idx}`" class="sb-okr">
-            <input v-model="o.objective" class="sb-input" :placeholder="$t('strategyBuilder.okrs.objectivePlaceholder')" />
-            <div v-for="(kr, krIdx) in o.key_results" :key="`kr-${idx}-${krIdx}`" class="sb-row">
-              <input v-model="o.key_results[krIdx]" class="sb-input sb-input--kr" :placeholder="$t('strategyBuilder.okrs.krPlaceholder')" />
-              <button type="button" class="sb-row-x" @click="o.key_results.splice(krIdx, 1)">×</button>
-            </div>
-            <div class="sb-okr__actions">
-              <button type="button" class="sb-link-btn" @click="o.key_results.push('')">+ {{ $t('strategyBuilder.okrs.addKr') }}</button>
-              <button type="button" class="sb-link-btn sb-link-btn--danger" @click="form.okrs.splice(idx, 1)">{{ $t('strategyBuilder.okrs.removeObjective') }}</button>
-            </div>
-          </div>
-          <button type="button" class="sb-btn sb-btn--ghost" @click="addObjective">+ {{ $t('strategyBuilder.okrs.addObjective') }}</button>
+          <p v-if="okrsPreview" class="sb-summary__body">{{ okrsPreview }}</p>
+          <p v-else class="sb-summary__empty">{{ $t('strategyBuilder.okrs.hint') }}</p>
         </article>
       </section>
 
-      <section class="sb-bottom">
-        <label class="sb-field__label">{{ $t('strategyBuilder.industryLabel') }}</label>
-        <input v-model="industry" class="sb-input" :placeholder="$t('strategyBuilder.industryPlaceholder')" />
-      </section>
+      <div v-if="openSection" class="sb-modal-overlay" @click.self="closeEditor">
+        <div class="sb-modal" role="dialog" aria-modal="true">
+          <header class="sb-modal__head">
+            <h2 class="sb-modal__h">{{ modalTitle }}</h2>
+            <button type="button" class="sb-modal__close" :aria-label="$t('strategyBuilder.close')" @click="closeEditor">×</button>
+          </header>
+
+          <div class="sb-modal__body">
+            <p class="sb-modal__hint">{{ modalHint }}</p>
+
+            <!-- Vision / Mission / Purpose: single textarea -->
+            <template v-if="['vision', 'mission', 'purpose'].includes(openSection)">
+              <textarea
+                v-model="form[openSection]"
+                class="sb-textarea"
+                rows="4"
+                :placeholder="$t(`strategyBuilder.${openSection}.placeholder`)"
+              />
+            </template>
+
+            <!-- Values: chips list -->
+            <template v-else-if="openSection === 'values'">
+              <div class="sb-chips">
+                <span v-for="(val, idx) in form.values" :key="`vm-${idx}`" class="sb-chip">
+                  <input
+                    v-model="form.values[idx]"
+                    class="sb-chip__input"
+                    :placeholder="$t('strategyBuilder.values.placeholder')"
+                  />
+                  <button type="button" class="sb-chip__x" @click="removeValue(idx)" aria-label="remove">×</button>
+                </span>
+                <button type="button" class="sb-chip--add" @click="addValue">
+                  + {{ $t('strategyBuilder.values.add') }}
+                </button>
+              </div>
+            </template>
+
+            <!-- Strategy: horizon + pillars + bets + metrics -->
+            <template v-else-if="openSection === 'strategy'">
+              <label class="sb-field__label">{{ $t('strategyBuilder.strategy.horizon') }}</label>
+              <input v-model="form.strategy.horizon" class="sb-input" :placeholder="$t('strategyBuilder.strategy.horizonPlaceholder')" />
+
+              <div class="sb-subhead">
+                <h4>{{ $t('strategyBuilder.strategy.pillars') }}</h4>
+                <button type="button" class="sb-link-btn" @click="addPillar">+ {{ $t('strategyBuilder.add') }}</button>
+              </div>
+              <div v-for="(p, idx) in form.strategy.pillars" :key="`pm-${idx}`" class="sb-editor-row sb-editor-row--split">
+                <div class="sb-editor-row__fields">
+                  <input v-model="p.name" class="sb-input" :placeholder="$t('strategyBuilder.strategy.pillarName')" />
+                  <textarea v-model="p.description" class="sb-textarea sb-textarea--tight" rows="2" :placeholder="$t('strategyBuilder.strategy.pillarDesc')" />
+                </div>
+                <button type="button" class="sb-row-x" @click="removePillar(idx)" aria-label="remove">×</button>
+              </div>
+
+              <div class="sb-subhead">
+                <h4>{{ $t('strategyBuilder.strategy.bets') }}</h4>
+                <button type="button" class="sb-link-btn" @click="form.strategy.bets.push('')">+ {{ $t('strategyBuilder.add') }}</button>
+              </div>
+              <div v-for="(b, idx) in form.strategy.bets" :key="`bm-${idx}`" class="sb-editor-row">
+                <input v-model="form.strategy.bets[idx]" class="sb-input" :placeholder="$t('strategyBuilder.strategy.betPlaceholder')" />
+                <button type="button" class="sb-row-x" @click="form.strategy.bets.splice(idx, 1)">×</button>
+              </div>
+
+              <div class="sb-subhead">
+                <h4>{{ $t('strategyBuilder.strategy.metrics') }}</h4>
+                <button type="button" class="sb-link-btn" @click="form.strategy.metrics.push('')">+ {{ $t('strategyBuilder.add') }}</button>
+              </div>
+              <div v-for="(m, idx) in form.strategy.metrics" :key="`mm-${idx}`" class="sb-editor-row">
+                <input v-model="form.strategy.metrics[idx]" class="sb-input" :placeholder="$t('strategyBuilder.strategy.metricPlaceholder')" />
+                <button type="button" class="sb-row-x" @click="form.strategy.metrics.splice(idx, 1)">×</button>
+              </div>
+            </template>
+
+            <!-- OKRs: objectives + key results -->
+            <template v-else-if="openSection === 'okrs'">
+              <div v-for="(o, idx) in form.okrs" :key="`om-${idx}`" class="sb-okr">
+                <input v-model="o.objective" class="sb-input" :placeholder="$t('strategyBuilder.okrs.objectivePlaceholder')" />
+                <div v-for="(kr, krIdx) in o.key_results" :key="`kr-${idx}-${krIdx}`" class="sb-editor-row">
+                  <input v-model="o.key_results[krIdx]" class="sb-input sb-input--kr" :placeholder="$t('strategyBuilder.okrs.krPlaceholder')" />
+                  <button type="button" class="sb-row-x" @click="o.key_results.splice(krIdx, 1)">×</button>
+                </div>
+                <div class="sb-okr__actions">
+                  <button type="button" class="sb-link-btn" @click="o.key_results.push('')">+ {{ $t('strategyBuilder.okrs.addKr') }}</button>
+                  <button type="button" class="sb-link-btn sb-link-btn--danger" @click="form.okrs.splice(idx, 1)">{{ $t('strategyBuilder.okrs.removeObjective') }}</button>
+                </div>
+              </div>
+              <button type="button" class="sb-btn sb-btn--ghost sb-btn--block" @click="addObjective">+ {{ $t('strategyBuilder.okrs.addObjective') }}</button>
+            </template>
+          </div>
+
+          <footer class="sb-modal__foot">
+            <button type="button" class="sb-btn sb-btn--ghost" :disabled="aiLoading[openSection]" @click="runAi(openSection)">
+              <span v-if="!aiLoading[openSection]">{{ $t('strategyBuilder.aiHelp') }}</span>
+              <span v-else>{{ $t('strategyBuilder.aiThinking') }}</span>
+            </button>
+            <button type="button" class="sb-btn sb-btn--primary" @click="closeEditor">
+              {{ $t('strategyBuilder.done') }}
+            </button>
+          </footer>
+        </div>
+      </div>
     </NewToolShell>
   </div>
 </template>
@@ -204,6 +241,7 @@ export default {
       scope: 'company',
       industry: '',
       form: emptyForm(),
+      openSection: null,
       aiLoading: { all: false, vision: false, mission: false, purpose: false, values: false, strategy: false, okrs: false },
       aiError: '',
     };
@@ -221,8 +259,54 @@ export default {
         { id: 'team', label: this.$t('strategyBuilder.scope.team') },
       ];
     },
+    valuesFilled() {
+      return (this.form.values || []).map((v) => String(v || '').trim()).filter(Boolean);
+    },
+    strategyPreview() {
+      const s = this.form.strategy || {};
+      const parts = [];
+      if (s.horizon) parts.push(s.horizon);
+      const pillars = (s.pillars || []).filter((p) => p && (p.name || p.description));
+      if (pillars.length) parts.push(this.$t('strategyBuilder.preview.pillars', { n: pillars.length }));
+      const bets = (s.bets || []).filter(Boolean);
+      if (bets.length) parts.push(this.$t('strategyBuilder.preview.bets', { n: bets.length }));
+      const metrics = (s.metrics || []).filter(Boolean);
+      if (metrics.length) parts.push(this.$t('strategyBuilder.preview.metrics', { n: metrics.length }));
+      return parts.join(' · ');
+    },
+    okrsPreview() {
+      const list = (this.form.okrs || []).filter((o) => o && (o.objective || (o.key_results || []).some(Boolean)));
+      if (!list.length) return '';
+      const krs = list.reduce((acc, o) => acc + (o.key_results || []).filter(Boolean).length, 0);
+      return this.$t('strategyBuilder.preview.okrs', { o: list.length, k: krs });
+    },
+    modalTitle() {
+      if (!this.openSection) return '';
+      return this.$t(`strategyBuilder.${this.openSection}.title`);
+    },
+    modalHint() {
+      if (!this.openSection) return '';
+      return this.$t(`strategyBuilder.${this.openSection}.hint`);
+    },
+  },
+  watch: {
+    openSection(val) {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = val ? 'hidden' : '';
+      }
+    },
+  },
+  beforeUnmount() {
+    if (typeof document !== 'undefined') document.body.style.overflow = '';
   },
   methods: {
+    openEditor(section) {
+      this.openSection = section;
+      this.aiError = '';
+    },
+    closeEditor() {
+      this.openSection = null;
+    },
     addValue() {
       this.form.values.push('');
     },
@@ -327,28 +411,17 @@ export default {
 </script>
 
 <style scoped>
-.sb-page {
-  position: relative;
-  min-height: calc(100vh - 40px);
-}
+.sb-page { position: relative; min-height: calc(100vh - 40px); }
 .sb-page__bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
 .sb-page__orb { position: absolute; width: 540px; height: 540px; border-radius: 50%; filter: blur(60px); opacity: 0.55; }
-.sb-page__orb--1 {
-  top: -220px; left: -210px;
-  background: radial-gradient(circle at 30% 30%, rgba(120, 119, 255, 0.4), transparent 65%);
-}
-.sb-page__orb--2 {
-  bottom: -220px; right: -160px;
-  background: radial-gradient(circle at 70% 70%, rgba(0, 194, 255, 0.35), transparent 65%);
-}
+.sb-page__orb--1 { top: -220px; left: -210px; background: radial-gradient(circle at 30% 30%, rgba(120, 119, 255, 0.4), transparent 65%); }
+.sb-page__orb--2 { bottom: -220px; right: -160px; background: radial-gradient(circle at 70% 70%, rgba(0, 194, 255, 0.35), transparent 65%); }
 
 .sb-intro,
 .sb-toolbar,
-.sb-card,
-.sb-bottom {
-  position: relative;
-  z-index: 1;
-}
+.sb-industry,
+.sb-summary,
+.sb-modal-overlay { position: relative; z-index: 1; }
 
 .sb-intro {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 255, 0.78));
@@ -366,7 +439,7 @@ export default {
   gap: 12px;
   align-items: flex-end;
   justify-content: space-between;
-  margin: 18px 0;
+  margin: 18px 0 10px;
 }
 .sb-scope { min-width: 260px; }
 .sb-scope__tabs {
@@ -374,77 +447,67 @@ export default {
   border: 1px solid rgba(10, 20, 45, 0.12);
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.9);
-}
-.sb-scope__tab {
-  padding: 8px 14px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(10, 20, 45, 0.7);
-  transition: 0.18s ease;
-}
-.sb-scope__tab + .sb-scope__tab { border-left: 1px solid rgba(10, 20, 45, 0.08); }
-.sb-scope__tab:hover { background: rgba(32, 90, 255, 0.06); }
-.sb-scope__tab--on {
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88));
-  color: #fff;
-}
-
-.sb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.sb-btn {
-  padding: 10px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid rgba(10, 20, 45, 0.14);
   background: rgba(255, 255, 255, 0.92);
-  color: rgba(10, 20, 45, 0.92);
-  transition: 0.18s ease;
 }
-.sb-btn:hover:not(:disabled) { transform: translateY(-1px); border-color: rgba(32, 90, 255, 0.35); }
-.sb-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.sb-btn--primary {
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88));
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(32, 90, 255, 0.35);
+.sb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.sb-industry {
+  margin-bottom: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(10, 20, 45, 0.08);
+  border-radius: 14px;
+  padding: 12px 16px;
 }
 
 .sb-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
 }
-.sb-card {
+
+.sb-summary {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(10, 20, 45, 0.08);
   border-radius: 18px;
-  padding: 18px 20px;
-  box-shadow: 0 20px 50px rgba(10, 20, 45, 0.08);
-}
-.sb-card--wide { grid-column: 1 / -1; }
-
-.sb-card__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.sb-card__h { margin: 0; font-size: 16px; font-weight: 700; }
-.sb-card__hint { margin: 6px 0 10px; color: rgba(10, 20, 45, 0.65); font-size: 13px; line-height: 1.5; }
-
-.sb-ai-btn {
-  padding: 6px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(32, 90, 255, 0.3);
-  background: rgba(32, 90, 255, 0.08);
-  color: rgba(32, 90, 255, 0.9);
-  font-size: 12px;
-  font-weight: 600;
+  padding: 16px 18px;
+  box-shadow: 0 18px 42px rgba(10, 20, 45, 0.08);
   cursor: pointer;
   transition: 0.18s ease;
+  min-height: 120px;
 }
-.sb-ai-btn:hover:not(:disabled) { background: rgba(32, 90, 255, 0.16); }
-.sb-ai-btn:disabled { opacity: 0.55; cursor: wait; }
+.sb-summary:hover {
+  transform: translateY(-2px);
+  border-color: rgba(32, 90, 255, 0.35);
+  box-shadow: 0 22px 50px rgba(10, 20, 45, 0.12);
+}
+.sb-summary--wide { grid-column: 1 / -1; }
+
+.sb-summary__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.sb-summary__h { margin: 0; font-size: 15px; font-weight: 700; }
+.sb-summary__edit {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(32, 90, 255, 0.9);
+}
+.sb-summary__body { margin: 0; font-size: 14px; line-height: 1.55; color: rgba(10, 20, 45, 0.88); }
+.sb-summary__empty { margin: 0; font-size: 13px; color: rgba(10, 20, 45, 0.55); font-style: italic; line-height: 1.5; }
+.sb-summary__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sb-summary__chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(32, 90, 255, 0.1);
+  color: rgba(32, 90, 255, 0.95);
+  font-size: 12px;
+  font-weight: 600;
+}
 
 .sb-field__label { display: block; font-size: 13px; font-weight: 600; margin: 8px 0 6px; color: rgba(10, 20, 45, 0.78); }
 
@@ -455,6 +518,7 @@ export default {
   border: 1px solid rgba(10, 20, 45, 0.14);
   font-size: 14px;
   background: #fff;
+  box-sizing: border-box;
 }
 .sb-input:focus { outline: none; border-color: rgba(32, 90, 255, 0.5); box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.12); }
 .sb-input--kr { font-size: 13px; }
@@ -469,11 +533,12 @@ export default {
   font-family: inherit;
   background: #fff;
   resize: vertical;
+  box-sizing: border-box;
 }
 .sb-textarea:focus { outline: none; border-color: rgba(32, 90, 255, 0.5); box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.12); }
 .sb-textarea--tight { min-height: 60px; }
 
-.sb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .sb-chip {
   display: inline-flex;
   align-items: center;
@@ -493,80 +558,39 @@ export default {
   color: rgba(10, 20, 45, 0.9);
 }
 .sb-chip__input:focus { outline: none; }
-.sb-chip__x {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(10, 20, 45, 0.1);
-  color: rgba(10, 20, 45, 0.7);
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-}
-.sb-chip--add {
-  background: transparent;
-  border-style: dashed;
-  cursor: pointer;
-  color: rgba(32, 90, 255, 0.9);
-  padding: 6px 12px;
-}
 
 .sb-subhead {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 12px 0 6px;
+  margin: 14px 0 6px;
 }
-.sb-subhead h4 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(10, 20, 45, 0.6); font-weight: 700; }
-.sb-link-btn {
-  background: none;
-  border: none;
-  color: rgba(32, 90, 255, 0.9);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-}
-.sb-link-btn:hover { background: rgba(32, 90, 255, 0.08); }
-.sb-link-btn--danger { color: rgba(239, 68, 68, 0.9); }
-.sb-link-btn--danger:hover { background: rgba(239, 68, 68, 0.08); }
+.sb-subhead h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(10, 20, 45, 0.6); font-weight: 700; }
 
-.sb-pillar {
-  display: grid;
-  grid-template-columns: 1fr 2fr auto;
-  gap: 8px;
-  align-items: start;
-  margin-bottom: 8px;
-}
-.sb-row {
+.sb-editor-row {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
-.sb-row-x {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: 1px solid rgba(10, 20, 45, 0.14);
-  background: #fff;
-  color: rgba(10, 20, 45, 0.7);
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  flex-shrink: 0;
+.sb-editor-row--split {
+  align-items: flex-start;
 }
-.sb-row-x:hover { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.3); color: rgba(239, 68, 68, 0.9); }
+.sb-editor-row__fields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
 
 .sb-okr {
   border: 1px solid rgba(10, 20, 45, 0.08);
   border-radius: 12px;
-  padding: 10px 12px;
-  background: rgba(246, 249, 255, 0.5);
+  padding: 12px 14px;
+  background: rgba(246, 249, 255, 0.6);
   margin-bottom: 10px;
 }
+.sb-okr > .sb-input:first-child { margin-bottom: 8px; }
 .sb-okr__actions {
   display: flex;
   gap: 10px;
@@ -574,21 +598,81 @@ export default {
   margin-top: 6px;
 }
 
-.sb-bottom {
-  margin-top: 18px;
-  background: rgba(255, 255, 255, 0.92);
+.sb-error { color: #b00020; font-size: 13px; margin: 10px 0; }
+
+/* Modal */
+.sb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 45, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 20px;
+  animation: sbFadeIn 0.18s ease-out;
+}
+.sb-modal {
+  width: min(640px, 100%);
+  max-height: min(90vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 20px;
   border: 1px solid rgba(10, 20, 45, 0.08);
-  border-radius: 14px;
-  padding: 14px 18px;
+  box-shadow: 0 40px 100px rgba(10, 20, 45, 0.3);
+  overflow: hidden;
+  animation: sbSlideUp 0.22s ease-out;
+}
+.sb-modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(10, 20, 45, 0.08);
+  background: linear-gradient(160deg, rgba(246, 249, 255, 0.9), rgba(255, 255, 255, 1));
+}
+.sb-modal__h { margin: 0; font-size: 18px; font-weight: 700; }
+.sb-modal__close {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(10, 20, 45, 0.06);
+  color: rgba(10, 20, 45, 0.7);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.sb-modal__close:hover { background: rgba(10, 20, 45, 0.12); color: rgba(10, 20, 45, 0.95); }
+
+.sb-modal__body {
+  padding: 18px 22px;
+  overflow-y: auto;
+  flex: 1;
+}
+.sb-modal__hint { margin: 0 0 12px; color: rgba(10, 20, 45, 0.65); font-size: 13px; line-height: 1.55; }
+
+.sb-modal__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 22px;
+  border-top: 1px solid rgba(10, 20, 45, 0.08);
+  background: rgba(246, 249, 255, 0.6);
+  flex-wrap: wrap;
 }
 
-.sb-error {
-  color: #b00020;
-  font-size: 13px;
-  margin: 10px 0;
+@keyframes sbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sbSlideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 600px) {
-  .sb-pillar { grid-template-columns: 1fr; }
+  .sb-modal { border-radius: 16px; }
+  .sb-modal__head, .sb-modal__body, .sb-modal__foot { padding-left: 16px; padding-right: 16px; }
 }
 </style>

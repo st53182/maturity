@@ -532,3 +532,229 @@ button {
   background: #f87171 !important;
   color: #fff !important;
 }
+
+/* ==========================================================================
+   Report Insights Analyzer (.ri-page): scoped buttons win over global CTA
+   ========================================================================== */
+#app .ri-page button {
+  min-height: unset !important;
+  border-radius: 12px !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+#app .ri-page button.ri-btn {
+  padding: 10px 18px !important;
+  border: 1px solid rgba(10, 20, 45, 0.14) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: rgba(10, 20, 45, 0.92) !important;
+  font-weight: 600;
+}
+
+#app .ri-page button.ri-btn:hover:not(:disabled) {
+  background: #f3f6ff !important;
+  border-color: rgba(32, 90, 255, 0.45) !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+  transform: translateY(-1px);
+}
+
+#app .ri-page button.ri-btn:active:not(:disabled) {
+  transform: translateY(0);
+  background: #e8edff !important;
+}
+
+#app .ri-page button.ri-btn--primary {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88)) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(32, 90, 255, 0.35) !important;
+}
+
+#app .ri-page button.ri-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(24, 70, 200, 0.98), rgba(0, 160, 220, 0.94)) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px rgba(32, 90, 255, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+#app .ri-page button.ri-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Strategy Builder (.sb-page): scoped buttons win over global CTA
+   ========================================================================== */
+#app .sb-page button {
+  min-height: unset !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+#app .sb-page button.sb-btn {
+  padding: 10px 18px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(10, 20, 45, 0.14) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: rgba(10, 20, 45, 0.92) !important;
+  font-weight: 600;
+}
+
+#app .sb-page button.sb-btn:hover:not(:disabled) {
+  border-color: rgba(32, 90, 255, 0.45) !important;
+  background: #f3f6ff !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+  transform: translateY(-1px);
+}
+
+#app .sb-page button.sb-btn:active:not(:disabled) {
+  transform: translateY(0);
+  background: #e8edff !important;
+}
+
+#app .sb-page button.sb-btn--primary {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88)) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(32, 90, 255, 0.35) !important;
+}
+
+#app .sb-page button.sb-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(24, 70, 200, 0.98), rgba(0, 160, 220, 0.94)) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px rgba(32, 90, 255, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+#app .sb-page button.sb-btn:disabled,
+#app .sb-page button.sb-ai-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Scope tab segment: clear active + hover state */
+#app .sb-page button.sb-scope__tab {
+  padding: 8px 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: rgba(10, 20, 45, 0.7) !important;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#app .sb-page button.sb-scope__tab + button.sb-scope__tab {
+  border-left: 1px solid rgba(10, 20, 45, 0.08) !important;
+}
+
+#app .sb-page button.sb-scope__tab:hover:not(.sb-scope__tab--on) {
+  background: rgba(32, 90, 255, 0.08) !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+}
+
+#app .sb-page button.sb-scope__tab--on {
+  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88)) !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25) !important;
+}
+
+/* AI-helper button on each card */
+#app .sb-page button.sb-ai-btn {
+  padding: 6px 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(32, 90, 255, 0.35) !important;
+  background: rgba(32, 90, 255, 0.09) !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#app .sb-page button.sb-ai-btn:hover:not(:disabled) {
+  background: rgba(32, 90, 255, 0.18) !important;
+  border-color: rgba(32, 90, 255, 0.55) !important;
+  color: rgba(24, 70, 200, 1) !important;
+}
+
+#app .sb-page button.sb-ai-btn:active:not(:disabled) {
+  background: rgba(32, 90, 255, 0.28) !important;
+  transform: translateY(0);
+}
+
+/* Inline "+ add" links and "remove" links */
+#app .sb-page button.sb-link-btn {
+  padding: 4px 8px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#app .sb-page button.sb-link-btn:hover {
+  background: rgba(32, 90, 255, 0.1) !important;
+}
+
+#app .sb-page button.sb-link-btn--danger {
+  color: rgba(239, 68, 68, 0.95) !important;
+}
+
+#app .sb-page button.sb-link-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Small "×" row remove buttons */
+#app .sb-page button.sb-row-x {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(10, 20, 45, 0.14) !important;
+  background: #fff !important;
+  color: rgba(10, 20, 45, 0.7) !important;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+#app .sb-page button.sb-row-x:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  color: rgba(239, 68, 68, 0.95) !important;
+}
+
+/* Values chip "×" */
+#app .sb-page button.sb-chip__x {
+  width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: none !important;
+  background: rgba(10, 20, 45, 0.12) !important;
+  color: rgba(10, 20, 45, 0.75) !important;
+  font-size: 14px;
+  line-height: 1;
+}
+
+#app .sb-page button.sb-chip__x:hover {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: rgba(239, 68, 68, 0.95) !important;
+}
+
+/* "+ ценность" dashed chip */
+#app .sb-page button.sb-chip--add {
+  padding: 6px 12px !important;
+  border: 1px dashed rgba(32, 90, 255, 0.35) !important;
+  background: transparent !important;
+  color: rgba(32, 90, 255, 0.95) !important;
+  border-radius: 999px !important;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#app .sb-page button.sb-chip--add:hover {
+  background: rgba(32, 90, 255, 0.08) !important;
+  border-color: rgba(32, 90, 255, 0.55) !important;
+}

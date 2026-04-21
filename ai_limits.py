@@ -136,6 +136,8 @@ AI_LIMITED_POST_PATHS = {
     "/api/survey-templates/ai-draft",
     "/api/business-value/parse-items",
     "/api/project-card/ai-suggest",
+    "/api/report-insights/analyze",
+    "/api/strategy-builder/ai-suggest",
 }
 
 

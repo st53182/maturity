@@ -37,6 +37,10 @@ const routes = [
   { path: '/new/disc-assessment', name: 'DISCAssessment', component: () => import('@/views/DISCAssessment.vue'), meta: { requiresAuth: true } },
   { path: '/new/metrics-tree', name: 'MetricsTreeNew', component: () => import('@/views/MetricsTreeView.vue'), meta: { requiresAuth: true } },
   { path: '/new/project-dashboard', name: 'ProjectDashboardDemo', component: () => import('@/views/ProjectDashboardDemo.vue') },
+  { path: '/new/report-insights', name: 'ReportInsightsAnalyzer', component: () => import('@/views/ReportInsightsAnalyzer.vue'), meta: { requiresAuth: true } },
+  { path: '/new/strategy-builder', name: 'StrategyBuilder', component: () => import('@/views/StrategyBuilder.vue'), meta: { requiresAuth: true } },
+  { path: '/report-insights', redirect: '/new/report-insights' },
+  { path: '/strategy-builder', redirect: '/new/strategy-builder' },
   /* Канон /new: редиректы со старых URL */
   { path: '/dashboard', redirect: '/new/dashboard' },
   { path: '/survey', redirect: '/new/survey' },

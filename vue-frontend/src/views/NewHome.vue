@@ -136,7 +136,8 @@
           <div class="area-card__links">
             <router-link to="/new/dashboard" class="area-link">{{ $t('newHome.links.dashboard') }}</router-link>
             <router-link to="/new/survey" class="area-link">{{ $t('newHome.links.survey') }}</router-link>
-            <router-link to="/usability-report" class="area-link">{{ $t('newHome.links.usabilityReport') }}</router-link>
+            <router-link to="/new/report-insights" class="area-link">{{ $t('newHome.links.reportInsights') }}</router-link>
+            <router-link to="/new/strategy-builder" class="area-link">{{ $t('newHome.links.strategyBuilder') }}</router-link>
           </div>
         </article>
       </section>

@@ -103,6 +103,14 @@
           <span>📑</span>
           <small>{{ $t('nav.projectCard') }}</small>
         </button>
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/report-insights']) }" @click="$router.push('/new/report-insights')">
+          <span>🔍</span>
+          <small>{{ $t('newHome.links.reportInsights') }}</small>
+        </button>
+        <button class="sidebar-btn" :class="{ 'sidebar-btn--active': navActive(['/new/strategy-builder']) }" @click="$router.push('/new/strategy-builder')">
+          <span>🧭</span>
+          <small>{{ $t('newHome.links.strategyBuilder') }}</small>
+        </button>
         <button class="sidebar-btn" @click="openExternalLink('https://poker.growboard.ru')">
           <span>♠️</span>
           <small>{{ $t('nav.poker') }}</small>
@@ -218,6 +226,14 @@
           <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/project-card', '/project-card']) }" @click="navigateAndClose(isNewUi ? '/new/project-card' : '/project-card')">
             <span>📑</span>
             <span>{{ $t('nav.projectCard') }}</span>
+          </button>
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/report-insights']) }" @click="navigateAndClose('/new/report-insights')">
+            <span>🔍</span>
+            <span>{{ $t('newHome.links.reportInsights') }}</span>
+          </button>
+          <button class="mobile-menu-btn" :class="{ 'mobile-menu-btn--active': navActive(['/new/strategy-builder']) }" @click="navigateAndClose('/new/strategy-builder')">
+            <span>🧭</span>
+            <span>{{ $t('newHome.links.strategyBuilder') }}</span>
           </button>
           <button class="mobile-menu-btn" @click="openExternalLinkAndClose('https://poker.growboard.ru')">
             <span>♠️</span>

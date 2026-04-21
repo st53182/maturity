@@ -1169,6 +1169,8 @@
       "dashboard": "Dashboard",
       "survey": "Assessment survey",
       "usabilityReport": "Usability report",
+      "reportInsights": "AI report analyzer (dashboards, finance, IT)",
+      "strategyBuilder": "Vision, mission and strategy",
       "agileKata": "Agile Kata canvas",
       "agileTools": "Agile tools library",
       "interviewSimulator": "AI Interview Simulator",
@@ -1391,6 +1393,126 @@
     "dashboardInterviewCta": "Open interview simulator",
     "maturityTitle": "Maturity assessment by link",
     "maturitySubtitle": "Create a link and share it so people can complete the assessment."
+  },
+  "reportInsights": {
+    "title": "AI report analyzer",
+    "subtitle": "Upload a report — get the spots that deserve attention",
+    "lead": "A tool for owners and leaders: upload any report — IT, finance, operations or HR — and the AI returns a short digest, highlights suspicious numbers, discrepancies and growth opportunities.",
+    "bullet1": "Supports HTML dashboards, PDF, images and plain text.",
+    "bullet2": "AI looks for anomalies: total mismatches, sudden swings, outliers and weak trends.",
+    "bullet3": "You get a traffic-light health grade, a list of insights and questions to ask the team.",
+    "uploadTitle": "Upload a report",
+    "uploadHint": "File up to 6 MB. Or paste the key numbers and comments below.",
+    "dropzonePlaceholder": "Choose a file (HTML, PDF, PNG/JPG, TXT, CSV)",
+    "clearFile": "Remove file",
+    "or": "or",
+    "pasteLabel": "Report text / key numbers",
+    "pastePlaceholder": "For example: 'Revenue $12.4M, plan $12.0M, margin 18% (Q2: 22%)…' — the more numbers and context, the better.",
+    "notesLabel": "What specifically worries you? (optional)",
+    "notesPlaceholder": "For example: 'margin drop and contractor spend felt off'. AI will weigh these cues.",
+    "analyzeCta": "Analyze",
+    "analyzing": "Analyzing…",
+    "loadSample": "Load sample",
+    "errors": {
+      "fileTooLarge": "File is larger than 6 MB — please upload a smaller file.",
+      "generic": "Analysis failed. Try again or use a smaller file."
+    },
+    "results": {
+      "summaryTitle": "AI summary",
+      "noSummary": "AI could not produce a summary.",
+      "insightsTitle": "What deserves attention",
+      "noInsights": "AI found nothing critical.",
+      "questionsTitle": "Questions worth asking",
+      "evidence": "Evidence",
+      "why": "Why it matters",
+      "action": "What to do",
+      "health": {
+        "green": "Report is healthy",
+        "yellow": "Has items to watch",
+        "red": "Needs urgent attention"
+      },
+      "severity": {
+        "info": "Info",
+        "watch": "Watch",
+        "warning": "Warning",
+        "critical": "Critical"
+      },
+      "category": {
+        "data_quality": "Data quality",
+        "trend": "Trend",
+        "outlier": "Outlier",
+        "finance": "Finance",
+        "performance": "Performance",
+        "risk": "Risk",
+        "opportunity": "Opportunity",
+        "other": "Other"
+      }
+    }
+  },
+  "strategyBuilder": {
+    "title": "Vision, mission and strategy",
+    "subtitle": "Build the strategic frame for your company, department or team",
+    "lead": "A tool for owners and leaders to articulate 'where we are going' — from vision and mission to strategic bets and OKRs. AI suggests wording and examples give you a quick starting point in two languages.",
+    "bullet1": "Pick the scope — company, department or team — AI takes the context into account.",
+    "bullet2": "Any section can be written manually or extended by AI.",
+    "bullet3": "A full example loads in one click — adapt it to your reality.",
+    "scopeLabel": "Scope",
+    "scope": {
+      "company": "Company",
+      "department": "Department",
+      "team": "Team"
+    },
+    "industryLabel": "Industry / context (optional)",
+    "industryPlaceholder": "E.g. retail fintech, industrial manufacturing, HR SaaS…",
+    "loadExample": "Load example",
+    "aiAll": "AI: draft all",
+    "aiHelp": "AI help",
+    "aiThinking": "AI is thinking…",
+    "aiFailed": "Could not get an AI suggestion. Please try again.",
+    "add": "Add",
+    "vision": {
+      "title": "Vision",
+      "hint": "A short, vivid picture of the future in 3–5 years. One sentence.",
+      "placeholder": "By 2028 we are…"
+    },
+    "mission": {
+      "title": "Mission",
+      "hint": "What we do today, for whom, and the change we deliver.",
+      "placeholder": "We help … by …"
+    },
+    "purpose": {
+      "title": "Purpose",
+      "hint": "The deeper 'why' — what we believe in.",
+      "placeholder": "We believe that…"
+    },
+    "values": {
+      "title": "Values",
+      "hint": "3–5 short values, 1–3 words each. No generic filler — only what actually drives decisions.",
+      "placeholder": "value",
+      "add": "value"
+    },
+    "strategy": {
+      "title": "Strategy",
+      "hint": "Key pillars, bets for the next year, and success metrics.",
+      "horizon": "Horizon",
+      "horizonPlaceholder": "E.g. 2026–2028 or next 6 months",
+      "pillars": "Strategic pillars",
+      "pillarName": "Pillar name",
+      "pillarDesc": "What exactly and why",
+      "bets": "Key bets (12 mo)",
+      "betPlaceholder": "A concrete initiative",
+      "metrics": "Success metrics",
+      "metricPlaceholder": "Outcome metric (not output)"
+    },
+    "okrs": {
+      "title": "Quarterly OKRs",
+      "hint": "2–3 objectives, each with 2–3 measurable Key Results. Focus on change for the customer.",
+      "objectivePlaceholder": "Qualitative Objective",
+      "krPlaceholder": "Measurable Key Result",
+      "addKr": "KR",
+      "addObjective": "objective",
+      "removeObjective": "Remove objective"
+    }
   },
   "interviewSimulator": {
     "voiceAnswer": "Dictate answer",

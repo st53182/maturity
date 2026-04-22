@@ -1533,6 +1533,13 @@
         "bullet2": "Fibonacci-like scale 1–13 and (value + urgency) / complexity",
         "bullet3": "News event and revision reveal who actually adapts"
       },
+      "scrumEvents": {
+        "title": "Team rhythm: Scrum events",
+        "desc": "Participants assemble 4 key events (Planning, Daily, Review, Retro) from atomic cards, see why each step exists, meet typical mistakes and get a Miro-style final board.",
+        "bullet1": "4 stages, 5 card categories, strong focus on the 'why'",
+        "bullet2": "Miro-style final board with 🟢🟡🔴 highlights",
+        "bullet3": "Group comparison and a 'build your own process' mode"
+      },
       "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
@@ -2258,6 +2265,120 @@
         "summary.hybrid": "Hybrid — fast revenue with a short window.",
         "summary.electric": "Electric — heavy capex, but large revenue and a growing market.",
         "summary.hydrogen": "Hydrogen — a long and risky bet with breakthrough potential."
+      }
+    },
+    "scrumEvents": {
+      "facTitle": "Team rhythm — facilitator panel",
+      "facSubtitle": "Create a session, add teams and share the links. For every group you can see which stages went 'green', where mistakes pile up, and how teams differ.",
+      "playTitle": "Team rhythm",
+      "newSessionTitle": "Scrum events session title",
+      "answersCount": "no answers | {n} answer | {n} answers",
+      "groupResults": "Group results",
+      "compareAll": "Compare teams",
+      "bestGroups": "Most complete processes",
+      "groupScoreboard": "Scoreboard",
+      "avgHealth": "Process health",
+      "noAnswersYet": "nobody has built the process yet",
+      "noErrorsMarked": "nobody flagged any typical mistakes",
+      "noAnswer": "no answer",
+      "errorsSeen": "Flagged mistakes",
+      "errorsSeenTop": "Mistakes participants recognise",
+      "customMode": "Custom mode",
+      "participantsDrill": "Per-participant drill-down",
+
+      "startTitle": "Team rhythm",
+      "startLead": "A team works in short cycles and regularly: plans, syncs, shows the result, improves. Assemble 4 key events — and you'll see the whole rhythm on a single board.",
+      "start": "Start",
+
+      "contextTitle": "What is a team rhythm",
+      "contextLead": "A team moves in short cycles. Every cycle has 4 events — and they are not random: each has its own purpose, participants and outcome.",
+
+      "cardsTitle": "Card set",
+      "cardsLead": "Meet the cards. You'll pick from them: why, who, what we use, when and how long.",
+      "buildCta": "Build the events",
+      "buildTitle": "Build 4 events",
+      "buildLead": "Switch between the stages at the top and pick the cards you think fit for each category.",
+      "fillAllStages": "Fill in all 4 stages",
+      "seeWhyCta": "Next: why it's needed",
+      "pickedCount": "nothing picked | {n} picked | {n} picked",
+
+      "whyTitle": "Why each event",
+      "whyLead": "Before looking at the result — figure out what problem each event is solving. That's the point of a rhythm, not just 'meeting for the sake of it'.",
+      "saveAndErrors": "Save and see typical mistakes",
+
+      "errorsTitle": "Typical mistakes and consequences",
+      "errorsLead": "Mark the mistakes you've seen in real life. We'll come back to them on the board.",
+      "fixCta": "Fix the process",
+      "toResult": "To the final board",
+
+      "fixTitle": "Fix the process",
+      "fixLead": "See where you went red and change your picks. You can remove cards or add new ones.",
+      "needsAttention": "needs attention",
+
+      "finalTitle": "Your process board",
+      "finalLead": "This is your 'Miro board' — the team's rhythm at a glance. Compare with what other teams picked and try building your own context.",
+      "yourHealth": "Your score",
+      "groupAvg": "Group average",
+      "groupComparison": "What other teams picked",
+      "missing": "Missing",
+      "tryCustomMode": "Build your own process",
+      "replay": "Rebuild from scratch",
+      "replayConfirm": "Reset your answers and rebuild?",
+
+      "customTitle": "Build your own process",
+      "customLead": "Pick a context and assemble the event the way you would run it. We'll save it with your answer so the facilitator can discuss.",
+      "customNoteLabel": "Comment (optional)",
+      "customNotePh": "For example: 'We run this as a weekly Monday 10am planner.'",
+      "saveCustom": "Save",
+
+      "next": "Next",
+      "back": "Back",
+
+      "stepContext": "Context",
+      "stepCards": "Cards",
+      "stepBuild": "Build",
+      "stepWhy": "Why",
+      "stepErrors": "Mistakes",
+      "stepFinal": "Board",
+
+      "cat": {
+        "goals": "Purpose (why)",
+        "participants": "Participants (who)",
+        "artifacts": "Artifacts",
+        "time": "When",
+        "duration": "How long"
+      },
+
+      "colors": {
+        "green": "makes sense",
+        "yellow": "debatable",
+        "red": "has issues",
+        "gray": "—"
+      },
+
+      "customs": {
+        "team_meeting": {
+          "title": "Team meeting",
+          "desc": "A recurring team meeting to agree on the next step."
+        },
+        "marketing_meeting": {
+          "title": "Marketing meeting",
+          "desc": "A meeting to sync on campaigns and content."
+        },
+        "ops_shift": {
+          "title": "Operational shift",
+          "desc": "A service shift handover: yesterday, today, tomorrow."
+        }
+      },
+
+      "errors": {
+        "no_team_on_planning": { "title": "No team at planning" },
+        "no_customer_on_review": { "title": "No customer at the review" },
+        "no_retro": { "title": "No retrospective" },
+        "meetings_too_long": { "title": "Meetings are too long" },
+        "no_clear_goal": { "title": "No clear sprint goal" },
+        "daily_as_status": { "title": "Daily becomes a status report" },
+        "review_without_increment": { "title": "Nothing to show at Review" }
       }
     }
   },

@@ -33,7 +33,9 @@ bp_agile_training = Blueprint(
 
 
 ANSWER_VALUES = {"relevant", "outdated"}
-ALLOWED_EXERCISE_KEYS = {"agile_principles", "cynefin", "iceberg", "mvp", "dor_dod", "wsjf"}
+ALLOWED_EXERCISE_KEYS = {
+    "agile_principles", "cynefin", "iceberg", "mvp", "dor_dod", "wsjf", "scrum_events",
+}
 
 
 # --------------------------- helpers ---------------------------

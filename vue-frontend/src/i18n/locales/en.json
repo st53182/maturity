@@ -1473,7 +1473,9 @@
       "pp": "pp",
       "language": "Language",
       "languageRu": "Русский",
-      "languageEn": "English"
+      "languageEn": "English",
+      "yourName": "Your name",
+      "yourNamePh": "Name (optional)"
     },
     "hub": {
       "title": "Agile Training",
@@ -1509,6 +1511,13 @@
         "bullet1": "4 cases: business, education, government, team",
         "bullet2": "Drag & drop cards + causal chain",
         "bullet3": "Depth-of-thinking score per team"
+      },
+      "mvp": {
+        "title": "MVP → MMP → MLP: from hypothesis to loved product",
+        "desc": "Participants build a product in three iterations using feature cards. They see what worked as MVP, what's enough for the market, and what turns the product into something users love.",
+        "bullet1": "3 product hypotheses: taxi, food delivery, online courses",
+        "bullet2": "Pick features with weights: critical / improves / optional",
+        "bullet3": "User reactions and anti-patterns for every iteration"
       },
       "backHome": "Back to exercises",
       "howItWorks": {
@@ -1829,6 +1838,115 @@
           "interventions": "Solutions",
           "debrief": "Feedback"
         }
+      }
+    },
+    "mvp": {
+      "facTitle": "MVP → MMP → MLP — facilitator panel",
+      "facSubtitle": "Run a product-thinking training, add teams and share links. See which features teams pick, how quickly they validate the hypothesis and who built the best product.",
+      "playTitle": "Product simulation: MVP → MMP → MLP",
+      "newSessionTitle": "MVP/MMP/MLP training name",
+      "answersCount": "0 answers | {n} answer | {n} answers",
+      "groupResults": "Group results",
+      "avgScore": "Average score (0–6)",
+      "totalScore": "Score",
+      "featurePicksTitle": "Features the team picked",
+      "leaderboard": "Leaderboard",
+      "leaderboardTitle": "Product teams leaderboard",
+      "leaderboardLead": "Group comparison: who validated the hypothesis faster and whose product came out better.",
+      "fastestHypothesis": "Fastest hypothesis check",
+      "fastestHypothesisHint": "Share of participants whose MVP version successfully validated the hypothesis.",
+      "bestProduct": "Best product",
+      "bestProductHint": "By average score across all three iterations (0–6).",
+      "groupScoreboard": "Success per iteration",
+      "startTitle": "Simulation: from hypothesis to a loved product",
+      "startLead": "You'll take a product through three stages: MVP, MMP and MLP. On each stage pick the right features and see what users say.",
+      "defMvp": "minimum version to validate the hypothesis",
+      "defMmp": "product that's ready to release to the market",
+      "defMlp": "product that users actually love",
+      "start": "Start",
+      "pickCase": "Pick a product hypothesis",
+      "pickCaseLead": "Each card is a separate product idea. Play any of them, or all in a row.",
+      "startCase": "Start",
+      "continueCase": "Continue",
+      "backToCases": "Back to hypotheses",
+      "hypothesisLabel": "Hypothesis",
+      "context": "Context",
+      "assembleMvp": "Assemble MVP",
+      "selectedOf": "Picked {n} of {max}",
+      "alreadyIn": "Already in the product",
+      "checkResult": "Check the result",
+      "resultTitle": "What happened",
+      "antipatterns": "Anti-patterns",
+      "hintsTitle": "You may be missing",
+      "yourPicks": "Your feature set",
+      "retryStage": "Re-assemble",
+      "goToFinal": "Go to final result",
+      "finalTitle": "Simulation recap",
+      "finalLead": "A quick recap of each stage and what it really took to validate the idea, ship to market and make users come back.",
+      "groupHint": "Group stats",
+      "groupStats": "Answers recorded: {answers}. Avg score: {avg}/6.",
+      "nextCase": "Next hypothesis",
+      "stage": {
+        "mvp": "MVP",
+        "mmp": "MMP",
+        "mlp": "MLP"
+      },
+      "stageTitle": {
+        "mvp": "Build an MVP",
+        "mmp": "Grow to MMP",
+        "mlp": "Grow to MLP"
+      },
+      "stageBrief": {
+        "mvp": "Pick up to {max} features — this is about validating the hypothesis, not building a full product.",
+        "mmp": "Add more features — the product must be ready to ship to the market. Total cap — {max}.",
+        "mlp": "Add final touches. The goal is a product users love. Total cap — {max}."
+      },
+      "weight": {
+        "critical": "critical",
+        "improve": "improves",
+        "optional": "optional"
+      },
+      "status": {
+        "success": "succeeded",
+        "partial": "partial",
+        "fail": "failed"
+      },
+      "verdict": {
+        "mvp": {
+          "success": "Hypothesis validated",
+          "partial": "Hypothesis partially validated",
+          "fail": "Hypothesis not validated"
+        },
+        "mmp": {
+          "success": "Ready to release",
+          "partial": "Can release with caveats",
+          "fail": "Too early to release"
+        },
+        "mlp": {
+          "success": "Users fell in love with the product",
+          "partial": "It's OK, but nothing to fall in love with",
+          "fail": "The product doesn't stick"
+        }
+      },
+      "goToStage": {
+        "mmp": "Evolve to MMP",
+        "mlp": "Evolve to MLP"
+      },
+      "explain": {
+        "mvp": "MVP is about validating the idea. A minimal product that tells you if the hypothesis holds.",
+        "mmp": "MMP is a working product — ready to release and to sell.",
+        "mlp": "MLP is a delightful product users come back to and recommend."
+      },
+      "ap": {
+        "too_many_optional_mvp": "Too many 'optional' features in MVP — focus on the hypothesis is lost.",
+        "missing_critical": "A key feature is missing — you can't validate the hypothesis without it.",
+        "vanity_feature_mvp": "A vanity feature sneaked into MVP — you don't need to build it yet.",
+        "mmp_missing_critical": "A key feature is still missing in MMP — can't release it.",
+        "mmp_no_improvements": "No 'improves' features in MMP — the product will be uncomfortable to use.",
+        "mmp_bloat": "MMP is bloated: too many optional features instead of needed ones.",
+        "mlp_missing_critical": "A key feature is still missing in MLP.",
+        "mlp_no_delight": "MLP has no delight features — no 'wow' effect.",
+        "mlp_vanity": "A useless feature was added to MLP — it doesn't drive love."
       }
     }
   },

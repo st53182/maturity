@@ -762,6 +762,48 @@ class AgileTrainingIcebergAnswer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingMvpAnswer(db.Model):
+    """Ответ участника по одному кейсу MVP→MMP→MLP.
+
+    Храним один общий JSON на кейс с выборами участника на каждой итерации
+    и вычисленными статусами — так удобнее поднимать последнее состояние
+    на фронте при возврате на страницу."""
+
+    __tablename__ = "agile_training_mvp_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id", "case_key",
+            name="uq_mvp_answer_participant_case",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    case_key = db.Column(db.String(64), nullable=False, index=True)
+    # Структура:
+    # {
+    #   "mvp": { "features": ["f1","f2"], "status": "partial" },
+    #   "mmp": { "features": [...], "status": "success" },
+    #   "mlp": { "features": [...], "status": "success" }
+    # }
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    total_score = db.Column(db.Integer, nullable=False, default=0)
+    final_stage = db.Column(db.String(16), nullable=True, index=True)  # mvp | mmp | mlp
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

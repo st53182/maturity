@@ -887,6 +887,43 @@ class AgileTrainingWsjfAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingScrumRolesAnswer(db.Model):
+    """Ответ участника тренажёра «Роли в Scrum».
+
+    Одна запись на участника. `data_json` хранит весь выбор:
+    selection[card_key][role_key] = level ('responsible' | 'participates' |
+    'should_not' | null), errors_seen, custom_cards, custom_role и
+    evaluation."""
+
+    __tablename__ = "agile_training_scrum_roles_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_scrum_roles_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    score = db.Column(db.Integer, nullable=True, index=True)
+    max_score = db.Column(db.Integer, nullable=True)
+    health_pct = db.Column(db.Integer, nullable=True, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingScrumEventsAnswer(db.Model):
     """Ответ участника тренажёра Scrum events / «Ритм работы команды».
 

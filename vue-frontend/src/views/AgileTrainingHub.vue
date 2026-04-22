@@ -107,6 +107,18 @@
         </ul>
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
+
+      <article class="at-card" @click="$router.push('/agile-training/scrum-roles')">
+        <span class="at-card__icon">🧩</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.scrumRoles.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.scrumRoles.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.scrumRoles.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.scrumRoles.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.scrumRoles.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
     </div>
 
     <section class="at-hub__helper">

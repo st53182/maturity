@@ -107,6 +107,7 @@ from agile_mvp import bp_agile_mvp
 from agile_dor_dod import bp_agile_dor_dod
 from agile_wsjf import bp_agile_wsjf
 from agile_scrum_events import bp_agile_scrum_events
+from agile_scrum_roles import bp_agile_scrum_roles
 from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
@@ -256,6 +257,7 @@ app.register_blueprint(bp_agile_mvp)
 app.register_blueprint(bp_agile_dor_dod)
 app.register_blueprint(bp_agile_wsjf)
 app.register_blueprint(bp_agile_scrum_events)
+app.register_blueprint(bp_agile_scrum_roles)
 app.register_blueprint(bp_ai_limits)
 app.register_blueprint(bp_tests)
 app.register_blueprint(bp_interview_simulator)

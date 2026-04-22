@@ -34,10 +34,11 @@ import AgileMvpPlay from '@/views/AgileMvpPlay.vue';
 import AgileDorDodPlay from '@/views/AgileDorDodPlay.vue';
 import AgileWsjfPlay from '@/views/AgileWsjfPlay.vue';
 import AgileScrumEventsPlay from '@/views/AgileScrumEventsPlay.vue';
+import AgileScrumRolesPlay from '@/views/AgileScrumRolesPlay.vue';
 
 export default {
   name: 'GroupPlayGateway',
-  components: { AgilePrinciplesPlay, AgileCynefinPlay, AgileIcebergPlay, AgileMvpPlay, AgileDorDodPlay, AgileWsjfPlay, AgileScrumEventsPlay },
+  components: { AgilePrinciplesPlay, AgileCynefinPlay, AgileIcebergPlay, AgileMvpPlay, AgileDorDodPlay, AgileWsjfPlay, AgileScrumEventsPlay, AgileScrumRolesPlay },
   data() {
     return {
       loading: true,
@@ -57,6 +58,7 @@ export default {
       if (this.exerciseKey === 'dor_dod') return 'AgileDorDodPlay';
       if (this.exerciseKey === 'wsjf') return 'AgileWsjfPlay';
       if (this.exerciseKey === 'scrum_events') return 'AgileScrumEventsPlay';
+      if (this.exerciseKey === 'scrum_roles') return 'AgileScrumRolesPlay';
       return 'AgilePrinciplesPlay';
     },
   },

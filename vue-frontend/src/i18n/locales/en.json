@@ -1540,6 +1540,13 @@
         "bullet2": "Miro-style final board with 🟢🟡🔴 highlights",
         "bullet3": "Group comparison and a 'build your own process' mode"
       },
+      "scrumRoles": {
+        "title": "Scrum roles: who owns what",
+        "desc": "The team figures out what the Product Owner, the team and the Scrum Master own. Sticky-note cards are distributed across 3 roles with levels 🟢 accountable · 🟡 participates · 🔴 should not do.",
+        "bullet1": "15 responsibility cards and 3 roles as columns",
+        "bullet2": "Levels of involvement, common mistakes and consequences",
+        "bullet3": "Final Miro-style board and comparison with the team"
+      },
       "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
@@ -2379,6 +2386,102 @@
         "no_clear_goal": { "title": "No clear sprint goal" },
         "daily_as_status": { "title": "Daily becomes a status report" },
         "review_without_increment": { "title": "Nothing to show at Review" }
+      }
+    },
+    "scrumRoles": {
+      "facTitle": "Scrum roles — facilitator panel",
+      "facSubtitle": "Create a session, add teams, share links. For every team you'll see how they split responsibility, where role conflicts appear and how teams differ.",
+      "playTitle": "Scrum roles: who owns what",
+      "newSessionTitle": "Scrum roles training name",
+      "answersCount": "no answers | {n} answer | {n} answers",
+      "groupResults": "Group results",
+      "compareAll": "Compare teams",
+      "leaderboard": "Leaders by distribution accuracy",
+      "groupScoreboard": "Team scoreboard",
+      "avgHealth": "Average accuracy",
+      "noAnswersYet": "no one has finished yet",
+      "noErrorsMarked": "no one has marked typical mistakes",
+      "noAnswer": "no answer",
+      "errorsSeen": "Errors marked",
+      "errorsSeenTop": "Which errors participants recognised",
+      "customCards": "Team's custom cards",
+      "customRoles": "Team's custom roles",
+      "customRole": "Custom role",
+      "participantsDrill": "Per-participant drill-down",
+      "missingLabel": "unset",
+      "heatmap": "What people picked per role",
+      "card": "Card",
+      "expected": "expected",
+
+      "welcome": "Welcome!",
+      "welcomeLead": "We'll figure out who owns what in Scrum: PO, the team and the Scrum Master. No 'by-the-book' answers — just clear understanding.",
+      "yourName": "How should we call you?",
+      "yourNamePh": "Your name or nickname",
+      "startBtn": "Start",
+      "nextBtn": "Next",
+      "backBtn": "Back",
+
+      "contextTitle": "Why this exercise",
+      "contextLead": "When roles are blurred, the team stalls — someone decides the wrong thing, someone else doesn't do their own. For a team to work well, we need to know:",
+      "contextItem1": "who owns what",
+      "contextItem2": "who participates",
+      "contextItem3": "who should stay out of it",
+      "contextHint": "Next you'll see 3 roles and cards with responsibilities, and you'll distribute them across levels of accountability.",
+
+      "rolesTitle": "3 Scrum roles",
+      "rolesLead": "Each role has its own focus. Read the short descriptions — they'll help on the next step.",
+      "focus": "Focus",
+      "goDistribute": "Go to the cards",
+
+      "distributeTitle": "Distribute the cards",
+      "distributeLead": "For each card pick the level of involvement for every role. A card can apply to several roles with different levels.",
+      "toWhy": "Next: why it matters",
+
+      "whyTitle": "Why this distribution",
+      "whyLead": "Here's why a healthy Scrum team splits responsibility this way. It's not a dogma — it's about consequences.",
+      "toErrors": "Next: typical mistakes",
+
+      "errorsTitle": "Typical mistakes and their consequences",
+      "errorsLead": "Tick the mistakes you or your team have faced. In the next step you'll get a chance to rework the weak spots.",
+      "toFix": "Rework weak spots",
+
+      "fixTitle": "Rework the weak cards",
+      "fixLead": "Below are only the cards where your distribution is yellow or red. Adjust the levels and hit 'Done'.",
+      "fixNothing": "Great job — every card is distributed correctly. Move on to the final board.",
+      "finishBtn": "Done — show the board",
+
+      "finalTitle": "Your Miro-style roles board",
+      "yourHealth": "Your accuracy",
+      "groupHealth": "Group average",
+      "compareTitle": "How others distributed",
+      "compareLead": "For each card — the percentage of group members that picked each level per role.",
+
+      "customToggle": "Add your own cards or a role",
+      "customLead": "If your team has its own specifics — add a card and assign it to roles. Or describe a custom role (e.g. 'Lead' or 'Analyst').",
+      "customCardPh": "Your card (short phrase)",
+      "addCustomCard": "Add a card",
+      "remove": "Remove",
+      "customRoleTitle": "Custom role name",
+      "customRoleDesc": "What this role owns (short)",
+      "saveCustom": "Save",
+
+      "roles": {
+        "po":   { "title": "Product Owner" },
+        "team": { "title": "The Team" },
+        "sm":   { "title": "Scrum Master" }
+      },
+      "levels": {
+        "responsible":  "🟢 Accountable",
+        "participates": "🟡 Participates",
+        "should_not":   "🔴 Should not do"
+      },
+      "errors": {
+        "sm_runs_dev":         { "title": "Scrum Master runs development" },
+        "po_runs_team":        { "title": "PO manages the team" },
+        "team_not_planning":   { "title": "The team is not part of planning" },
+        "no_product_ownership":{ "title": "No one owns the product" },
+        "sm_as_secretary":     { "title": "SM becomes a meeting secretary instead of a process coach" },
+        "po_designs_solution": { "title": "PO dictates how to implement" }
       }
     }
   },

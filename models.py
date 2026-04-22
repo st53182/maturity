@@ -804,6 +804,51 @@ class AgileTrainingMvpAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingDorDodAnswer(db.Model):
+    """Ответ участника тренажёра Definition of Ready / Definition of Done.
+
+    Модель простая: один участник — одна запись в группе. Внутри
+    `data_json` хранятся обе итерации (initial и improved) и выбранный
+    тип команды, чтобы можно было показать «стало лучше или нет»."""
+
+    __tablename__ = "agile_training_dor_dod_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_dor_dod_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    team_key = db.Column(db.String(32), nullable=False, index=True)
+    # Структура:
+    # {
+    #   "initial":  { "dor": [...], "dod": [...], "mapping": {rule: [effects]} },
+    #   "improved": { ... } | null,
+    #   "eval_initial":  { ...evaluate_round output... },
+    #   "eval_improved": { ... } | null
+    # }
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    score_initial = db.Column(db.Float, nullable=False, default=0.0)
+    score_improved = db.Column(db.Float, nullable=True)
+    outcome_initial = db.Column(db.String(32), nullable=True)
+    outcome_improved = db.Column(db.String(32), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

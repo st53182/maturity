@@ -74,6 +74,7 @@ const routes = [
   {path: '/agile-training/cynefin', name: 'AgileCynefinFacilitator', component: () => import('@/views/AgileCynefinFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/iceberg', name: 'AgileIcebergFacilitator', component: () => import('@/views/AgileIcebergFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/mvp', name: 'AgileMvpFacilitator', component: () => import('@/views/AgileMvpFacilitator.vue'), meta: { requiresAuth: true }},
+  {path: '/agile-training/dor-dod', name: 'AgileDorDodFacilitator', component: () => import('@/views/AgileDorDodFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/g/:slug', name: 'GroupPlay', component: () => import('@/views/GroupPlayGateway.vue')},
   {path: '/testing-types', name: 'TestingTypesAssignment', component: () => import('@/views/TestingTypesAssignment.vue'), meta: { requiresAuth: true }},
   {path: '/usability-report', name: 'UsabilityReport', component: () => import('@/views/UsabilityReport.vue'), meta: { requiresAuth: true }},

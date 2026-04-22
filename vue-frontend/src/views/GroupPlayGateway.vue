@@ -31,10 +31,11 @@ import AgilePrinciplesPlay from '@/views/AgilePrinciplesPlay.vue';
 import AgileCynefinPlay from '@/views/AgileCynefinPlay.vue';
 import AgileIcebergPlay from '@/views/AgileIcebergPlay.vue';
 import AgileMvpPlay from '@/views/AgileMvpPlay.vue';
+import AgileDorDodPlay from '@/views/AgileDorDodPlay.vue';
 
 export default {
   name: 'GroupPlayGateway',
-  components: { AgilePrinciplesPlay, AgileCynefinPlay, AgileIcebergPlay, AgileMvpPlay },
+  components: { AgilePrinciplesPlay, AgileCynefinPlay, AgileIcebergPlay, AgileMvpPlay, AgileDorDodPlay },
   data() {
     return {
       loading: true,
@@ -51,6 +52,7 @@ export default {
       if (this.exerciseKey === 'cynefin') return 'AgileCynefinPlay';
       if (this.exerciseKey === 'iceberg') return 'AgileIcebergPlay';
       if (this.exerciseKey === 'mvp') return 'AgileMvpPlay';
+      if (this.exerciseKey === 'dor_dod') return 'AgileDorDodPlay';
       return 'AgilePrinciplesPlay';
     },
   },

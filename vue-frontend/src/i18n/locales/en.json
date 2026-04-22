@@ -1519,6 +1519,13 @@
         "bullet2": "Pick features with weights: critical / improves / optional",
         "bullet3": "User reactions and anti-patterns for every iteration"
       },
+      "dorDod": {
+        "title": "Definition of Ready / Done: why even bother",
+        "desc": "Team picks a context, assembles DoR/DoD rules, sees the effect of each rule, simulates consequences, catches anti-patterns and rebuilds the result.",
+        "bullet1": "3 team contexts: IT, marketing, ops/gov",
+        "bullet2": "12 rule cards and 9 effects, including a provocation",
+        "bullet3": "Outcome simulation and cross-group comparison"
+      },
       "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
@@ -1947,6 +1954,150 @@
         "mlp_missing_critical": "A key feature is still missing in MLP.",
         "mlp_no_delight": "MLP has no delight features — no 'wow' effect.",
         "mlp_vanity": "A useless feature was added to MLP — it doesn't drive love."
+      }
+    },
+    "dorDod": {
+      "facTitle": "Definition of Ready / Done — facilitator panel",
+      "facSubtitle": "Create a training session, add teams and share links. For every group you can see how they built DoR/DoD, which effects they understood and which antipatterns they caught.",
+      "playTitle": "Definition of Ready / Done simulator",
+      "newSessionTitle": "DoR/DoD training name",
+      "answersCount": "no answers | {n} answer | {n} answers",
+      "groupResults": "Group results",
+      "avgScore": "Average score",
+      "leaderboard": "Team leaderboard",
+      "bestHealth": "Healthiest teams",
+      "bestGrowth": "Biggest growth",
+      "groupScoreboard": "Summary table",
+      "scoreInitial": "Score: first build",
+      "scoreImproved": "Score: after improvement",
+      "healthPct": "Healthy outcomes, %",
+      "avgInitial": "Avg before",
+      "avgImproved": "Avg after",
+      "dor": "Definition of Ready",
+      "dod": "Definition of Done",
+      "usuallyDor": "usually DoR",
+      "usuallyDod": "usually DoD",
+      "eitherShort": "either",
+      "topEffects": "Top effects",
+      "provocative": "provocation",
+      "antipatternsTop": "Antipatterns",
+      "noAntipatterns": "The team avoided typical mistakes",
+      "noParticipantsForTeam": "No one in this team type yet",
+      "participantsDrill": "Per-participant details",
+      "noAnswer": "no answer",
+      "score": "score",
+      "mapping": "Rule → effect",
+
+      "startTitle": "Why do we even need DoR and DoD?",
+      "startLead": "You'll step into a team: pick its type, assemble the rules, see the consequences and rebuild the solution.",
+      "defDor": "criteria for a task to be ready to start",
+      "defDod": "criteria for a result to be ready to ship",
+      "start": "Start",
+      "next": "Next",
+      "back": "Back",
+
+      "teamTitle": "Pick a team type",
+      "teamLead": "DoR/DoD rules depend heavily on context. Pick the team you can relate to the most.",
+
+      "introTitle": "What usually hurts",
+      "introLead": "Typical problems a team faces without clear rules:",
+      "problem1": "tasks get picked up too early",
+      "problem2": "tasks are called 'done' but problems keep surfacing",
+      "problem3": "lots of rework and misunderstandings",
+      "taskTitle": "Your task",
+      "taskText": "Create DoR and DoD rules for your team. There is no single right answer — only what fits the context.",
+
+      "rulesTitle": "Rule cards set",
+      "rulesLead": "Here are the available rules. Next you'll sort them: what we check before starting (DoR) vs. before delivering (DoD).",
+      "distributeCta": "Sort into columns",
+
+      "distributeTitle": "Sort the rules into DoR and DoD",
+      "distributeLead": "Click '→ DoR' or '→ DoD' on a rule card. One rule goes into one column.",
+      "availableRules": "Available rules",
+      "mappingCta": "Next: why this matters",
+
+      "mappingTitle": "Why each rule matters",
+      "mappingLead": "For each selected rule, pick the effects you think it really produces. You can pick several, or none at all.",
+      "priorityForTeam": "Especially important for this team",
+      "selectFirst": "Select at least one rule on the previous step first.",
+      "seeConsequences": "See consequences",
+
+      "simulateTitle": "The team worked like this for a couple of sprints…",
+      "whyTitle": "What led to this",
+      "mappingFeedback": "Feedback on the meaning of your rules",
+      "noMapping": "no effects selected",
+
+      "antipatternsTitle": "Antipatterns",
+      "antipatternsLead": "Here are the typical mistakes. The ones you hit are in red, the rest are for reference.",
+      "knownAntipatterns": "Known DoR/DoD antipatterns",
+      "improveNow": "Rebuild and improve",
+
+      "improveTitle": "Rebuild your DoR and DoD",
+
+      "finalTitle": "Final result",
+      "finalLead": "Comparison: did things get better after the rebuild, and how your team compares with the others.",
+      "resolvedAntipatterns": "Antipatterns resolved",
+      "introducedAntipatterns": "New issues introduced",
+      "nothingChanged": "Nothing really changed — it happens.",
+      "groupStats": "Group statistics",
+      "topDor": "Most often in DoR",
+      "topDod": "Most often in DoD",
+      "replay": "Play again",
+      "replayConfirm": "Reset your result and start the simulator over?",
+
+      "round": {
+        "initial": "First build",
+        "improved": "After improvement"
+      },
+      "stepTeam": "Team",
+      "stepIntro": "Context",
+      "stepRules": "Rules",
+      "stepDistribute": "Sort",
+      "stepMapping": "Meaning",
+      "stepSimulate": "Outcome",
+      "stepAntipatterns": "Mistakes",
+      "stepImprove": "Improve",
+      "stepFinal": "Results",
+
+      "outcome": {
+        "blocked": "Tasks got stuck",
+        "rework_heavy": "Lots of rework",
+        "stable": "Works steadily",
+        "predictable": "Predictable outcome"
+      },
+      "outcomeLead": {
+        "blocked": "DoR is too strict — barely anything gets into development and the queue grows.",
+        "rework_heavy": "Weak rules: tasks come back for rework and the team wastes time.",
+        "stable": "Basic discipline is in place, the team starts working smoothly.",
+        "predictable": "Rules are well balanced — the outcome is predictable, mistakes are rare."
+      },
+
+      "reason.dor_too_strict": "Too many conditions in DoR — tasks can't enter the work.",
+      "reason.dor_too_soft": "Almost nothing in DoR — raw tasks cause pain later.",
+      "reason.dod_too_weak": "DoD has no mandatory checks — everyone has their own 'done'.",
+      "reason.dor_dod_mixed": "DoR and DoD rules are swapped — it's unclear what to check when.",
+      "reason.critical_missing": "Critical rules are missing that you really need.",
+      "reason.speed_illusion": "People expect speed from DoR/DoD — they actually slow things down at first.",
+      "reason.balanced": "You found the balance: a filter on the way in and a clear gate on the way out.",
+      "reason.basic_works": "Basic discipline is already paying off.",
+
+      "ap": {
+        "dor_too_strict": "DoR is too strict",
+        "dor_too_soft": "DoR is too soft",
+        "dod_too_weak": "DoD is too weak",
+        "dor_dod_mixed": "DoR and DoD are mixed",
+        "critical_missing": "Missing critical rules",
+        "speed_illusion": "Betting on 'speed' as an effect",
+        "value_too_late": "Value is checked too late"
+      },
+      "apDesc": {
+        "dor_too_strict": "When start conditions are too many, tasks can't enter the work and the backlog clogs up.",
+        "dor_too_soft": "With almost nothing in DoR, tasks go into work raw and the team struggles.",
+        "dod_too_weak": "Without mandatory handover checks everyone has their own 'done' — hidden bugs appear.",
+        "dor_dod_mixed": "When DoR and DoD are mixed up, it's hard to know what to check and when.",
+        "critical_missing": "Critical rules (testing, acceptance criteria, no blockers) should normally stay in the set.",
+        "speed_illusion": "DoR/DoD slow things down at first — they're about quality and predictability, not speed.",
+        "value_too_late": "If value is only checked after completion, the team may spend ages on unneeded work."
       }
     }
   },

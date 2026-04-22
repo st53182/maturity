@@ -192,17 +192,11 @@
           <div class="dd-map-row__effects">
             <label v-for="e in content.effects" :key="r.key+'-'+e.key"
                    class="dd-eff-chip"
-                   :class="{
-                     'is-active': (mapping[r.key] || []).includes(e.key),
-                     'dd-eff-chip--prov': e.provocative,
-                   }">
+                   :class="{ 'is-active': (mapping[r.key] || []).includes(e.key) }">
               <input type="checkbox"
                      :checked="(mapping[r.key] || []).includes(e.key)"
                      @change="toggleEffect(r.key, e.key)">
               <span>{{ e.title }}</span>
-              <span v-if="e.provocative" class="dd-tag dd-tag--neutral">
-                {{ $t('agileTraining.dorDod.provocative') }}
-              </span>
             </label>
           </div>
         </li>
@@ -499,13 +493,28 @@ export default {
     },
     ruleTitle(k) { return this.rulesIndex[k]?.title || k; },
     effectTitle(k) { return this.effectsIndex[k]?.title || k; },
+    shuffle(arr) {
+      const out = Array.isArray(arr) ? [...arr] : [];
+      for (let i = out.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    },
     async reloadContent() {
       try {
         const params = { locale: this.locale };
         if (this.participantToken) params.participant_token = this.participantToken;
         const res = await axios.get(`/api/agile-training/dor-dod/g/${this.slug}/state`, { params });
         this.group = res.data.group;
-        this.content = res.data.content || this.content;
+        const raw = res.data.content || this.content;
+        // Перемешиваем карточки правил и эффекты, чтобы задание не
+        // «решалось» по порядку (раньше сначала шли все DoR, потом DoD).
+        this.content = {
+          ...raw,
+          rules: this.shuffle(raw.rules),
+          effects: this.shuffle(raw.effects),
+        };
         const answer = res.data.answer;
         if (answer) {
           this.teamKey = answer.team_key;

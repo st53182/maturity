@@ -223,6 +223,87 @@ RULES: List[Dict] = [
         "is_critical": False,
         "maps_to": ["rework", "clear_result"],
     },
+    {
+        "key": "risks_identified",
+        "title": {"ru": "Известны основные риски", "en": "Main risks are known"},
+        "desc": {
+            "ru": "Команда понимает, что может пойти не так",
+            "en": "The team knows what could go wrong",
+        },
+        "expected_column": "dor",
+        "is_critical": False,
+        "maps_to": ["predictability", "less_chaos"],
+    },
+    {
+        "key": "success_metrics",
+        "title": {
+            "ru": "Есть метрики успеха",
+            "en": "Success metrics defined",
+        },
+        "desc": {
+            "ru": "Понятно, как измерим, что задача удалась",
+            "en": "It is clear how we measure success",
+        },
+        "expected_column": "dor",
+        "is_critical": False,
+        "maps_to": ["clear_result", "unity"],
+    },
+    {
+        "key": "estimation_done",
+        "title": {
+            "ru": "Задача оценена по трудоёмкости",
+            "en": "Task is estimated",
+        },
+        "desc": {
+            "ru": "Есть хотя бы грубая оценка усилий",
+            "en": "There is at least a rough effort estimate",
+        },
+        "expected_column": "dor",
+        "is_critical": False,
+        "maps_to": ["predictability"],
+    },
+    {
+        "key": "user_tested",
+        "title": {
+            "ru": "Проверено пользователем",
+            "en": "Validated with end user",
+        },
+        "desc": {
+            "ru": "Конечный пользователь убедился, что всё работает",
+            "en": "End user confirmed it actually works",
+        },
+        "expected_column": "dod",
+        "is_critical": False,
+        "maps_to": ["rework", "clear_result"],
+    },
+    {
+        "key": "rollback_plan",
+        "title": {
+            "ru": "Есть план отката",
+            "en": "Rollback plan exists",
+        },
+        "desc": {
+            "ru": "Понятно, как вернуть всё назад, если что-то сломается",
+            "en": "We know how to roll back if something breaks",
+        },
+        "expected_column": "dod",
+        "is_critical": False,
+        "maps_to": ["defects", "less_chaos"],
+    },
+    {
+        "key": "handed_off",
+        "title": {
+            "ru": "Результат передан в эксплуатацию",
+            "en": "Handed off to operations",
+        },
+        "desc": {
+            "ru": "Результат передан тем, кто будет с ним жить дальше",
+            "en": "Handed off to whoever operates it next",
+        },
+        "expected_column": "dod",
+        "is_critical": False,
+        "maps_to": ["blockers", "clear_result"],
+    },
 ]
 
 

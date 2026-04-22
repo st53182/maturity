@@ -123,7 +123,7 @@
               </span>
               <span v-if="team.participants" class="dd-pill dd-pill--muted">
                 {{ $t('agileTraining.dorDod.avgScore') }}:
-                <b>{{ team.avg_improved || team.avg_initial }}</b>
+                <b>{{ team.avg_initial }}</b>
               </span>
             </div>
 
@@ -215,13 +215,9 @@
                   </span>
                   <span v-if="p.has_answer" class="dd-pill">
                     {{ $t('agileTraining.dorDod.score') }}:
-                    {{ p.score_improved ?? p.score_initial }}
+                    {{ p.score_initial }}
                   </span>
-                  <span v-if="p.has_answer && p.outcome_improved"
-                        class="dd-pill" :class="outcomeClass(p.outcome_improved)">
-                    {{ $t('agileTraining.dorDod.outcome.' + p.outcome_improved) }}
-                  </span>
-                  <span v-if="p.has_answer && !p.outcome_improved && p.outcome_initial"
+                  <span v-if="p.has_answer && p.outcome_initial"
                         class="dd-pill" :class="outcomeClass(p.outcome_initial)">
                     {{ $t('agileTraining.dorDod.outcome.' + p.outcome_initial) }}
                   </span>
@@ -230,7 +226,7 @@
                   </span>
                 </button>
                 <div v-if="resultsModal.expanded[p.id] && p.has_answer" class="dd-part__body">
-                  <template v-for="stage in ['initial','improved']" :key="stage">
+                  <template v-for="stage in ['initial']" :key="stage">
                   <div v-if="p[stage]" class="dd-part__stage">
                     <div class="dd-part__stage-title">
                       {{ $t('agileTraining.dorDod.round.' + stage) }}
@@ -283,22 +279,10 @@
             <div class="dd-leaderboard__col">
               <h4>🏆 {{ $t('agileTraining.dorDod.bestHealth') }}</h4>
               <ol>
-                <li v-for="(g, idx) in compareAll.data.leaderboard_best.slice(0, 5)" :key="g.id">
+                <li v-for="(g, idx) in (compareAll.data.leaderboard_best || []).slice(0, 5)" :key="g.id">
                   <b>{{ idx + 1 }}.</b> {{ g.name }} · {{ g.health_pct }}%
                   <span class="dd-fac__hint">
-                    (avg {{ g.avg_improved || g.avg_initial }})
-                  </span>
-                </li>
-              </ol>
-            </div>
-            <div class="dd-leaderboard__col">
-              <h4>📈 {{ $t('agileTraining.dorDod.bestGrowth') }}</h4>
-              <ol>
-                <li v-for="(g, idx) in compareAll.data.leaderboard_growth.slice(0, 5)" :key="g.id">
-                  <b>{{ idx + 1 }}.</b> {{ g.name }}
-                  <span class="dd-fac__hint">
-                    {{ g.avg_initial }} → {{ g.avg_improved }}
-                    (Δ {{ (g.avg_improved - g.avg_initial).toFixed(1) }})
+                    (avg {{ g.avg_initial }})
                   </span>
                 </li>
               </ol>
@@ -312,7 +296,6 @@
                 <th>{{ $t('agileTraining.facilitator.groups') }}</th>
                 <th>{{ $t('agileTraining.facilitator.participants', { n: 2 }, 2) }}</th>
                 <th>{{ $t('agileTraining.dorDod.scoreInitial') }}</th>
-                <th>{{ $t('agileTraining.dorDod.scoreImproved') }}</th>
                 <th>{{ $t('agileTraining.dorDod.healthPct') }}</th>
               </tr>
             </thead>
@@ -321,7 +304,6 @@
                 <td><b>{{ g.name }}</b></td>
                 <td>{{ g.participants_count }}</td>
                 <td>{{ g.avg_initial }}</td>
-                <td>{{ g.avg_improved }}</td>
                 <td :class="heatmapClass(g.health_pct)">{{ g.health_pct }}%</td>
               </tr>
             </tbody>

@@ -104,10 +104,8 @@
     </section>
 
     <!-- 4. Distribute DoR/DoD -->
-    <section v-else-if="step === 'distribute' || step === 'improve_distribute'" class="dd-card">
-      <h2>{{ step === 'improve_distribute'
-            ? $t('agileTraining.dorDod.improveTitle')
-            : $t('agileTraining.dorDod.distributeTitle') }}</h2>
+    <section v-else-if="step === 'distribute'" class="dd-card">
+      <h2>{{ $t('agileTraining.dorDod.distributeTitle') }}</h2>
       <p class="dd-card__lead">{{ $t('agileTraining.dorDod.distributeLead') }}</p>
 
       <div class="dd-columns">
@@ -155,20 +153,19 @@
       </ul>
 
       <div class="dd-card__actions">
-        <button class="dd-btn dd-btn--ghost"
-                @click="step === 'improve_distribute' ? goStep('antipatterns') : goStep('rules')">
+        <button class="dd-btn dd-btn--ghost" @click="goStep('rules')">
           ← {{ $t('agileTraining.dorDod.back') }}
         </button>
         <button class="dd-btn dd-btn--primary"
                 :disabled="!dor.length && !dod.length"
-                @click="goStep(step === 'improve_distribute' ? 'improve_mapping' : 'mapping')">
+                @click="goStep('mapping')">
           {{ $t('agileTraining.dorDod.mappingCta') }} →
         </button>
       </div>
     </section>
 
     <!-- 5. Mapping (rule → effect) -->
-    <section v-else-if="step === 'mapping' || step === 'improve_mapping'" class="dd-card">
+    <section v-else-if="step === 'mapping'" class="dd-card">
       <h2>{{ $t('agileTraining.dorDod.mappingTitle') }}</h2>
       <p class="dd-card__lead">{{ $t('agileTraining.dorDod.mappingLead') }}</p>
       <div v-if="priorityEffectsForTeam.length" class="dd-priority">
@@ -203,13 +200,12 @@
       </ul>
 
       <div class="dd-card__actions">
-        <button class="dd-btn dd-btn--ghost"
-                @click="goStep(step === 'improve_mapping' ? 'improve_distribute' : 'distribute')">
+        <button class="dd-btn dd-btn--ghost" @click="goStep('distribute')">
           ← {{ $t('agileTraining.dorDod.back') }}
         </button>
         <button class="dd-btn dd-btn--primary"
                 :disabled="submitting"
-                @click="submitRound(step === 'improve_mapping' ? 'improved' : 'initial')">
+                @click="submitRound()">
           {{ submitting ? $t('common.loading') : $t('agileTraining.dorDod.seeConsequences') }} →
         </button>
       </div>
@@ -291,8 +287,8 @@
 
       <div class="dd-card__actions">
         <button class="dd-btn dd-btn--ghost" @click="goStep('simulate')">← {{ $t('agileTraining.dorDod.back') }}</button>
-        <button class="dd-btn dd-btn--primary" @click="enterImprovement">
-          {{ $t('agileTraining.dorDod.improveNow') }} →
+        <button class="dd-btn dd-btn--primary" @click="goToFinal">
+          {{ $t('agileTraining.dorDod.finishCta') }} →
         </button>
       </div>
     </section>
@@ -303,35 +299,12 @@
       <p class="dd-card__lead">{{ $t('agileTraining.dorDod.finalLead') }}</p>
 
       <div class="dd-score-row">
-        <div class="dd-score-box">
+        <div class="dd-score-box dd-score-box--strong">
           <div class="dd-score-box__label">{{ $t('agileTraining.dorDod.scoreInitial') }}</div>
           <div class="dd-score-box__val">{{ scoreInitial }}</div>
           <div v-if="outcomeInitial" class="dd-pill" :class="outcomeClass(outcomeInitial)">
             {{ $t('agileTraining.dorDod.outcome.' + outcomeInitial) }}
           </div>
-        </div>
-        <div class="dd-score-arrow">→</div>
-        <div class="dd-score-box dd-score-box--strong">
-          <div class="dd-score-box__label">{{ $t('agileTraining.dorDod.scoreImproved') }}</div>
-          <div class="dd-score-box__val">{{ scoreImproved }}</div>
-          <div v-if="outcomeImproved" class="dd-pill" :class="outcomeClass(outcomeImproved)">
-            {{ $t('agileTraining.dorDod.outcome.' + outcomeImproved) }}
-          </div>
-        </div>
-      </div>
-
-      <div v-if="delta" class="dd-delta">
-        <div v-if="delta.resolved.length">
-          ✅ <b>{{ $t('agileTraining.dorDod.resolvedAntipatterns') }}:</b>
-          {{ delta.resolved.map(a => $t('agileTraining.dorDod.ap.' + a)).join(', ') }}
-        </div>
-        <div v-if="delta.introduced.length">
-          ⚠️ <b>{{ $t('agileTraining.dorDod.introducedAntipatterns') }}:</b>
-          {{ delta.introduced.map(a => $t('agileTraining.dorDod.ap.' + a)).join(', ') }}
-        </div>
-        <div v-if="!delta.resolved.length && !delta.introduced.length && delta.score_delta === 0"
-             class="dd-fac__hint">
-          {{ $t('agileTraining.dorDod.nothingChanged') }}
         </div>
       </div>
 
@@ -349,10 +322,6 @@
             <div class="dd-bar">
               <span class="dd-bar__label">{{ $t('agileTraining.dorDod.avgInitial') }}</span>
               <span class="dd-bar__val">{{ team.avg_initial }}</span>
-            </div>
-            <div class="dd-bar">
-              <span class="dd-bar__label">{{ $t('agileTraining.dorDod.avgImproved') }}</span>
-              <span class="dd-bar__val">{{ team.avg_improved }}</span>
             </div>
           </div>
           <div v-if="team.dor_top.length" class="dd-team-stat__top">
@@ -400,10 +369,7 @@ export default {
       lastEval: null,
       simulation: null,
       scoreInitial: 0,
-      scoreImproved: null,
       outcomeInitial: null,
-      outcomeImproved: null,
-      delta: null,
       groupResults: null,
       steps: [
         { key: 'team', labelKey: 'agileTraining.dorDod.stepTeam' },
@@ -413,7 +379,6 @@ export default {
         { key: 'mapping', labelKey: 'agileTraining.dorDod.stepMapping' },
         { key: 'simulate', labelKey: 'agileTraining.dorDod.stepSimulate' },
         { key: 'antipatterns', labelKey: 'agileTraining.dorDod.stepAntipatterns' },
-        { key: 'improve_distribute', labelKey: 'agileTraining.dorDod.stepImprove' },
         { key: 'final', labelKey: 'agileTraining.dorDod.stepFinal' },
       ],
       knownAntipatterns: [
@@ -482,10 +447,7 @@ export default {
   methods: {
     setLocale(lc) { this.locale = lc; },
     stepIndex(key) {
-      const i = this.steps.findIndex(s => s.key === key);
-      // improve_mapping считаем как шаг 8 (improve_distribute)
-      if (i === -1 && key === 'improve_mapping') return this.steps.findIndex(s => s.key === 'improve_distribute');
-      return i;
+      return this.steps.findIndex(s => s.key === key);
     },
     goStep(s) {
       this.step = s;
@@ -520,20 +482,10 @@ export default {
           this.teamKey = answer.team_key;
           const initial = answer.data?.initial;
           if (initial) {
-            this.scoreInitial = answer.data?.eval_initial?.score_raw || 0;
-            this.outcomeInitial = answer.data?.sim_initial?.outcome || null;
-          }
-          const improved = answer.data?.improved;
-          if (improved) {
-            this.dor = [...improved.dor]; this.dod = [...improved.dod];
-            this.mapping = this.cloneMapping(improved.mapping);
-            this.scoreImproved = answer.data?.eval_improved?.score_raw || 0;
-            this.outcomeImproved = answer.data?.sim_improved?.outcome || null;
-            this.lastEval = answer.data?.eval_improved || null;
-            this.simulation = answer.data?.sim_improved || null;
-          } else if (initial) {
             this.dor = [...initial.dor]; this.dod = [...initial.dod];
             this.mapping = this.cloneMapping(initial.mapping);
+            this.scoreInitial = answer.data?.eval_initial?.score_raw || 0;
+            this.outcomeInitial = answer.data?.sim_initial?.outcome || null;
             this.lastEval = answer.data?.eval_initial || null;
             this.simulation = answer.data?.sim_initial || null;
           }
@@ -560,12 +512,9 @@ export default {
           return;
         }
       }
-      // восстанавливаем логическую точку возврата
-      if (this.scoreImproved !== null && this.scoreImproved !== undefined) {
+      if (this.scoreInitial) {
         this.step = 'final';
         await this.loadGroupResults();
-      } else if (this.scoreInitial) {
-        this.step = 'antipatterns';
       } else if (this.teamKey) {
         this.step = 'intro';
       } else {
@@ -615,13 +564,13 @@ export default {
       if (idx >= 0) cur.splice(idx, 1); else cur.push(effectKey);
       this.mapping = { ...this.mapping, [ruleKey]: cur };
     },
-    async submitRound(roundKey) {
+    async submitRound() {
       this.submitting = true;
       try {
         const body = {
           participant_token: this.participantToken,
           team_key: this.teamKey,
-          round: roundKey,
+          round: 'initial',
           dor: this.dor,
           dod: this.dod,
           mapping: this.mapping,
@@ -629,32 +578,25 @@ export default {
         const res = await axios.post(`/api/agile-training/dor-dod/g/${this.slug}/answer`, body);
         this.lastEval = res.data.eval;
         this.simulation = res.data.simulation;
-        this.delta = res.data.delta;
-        if (roundKey === 'improved') {
-          this.scoreImproved = res.data.eval?.score_raw || 0;
-          this.outcomeImproved = res.data.simulation?.outcome || null;
-          await this.loadGroupResults();
-          this.goStep('final');
-        } else {
-          this.scoreInitial = res.data.eval?.score_raw || 0;
-          this.outcomeInitial = res.data.simulation?.outcome || null;
-          this.goStep('simulate');
-        }
+        this.scoreInitial = res.data.eval?.score_raw || 0;
+        this.outcomeInitial = res.data.simulation?.outcome || null;
+        this.goStep('simulate');
       } catch (e) {
         alert(e.response?.data?.error || 'Failed to save');
       } finally {
         this.submitting = false;
       }
     },
-    enterImprovement() {
-      this.goStep('improve_distribute');
+    async goToFinal() {
+      await this.loadGroupResults();
+      this.goStep('final');
     },
     async replay() {
       if (!confirm(this.$t('agileTraining.dorDod.replayConfirm'))) return;
       this.dor = []; this.dod = []; this.mapping = {};
-      this.scoreInitial = 0; this.scoreImproved = null;
-      this.outcomeInitial = null; this.outcomeImproved = null;
-      this.simulation = null; this.lastEval = null; this.delta = null;
+      this.scoreInitial = 0;
+      this.outcomeInitial = null;
+      this.simulation = null; this.lastEval = null;
       this.teamKey = '';
       this.goStep('team');
     },

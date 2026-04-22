@@ -2038,11 +2038,12 @@
       "antipatternsLead": "Here are the typical mistakes. The ones you hit are in red, the rest are for reference.",
       "knownAntipatterns": "Known DoR/DoD antipatterns",
       "improveNow": "Rebuild and improve",
+      "finishCta": "Finish the exercise",
 
       "improveTitle": "Rebuild your DoR and DoD",
 
       "finalTitle": "Final result",
-      "finalLead": "Comparison: did things get better after the rebuild, and how your team compares with the others.",
+      "finalLead": "How your team compares with the others and what DoR / DoD you ended up with.",
       "resolvedAntipatterns": "Antipatterns resolved",
       "introducedAntipatterns": "New issues introduced",
       "nothingChanged": "Nothing really changed — it happens.",

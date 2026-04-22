@@ -187,7 +187,7 @@
               </li>
             </ul>
 
-            <details class="atf-raw">
+            <details class="atf-raw" open>
               <summary>{{ $t('agileTraining.facilitator.allPrinciples') }}</summary>
               <ul class="atf-raw__list atf-raw__list--full">
                 <li v-for="row in resultsModal.data.per_principle" :key="'a-'+row.key" class="atf-raw__item">
@@ -197,6 +197,22 @@
                   </div>
                   <div class="atf-raw__bar"><div :style="{ width: row.relevant_pct + '%' }"></div></div>
                   <p v-if="row.text" class="atf-raw__text">{{ row.text }}</p>
+
+                  <div v-if="suggestionsForPrinciple(row.key).length" class="atf-sugg-list">
+                    <div class="atf-sugg-list__title">
+                      ✍ {{ $t('agileTraining.facilitator.suggestionsTitle') }}
+                    </div>
+                    <div
+                      v-for="sug in suggestionsForPrinciple(row.key)"
+                      :key="'fac-sug-'+sug.id"
+                      class="atf-sugg"
+                    >
+                      <div class="atf-sugg__text">{{ sug.text }}</div>
+                      <div class="atf-sugg__meta">
+                        {{ sug.author_name || $t('agileTraining.facilitator.anonymous') }}
+                      </div>
+                    </div>
+                  </div>
                 </li>
               </ul>
             </details>
@@ -333,7 +349,7 @@ export default {
       creatingGroup: false,
       copiedSlug: '',
       principlesTotal: 12,
-      resultsModal: { open: false, group: null, data: null },
+      resultsModal: { open: false, group: null, data: null, suggestions: {} },
       compareAll: { open: false, data: null }
     };
   },
@@ -462,7 +478,7 @@ export default {
       }
     },
     async openGroupResults(g) {
-      this.resultsModal = { open: true, group: g, data: null };
+      this.resultsModal = { open: true, group: g, data: null, suggestions: {} };
       document.body.style.overflow = 'hidden';
       try {
         const res = await axios.get(`/api/agile-training/g/${g.slug}/results`);
@@ -471,9 +487,18 @@ export default {
         this.resultsModal.data = null;
         alert(e.response?.data?.error || 'Failed to load results');
       }
+      try {
+        const sug = await axios.get(`/api/agile-training/g/${g.slug}/rewrite-suggestions`);
+        this.resultsModal.suggestions = sug.data.by_principle || {};
+      } catch (e) {
+        this.resultsModal.suggestions = {};
+      }
+    },
+    suggestionsForPrinciple(key) {
+      return (this.resultsModal.suggestions || {})[key] || [];
     },
     closeResults() {
-      this.resultsModal = { open: false, group: null, data: null };
+      this.resultsModal = { open: false, group: null, data: null, suggestions: {} };
       document.body.style.overflow = '';
     },
     async openCompareAll() {
@@ -739,6 +764,25 @@ export default {
 .atf-raw__list--full .atf-raw__name { font-weight: 700; font-size: 13px; }
 .atf-raw__list--full .atf-raw__meta { font-size: 12px; color: #334155; }
 .atf-raw__text { margin: 0; font-size: 13px; line-height: 1.55; color: #475569; }
+
+.atf-sugg-list { display: grid; gap: 6px; margin-top: 6px; }
+.atf-sugg-list__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.atf-sugg {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+}
+.atf-sugg__text { font-size: 13px; color: #0f172a; line-height: 1.5; white-space: pre-wrap; }
+.atf-sugg__meta { font-size: 11px; color: #64748b; }
 
 /* locale field in create form */
 .atf-locale-field {

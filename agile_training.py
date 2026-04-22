@@ -21,6 +21,7 @@ from models import (
     AgileTrainingAnswer,
     AgileTrainingGroup,
     AgileTrainingParticipant,
+    AgileTrainingRewriteSuggestion,
     AgileTrainingSession,
 )
 from agile_training_content import AGILE_PRINCIPLES, valid_principle_keys
@@ -361,6 +362,112 @@ def participant_answer(slug: str):
         "stats": stats,
         "provocation": principle.get("provocation", ""),
     })
+
+
+def _serialize_suggestion(sug: "AgileTrainingRewriteSuggestion", own_token: str = "") -> Dict:
+    author = sug.participant
+    own = bool(own_token) and author is not None and author.participant_token == own_token
+    return {
+        "id": sug.id,
+        "principle_key": sug.principle_key,
+        "text": sug.text,
+        "author_name": (author.display_name if author else None),
+        "created_at": sug.created_at.isoformat() if sug.created_at else None,
+        "own": own,
+    }
+
+
+@bp_agile_training.get("/g/<slug>/rewrite-suggestions")
+def rewrite_suggestions_list(slug: str):
+    group = _ensure_group_by_slug(slug)
+    if not group:
+        return jsonify({"error": "Group not found"}), 404
+
+    own_token = (request.args.get("participant_token") or "").strip()
+
+    rows = (
+        AgileTrainingRewriteSuggestion.query
+        .filter_by(group_id=group.id)
+        .order_by(AgileTrainingRewriteSuggestion.created_at.asc())
+        .all()
+    )
+    by_principle: Dict[str, List[Dict]] = defaultdict(list)
+    for sug in rows:
+        by_principle[sug.principle_key].append(_serialize_suggestion(sug, own_token))
+    return jsonify({
+        "by_principle": by_principle,
+        "total": len(rows),
+    })
+
+
+@bp_agile_training.post("/g/<slug>/rewrite-suggestions")
+def rewrite_suggestion_create(slug: str):
+    group = _ensure_group_by_slug(slug)
+    if not group:
+        return jsonify({"error": "Group not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    token = (data.get("participant_token") or "").strip()
+    principle_key = (data.get("principle_key") or "").strip()
+    text = (data.get("text") or "").strip()
+
+    if not token:
+        return jsonify({"error": "participant_token required"}), 400
+    if principle_key not in valid_principle_keys():
+        return jsonify({"error": "Unknown principle_key"}), 400
+    if not text:
+        return jsonify({"error": "text required"}), 400
+    if len(text) > 2000:
+        text = text[:2000]
+
+    participant = AgileTrainingParticipant.query.filter_by(
+        participant_token=token, group_id=group.id
+    ).first()
+    if not participant:
+        return jsonify({"error": "Participant not found in this group"}), 404
+
+    sug = AgileTrainingRewriteSuggestion(
+        group_id=group.id,
+        participant_id=participant.id,
+        principle_key=principle_key,
+        text=text,
+    )
+    db.session.add(sug)
+    db.session.commit()
+    return jsonify({"suggestion": _serialize_suggestion(sug, own_token=token)}), 201
+
+
+@bp_agile_training.delete("/g/<slug>/rewrite-suggestions/<int:sug_id>")
+def rewrite_suggestion_delete(slug: str, sug_id: int):
+    group = _ensure_group_by_slug(slug)
+    if not group:
+        return jsonify({"error": "Group not found"}), 404
+
+    # Токен может прийти в body (DELETE с JSON) или в query — принимаем оба варианта.
+    token = ""
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        token = (data.get("participant_token") or "").strip()
+    if not token:
+        token = (request.args.get("participant_token") or "").strip()
+    if not token:
+        return jsonify({"error": "participant_token required"}), 400
+
+    sug = AgileTrainingRewriteSuggestion.query.filter_by(
+        id=sug_id, group_id=group.id
+    ).first()
+    if not sug:
+        return jsonify({"error": "Not found"}), 404
+
+    participant = AgileTrainingParticipant.query.filter_by(
+        participant_token=token, group_id=group.id
+    ).first()
+    if not participant or participant.id != sug.participant_id:
+        return jsonify({"error": "Forbidden"}), 403
+
+    db.session.delete(sug)
+    db.session.commit()
+    return jsonify({"deleted": True})
 
 
 @bp_agile_training.get("/g/<slug>/results")

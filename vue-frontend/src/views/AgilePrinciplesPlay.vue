@@ -203,8 +203,9 @@
           </ul>
         </section>
 
-        <details class="atp-block atp-all">
+        <details class="atp-block atp-all" open>
           <summary>📋 {{ $t('agileTraining.play.resultsScreen.all') }}</summary>
+          <p class="atp-muted atp-all__lead">{{ $t('agileTraining.play.resultsScreen.suggestIntro') }}</p>
           <ul class="atp-all__list">
             <li v-for="row in resultsData.per_principle" :key="'all-'+row.key" class="atp-all__item">
               <div class="atp-all__head">
@@ -215,6 +216,48 @@
                 <div class="atp-all__fill" :style="{ width: row.relevant_pct + '%' }"></div>
               </div>
               <p class="atp-all__text">{{ row.text }}</p>
+
+              <!-- список предложений -->
+              <div v-if="suggestionsFor(row.key).length" class="atp-sugg-list">
+                <div
+                  v-for="sug in suggestionsFor(row.key)"
+                  :key="'sug-'+sug.id"
+                  class="atp-sugg"
+                  :class="{ 'atp-sugg--own': sug.own }"
+                >
+                  <div class="atp-sugg__text">{{ sug.text }}</div>
+                  <div class="atp-sugg__meta">
+                    <span>{{ sug.author_name || $t('agileTraining.play.resultsScreen.anonymous') }}<span v-if="sug.own"> · {{ $t('agileTraining.play.resultsScreen.you') }}</span></span>
+                    <button
+                      v-if="sug.own"
+                      type="button"
+                      class="atp-sugg__del"
+                      @click="deleteSuggestion(sug, row.key)"
+                    >✕ {{ $t('agileTraining.play.resultsScreen.suggestDelete') }}</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- форма предложения -->
+              <div class="atp-sugg-form">
+                <textarea
+                  v-model="suggestionDrafts[row.key]"
+                  rows="2"
+                  class="atp-sugg-form__input"
+                  :placeholder="$t('agileTraining.play.resultsScreen.suggestPlaceholder')"
+                  maxlength="2000"
+                ></textarea>
+                <button
+                  type="button"
+                  class="atp-sugg-form__btn"
+                  :disabled="savingSuggestion === row.key || !(suggestionDrafts[row.key] || '').trim()"
+                  @click="submitSuggestion(row.key)"
+                >
+                  {{ savingSuggestion === row.key
+                     ? $t('agileTraining.common.loading')
+                     : $t('agileTraining.play.resultsScreen.suggestSave') }}
+                </button>
+              </div>
             </li>
           </ul>
         </details>
@@ -257,7 +300,10 @@ export default {
       rewriteDraft: '',
       savingRewrite: false,
       resultsData: null,
-      drag: { active: false, startX: 0, dx: 0 }
+      drag: { active: false, startX: 0, dx: 0 },
+      suggestions: {},
+      suggestionDrafts: {},
+      savingSuggestion: null
     };
   },
   computed: {
@@ -466,8 +512,70 @@ export default {
       try {
         const res = await axios.get(`/api/agile-training/g/${this.slug}/results`);
         this.resultsData = res.data;
+        await this.loadSuggestions();
       } catch (e) {
         this.error = e.response?.data?.error || 'Failed to load results';
+      }
+    },
+
+    suggestionsFor(principleKey) {
+      return this.suggestions[principleKey] || [];
+    },
+
+    async loadSuggestions() {
+      try {
+        const res = await axios.get(
+          `/api/agile-training/g/${this.slug}/rewrite-suggestions`,
+          { params: this.participantToken ? { participant_token: this.participantToken } : {} }
+        );
+        this.suggestions = res.data.by_principle || {};
+      } catch (e) {
+        // Не критично — просто не показываем предложения.
+      }
+    },
+
+    async submitSuggestion(principleKey) {
+      const text = (this.suggestionDrafts[principleKey] || '').trim();
+      if (!text) return;
+      if (!this.participantToken) {
+        alert(this.$t('agileTraining.play.resultsScreen.suggestNeedStart'));
+        return;
+      }
+      this.savingSuggestion = principleKey;
+      try {
+        const res = await axios.post(
+          `/api/agile-training/g/${this.slug}/rewrite-suggestions`,
+          {
+            participant_token: this.participantToken,
+            principle_key: principleKey,
+            text
+          }
+        );
+        const sug = res.data.suggestion;
+        if (sug) {
+          const list = this.suggestions[principleKey] ? this.suggestions[principleKey].slice() : [];
+          list.push(sug);
+          this.suggestions = { ...this.suggestions, [principleKey]: list };
+        }
+        this.suggestionDrafts = { ...this.suggestionDrafts, [principleKey]: '' };
+      } catch (e) {
+        alert(e.response?.data?.error || 'Failed to save suggestion');
+      } finally {
+        this.savingSuggestion = null;
+      }
+    },
+
+    async deleteSuggestion(sug, principleKey) {
+      if (!sug || !sug.own) return;
+      try {
+        await axios.delete(
+          `/api/agile-training/g/${this.slug}/rewrite-suggestions/${sug.id}`,
+          { params: { participant_token: this.participantToken } }
+        );
+        const list = (this.suggestions[principleKey] || []).filter(x => x.id !== sug.id);
+        this.suggestions = { ...this.suggestions, [principleKey]: list };
+      } catch (e) {
+        alert(e.response?.data?.error || 'Failed to delete');
       }
     },
 
@@ -785,6 +893,78 @@ export default {
 .atp-all__track { height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
 .atp-all__fill { height: 100%; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); }
 .atp-all__text { margin: 0; color: #475569; font-size: 13px; line-height: 1.55; }
+.atp-all__lead { margin: 6px 0 0; }
+
+.atp-sugg-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+.atp-sugg {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+.atp-sugg--own {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+}
+.atp-sugg__text { font-size: 13px; color: #0f172a; line-height: 1.5; white-space: pre-wrap; }
+.atp-sugg__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+.atp-sugg__del {
+  background: transparent;
+  border: none;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.atp-sugg__del:hover { text-decoration: underline; }
+
+.atp-sugg-form {
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+}
+.atp-sugg-form__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  background: #fff;
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+.atp-sugg-form__input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+.atp-sugg-form__btn {
+  justify-self: start;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.atp-sugg-form__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.atp-sugg-form__btn:hover:not(:disabled) { box-shadow: 0 4px 10px rgba(139,92,246,0.3); }
 
 .atp-results__actions {
   display: flex; justify-content: center; margin-top: 20px;

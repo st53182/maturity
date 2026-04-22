@@ -1540,6 +1540,8 @@
       "thisGroup": "This group",
       "otherGroups": "Other groups",
       "allPrinciples": "All principles",
+      "suggestionsTitle": "Team suggestions for rewording",
+      "anonymous": "Anonymous",
       "contentLanguage": "Content language",
       "contentLanguageHint": "Participants who open a group link will see principles in this language (they can still switch it manually).",
       "sessionLocale": "Training language",
@@ -1600,7 +1602,14 @@
         "we": "Us",
         "others": "Others",
         "all": "All 12 principles",
-        "replay": "Play again"
+        "replay": "Play again",
+        "suggestIntro": "Expand any principle and suggest how you would phrase it today. Everyone in your team will see the suggestions.",
+        "suggestPlaceholder": "Your wording for this principle…",
+        "suggestSave": "Suggest",
+        "suggestDelete": "Delete",
+        "suggestNeedStart": "To suggest wording, go back to the start screen and begin the training.",
+        "anonymous": "Anonymous",
+        "you": "you"
       },
       "error": {
         "title": "Could not open the training",

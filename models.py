@@ -692,3 +692,33 @@ class AgileTrainingAnswer(db.Model):
     value = db.Column(db.String(16), nullable=False)  # relevant | outdated
     rewrite = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class AgileTrainingRewriteSuggestion(db.Model):
+    """Коллективные предложения по переформулировке принципа внутри одной группы.
+
+    В отличие от Answer.rewrite (один на ответ), таких предложений может быть
+    несколько от одного участника и по одному принципу — чтобы команда могла
+    обсуждать и дорабатывать формулировки прямо на экране результатов.
+    """
+
+    __tablename__ = "agile_training_rewrite_suggestion"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    principle_key = db.Column(db.String(64), nullable=False, index=True)
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    participant = db.relationship("AgileTrainingParticipant")

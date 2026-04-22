@@ -2256,22 +2256,28 @@
       },
 
       "consequences": {
-        "gain.quick_revenue": "Quick revenue in under 5 months.",
-        "gain.proven_tech": "Proven tech — low execution risk.",
-        "gain.balance": "A good balance of money and outlook.",
-        "gain.market_growth": "A growing market — long-term upside.",
-        "gain.contract_secured": "100k-unit contract already in hand.",
-        "gain.breakthrough": "A real shot at a tech breakthrough.",
-        "gain.first_mover": "First-mover advantage.",
-        "loss.weak_future": "The product may age earlier than planned.",
-        "loss.market_shift_risk": "Market is shifting to EV — the window is short.",
-        "loss.tech_risk": "Technical risks and possible delays.",
-        "loss.capex": "Heavy investment in production lines and batteries.",
-        "loss.long_dry_period": "20 months without revenue — hard on the company.",
-        "loss.tech_risk_high": "High risk of failure and lost investment.",
-        "summary.hybrid": "Hybrid — fast revenue with a short window.",
-        "summary.electric": "Electric — heavy capex, but large revenue and a growing market.",
-        "summary.hydrogen": "Hydrogen — a long and risky bet with breakthrough potential."
+        "gain": {
+          "quick_revenue": "Quick revenue in under 5 months.",
+          "proven_tech": "Proven tech — low execution risk.",
+          "balance": "A good balance of money and outlook.",
+          "market_growth": "A growing market — long-term upside.",
+          "contract_secured": "100k-unit contract already in hand.",
+          "breakthrough": "A real shot at a tech breakthrough.",
+          "first_mover": "First-mover advantage."
+        },
+        "loss": {
+          "weak_future": "The product may age earlier than planned.",
+          "market_shift_risk": "Market is shifting to EV — the window is short.",
+          "tech_risk": "Technical risks and possible delays.",
+          "capex": "Heavy investment in production lines and batteries.",
+          "long_dry_period": "20 months without revenue — hard on the company.",
+          "tech_risk_high": "High risk of failure and lost investment."
+        },
+        "summary": {
+          "hybrid": "Hybrid — fast revenue with a short window.",
+          "electric": "Electric — heavy capex, but large revenue and a growing market.",
+          "hydrogen": "Hydrogen — a long and risky bet with breakthrough potential."
+        }
       }
     },
     "scrumEvents": {

@@ -1526,6 +1526,13 @@
         "bullet2": "12 rule cards and 9 effects, including a provocation",
         "bullet3": "Outcome simulation and cross-group comparison"
       },
+      "wsjf": {
+        "title": "WSJF: prioritization at a strategic crossroads",
+        "desc": "The team picks a direction at a car company — hybrid, electric or hydrogen. They score value, urgency and complexity, see consequences, get breaking news and revise the decision.",
+        "bullet1": "Strong business context and 3 options with limited resources",
+        "bullet2": "Fibonacci-like scale 1–13 and (value + urgency) / complexity",
+        "bullet3": "News event and revision reveal who actually adapts"
+      },
       "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
@@ -2098,6 +2105,158 @@
         "critical_missing": "Critical rules (testing, acceptance criteria, no blockers) should normally stay in the set.",
         "speed_illusion": "DoR/DoD slow things down at first — they're about quality and predictability, not speed.",
         "value_too_late": "If value is only checked after completion, the team may spend ages on unneeded work."
+      }
+    },
+    "wsjf": {
+      "facTitle": "WSJF — facilitator panel",
+      "facSubtitle": "Create a training, add teams and share links. For each group you can see initial choices, revisions and typical mistakes.",
+      "playTitle": "WSJF prioritization trainer",
+      "newSessionTitle": "Title of WSJF training",
+      "answersCount": "no answers | {n} answer | {n} answers",
+      "groupResults": "Group results",
+      "compareAll": "Compare teams",
+      "groupScoreboard": "Scoreboard",
+      "initialChoice": "Initial choice",
+      "revisedChoice": "After the news",
+      "changedMind": "Changed mind",
+      "noAdaptationYet": "no revisions yet",
+      "choicesFlow": "How choices shifted",
+      "option": "Option",
+      "initialPct": "Before the news",
+      "revisedPct": "After the news",
+      "avgValue": "Value (avg)",
+      "avgUrgency": "Urgency (avg)",
+      "avgComplexity": "Complexity (avg)",
+      "expected": "expert",
+      "byRole": "By role",
+      "noRevisedYet": "no revisions yet",
+      "topErrors": "Common mistakes",
+      "noErrors": "no mistakes captured",
+      "eventsShown": "News events shown",
+      "participantsDrill": "Per-participant details",
+      "noAnswer": "no answer",
+
+      "startTitle": "Where does the company go?",
+      "startLead": "You are on the team of a car company. Resources will only fuel one direction. The task is not to guess — it's to understand trade-offs.",
+      "startBullet1": "Three-dimensional score: value, urgency, complexity",
+      "startBullet2": "Scale 1, 2, 3, 5, 8, 13",
+      "startBullet3": "News will hit after the decision — and you'll get a chance to revise",
+      "start": "Let's go",
+      "next": "Next",
+      "back": "Back",
+
+      "roleTitle": "Pick your role",
+      "roleLead": "Your role doesn't change the formula — it changes what you look at first. Share that with the team afterwards.",
+
+      "contextTitle": "The situation",
+      "goToScores": "To scoring",
+
+      "scoresTitle": "Score each direction",
+      "reviseScoresTitle": "Re-score the directions",
+      "scoresLead": "Pick value, urgency and complexity on the scale for each option. Choose the number that matches your gut.",
+      "legend": {
+        "low": "low",
+        "mid": "moderate",
+        "high": "very high"
+      },
+      "dim": {
+        "value": "Value",
+        "urgency": "Urgency",
+        "complexity": "Complexity",
+        "valueHint": "how much it pays the business",
+        "urgencyHint": "how important it is right now",
+        "complexityHint": "resources, timeline and risk"
+      },
+      "calcPriority": "Calculate priority",
+
+      "prioritiesTitle": "Priorities",
+      "prioritiesLead": "Here's the formula output. The top one is what the math favors — but the call is yours.",
+      "formula": "priority = (value + urgency) / complexity",
+      "goToChoose": "Make a choice",
+
+      "chooseTitle": "What do we launch first?",
+      "reviseChooseTitle": "What do we launch now?",
+      "chooseLead": "Go with the formula or with your gut. Whichever — own the argument.",
+      "lockIn": "Lock it in",
+      "finish": "Finish",
+
+      "consequencesTitle": "Consequences",
+      "youGained": "What you gained",
+      "youLost": "What you lost",
+      "heyLook": "Heads up",
+      "nextNews": "Read the news",
+
+      "breaking": "BREAKING",
+      "eventNote": "Events like these happen in reality all the time. Teams that can revise decisions outperform those who 'already decided, full stop'.",
+      "rethink": "Revise the decision",
+
+      "finalTitle": "Done",
+      "adaptationLead": {
+        "stayed_right": "You kept the decision — and the news only confirmed it. Confidence isn't stubbornness.",
+        "stayed_risky": "You kept the decision even though the news worked against it. Maybe you see something the market doesn't — or worth a second pass.",
+        "adapted_well": "You spotted the signal and adjusted course. That's the real value of iteration.",
+        "over_adjusted": "You changed the decision, but the news doesn't support the new direction. Sometimes holding the line is better.",
+        "no_change": "You haven't closed the revision yet. Finish it — we'll see how it looks."
+      },
+      "yesChanged": "Yes, changed",
+      "noKept": "No, kept it",
+      "yourGroup": "Your group",
+      "adaptations": "Adaptation",
+      "refreshGroup": "Refresh group data",
+      "tryAgain": "Try again",
+
+      "adaptation": {
+        "stayed_right": "kept and was right",
+        "stayed_risky": "kept though shouldn't",
+        "adapted_well": "adapted well",
+        "over_adjusted": "over-adjusted",
+        "no_change": "didn't revise"
+      },
+
+      "err": {
+        "undervalued_risk": "Risks and complexity underestimated",
+        "ignored_urgency": "Urgency ignored",
+        "math_blind": "Chose something other than the formula",
+        "role_mismatch_business_hydrogen": "Business role chose hydrogen — no quick revenue",
+        "role_mismatch_engineer_too_easy": "Engineer set hydrogen complexity too low"
+      },
+
+      "strengths": "Strengths",
+      "risks": "Risks",
+
+      "round": {
+        "initial": "First round",
+        "revised": "After the news"
+      },
+
+      "step": {
+        "role": "Role",
+        "context": "Context",
+        "scores": "Scores",
+        "priorities": "Priorities",
+        "choose": "Choose",
+        "consequences": "Consequences",
+        "event": "News",
+        "final": "Outcome"
+      },
+
+      "consequences": {
+        "gain.quick_revenue": "Quick revenue in under 5 months.",
+        "gain.proven_tech": "Proven tech — low execution risk.",
+        "gain.balance": "A good balance of money and outlook.",
+        "gain.market_growth": "A growing market — long-term upside.",
+        "gain.contract_secured": "100k-unit contract already in hand.",
+        "gain.breakthrough": "A real shot at a tech breakthrough.",
+        "gain.first_mover": "First-mover advantage.",
+        "loss.weak_future": "The product may age earlier than planned.",
+        "loss.market_shift_risk": "Market is shifting to EV — the window is short.",
+        "loss.tech_risk": "Technical risks and possible delays.",
+        "loss.capex": "Heavy investment in production lines and batteries.",
+        "loss.long_dry_period": "20 months without revenue — hard on the company.",
+        "loss.tech_risk_high": "High risk of failure and lost investment.",
+        "summary.hybrid": "Hybrid — fast revenue with a short window.",
+        "summary.electric": "Electric — heavy capex, but large revenue and a growing market.",
+        "summary.hydrogen": "Hydrogen — a long and risky bet with breakthrough potential."
       }
     }
   },

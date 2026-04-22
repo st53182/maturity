@@ -588,3 +588,106 @@ class ChatContact(db.Model):
 
     owner = db.relationship("User", foreign_keys=[user_id], backref=db.backref("chat_contacts_owned", lazy="dynamic"))
     contact = db.relationship("User", foreign_keys=[contact_user_id], backref=db.backref("chat_contacts_as_target", lazy="dynamic"))
+
+
+class AgileTrainingSession(db.Model):
+    """Сессия тренинга по Agile (владелец = фасилитатор)."""
+
+    __tablename__ = "agile_training_session"
+
+    id = db.Column(db.Integer, primary_key=True)
+    owner_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    title = db.Column(db.String(255), nullable=False, default="Agile training")
+    exercise_key = db.Column(db.String(64), nullable=False, default="agile_principles", index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    owner = db.relationship("User", backref=db.backref("agile_training_sessions", lazy="dynamic"))
+    groups = db.relationship(
+        "AgileTrainingGroup",
+        backref="session",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+
+
+class AgileTrainingGroup(db.Model):
+    """Команда внутри тренинга; slug — часть публичной ссылки /g/<slug>."""
+
+    __tablename__ = "agile_training_group"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_session.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = db.Column(db.String(120), nullable=False, default="Team")
+    slug = db.Column(db.String(96), nullable=False, unique=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    participants = db.relationship(
+        "AgileTrainingParticipant",
+        backref="group",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+    answers = db.relationship(
+        "AgileTrainingAnswer",
+        backref="group",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+
+
+class AgileTrainingParticipant(db.Model):
+    """Участник тренинга без логина; идентифицируется непубличным токеном в localStorage."""
+
+    __tablename__ = "agile_training_participant"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_token = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    display_name = db.Column(db.String(120), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    answers = db.relationship(
+        "AgileTrainingAnswer",
+        backref="participant",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+
+
+class AgileTrainingAnswer(db.Model):
+    """Ответ участника по одному принципу."""
+
+    __tablename__ = "agile_training_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id", "principle_key", name="uq_agile_training_answer_participant_principle"
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    principle_key = db.Column(db.String(64), nullable=False, index=True)
+    value = db.Column(db.String(16), nullable=False)  # relevant | outdated
+    rewrite = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

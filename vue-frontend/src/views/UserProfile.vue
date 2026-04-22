@@ -38,6 +38,40 @@
       <button type="submit" class="modern-button purple">{{ $t('profile.saveChanges') }}</button>
     </form>
 
+    <div class="form-section jwt-section">
+      <div class="jwt-head">
+        <div>
+          <h2>{{ $t('profile.jwtTitle') }}</h2>
+          <p class="muted jwt-hint">{{ $t('profile.jwtHint') }}</p>
+        </div>
+        <div class="jwt-meta">
+          <span v-if="jwtExpired" class="jwt-badge jwt-badge--danger">{{ $t('profile.jwtExpired') }}</span>
+          <span v-else-if="jwtExpiresInDays !== null" class="jwt-badge">
+            {{ $t('profile.jwtValidFor', { days: jwtExpiresInDays }) }}
+          </span>
+        </div>
+      </div>
+
+      <div v-if="jwtToken" class="jwt-box" :class="{ 'jwt-box--warn': jwtExpired }">
+        <code class="jwt-value">{{ jwtVisible ? jwtToken : maskedJwt }}</code>
+        <div class="jwt-actions">
+          <button type="button" class="jwt-btn" @click="jwtVisible = !jwtVisible">
+            {{ jwtVisible ? $t('profile.jwtHide') : $t('profile.jwtShow') }}
+          </button>
+          <button type="button" class="jwt-btn jwt-btn--primary" @click="copyJwt">
+            {{ jwtCopied ? $t('profile.jwtCopied') : $t('profile.jwtCopy') }}
+          </button>
+        </div>
+      </div>
+      <p v-else class="muted">{{ $t('profile.jwtMissing') }}</p>
+
+      <div v-if="jwtPayload" class="jwt-details">
+        <div><span class="jwt-details__k">sub</span><span class="jwt-details__v">{{ jwtPayload.sub }}</span></div>
+        <div v-if="jwtIssuedAt"><span class="jwt-details__k">iat</span><span class="jwt-details__v">{{ formatDateTime(jwtIssuedAt) }}</span></div>
+        <div v-if="jwtExpiresAt"><span class="jwt-details__k">exp</span><span class="jwt-details__v">{{ formatDateTime(jwtExpiresAt) }}</span></div>
+      </div>
+    </div>
+
     <div class="form-section invite-section">
       <h2>Пригласить пользователя</h2>
       <label>Email приглашённого (необязательно)</label>
@@ -124,8 +158,58 @@ export default {
       inviteeEmail: '',
       newInviteCode: '',
       myInvites: [],
-      inviteLoading: false
+      inviteLoading: false,
+      jwtVisible: false,
+      jwtCopied: false
     };
+  },
+  computed: {
+    jwtToken() {
+      if (typeof localStorage === 'undefined') return '';
+      return localStorage.getItem('token') || '';
+    },
+    maskedJwt() {
+      const t = this.jwtToken;
+      if (!t) return '';
+      if (t.length <= 24) return '•'.repeat(t.length);
+      return `${t.slice(0, 12)}${'•'.repeat(24)}${t.slice(-8)}`;
+    },
+    jwtPayload() {
+      const t = this.jwtToken;
+      if (!t) return null;
+      const parts = t.split('.');
+      if (parts.length < 2) return null;
+      try {
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = b64 + '==='.slice((b64.length + 3) % 4);
+        const json = decodeURIComponent(
+          atob(padded)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join(''),
+        );
+        return JSON.parse(json);
+      } catch (e) {
+        return null;
+      }
+    },
+    jwtIssuedAt() {
+      const p = this.jwtPayload;
+      return p && typeof p.iat === 'number' ? new Date(p.iat * 1000) : null;
+    },
+    jwtExpiresAt() {
+      const p = this.jwtPayload;
+      return p && typeof p.exp === 'number' ? new Date(p.exp * 1000) : null;
+    },
+    jwtExpired() {
+      return this.jwtExpiresAt ? this.jwtExpiresAt.getTime() < Date.now() : false;
+    },
+    jwtExpiresInDays() {
+      if (!this.jwtExpiresAt) return null;
+      const diff = this.jwtExpiresAt.getTime() - Date.now();
+      if (diff <= 0) return 0;
+      return Math.ceil(diff / (24 * 3600 * 1000));
+    }
   },
   async mounted() {
     try {
@@ -212,6 +296,40 @@ export default {
         month: 'short',
         day: 'numeric'
       });
+    },
+
+    formatDateTime(date) {
+      if (!date) return '';
+      return date.toLocaleString(this.$i18n?.locale === 'en' ? 'en-US' : 'ru-RU', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    },
+
+    async copyJwt() {
+      const token = this.jwtToken;
+      if (!token) return;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(token);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = token;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        this.jwtCopied = true;
+        setTimeout(() => { this.jwtCopied = false; }, 1600);
+      } catch (e) {
+        alert(this.$t('profile.jwtCopyFailed'));
+      }
     },
 
     toggleRecommendations(assessmentId) {
@@ -604,6 +722,117 @@ hr {
 .invite-section .modern-button {
   margin-top: 8px;
 }
+
+.jwt-section {
+  border-left-color: #0ea5e9;
+}
+.jwt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.jwt-head h2 { margin: 0; }
+.jwt-hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.55;
+}
+.jwt-meta { display: flex; gap: 8px; align-items: center; }
+.jwt-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ecfeff;
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #bae6fd;
+}
+.jwt-badge--danger {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+.jwt-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.jwt-box--warn { border-color: #fecaca; background: #fef2f2; }
+.jwt-value {
+  flex: 1 1 260px;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #0f172a;
+  word-break: break-all;
+  background: transparent;
+  padding: 2px 0;
+  line-height: 1.5;
+}
+.jwt-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.jwt-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.jwt-btn:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+.jwt-btn--primary {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);
+}
+.jwt-btn--primary:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(14, 165, 233, 0.35);
+}
+.jwt-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 18px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #475569;
+}
+.jwt-details__k {
+  display: inline-block;
+  width: 36px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #0ea5e9;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.jwt-details__v {
+  color: #0f172a;
+}
+.muted { color: #6b7280; font-size: 13px; }
 .invite-code {
   margin-top: 10px;
   font-size: 0.95rem;

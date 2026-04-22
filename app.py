@@ -100,6 +100,7 @@ from testing_types import bp_testing_types
 from usability_report import bp_usability_report
 from qa_user_story import bp_qa_user_story
 from qa_test_docs import bp_qa_test_docs
+from agile_training import bp_agile_training
 from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
@@ -228,6 +229,7 @@ app.register_blueprint(bp_testing_types)
 app.register_blueprint(bp_usability_report)
 app.register_blueprint(bp_qa_user_story)
 app.register_blueprint(bp_qa_test_docs)
+app.register_blueprint(bp_agile_training)
 app.register_blueprint(bp_ai_limits)
 app.register_blueprint(bp_tests)
 app.register_blueprint(bp_interview_simulator)

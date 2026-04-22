@@ -98,6 +98,7 @@
             <router-link to="/new/system-thinking" class="area-link">{{ $t('newHome.links.systemThinking') }}</router-link>
             <router-link to="/new/agile-kata" class="area-link">{{ $t('newHome.links.agileKata') }}</router-link>
             <router-link to="/new/agile-tools" class="area-link">{{ $t('newHome.links.agileTools') }}</router-link>
+            <router-link to="/agile-training" class="area-link">{{ $t('newHome.links.agileTraining') }}</router-link>
             <router-link to="/new/interview-simulator" class="area-link">{{ $t('newHome.links.interviewSimulator') }}</router-link>
           </div>
         </article>

@@ -1,0 +1,535 @@
+{
+  "info": {
+    "_postman_id": "7b2e6b5c-3c4a-4a2d-9f6e-growboard-001",
+    "name": "GrowBoard API — QA",
+    "description": "Коллекция для тестирования REST API GrowBoard. Используйте окружение с переменными base_url, access_token, invite_code, team_id, maturity_token, survey_token. Login-запрос автоматически сохраняет access_token в окружение.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://www.growboard.ru" },
+    { "key": "access_token", "value": "" },
+    { "key": "invite_code", "value": "" },
+    { "key": "team_id", "value": "" },
+    { "key": "maturity_token", "value": "" },
+    { "key": "survey_token", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "API root",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{base_url}}/api", "host": ["{{base_url}}"], "path": ["api"] }
+          }
+        },
+        {
+          "name": "AI health",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/ai-health", "host": ["{{base_url}}"], "path": ["api", "ai-health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"qa.tester@example.com\",\n  \"password\": \"Test_Pwd_99!\",\n  \"invite_code\": \"{{invite_code}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] }
+          }
+        },
+        {
+          "name": "Login (auto-save token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access_token) {",
+                  "  pm.environment.set('access_token', data.access_token);",
+                  "  pm.collectionVariables.set('access_token', data.access_token);",
+                  "}",
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has access_token', () => pm.expect(data.access_token).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"qa.tester@example.com\",\n  \"password\": \"Test_Pwd_99!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "Create invite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invitee_email\": \"colleague@example.com\",\n  \"ttl_days\": 7\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/invites", "host": ["{{base_url}}"], "path": ["api", "invites"] }
+          }
+        },
+        {
+          "name": "My invites",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/invites/my", "host": ["{{base_url}}"], "path": ["api", "invites", "my"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get profile",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/user_profile", "host": ["{{base_url}}"], "path": ["api", "user_profile"] }
+          }
+        },
+        {
+          "name": "Update profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"QA Tester\",\n  \"role\": \"QA Engineer\",\n  \"locale\": \"ru\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/update_profile", "host": ["{{base_url}}"], "path": ["api", "update_profile"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teams & Survey",
+      "item": [
+        {
+          "name": "Create team (auto-save team_id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.team_id) pm.environment.set('team_id', data.team_id);",
+                  "pm.test('status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"team_name\": \"QA Team {{$timestamp}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/create_team", "host": ["{{base_url}}"], "path": ["create_team"] }
+          }
+        },
+        {
+          "name": "My teams",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/user_teams", "host": ["{{base_url}}"], "path": ["user_teams"] }
+          }
+        },
+        {
+          "name": "Get questions",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{base_url}}/questions?lang=ru",
+              "host": ["{{base_url}}"],
+              "path": ["questions"],
+              "query": [{ "key": "lang", "value": "ru" }]
+            }
+          }
+        },
+        {
+          "name": "Submit assessment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"team_id\": {{team_id}},\n  \"answers\": {\n    \"1\": \"basic\",\n    \"2\": \"transitional\",\n    \"3\": \"growing\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/submit_assessment", "host": ["{{base_url}}"], "path": ["submit_assessment"] }
+          }
+        },
+        {
+          "name": "Team progress",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/team_progress/{{team_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["team_progress", "{{team_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete team",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/dashboard/delete_team/{{team_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "delete_team", "{{team_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maturity Link",
+      "item": [
+        {
+          "name": "Create link (auto-save token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json();",
+                  "if (d && d.token) pm.environment.set('maturity_token', d.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"team_id\": {{team_id}},\n  \"language\": \"ru\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/maturity-link", "host": ["{{base_url}}"], "path": ["api", "maturity-link"] }
+          }
+        },
+        {
+          "name": "Get session",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{base_url}}/api/maturity/{{maturity_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "maturity", "{{maturity_token}}"]
+            }
+          }
+        },
+        {
+          "name": "Submit answers",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": {\n    \"1\": \"basic\",\n    \"2\": \"transitional\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/maturity/{{maturity_token}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "maturity", "{{maturity_token}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Get results",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{base_url}}/api/maturity/{{maturity_token}}/results",
+              "host": ["{{base_url}}"],
+              "path": ["api", "maturity", "{{maturity_token}}", "results"]
+            }
+          }
+        },
+        {
+          "name": "Generate recommendations (AI, limited)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Survey-Token", "value": "{{maturity_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": {
+              "raw": "{{base_url}}/api/maturity/{{maturity_token}}/recommendations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "maturity", "{{maturity_token}}", "recommendations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "DISC",
+      "item": [
+        {
+          "name": "Questions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/disc/questions", "host": ["{{base_url}}"], "path": ["api", "disc", "questions"] }
+          }
+        },
+        {
+          "name": "Submit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    { \"question_id\": 1, \"type\": \"D\" },\n    { \"question_id\": 2, \"type\": \"I\" }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/disc/submit", "host": ["{{base_url}}"], "path": ["api", "disc", "submit"] }
+          }
+        },
+        {
+          "name": "History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/disc/history", "host": ["{{base_url}}"], "path": ["api", "disc", "history"] }
+          }
+        },
+        {
+          "name": "Latest",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/disc/latest", "host": ["{{base_url}}"], "path": ["api", "disc", "latest"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business Value",
+      "item": [
+        {
+          "name": "Get factors",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/business-value/factors", "host": ["{{base_url}}"], "path": ["api", "business-value", "factors"] }
+          }
+        },
+        {
+          "name": "Score preview",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"title\": \"Пример фичи\", \"scores\": { \"revenue\": 4, \"risk\": 2 } }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/business-value/score-preview", "host": ["{{base_url}}"], "path": ["api", "business-value", "score-preview"] }
+          }
+        },
+        {
+          "name": "Parse items (AI, limited)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"1. Личный кабинет клиента\\n2. Мобильные пуши\\n3. Импорт из CSV\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/business-value/parse-items", "host": ["{{base_url}}"], "path": ["api", "business-value", "parse-items"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Project Card / Report / Strategy",
+      "item": [
+        {
+          "name": "Project card AI (limited)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"section\": \"goals\",\n  \"locale\": \"ru\",\n  \"form\": { \"projectName\": \"QA Pilot\", \"goals\": \"\" }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/project-card/ai-suggest", "host": ["{{base_url}}"], "path": ["api", "project-card", "ai-suggest"] }
+          }
+        },
+        {
+          "name": "Report insights — raw text (limited)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Отчёт по продажам Q1: выручка 120М, план 150М, отклонение -20%. Анонимные заказы выросли в 3 раза.\",\n  \"notes\": \"Проверить рост анонимных заказов\",\n  \"locale\": \"ru\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/report-insights/analyze", "host": ["{{base_url}}"], "path": ["api", "report-insights", "analyze"] }
+          }
+        },
+        {
+          "name": "Report insights — file upload (limited)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "notes", "value": "Прошу обратить внимание на отклонения", "type": "text" },
+                { "key": "locale", "value": "ru", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/report-insights/analyze", "host": ["{{base_url}}"], "path": ["api", "report-insights", "analyze"] }
+          }
+        },
+        {
+          "name": "Strategy builder — section (limited)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"section\": \"vision\",\n  \"scope\": \"company\",\n  \"locale\": \"ru\",\n  \"industry\": \"финтех для розницы\",\n  \"form\": {\n    \"vision\": \"\",\n    \"mission\": \"\",\n    \"purpose\": \"\",\n    \"values\": [],\n    \"strategy\": { \"horizon\": \"\", \"pillars\": [], \"bets\": [], \"metrics\": [] },\n    \"okrs\": []\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/strategy-builder/ai-suggest", "host": ["{{base_url}}"], "path": ["api", "strategy-builder", "ai-suggest"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "QA Test Docs",
+      "item": [
+        {
+          "name": "Plan — submissions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/qa-test-docs/plan/submissions", "host": ["{{base_url}}"], "path": ["api", "qa-test-docs", "plan", "submissions"] }
+          }
+        },
+        {
+          "name": "Plan — submit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"scope\": \"Регрессия\",\n    \"approach\": \"Ручное + API\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/qa-test-docs/plan/submit", "host": ["{{base_url}}"], "path": ["api", "qa-test-docs", "plan", "submit"] }
+          }
+        },
+        {
+          "name": "Plan — evaluate (AI)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fields\": {\n    \"scope\": \"Регрессия\",\n    \"approach\": \"Ручное + API\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/qa-test-docs/plan/evaluate", "host": ["{{base_url}}"], "path": ["api", "qa-test-docs", "plan", "evaluate"] }
+          }
+        },
+        {
+          "name": "Case — submissions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/qa-test-docs/case/submissions", "host": ["{{base_url}}"], "path": ["api", "qa-test-docs", "case", "submissions"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI usage & limits",
+      "item": [
+        {
+          "name": "Get usage",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/ai-usage", "host": ["{{base_url}}"], "path": ["api", "ai-usage"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tests runner",
+      "item": [
+        {
+          "name": "List tests",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/tests/list", "host": ["{{base_url}}"], "path": ["api", "tests", "list"] }
+          }
+        },
+        {
+          "name": "Run all",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('failed is 0', () => pm.expect(d.failed).to.eql(0));",
+                  "pm.test('total > 0', () => pm.expect(d.total).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/tests/run", "host": ["{{base_url}}"], "path": ["api", "tests", "run"] }
+          }
+        },
+        {
+          "name": "Run category (auth)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/tests/run/auth", "host": ["{{base_url}}"], "path": ["api", "tests", "run", "auth"] }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -10,3 +10,6 @@ instance/
 .venv/
 venv/
 .env
+
+# Временные файлы сборки PDF-руководств
+docs/*.tmp.pdf

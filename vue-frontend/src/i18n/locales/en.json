@@ -997,7 +997,17 @@
     "autoDetected": "Automatically determined after DISC assessment",
     "latestResult": "Latest Result",
     "noRecommendations": "Recommendations not available",
-    "loadError": "Failed to load profile"
+    "loadError": "Failed to load profile",
+    "jwtTitle": "JWT access token",
+    "jwtHint": "Use this token in Postman as a Bearer header. Do not share it with anyone.",
+    "jwtMissing": "No token found. Please sign in again.",
+    "jwtShow": "Show",
+    "jwtHide": "Hide",
+    "jwtCopy": "Copy",
+    "jwtCopied": "Copied",
+    "jwtCopyFailed": "Failed to copy the token",
+    "jwtExpired": "Token expired",
+    "jwtValidFor": "Valid for {days} more days"
   },
   "meetingDesign": {
     "title": "Meeting Design",
@@ -1173,6 +1183,7 @@
       "strategyBuilder": "Vision, mission and strategy",
       "agileKata": "Agile Kata canvas",
       "agileTools": "Agile tools library",
+      "agileTraining": "Agile Training — group exercises",
       "interviewSimulator": "AI Interview Simulator",
       "businessValue": "Business value scoring (stories / epics)"
     },
@@ -1446,6 +1457,131 @@
         "risk": "Risk",
         "opportunity": "Opportunity",
         "other": "Other"
+      }
+    }
+  },
+  "agileTraining": {
+    "common": {
+      "back": "Back",
+      "loading": "Loading",
+      "copy": "Copy",
+      "copied": "Copied",
+      "relevant": "Relevant",
+      "outdated": "Outdated",
+      "notEnoughData": "Not enough data yet",
+      "votes": "votes",
+      "pp": "pp"
+    },
+    "hub": {
+      "title": "Agile Training",
+      "subtitle": "Interactive exercises on Agile, Scrum and Kanban for groups of 10–30 people",
+      "lead": "Create a training, hand unique links to each team and watch aggregated answers in real time. Participants don't need to sign in.",
+      "start": "Start",
+      "soon": "Soon",
+      "principles": {
+        "title": "Agile principles — swipe trainer",
+        "desc": "Teams swipe 12 Agile Manifesto principles: 'relevant' vs 'outdated'. After each answer the group stats and a provocative comment appear.",
+        "bullet1": "Unique link per team",
+        "bullet2": "No sign-in, runs in the browser",
+        "bullet3": "Cross-group comparison"
+      },
+      "scrum": {
+        "title": "Scrum myths and truth",
+        "desc": "Cards with Scrum statements; participants vote 'myth' or 'truth' and you debrief together."
+      },
+      "kanban": {
+        "title": "WIP limits in Kanban",
+        "desc": "A flow simulation: teams pick WIP limits and see how lead time and throughput change."
+      },
+      "howItWorks": {
+        "title": "How it works",
+        "step1": "The facilitator creates a training session and adds several groups (teams).",
+        "step2": "Each group gets a unique link like /g/team-xyz.",
+        "step3": "Participants open the link on their own devices — no sign-up required.",
+        "step4": "The facilitator sees progress, the most controversial principles and how groups differ."
+      }
+    },
+    "facilitator": {
+      "title": "Agile principles — facilitator panel",
+      "lead": "Create a training, add groups and share links. Answers are collected per team.",
+      "sessions": "My trainings",
+      "newSessionPlaceholder": "Training title, e.g. 'Agile 101 — April'",
+      "createSession": "Create training",
+      "noSessions": "No trainings yet. Create your first one on the left.",
+      "open": "Open",
+      "groupsCount": "no groups | {n} group | {n} groups",
+      "backToSessions": "Back to trainings",
+      "refresh": "Refresh",
+      "deleteSession": "Delete training",
+      "confirmDeleteSession": "Delete this training along with all groups and answers?",
+      "groupPlaceholder": "Group name, e.g. 'Team Alpha'",
+      "addGroup": "Add group",
+      "noGroups": "Add at least one group to get a link.",
+      "status": {
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "completed": "Completed"
+      },
+      "viewResults": "Results",
+      "resetGroup": "Reset answers",
+      "deleteGroup": "Delete",
+      "confirmResetGroup": "Reset all answers for group '{name}'?",
+      "confirmDeleteGroup": "Delete group '{name}' and its answers?",
+      "results": "Results",
+      "participantsTotal": "Participants: {n}",
+      "topControversial": "Top-3 controversial principles",
+      "topObvious": "Top-3 most obvious principles",
+      "compare": "Comparison with other groups",
+      "compareSolo": "No other groups in this training yet — comparison will appear once a second team finishes.",
+      "compareNoDiff": "This group's answers are close to the session average.",
+      "thisGroup": "This group",
+      "otherGroups": "Other groups",
+      "allPrinciples": "All principles"
+    },
+    "play": {
+      "start": {
+        "lead": "You are about to see {n} Agile Manifesto principles. Swipe the card right if you find the principle still relevant, or left if you think it is outdated.",
+        "step1": "Right → 'Relevant'",
+        "step2": "Left → 'Outdated'",
+        "step3": "After each answer you see what your team voted",
+        "namePlaceholder": "What should we call you (optional)",
+        "cta": "Start",
+        "resume": "You already answered {n} of {total}. We'll continue where you stopped."
+      },
+      "swipe": {
+        "relevant": "Relevant",
+        "outdated": "Outdated"
+      },
+      "result": {
+        "title": "How your team voted",
+        "based": "Based on {n} votes",
+        "next": "Next",
+        "finish": "See results"
+      },
+      "rewrite": {
+        "title": "Rewrite the principle in your own words",
+        "placeholder": "How would you phrase this principle today?",
+        "save": "Save rewrite",
+        "saved": "Thanks, saved!"
+      },
+      "resultsScreen": {
+        "title": "Done!",
+        "group": "Team: {name}",
+        "topControversial": "Where opinions split",
+        "controversialHint": "Green — 'relevant', red — 'outdated'. The closer to 50/50, the hotter the debate.",
+        "topObvious": "Where opinions align",
+        "obviousHint": "Principles your team agreed on quickly.",
+        "compare": "How we differ from other groups",
+        "compareSolo": "Only our group has played so far — comparison will appear after other teams finish.",
+        "compareNoDiff": "Our answers are close to the average of other groups.",
+        "we": "Us",
+        "others": "Others",
+        "all": "All 12 principles",
+        "replay": "Play again"
+      },
+      "error": {
+        "title": "Could not open the training",
+        "notFound": "Group not found. Check the link with your facilitator."
       }
     }
   },

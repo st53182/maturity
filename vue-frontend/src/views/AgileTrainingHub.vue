@@ -36,11 +36,16 @@
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
 
-      <article class="at-card at-card--soon">
-        <span class="at-card__icon">🧩</span>
-        <h2 class="at-card__title">{{ $t('agileTraining.hub.scrum.title') }}</h2>
-        <p class="at-card__desc">{{ $t('agileTraining.hub.scrum.desc') }}</p>
-        <span class="at-card__cta at-card__cta--muted">{{ $t('agileTraining.hub.soon') }}</span>
+      <article class="at-card" @click="$router.push('/agile-training/cynefin')">
+        <span class="at-card__icon">🧭</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.cynefin.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.cynefin.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.cynefin.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.cynefin.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.cynefin.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
 
       <article class="at-card at-card--soon">

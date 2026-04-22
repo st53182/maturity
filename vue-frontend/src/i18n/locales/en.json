@@ -1496,6 +1496,14 @@
         "title": "WIP limits in Kanban",
         "desc": "A flow simulation: teams pick WIP limits and see how lead time and throughput change."
       },
+      "cynefin": {
+        "title": "Cynefin — where does this problem belong?",
+        "desc": "8 universal cases (government, manufacturing, education, crises). Participants assign each case to a Cynefin domain, pick an action strategy and then see the expert answer and the group's view.",
+        "bullet1": "4 domains: Obvious · Complicated · Complex · Chaotic",
+        "bullet2": "Drag & drop or click on a zone",
+        "bullet3": "Consequences of each wrong choice are discussed"
+      },
+      "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
         "step1": "The facilitator creates a training session and adds several groups (teams).",
@@ -1561,7 +1569,19 @@
       "principleColumn": "Principle",
       "spread": "spread",
       "noData": "—",
-      "noAnswersYet": "Nobody has answered in this session yet."
+      "noAnswersYet": "Nobody has answered in this session yet.",
+      "mySessions": "My trainings",
+      "newSessionTitle": "Training title, e.g. 'Cynefin — April'",
+      "newGroupName": "Group name, e.g. 'Team Alpha'",
+      "noGroups": "Add at least one group to get a link.",
+      "groups": "Groups",
+      "participants": "Participants: {n}",
+      "backToList": "Back to training list",
+      "copyLink": "Copy",
+      "copied": "Copied",
+      "reset": "Reset",
+      "delete": "Delete",
+      "confirmReset": "Reset all answers for group '{name}'?"
     },
     "play": {
       "start": {
@@ -1615,7 +1635,66 @@
         "title": "Could not open the training",
         "notFound": "Group not found. Check the link with your facilitator."
       },
-      "languageHint": "Language chosen by the facilitator. You can switch it."
+      "languageHint": "Language chosen by the facilitator. You can switch it.",
+      "loadError": "Could not load the training"
+    },
+    "cynefin": {
+      "facTitle": "Cynefin — facilitator panel",
+      "facSubtitle": "Create a training, add teams and share links. Answers are collected separately for each group.",
+      "groupResults": "Group results",
+      "expertDomain": "Expert",
+      "answersCount": "no answers | {n} answer | {n} answers",
+      "answersShort": "ans.",
+      "mostSplitHint": "Biggest gap between max and min 'percent for the expert domain' across groups.",
+      "mostAlignedHint": "Cases where teams aligned on the domain.",
+      "heatmapTitle": "Heatmap: cases × groups",
+      "heatmapHint": "Percent of answers matching the expert domain per team.",
+      "domain": {
+        "obvious": "Obvious",
+        "complicated": "Complicated",
+        "complex": "Complex",
+        "chaotic": "Chaotic"
+      },
+      "domainShort": {
+        "obvious": "Cause → effect is clear. Best practices.",
+        "complicated": "Causes exist but need experts and analysis.",
+        "complex": "The system's behaviour only emerges through action.",
+        "chaotic": "Stabilise here and now."
+      },
+      "play": {
+        "startLead": "You are going to work through a series of cases. For each one you'll place it into a Cynefin domain, pick a strategy — and then see what your team thinks.",
+        "how1": "Read the situation and choose a domain",
+        "how2": "Pick an action strategy",
+        "how3": "See the expert debrief and the team's view",
+        "startBtn": "Start",
+        "chooseDomainBtn": "Choose domain",
+        "dropHint": "Drag the card into a domain or click the one you pick.",
+        "strategyTitle": "How will you act?",
+        "strategyLead": "Choose one of the typical approaches for this domain or describe your own.",
+        "customStrategyLabel": "Custom option (optional)",
+        "customStrategyPlaceholder": "Describe how you would act in this situation…",
+        "submitBtn": "Submit answer",
+        "matchYes": "✓ Matches the expert",
+        "matchNo": "⚠ Expert choice is different",
+        "yourChoice": "Your choice",
+        "rationale": "Why this domain",
+        "consequences": "What happens if you pick…",
+        "groupStats": "How the team answered",
+        "groupStatsHint": "based on {n} answers",
+        "nextCaseBtn": "Next case",
+        "resultsBtn": "See results",
+        "resultsTitle": "Done!",
+        "resultsLead": "Results for team '{group}'",
+        "matchesExpert": "matches with the expert",
+        "teamParticipants": "participants in the team",
+        "overallDomains": "Overall domain distribution",
+        "topControversial": "Most controversial cases",
+        "topControversialHint": "Cases where answers are split most evenly across domains — perfect for the debrief.",
+        "noControversy": "Too few answers to score controversy yet.",
+        "allCases": "All 8 cases",
+        "allCasesToggle": "Expand / collapse",
+        "restart": "Play again"
+      }
     }
   },
   "strategyBuilder": {

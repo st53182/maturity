@@ -694,6 +694,37 @@ class AgileTrainingAnswer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingCynefinAnswer(db.Model):
+    """Ответ участника по одному кейсу Cynefin (домен + стратегия)."""
+
+    __tablename__ = "agile_training_cynefin_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id", "case_key",
+            name="uq_cynefin_answer_participant_case",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    case_key = db.Column(db.String(64), nullable=False, index=True)
+    selected_domain = db.Column(db.String(32), nullable=False)
+    selected_strategy = db.Column(db.String(64), nullable=True)
+    custom_strategy = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

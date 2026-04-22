@@ -33,6 +33,7 @@ bp_agile_training = Blueprint(
 
 
 ANSWER_VALUES = {"relevant", "outdated"}
+ALLOWED_EXERCISE_KEYS = {"agile_principles", "cynefin"}
 
 
 # --------------------------- helpers ---------------------------
@@ -279,6 +280,7 @@ def group_public(slug: str):
             "id": session.id if session else None,
             "title": session.title if session else "",
             "locale": (getattr(session, "locale", None) or "ru") if session else "ru",
+            "exercise_key": (getattr(session, "exercise_key", None) or "agile_principles") if session else "agile_principles",
         },
         "principles_total": len(AGILE_PRINCIPLES),
     })
@@ -527,10 +529,13 @@ def sessions_create():
     locale = (data.get("locale") or "ru").strip().lower()
     if locale not in ALLOWED_LOCALES:
         locale = "ru"
+    exercise_key = (data.get("exercise_key") or "agile_principles").strip().lower()
+    if exercise_key not in ALLOWED_EXERCISE_KEYS:
+        exercise_key = "agile_principles"
     s = AgileTrainingSession(
         owner_user_id=uid,
         title=title,
-        exercise_key="agile_principles",
+        exercise_key=exercise_key,
         locale=locale,
     )
     db.session.add(s)

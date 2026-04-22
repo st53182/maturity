@@ -44,7 +44,7 @@
           <h3>{{ s.title }}</h3>
           <div class="atf-session-card__meta">
             <span>{{ formatDate(s.created_at) }}</span>
-            <span class="atf-badge">{{ $tc('agileTraining.facilitator.groupsCount', s.groups_count) }}</span>
+            <span class="atf-badge">{{ $t('agileTraining.facilitator.groupsCount', { n: s.groups_count }, s.groups_count) }}</span>
             <span class="atf-badge atf-badge--locale">{{ (s.locale || 'ru').toUpperCase() }}</span>
           </div>
           <span class="atf-session-card__cta">{{ $t('agileTraining.facilitator.open') }} →</span>

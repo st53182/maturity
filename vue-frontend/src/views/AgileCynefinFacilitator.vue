@@ -38,7 +38,7 @@
               <span class="cyn-fac__badge">{{ (s.locale || 'ru').toUpperCase() }}</span>
               <span>{{ formatDate(s.created_at) }}</span>
               <span>·</span>
-              <span>{{ $t('agileTraining.facilitator.groupsCount', { n: s.groups_count || 0 }) }}</span>
+              <span>{{ $t('agileTraining.facilitator.groupsCount', { n: s.groups_count || 0 }, s.groups_count || 0) }}</span>
             </div>
           </div>
           <button class="cyn-fac__open-btn" @click="openSession(s.id)">
@@ -83,9 +83,9 @@
           <div class="cyn-fac__group-main">
             <div class="cyn-fac__group-name">{{ g.name }}</div>
             <div class="cyn-fac__item-meta">
-              <span>{{ $t('agileTraining.facilitator.participants', { n: g.participants_count || 0 }) }}</span>
+              <span>{{ $t('agileTraining.facilitator.participants', { n: g.participants_count || 0 }, g.participants_count || 0) }}</span>
               <span>·</span>
-              <span>{{ $t('agileTraining.cynefin.answersCount', { n: g.answers_count || 0 }) }}</span>
+              <span>{{ $t('agileTraining.cynefin.answersCount', { n: g.answers_count || 0 }, g.answers_count || 0) }}</span>
               <span>·</span>
               <span :class="['cyn-fac__status', 'cyn-fac__status--' + (g.status || 'not_started')]">
                 {{ $t('agileTraining.facilitator.status.' + (g.status || 'not_started')) }}
@@ -117,7 +117,7 @@
         <div v-if="resultsModal.loading" class="cyn-fac__hint">{{ $t('common.loading') }}…</div>
         <div v-else-if="resultsModal.data">
           <p class="cyn-modal__lead">
-            {{ $t('agileTraining.facilitator.participants', { n: resultsModal.data.participants_count || 0 }) }}
+            {{ $t('agileTraining.facilitator.participants', { n: resultsModal.data.participants_count || 0 }, resultsModal.data.participants_count || 0) }}
           </p>
           <div v-for="row in resultsModal.data.per_case" :key="row.key" class="cyn-case-row">
             <div class="cyn-case-row__head">

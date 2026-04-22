@@ -451,8 +451,20 @@ export default {
 }
 .ice-fac__locale { flex: 0 0 auto; }
 .ice-fac__create button, .ice-fac__add-group button, .ice-fac__open-btn {
-  padding: 10px 18px; border: none; border-radius: 10px; background: #0f172a;
-  color: #fff; font-weight: 600; cursor: pointer;
+  padding: 10px 18px; border: none !important; border-radius: 10px !important;
+  background: linear-gradient(135deg, #0ea5e9, #0369a1) !important;
+  color: #fff !important; font-weight: 600; cursor: pointer;
+  box-shadow: 0 6px 14px rgba(14,165,233,0.3) !important;
+  transition: transform 0.1s ease, box-shadow 0.2s ease, filter 0.15s ease;
+}
+.ice-fac__create button:hover:not(:disabled), .ice-fac__add-group button:hover:not(:disabled), .ice-fac__open-btn:hover:not(:disabled) {
+  transform: translateY(-1px); box-shadow: 0 10px 22px rgba(14,165,233,0.45) !important; filter: brightness(1.05);
+}
+.ice-fac__create button:active:not(:disabled), .ice-fac__add-group button:active:not(:disabled), .ice-fac__open-btn:active:not(:disabled) {
+  transform: translateY(1px); box-shadow: 0 2px 6px rgba(14,165,233,0.3) !important;
+}
+.ice-fac__create button:disabled, .ice-fac__add-group button:disabled, .ice-fac__open-btn:disabled {
+  opacity: 0.5; cursor: not-allowed;
 }
 .ice-fac__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .ice-fac__item, .ice-fac__group {
@@ -469,10 +481,13 @@ export default {
 .ice-fac__active-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
 .ice-fac__active-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
 .ice-fac__active-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-ghost { padding: 8px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; color: #0f172a; cursor: pointer; font: inherit; font-weight: 600; }
-.btn-ghost:hover { border-color: #0369a1; color: #0369a1; }
+.btn-ghost { padding: 8px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; color: #0f172a; cursor: pointer; font: inherit; font-weight: 600; transition: all 0.15s ease; }
+.btn-ghost:hover:not(:disabled) { border-color: #0369a1; color: #0369a1; background: #f0f9ff; }
+.btn-ghost:active:not(:disabled) { background: #e0f2fe; transform: translateY(1px); }
 .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-danger { padding: 8px 14px; border-radius: 10px; border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; cursor: pointer; font: inherit; font-weight: 600; }
+.btn-danger { padding: 8px 14px; border-radius: 10px; border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; cursor: pointer; font: inherit; font-weight: 600; transition: all 0.15s ease; }
+.btn-danger:hover:not(:disabled) { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+.btn-danger:active:not(:disabled) { background: #fecaca; transform: translateY(1px); }
 .ice-fac__groups-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
 .ice-fac__add-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .ice-fac__groups { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -484,7 +499,9 @@ export default {
 .ice-fac__status--completed { background: #dcfce7; color: #166534; }
 .ice-fac__link { margin-top: 8px; display: flex; gap: 8px; align-items: center; }
 .ice-fac__link code { background: #f8fafc; padding: 4px 8px; border-radius: 6px; font-size: 12px; word-break: break-all; }
-.ice-fac__copy { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 12px; font-weight: 600; }
+.ice-fac__copy { padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; color: #334155; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s ease; }
+.ice-fac__copy:hover:not(:disabled) { border-color: #0369a1; color: #0369a1; background: #f0f9ff; }
+.ice-fac__copy:active:not(:disabled) { background: #e0f2fe; transform: translateY(1px); }
 .ice-fac__group-actions { display: flex; gap: 6px; flex-direction: column; align-items: flex-end; }
 
 .ice-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 1000; }

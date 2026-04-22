@@ -666,20 +666,23 @@ export default {
 }
 .atf-btn--small { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
 .atf-btn--ghost { background: transparent; border-color: #cbd5e1; color: #334155; }
-.atf-btn--ghost:hover { border-color: #94a3b8; background: #f1f5f9; }
+.atf-btn--ghost:hover:not(:disabled) { border-color: #7c3aed; background: #faf5ff; color: #6d28d9; }
+.atf-btn--ghost:active:not(:disabled) { background: #ede9fe; transform: translateY(1px); }
 .atf-btn--primary {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: #fff;
   box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
 }
-.atf-btn--primary:hover { box-shadow: 0 6px 14px rgba(139, 92, 246, 0.4); }
+.atf-btn--primary:hover:not(:disabled) { box-shadow: 0 8px 18px rgba(139, 92, 246, 0.5); transform: translateY(-1px); filter: brightness(1.05); }
+.atf-btn--primary:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 6px rgba(139,92,246,0.3); }
 .atf-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .atf-btn--danger {
   background: #fff;
   color: #b91c1c;
   border-color: #fecaca;
 }
-.atf-btn--danger:hover { background: #fef2f2; border-color: #fca5a5; }
+.atf-btn--danger:hover:not(:disabled) { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+.atf-btn--danger:active:not(:disabled) { background: #fecaca; transform: translateY(1px); }
 
 /* modal */
 .atf-modal-overlay {

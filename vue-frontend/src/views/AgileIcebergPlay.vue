@@ -784,17 +784,24 @@ export default {
 .ice-btn {
   padding: 12px 22px; border-radius: 12px; border: none;
   font: inherit; font-weight: 700; cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
-.ice-btn--primary { background: #0ea5e9; color: #fff; }
-.ice-btn--primary:hover { background: #0284c7; }
-.ice-btn--primary:disabled { background: #cbd5e1; cursor: not-allowed; }
+.ice-btn:active:not(:disabled) { transform: translateY(1px); }
+.ice-btn--primary { background: #0ea5e9; color: #fff; box-shadow: 0 6px 14px rgba(14,165,233,0.28); }
+.ice-btn--primary:hover:not(:disabled) { background: #0284c7; box-shadow: 0 8px 18px rgba(2,132,199,0.35); }
+.ice-btn--primary:disabled { background: #cbd5e1; color: #fff; cursor: not-allowed; box-shadow: none; }
 .ice-btn--ghost { background: #fff; border: 1px solid #cbd5e1; color: #0f172a; }
-.ice-btn--ghost:hover { border-color: #0ea5e9; color: #0ea5e9; }
+.ice-btn--ghost:hover:not(:disabled) { border-color: #0ea5e9; color: #0ea5e9; background: #f0f9ff; }
 .ice-btn--choice {
   background: #fff; border: 2px solid #cbd5e1; color: #334155;
-  padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 14px;
+  padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 14px;
 }
-.ice-btn--choice-active { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+.ice-btn--choice:hover:not(:disabled) { border-color: #0ea5e9; color: #0ea5e9; background: #f0f9ff; }
+.ice-btn--choice-active {
+  background: #0ea5e9 !important; border-color: #0284c7 !important; color: #fff !important;
+  box-shadow: 0 6px 14px rgba(14,165,233,0.35);
+}
+.ice-btn--choice-active:hover:not(:disabled) { background: #0284c7 !important; color: #fff !important; }
 
 .ice-progress {
   max-width: 820px; margin: 0 auto 18px;

@@ -694,7 +694,8 @@ export default {
   font-family: inherit;
   transition: all 0.2s ease;
 }
-.atp-start__btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(139, 92, 246, 0.45); }
+.atp-start__btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(139, 92, 246, 0.45); filter: brightness(1.05); }
+.atp-start__btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 3px 10px rgba(139,92,246,0.3); }
 .atp-start__btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .atp-start__resume { margin-top: 14px; color: #64748b; font-size: 13px; }
 
@@ -778,21 +779,25 @@ export default {
 }
 .atp-bigbtn:disabled { opacity: 0.6; cursor: not-allowed; }
 .atp-bigbtn--left { background: #fff; color: #b91c1c; border: 2px solid #fecaca; }
-.atp-bigbtn--left:hover { background: #fef2f2; border-color: #f87171; }
+.atp-bigbtn--left:hover:not(:disabled) { background: #fee2e2; border-color: #ef4444; color: #991b1b; box-shadow: 0 8px 18px rgba(239,68,68,0.18); }
+.atp-bigbtn--left:active:not(:disabled) { background: #fecaca; transform: translateY(1px); }
 .atp-bigbtn--right { background: #fff; color: #15803d; border: 2px solid #bbf7d0; }
-.atp-bigbtn--right:hover { background: #f0fdf4; border-color: #4ade80; }
+.atp-bigbtn--right:hover:not(:disabled) { background: #dcfce7; border-color: #22c55e; color: #166534; box-shadow: 0 8px 18px rgba(34,197,94,0.2); }
+.atp-bigbtn--right:active:not(:disabled) { background: #bbf7d0; transform: translateY(1px); }
 .atp-bigbtn--primary {
   width: 100%;
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: #fff;
   box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35);
 }
-.atp-bigbtn--primary:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(139, 92, 246, 0.45); }
+.atp-bigbtn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(139, 92, 246, 0.45); filter: brightness(1.05); }
+.atp-bigbtn--primary:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 3px 10px rgba(139,92,246,0.3); }
 .atp-bigbtn--ghost {
   background: #fff; color: #334155;
   border: 1px solid #cbd5e1;
 }
-.atp-bigbtn--ghost:hover { background: #f1f5f9; border-color: #94a3b8; }
+.atp-bigbtn--ghost:hover:not(:disabled) { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
+.atp-bigbtn--ghost:active:not(:disabled) { background: #e0e7ff; }
 
 /* result */
 .atp-result {

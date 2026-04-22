@@ -189,11 +189,14 @@
 
             <details class="atf-raw">
               <summary>{{ $t('agileTraining.facilitator.allPrinciples') }}</summary>
-              <ul class="atf-raw__list">
-                <li v-for="row in resultsModal.data.per_principle" :key="'a-'+row.key">
-                  <div class="atf-raw__name">{{ row.short }}</div>
+              <ul class="atf-raw__list atf-raw__list--full">
+                <li v-for="row in resultsModal.data.per_principle" :key="'a-'+row.key" class="atf-raw__item">
+                  <div class="atf-raw__head">
+                    <span class="atf-raw__name">{{ row.short }}</span>
+                    <span class="atf-raw__meta">{{ row.relevant_pct }}% · {{ row.total }} {{ $t('agileTraining.common.votes') }}</span>
+                  </div>
                   <div class="atf-raw__bar"><div :style="{ width: row.relevant_pct + '%' }"></div></div>
-                  <div class="atf-raw__meta">{{ row.relevant_pct }}% · {{ row.total }} {{ $t('agileTraining.common.votes') }}</div>
+                  <p v-if="row.text" class="atf-raw__text">{{ row.text }}</p>
                 </li>
               </ul>
             </details>
@@ -713,6 +716,29 @@ export default {
 .atf-raw__bar div { height: 100%; background: #8b5cf6; }
 .atf-raw__name { color: #0f172a; }
 .atf-raw__meta { text-align: right; font-weight: 600; }
+.atf-raw__list--full {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: none !important;
+}
+.atf-raw__list--full .atf-raw__item {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+}
+.atf-raw__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.atf-raw__list--full .atf-raw__name { font-weight: 700; font-size: 13px; }
+.atf-raw__list--full .atf-raw__meta { font-size: 12px; color: #334155; }
+.atf-raw__text { margin: 0; font-size: 13px; line-height: 1.55; color: #475569; }
 
 /* locale field in create form */
 .atf-locale-field {

@@ -205,13 +205,16 @@
 
         <details class="atp-block atp-all">
           <summary>📋 {{ $t('agileTraining.play.resultsScreen.all') }}</summary>
-          <ul class="atp-listbars">
-            <li v-for="row in resultsData.per_principle" :key="'all-'+row.key">
-              <div class="atp-listbars__name">{{ row.short }}</div>
-              <div class="atp-listbars__track">
-                <div class="atp-listbars__fill" :style="{ width: row.relevant_pct + '%' }"></div>
+          <ul class="atp-all__list">
+            <li v-for="row in resultsData.per_principle" :key="'all-'+row.key" class="atp-all__item">
+              <div class="atp-all__head">
+                <span class="atp-all__name">{{ row.short }}</span>
+                <span class="atp-all__pct">{{ row.relevant_pct }}% · {{ row.total }} {{ $t('agileTraining.common.votes') }}</span>
               </div>
-              <div class="atp-listbars__pct">{{ row.relevant_pct }}%</div>
+              <div class="atp-all__track">
+                <div class="atp-all__fill" :style="{ width: row.relevant_pct + '%' }"></div>
+              </div>
+              <p class="atp-all__text">{{ row.text }}</p>
             </li>
           </ul>
         </details>
@@ -761,6 +764,27 @@ export default {
 .atp-diff--up { color: #16a34a; }
 .atp-diff--down { color: #b91c1c; }
 .atp-all summary { cursor: pointer; font-weight: 700; color: #1f2937; }
+.atp-all__list { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 12px; }
+.atp-all__item {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+}
+.atp-all__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.atp-all__name { font-weight: 700; color: #0f172a; font-size: 14px; }
+.atp-all__pct { color: #334155; font-weight: 600; font-size: 12px; white-space: nowrap; }
+.atp-all__track { height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+.atp-all__fill { height: 100%; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); }
+.atp-all__text { margin: 0; color: #475569; font-size: 13px; line-height: 1.55; }
 
 .atp-results__actions {
   display: flex; justify-content: center; margin-top: 20px;

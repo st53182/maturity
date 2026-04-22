@@ -559,3 +559,70 @@ def group_reset(group_id: int):
     # участников оставляем — они могут переиграть; достаточно очистить ответы
     db.session.commit()
     return jsonify({"reset": True})
+
+
+@bp_agile_cynefin.get("/groups/<int:group_id>/participants")
+@jwt_required()
+def group_participants(group_id: int):
+    """Детальные ответы каждого участника: какой домен и стратегию выбрал
+    по каждому кейсу. Используется в панели фасилитатора для разбора."""
+    uid = _uid()
+    g = (
+        AgileTrainingGroup.query
+        .join(AgileTrainingSession, AgileTrainingSession.id == AgileTrainingGroup.session_id)
+        .filter(AgileTrainingGroup.id == group_id, AgileTrainingSession.owner_user_id == uid)
+        .first()
+    )
+    if not g:
+        return jsonify({"error": "Not found"}), 404
+
+    sess = AgileTrainingSession.query.get(g.session_id)
+    locale = (sess.locale if sess else "ru") or "ru"
+    cases = get_cases_for_locale(locale)
+    cases_index = {c["key"]: c for c in cases}
+
+    participants = (
+        AgileTrainingParticipant.query
+        .filter_by(group_id=g.id)
+        .order_by(AgileTrainingParticipant.id.asc())
+        .all()
+    )
+    rows = []
+    for idx, p in enumerate(participants, start=1):
+        answers = (
+            AgileTrainingCynefinAnswer.query
+            .filter_by(participant_id=p.id)
+            .order_by(AgileTrainingCynefinAnswer.id.asc())
+            .all()
+        )
+        per_case = []
+        for a in answers:
+            case = cases_index.get(a.case_key) or {}
+            per_case.append({
+                "case_key": a.case_key,
+                "case_title": case.get("title", a.case_key),
+                "case_category": case.get("category", ""),
+                "expert_domain": case.get("expert_domain"),
+                "selected_domain": a.selected_domain,
+                "selected_strategy": a.selected_strategy,
+                "selected_strategy_label": (
+                    get_strategy_label(a.selected_domain, a.selected_strategy, locale)
+                    if (a.selected_strategy and a.selected_domain) else None
+                ),
+                "custom_strategy": a.custom_strategy,
+                "domain_match": bool(case.get("expert_domain") and a.selected_domain == case.get("expert_domain")),
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+        rows.append({
+            "id": p.id,
+            "display_name": p.display_name or f"#{idx}",
+            "anonymous_label": f"#{idx}",
+            "joined_at": p.created_at.isoformat() if p.created_at else None,
+            "cases_answered": len(answers),
+            "correct_domain_count": sum(1 for c in per_case if c["domain_match"]),
+            "answers": per_case,
+        })
+    return jsonify({
+        "group": {"id": g.id, "name": g.name, "slug": g.slug},
+        "participants": rows,
+    })

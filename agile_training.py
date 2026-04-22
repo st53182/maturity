@@ -607,6 +607,81 @@ def groups_reset(group_id: int):
     return jsonify({"reset": True})
 
 
+@bp_agile_training.get("/groups/<int:group_id>/participants")
+@jwt_required()
+def groups_participants(group_id: int):
+    """Детальные ответы каждого участника группы — для фасилитатора,
+    чтобы он мог посмотреть, что именно выбрал каждый человек."""
+    uid = _uid()
+    g = _group_for_owner(group_id, uid)
+    if not g:
+        return jsonify({"error": "Not found"}), 404
+
+    participants = (
+        AgileTrainingParticipant.query
+        .filter_by(group_id=g.id)
+        .order_by(AgileTrainingParticipant.id.asc())
+        .all()
+    )
+    principles_index = {p["key"]: p for p in AGILE_PRINCIPLES}
+    rows = []
+    for idx, p in enumerate(participants, start=1):
+        answers = (
+            AgileTrainingAnswer.query
+            .filter_by(participant_id=p.id)
+            .order_by(AgileTrainingAnswer.id.asc())
+            .all()
+        )
+        per_principle = []
+        rel = 0
+        out = 0
+        for a in answers:
+            meta = principles_index.get(a.principle_key) or {}
+            per_principle.append({
+                "principle_key": a.principle_key,
+                "short": meta.get("short", a.principle_key),
+                "text": meta.get("text", ""),
+                "value": a.value,
+                "rewrite": a.rewrite,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+            if a.value == "relevant":
+                rel += 1
+            elif a.value == "outdated":
+                out += 1
+        suggestions = (
+            AgileTrainingRewriteSuggestion.query
+            .filter_by(participant_id=p.id)
+            .order_by(AgileTrainingRewriteSuggestion.id.asc())
+            .all()
+        )
+        suggestions_out = [
+            {
+                "id": s.id,
+                "principle_key": s.principle_key,
+                "short": (principles_index.get(s.principle_key) or {}).get("short", s.principle_key),
+                "text": s.text,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in suggestions
+        ]
+        rows.append({
+            "id": p.id,
+            "display_name": p.display_name or f"#{idx}",
+            "anonymous_label": f"#{idx}",
+            "joined_at": p.created_at.isoformat() if p.created_at else None,
+            "answers_total": len(answers),
+            "relevant_count": rel,
+            "outdated_count": out,
+            "answers": per_principle,
+            "suggestions": suggestions_out,
+        })
+    return jsonify({
+        "group": _serialize_group(g),
+        "participants": rows,
+    })
+
+
 @bp_agile_training.get("/sessions/<int:session_id>/results")
 @jwt_required()
 def sessions_results(session_id: int):

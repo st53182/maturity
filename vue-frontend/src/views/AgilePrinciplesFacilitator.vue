@@ -216,6 +216,62 @@
                 </li>
               </ul>
             </details>
+
+            <section class="atf-participants">
+              <h4>👥 {{ $t('agileTraining.facilitator.participantsTitle') }}</h4>
+              <p class="atf-muted">{{ $t('agileTraining.facilitator.participantsLead') }}</p>
+              <p v-if="!resultsModal.participants.length" class="atf-muted">
+                {{ $t('agileTraining.facilitator.participantsEmpty') }}
+              </p>
+              <ul v-else class="atf-participants__list">
+                <li v-for="p in resultsModal.participants" :key="'p-'+p.id" class="atf-participants__item">
+                  <button
+                    type="button"
+                    class="atf-participants__toggle"
+                    :class="{ 'is-open': !!resultsModal.expanded[p.id] }"
+                    @click="toggleParticipant(p.id)"
+                  >
+                    <span class="atf-participants__name">
+                      <span class="atf-participants__avatar">{{ (p.display_name || p.anonymous_label).slice(0,2).toUpperCase() }}</span>
+                      <span>{{ p.display_name || $t('agileTraining.facilitator.anonymous') }}</span>
+                      <span class="atf-participants__anon">{{ p.anonymous_label }}</span>
+                    </span>
+                    <span class="atf-participants__stats">
+                      <span class="atf-pill atf-pill--ok">{{ $t('agileTraining.facilitator.relevantCount', { n: p.relevant_count }) }}</span>
+                      <span class="atf-pill atf-pill--no">{{ $t('agileTraining.facilitator.outdatedCount', { n: p.outdated_count }) }}</span>
+                      <span class="atf-participants__arrow">{{ resultsModal.expanded[p.id] ? '−' : '+' }}</span>
+                    </span>
+                  </button>
+                  <div v-if="resultsModal.expanded[p.id]" class="atf-participants__body">
+                    <p v-if="!p.answers.length" class="atf-muted">
+                      {{ $t('agileTraining.facilitator.noAnswersForParticipant') }}
+                    </p>
+                    <ol v-else class="atf-answers">
+                      <li v-for="a in p.answers" :key="'pa-'+p.id+'-'+a.principle_key" class="atf-answers__item">
+                        <div class="atf-answers__head">
+                          <span class="atf-answers__short">{{ a.short }}</span>
+                          <span class="atf-answers__value" :class="a.value === 'relevant' ? 'is-relevant' : 'is-outdated'">
+                            {{ a.value === 'relevant' ? '✅ ' + $t('agileTraining.common.relevant') : '❌ ' + $t('agileTraining.common.outdated') }}
+                          </span>
+                        </div>
+                        <p v-if="a.text" class="atf-answers__text">{{ a.text }}</p>
+                        <p v-if="a.rewrite" class="atf-answers__rewrite">
+                          ✍ <em>{{ $t('agileTraining.facilitator.rewriteLabel') }}:</em> {{ a.rewrite }}
+                        </p>
+                      </li>
+                    </ol>
+                    <div v-if="p.suggestions && p.suggestions.length" class="atf-sugg-list" style="margin-top: 12px;">
+                      <div class="atf-sugg-list__title">
+                        ✍ {{ $t('agileTraining.facilitator.suggestionsFromParticipant') }}
+                      </div>
+                      <div v-for="s in p.suggestions" :key="'ps-'+s.id" class="atf-sugg">
+                        <div class="atf-sugg__text"><strong>{{ s.short }}:</strong> {{ s.text }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </section>
           </div>
           <div class="atf-modal__body" v-else>
             <p class="atf-muted">{{ $t('agileTraining.common.loading') }}…</p>
@@ -349,7 +405,7 @@ export default {
       creatingGroup: false,
       copiedSlug: '',
       principlesTotal: 12,
-      resultsModal: { open: false, group: null, data: null, suggestions: {} },
+      resultsModal: { open: false, group: null, data: null, suggestions: {}, participants: [], expanded: {} },
       compareAll: { open: false, data: null }
     };
   },
@@ -478,7 +534,7 @@ export default {
       }
     },
     async openGroupResults(g) {
-      this.resultsModal = { open: true, group: g, data: null, suggestions: {} };
+      this.resultsModal = { open: true, group: g, data: null, suggestions: {}, participants: [], expanded: {} };
       document.body.style.overflow = 'hidden';
       try {
         const res = await axios.get(`/api/agile-training/g/${g.slug}/results`);
@@ -493,12 +549,23 @@ export default {
       } catch (e) {
         this.resultsModal.suggestions = {};
       }
+      try {
+        const parts = await axios.get(`/api/agile-training/groups/${g.id}/participants`,
+          { headers: this.authHeaders() });
+        this.resultsModal.participants = parts.data.participants || [];
+      } catch (e) {
+        this.resultsModal.participants = [];
+      }
     },
     suggestionsForPrinciple(key) {
       return (this.resultsModal.suggestions || {})[key] || [];
     },
+    toggleParticipant(pid) {
+      const current = !!this.resultsModal.expanded[pid];
+      this.resultsModal.expanded = { ...this.resultsModal.expanded, [pid]: !current };
+    },
     closeResults() {
-      this.resultsModal = { open: false, group: null, data: null, suggestions: {} };
+      this.resultsModal = { open: false, group: null, data: null, suggestions: {}, participants: [], expanded: {} };
       document.body.style.overflow = '';
     },
     async openCompareAll() {
@@ -786,6 +853,47 @@ export default {
 }
 .atf-sugg__text { font-size: 13px; color: #0f172a; line-height: 1.5; white-space: pre-wrap; }
 .atf-sugg__meta { font-size: 11px; color: #64748b; }
+
+/* Participants drill-down */
+.atf-participants { margin-top: 22px; }
+.atf-participants h4 { margin-bottom: 6px; }
+.atf-participants__list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.atf-participants__item { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+.atf-participants__toggle {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: #fafafa; border: none; cursor: pointer; font: inherit;
+  gap: 12px; text-align: left; transition: background 0.15s ease;
+}
+.atf-participants__toggle:hover { background: #f1f5f9; }
+.atf-participants__toggle.is-open { background: #eef2ff; }
+.atf-participants__name { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #0f172a; min-width: 0; }
+.atf-participants__avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+}
+.atf-participants__anon { color: #64748b; font-size: 12px; font-weight: 500; }
+.atf-participants__stats { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.atf-participants__arrow { font-weight: 700; color: #64748b; font-size: 18px; margin-left: 4px; min-width: 18px; text-align: center; }
+.atf-pill {
+  display: inline-flex; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+}
+.atf-pill--ok { background: #dcfce7; color: #166534; }
+.atf-pill--no { background: #fee2e2; color: #991b1b; }
+.atf-participants__body { padding: 14px 16px 16px; background: #fff; border-top: 1px solid #eef2f7; }
+.atf-answers { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; counter-reset: atf-ans; }
+.atf-answers__item { padding: 10px 12px; background: #f8fafc; border-radius: 10px; border-left: 3px solid #e2e8f0; }
+.atf-answers__item:has(.is-relevant) { border-left-color: #22c55e; }
+.atf-answers__item:has(.is-outdated) { border-left-color: #ef4444; }
+.atf-answers__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.atf-answers__short { font-weight: 600; color: #0f172a; font-size: 13px; }
+.atf-answers__value { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.atf-answers__value.is-relevant { background: #dcfce7; color: #166534; }
+.atf-answers__value.is-outdated { background: #fee2e2; color: #991b1b; }
+.atf-answers__text { margin: 6px 0 0; font-size: 12px; color: #475569; line-height: 1.5; }
+.atf-answers__rewrite { margin: 6px 0 0; font-size: 12px; color: #7c3aed; background: #faf5ff; padding: 6px 10px; border-radius: 8px; line-height: 1.5; }
 
 /* locale field in create form */
 .atf-locale-field {

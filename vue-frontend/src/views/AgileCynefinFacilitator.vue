@@ -145,6 +145,67 @@
               <b>💡</b> {{ row.expert_rationale }}
             </p>
           </div>
+
+          <section class="cyn-participants">
+            <h4>👥 {{ $t('agileTraining.facilitator.participantsTitle') }}</h4>
+            <p class="cyn-modal__lead">{{ $t('agileTraining.facilitator.participantsLead') }}</p>
+            <p v-if="!resultsModal.participants.length" class="cyn-fac__hint">
+              {{ $t('agileTraining.facilitator.participantsEmpty') }}
+            </p>
+            <ul v-else class="cyn-participants__list">
+              <li v-for="p in resultsModal.participants" :key="'cp-'+p.id" class="cyn-participants__item">
+                <button
+                  type="button"
+                  class="cyn-fac__participants-toggle"
+                  :class="{ 'is-open': !!resultsModal.expanded[p.id] }"
+                  @click="toggleParticipant(p.id)"
+                >
+                  <span class="cyn-participants__name">
+                    <span class="cyn-participants__avatar">{{ (p.display_name || p.anonymous_label).slice(0,2).toUpperCase() }}</span>
+                    <span>{{ p.display_name || $t('agileTraining.facilitator.anonymous') }}</span>
+                    <span class="cyn-participants__anon">{{ p.anonymous_label }}</span>
+                  </span>
+                  <span class="cyn-participants__stats">
+                    <span class="cyn-pill">{{ $t('agileTraining.facilitator.casesAnswered', { n: p.cases_answered }) }}</span>
+                    <span class="cyn-pill cyn-pill--ok">{{ $t('agileTraining.facilitator.correctDomain', { n: p.correct_domain_count }) }}</span>
+                    <span class="cyn-participants__arrow">{{ resultsModal.expanded[p.id] ? '−' : '+' }}</span>
+                  </span>
+                </button>
+                <div v-if="resultsModal.expanded[p.id]" class="cyn-participants__body">
+                  <p v-if="!p.answers.length" class="cyn-fac__hint">
+                    {{ $t('agileTraining.facilitator.noAnswersForParticipant') }}
+                  </p>
+                  <ol v-else class="cyn-participants__answers">
+                    <li v-for="a in p.answers" :key="'cpa-'+p.id+'-'+a.case_key" class="cyn-participants__answer">
+                      <div class="cyn-participants__answer-head">
+                        <span class="cyn-case-row__cat" v-if="a.case_category">{{ a.case_category }}</span>
+                        <strong>{{ a.case_title }}</strong>
+                      </div>
+                      <div class="cyn-participants__fields">
+                        <div class="cyn-participants__field">
+                          <span class="cyn-participants__k">{{ $t('agileTraining.facilitator.ownerDomain') }}:</span>
+                          <span :class="['cyn-dom-pill', 'cyn-dom-pill--' + a.selected_domain]">
+                            {{ $t('agileTraining.cynefin.domain.' + a.selected_domain) }}
+                          </span>
+                          <span v-if="a.expert_domain && !a.domain_match" class="cyn-participants__exp">
+                            · {{ $t('agileTraining.facilitator.expertDomain', { domain: $t('agileTraining.cynefin.domain.' + a.expert_domain) }) }}
+                          </span>
+                          <span v-else-if="a.domain_match" class="cyn-participants__match">✓</span>
+                        </div>
+                        <div class="cyn-participants__field" v-if="a.selected_strategy_label || a.custom_strategy">
+                          <span class="cyn-participants__k">{{ $t('agileTraining.facilitator.ownerStrategy') }}:</span>
+                          <span v-if="a.selected_strategy_label">{{ a.selected_strategy_label }}</span>
+                          <span v-if="a.custom_strategy" class="cyn-participants__custom">
+                            ✍ {{ $t('agileTraining.facilitator.customStrategy') }}: “{{ a.custom_strategy }}”
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  </ol>
+                </div>
+              </li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>
@@ -273,7 +334,7 @@ export default {
       groups: [],
       newGroupName: '',
       copiedSlug: '',
-      resultsModal: { open: false, group: null, loading: false, data: null },
+      resultsModal: { open: false, group: null, loading: false, data: null, participants: [], expanded: {} },
       compareAll: { open: false, loading: false, data: null },
     };
   },
@@ -398,7 +459,7 @@ export default {
       }
     },
     async openGroupResults(g) {
-      this.resultsModal = { open: true, group: g, loading: true, data: null };
+      this.resultsModal = { open: true, group: g, loading: true, data: null, participants: [], expanded: {} };
       try {
         const res = await axios.get(`/api/agile-training/cynefin/groups/${g.id}/results`, {
           headers: this.authHeaders(),
@@ -411,9 +472,20 @@ export default {
       } finally {
         this.resultsModal.loading = false;
       }
+      try {
+        const parts = await axios.get(`/api/agile-training/cynefin/groups/${g.id}/participants`,
+          { headers: this.authHeaders() });
+        this.resultsModal.participants = parts.data.participants || [];
+      } catch (e) {
+        this.resultsModal.participants = [];
+      }
+    },
+    toggleParticipant(pid) {
+      const cur = !!this.resultsModal.expanded[pid];
+      this.resultsModal.expanded = { ...this.resultsModal.expanded, [pid]: !cur };
     },
     closeResults() {
-      this.resultsModal = { open: false, group: null, loading: false, data: null };
+      this.resultsModal = { open: false, group: null, loading: false, data: null, participants: [], expanded: {} };
     },
     async openCompareAll() {
       if (!this.activeSession) return;
@@ -559,6 +631,41 @@ export default {
 .cyn-case-row__cat { color: #7c3aed; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-right: 6px; }
 .cyn-case-row__scenario { color: #334155; margin: 0 0 10px; line-height: 1.55; }
 .cyn-case-row__rationale { color: #475569; margin: 10px 0 0; font-size: 13px; line-height: 1.5; }
+
+/* Participants drill-down */
+.cyn-participants { margin-top: 22px; }
+.cyn-participants h4 { margin-bottom: 4px; }
+.cyn-participants__list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.cyn-participants__item { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+.cyn-fac__participants-toggle {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: #fafafa; border: none; cursor: pointer; font: inherit;
+  gap: 12px; text-align: left; transition: background 0.15s ease;
+}
+.cyn-fac__participants-toggle:hover:not(:disabled) { background: #f5f3ff; }
+.cyn-fac__participants-toggle.is-open { background: #ede9fe; }
+.cyn-participants__name { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #0f172a; min-width: 0; }
+.cyn-participants__avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.cyn-participants__anon { color: #64748b; font-size: 12px; font-weight: 500; }
+.cyn-participants__stats { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cyn-participants__arrow { font-weight: 700; color: #64748b; font-size: 18px; margin-left: 4px; min-width: 18px; text-align: center; }
+.cyn-pill { display: inline-flex; padding: 2px 8px; border-radius: 999px; background: #ede9fe; color: #6d28d9; font-size: 11px; font-weight: 700; }
+.cyn-pill--ok { background: #dcfce7; color: #166534; }
+.cyn-participants__body { padding: 14px 16px 16px; background: #fff; border-top: 1px solid #eef2f7; }
+.cyn-participants__answers { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.cyn-participants__answer { padding: 10px 12px; background: #faf5ff; border-radius: 10px; border-left: 3px solid #c4b5fd; }
+.cyn-participants__answer-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.cyn-participants__fields { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #334155; }
+.cyn-participants__field { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cyn-participants__k { color: #64748b; font-weight: 600; font-size: 12px; }
+.cyn-participants__exp { color: #b45309; font-size: 12px; }
+.cyn-participants__match { color: #15803d; font-weight: 700; }
+.cyn-participants__custom { color: #7c3aed; font-style: italic; font-size: 12px; }
 
 .cyn-bars { display: flex; flex-direction: column; gap: 6px; }
 .cyn-bars__row { display: grid; grid-template-columns: 130px 1fr 44px; gap: 8px; align-items: center; }

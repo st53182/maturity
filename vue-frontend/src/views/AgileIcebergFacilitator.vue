@@ -173,6 +173,129 @@
               <b>💡 {{ $t('agileTraining.iceberg.expertSummary') }}:</b> {{ row.summary }}
             </p>
           </div>
+
+          <section class="ice-participants">
+            <h4 class="ice-section-title">👥 {{ $t('agileTraining.facilitator.participantsTitle') }}</h4>
+            <p class="ice-modal__lead">{{ $t('agileTraining.facilitator.participantsLead') }}</p>
+            <p v-if="!resultsModal.participants.length" class="ice-fac__hint">
+              {{ $t('agileTraining.facilitator.participantsEmpty') }}
+            </p>
+            <ul v-else class="ice-participants__list">
+              <li v-for="p in resultsModal.participants" :key="'ip-'+p.id" class="ice-participants__item">
+                <button
+                  type="button"
+                  class="ice-fac__participants-toggle"
+                  :class="{ 'is-open': !!resultsModal.expandedP[p.id] }"
+                  @click="toggleParticipant(p.id)"
+                >
+                  <span class="ice-participants__name">
+                    <span class="ice-participants__avatar">{{ (p.display_name || p.anonymous_label).slice(0,2).toUpperCase() }}</span>
+                    <span>{{ p.display_name || $t('agileTraining.facilitator.anonymous') }}</span>
+                    <span class="ice-participants__anon">{{ p.anonymous_label }}</span>
+                  </span>
+                  <span class="ice-participants__stats">
+                    <span class="ice-pill">{{ $t('agileTraining.facilitator.casesAnswered', { n: p.cases_answered }) }}</span>
+                    <span class="ice-pill ice-pill--score">{{ $t('agileTraining.facilitator.depthScoreAvg') }}: {{ p.avg_depth_score }}</span>
+                    <span class="ice-participants__arrow">{{ resultsModal.expandedP[p.id] ? '−' : '+' }}</span>
+                  </span>
+                </button>
+                <div v-if="resultsModal.expandedP[p.id]" class="ice-participants__body">
+                  <p v-if="!p.answers.length" class="ice-fac__hint">
+                    {{ $t('agileTraining.facilitator.noAnswersForParticipant') }}
+                  </p>
+                  <ul v-else class="ice-participants__cases">
+                    <li v-for="a in p.answers" :key="'ipa-'+p.id+'-'+a.case_key" class="ice-participants__case">
+                      <button
+                        type="button"
+                        class="ice-fac__case-toggle"
+                        :class="{ 'is-open': isCaseOpen(p.id, a.case_key) }"
+                        @click="toggleCase(p.id, a.case_key)"
+                      >
+                        <span class="ice-participants__case-head">
+                          <span class="ice-case-row__cat" v-if="a.case_category">{{ a.case_category }}</span>
+                          <strong>{{ a.case_title }}</strong>
+                        </span>
+                        <span class="ice-participants__case-stats">
+                          <span class="ice-pill ice-pill--score">{{ $t('agileTraining.facilitator.depthScore') }}: {{ a.depth_score }}</span>
+                          <span v-if="a.primary_level" class="ice-pill">{{ levelName(a.primary_level) }}</span>
+                          <span class="ice-participants__arrow">{{ isCaseOpen(p.id, a.case_key) ? '−' : '+' }}</span>
+                        </span>
+                      </button>
+                      <div v-if="isCaseOpen(p.id, a.case_key)" class="ice-participants__case-body">
+                        <div class="ice-participants__section">
+                          <div class="ice-participants__k">🧊 {{ $t('agileTraining.facilitator.placementsLabel') }}</div>
+                          <div v-for="lk in LEVEL_KEYS" :key="'pl-'+p.id+'-'+a.case_key+'-'+lk" class="ice-participants__lvl">
+                            <div class="ice-participants__lvl-name">{{ levelName(lk) }}</div>
+                            <div class="ice-participants__lvl-items">
+                              <span v-if="!(a.placements_by_level && a.placements_by_level[lk] && a.placements_by_level[lk].length)" class="ice-participants__dim">—</span>
+                              <span
+                                v-for="it in (a.placements_by_level && a.placements_by_level[lk] || [])"
+                                :key="'pli-'+p.id+'-'+it.key"
+                                class="ice-participants__chip"
+                                :class="{ 'ice-participants__chip--match': it.match, 'ice-participants__chip--miss': !it.match }"
+                                :title="it.match ? $t('agileTraining.facilitator.expertMatch') : $t('agileTraining.facilitator.expertMismatch')"
+                              >
+                                {{ it.label }}<span v-if="!it.match"> · {{ levelName(it.expert_level) }}</span>
+                              </span>
+                            </div>
+                          </div>
+                          <div v-if="a.custom_items && a.custom_items.length" class="ice-participants__lvl">
+                            <div class="ice-participants__lvl-name">✍ {{ $t('agileTraining.facilitator.customItem') }}</div>
+                            <div class="ice-participants__lvl-items">
+                              <span v-for="(ci, i) in a.custom_items" :key="'ci-'+p.id+'-'+i" class="ice-participants__chip ice-participants__chip--custom">
+                                {{ ci.text }} <em v-if="ci.level" class="ice-participants__dim">({{ levelName(ci.level) }})</em>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div v-if="a.chain && a.chain.length" class="ice-participants__section">
+                          <div class="ice-participants__k">🔗 {{ $t('agileTraining.facilitator.chainLabel') }}</div>
+                          <ul class="ice-participants__chain">
+                            <li v-for="step in a.chain" :key="'ch-'+p.id+'-'+a.case_key+'-'+step.level">
+                              <strong>{{ levelName(step.level) }}:</strong> {{ step.text }}
+                            </li>
+                          </ul>
+                        </div>
+
+                        <div v-if="a.superficial && a.superficial.length" class="ice-participants__section">
+                          <div class="ice-participants__k">🧠 {{ $t('agileTraining.facilitator.superficialLabel') }}</div>
+                          <ul class="ice-participants__sup">
+                            <li v-for="s in a.superficial" :key="'sup-'+p.id+'-'+s.key" :class="s.correct ? 'is-ok' : 'is-bad'">
+                              <div class="ice-participants__sup-text">«{{ s.text }}»</div>
+                              <div class="ice-participants__sup-meta">
+                                <span class="ice-participants__sup-label">
+                                  {{ $t('agileTraining.facilitator.sympUser') }}:
+                                  <b>{{ s.user_is_symptom ? $t('agileTraining.facilitator.isSymptom') : $t('agileTraining.facilitator.isRealCause') }}</b>
+                                </span>
+                                <span class="ice-participants__sup-label">
+                                  {{ $t('agileTraining.facilitator.sympExpert') }}:
+                                  <b>{{ s.expert_is_symptom ? $t('agileTraining.facilitator.isSymptom') : $t('agileTraining.facilitator.isRealCause') }}</b>
+                                </span>
+                                <span class="ice-participants__sup-verdict" :class="s.correct ? 'is-ok' : 'is-bad'">
+                                  {{ s.correct ? '✓ ' + $t('agileTraining.facilitator.sympCorrect') : '✕ ' + $t('agileTraining.facilitator.sympIncorrect') }}
+                                </span>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <div v-if="a.interventions && a.interventions.length" class="ice-participants__section">
+                          <div class="ice-participants__k">🛠 {{ $t('agileTraining.facilitator.interventionsLabel') }}</div>
+                          <ul class="ice-participants__iv">
+                            <li v-for="iv in a.interventions" :key="'iv-'+p.id+'-'+a.case_key+'-'+iv.level">
+                              <div class="ice-participants__iv-head"><strong>{{ levelName(iv.level) }}</strong></div>
+                              <div class="ice-participants__iv-text">{{ iv.text }}</div>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>
@@ -266,7 +389,7 @@ export default {
       groups: [],
       newGroupName: '',
       copiedSlug: '',
-      resultsModal: { open: false, group: null, loading: false, data: null },
+      resultsModal: { open: false, group: null, loading: false, data: null, participants: [], expandedP: {}, expandedC: {} },
       compareAll: { open: false, loading: false, data: null },
     };
   },
@@ -378,7 +501,7 @@ export default {
       } catch (_) { alert('Failed to copy link'); }
     },
     async openGroupResults(g) {
-      this.resultsModal = { open: true, group: g, loading: true, data: null };
+      this.resultsModal = { open: true, group: g, loading: true, data: null, participants: [], expandedP: {}, expandedC: {} };
       try {
         const res = await axios.get(`/api/agile-training/iceberg/groups/${g.id}/results`, {
           headers: this.authHeaders(),
@@ -391,8 +514,30 @@ export default {
       } finally {
         this.resultsModal.loading = false;
       }
+      try {
+        const parts = await axios.get(`/api/agile-training/iceberg/groups/${g.id}/participants`,
+          { headers: this.authHeaders() });
+        this.resultsModal.participants = parts.data.participants || [];
+      } catch (e) {
+        this.resultsModal.participants = [];
+      }
     },
-    closeResults() { this.resultsModal = { open: false, group: null, loading: false, data: null }; },
+    toggleParticipant(pid) {
+      const cur = !!this.resultsModal.expandedP[pid];
+      this.resultsModal.expandedP = { ...this.resultsModal.expandedP, [pid]: !cur };
+    },
+    toggleCase(pid, caseKey) {
+      const key = pid + ':' + caseKey;
+      const cur = !!this.resultsModal.expandedC[key];
+      this.resultsModal.expandedC = { ...this.resultsModal.expandedC, [key]: !cur };
+    },
+    isCaseOpen(pid, caseKey) {
+      return !!this.resultsModal.expandedC[pid + ':' + caseKey];
+    },
+    levelName(lk) {
+      return this.$t('agileTraining.iceberg.level.' + lk);
+    },
+    closeResults() { this.resultsModal = { open: false, group: null, loading: false, data: null, participants: [], expandedP: {}, expandedC: {} }; },
     async openCompareAll() {
       if (!this.activeSession) return;
       this.compareAll = { open: true, loading: true, data: null };
@@ -538,6 +683,79 @@ export default {
 .ice-case-row__cat { color: #0369a1; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-right: 6px; }
 .ice-case-row__scenario { color: #334155; margin: 0 0 10px; line-height: 1.55; }
 .ice-case-row__expert { color: #475569; margin: 10px 0 0; font-size: 13px; line-height: 1.5; background: #f8fafc; padding: 10px 12px; border-radius: 10px; }
+
+/* Participants drill-down */
+.ice-participants { margin-top: 24px; }
+.ice-participants__list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.ice-participants__item { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+.ice-fac__participants-toggle {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: #fafafa; border: none; cursor: pointer; font: inherit;
+  gap: 12px; text-align: left; transition: background 0.15s ease;
+}
+.ice-fac__participants-toggle:hover:not(:disabled) { background: #f0f9ff; }
+.ice-fac__participants-toggle.is-open { background: #e0f2fe; }
+.ice-participants__name { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #0f172a; min-width: 0; }
+.ice-participants__avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9, #0369a1); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.ice-participants__anon { color: #64748b; font-size: 12px; font-weight: 500; }
+.ice-participants__stats { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ice-participants__arrow { font-weight: 700; color: #64748b; font-size: 18px; margin-left: 4px; min-width: 18px; text-align: center; }
+.ice-participants__body { padding: 14px 16px 16px; background: #fff; border-top: 1px solid #eef2f7; }
+.ice-participants__cases { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.ice-participants__case { background: #f0f9ff; border-radius: 10px; overflow: hidden; }
+.ice-fac__case-toggle {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: transparent; border: none; cursor: pointer; font: inherit;
+  gap: 12px; text-align: left; transition: background 0.15s ease;
+}
+.ice-fac__case-toggle:hover:not(:disabled) { background: #e0f2fe; }
+.ice-fac__case-toggle.is-open { background: #bae6fd; }
+.ice-participants__case-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ice-participants__case-stats { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ice-participants__case-body {
+  padding: 12px 14px 14px; background: #fff; border-top: 1px solid #dbeafe;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.ice-participants__section { display: flex; flex-direction: column; gap: 6px; }
+.ice-participants__k { font-weight: 700; color: #0f172a; font-size: 13px; }
+.ice-participants__lvl {
+  display: grid; grid-template-columns: 180px 1fr; gap: 8px; align-items: start;
+  padding: 4px 0;
+}
+.ice-participants__lvl-name { font-size: 12px; color: #475569; font-weight: 600; }
+.ice-participants__lvl-items { display: flex; gap: 6px; flex-wrap: wrap; }
+.ice-participants__chip {
+  display: inline-flex; padding: 3px 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 500; border: 1px solid transparent; line-height: 1.3;
+}
+.ice-participants__chip--match { background: #dcfce7; color: #166534; border-color: #86efac; }
+.ice-participants__chip--miss { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.ice-participants__chip--custom { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; font-style: italic; }
+.ice-participants__dim { color: #94a3b8; font-size: 11px; }
+.ice-participants__chain { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.ice-participants__chain li { padding: 8px 10px; background: #f8fafc; border-left: 3px solid #0ea5e9; border-radius: 6px; font-size: 13px; color: #334155; line-height: 1.45; }
+.ice-participants__sup { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.ice-participants__sup li { padding: 8px 10px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #e2e8f0; font-size: 12px; }
+.ice-participants__sup li.is-ok { border-left-color: #22c55e; }
+.ice-participants__sup li.is-bad { border-left-color: #ef4444; background: #fef2f2; }
+.ice-participants__sup-text { color: #0f172a; font-size: 13px; margin-bottom: 4px; font-style: italic; }
+.ice-participants__sup-meta { display: flex; gap: 12px; flex-wrap: wrap; color: #475569; }
+.ice-participants__sup-label { font-size: 11px; }
+.ice-participants__sup-verdict { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+.ice-participants__sup-verdict.is-ok { background: #dcfce7; color: #166534; }
+.ice-participants__sup-verdict.is-bad { background: #fee2e2; color: #991b1b; }
+.ice-participants__iv { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.ice-participants__iv li { padding: 8px 10px; background: #f0f9ff; border-radius: 8px; border-left: 3px solid #0ea5e9; }
+.ice-participants__iv-head { font-size: 11px; color: #0369a1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+.ice-participants__iv-text { font-size: 13px; color: #0f172a; line-height: 1.5; white-space: pre-wrap; }
+@media (max-width: 640px) {
+  .ice-participants__lvl { grid-template-columns: 1fr; gap: 2px; }
+}
 .ice-case-row__stats { display: flex; gap: 6px; flex-wrap: wrap; }
 .ice-pill { background: #f1f5f9; color: #334155; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; }
 .ice-pill--score { background: #ecfeff; color: #0369a1; }

@@ -585,3 +585,127 @@ def group_reset(group_id: int):
     AgileTrainingIcebergAnswer.query.filter_by(group_id=g.id).delete()
     db.session.commit()
     return jsonify({"reset": True})
+
+
+@bp_agile_iceberg.get("/groups/<int:group_id>/participants")
+@jwt_required()
+def group_participants(group_id: int):
+    """Детальные ответы каждого участника группы по каждому кейсу:
+    что он разложил по уровням айсберга, как классифицировал поверхностные
+    объяснения, какую причинную цепочку построил и какие интервенции предложил."""
+    uid = _uid()
+    g = (
+        AgileTrainingGroup.query
+        .join(AgileTrainingSession, AgileTrainingSession.id == AgileTrainingGroup.session_id)
+        .filter(AgileTrainingGroup.id == group_id, AgileTrainingSession.owner_user_id == uid)
+        .first()
+    )
+    if not g:
+        return jsonify({"error": "Not found"}), 404
+
+    sess = AgileTrainingSession.query.get(g.session_id)
+    locale = (sess.locale if sess else "ru") or "ru"
+    cases = get_cases_for_locale(locale)
+    cases_index = {c["key"]: c for c in cases}
+
+    participants = (
+        AgileTrainingParticipant.query
+        .filter_by(group_id=g.id)
+        .order_by(AgileTrainingParticipant.id.asc())
+        .all()
+    )
+    rows = []
+    for idx, p in enumerate(participants, start=1):
+        answers = (
+            AgileTrainingIcebergAnswer.query
+            .filter_by(participant_id=p.id)
+            .order_by(AgileTrainingIcebergAnswer.id.asc())
+            .all()
+        )
+        per_case = []
+        total_score = 0
+        for a in answers:
+            payload = _safe_json_load(a.data_json)
+            case = cases_index.get(a.case_key) or {}
+            items_index = {it.get("key"): it for it in (case.get("items") or [])}
+            superficial_index = {
+                s.get("key"): s for s in (case.get("superficial_explanations") or [])
+            }
+
+            # placements: { item_key: level } — группируем по уровням для UI
+            placements_by_level: Dict[str, List[Dict]] = {lk: [] for lk in LEVEL_KEYS}
+            for item_key, lv in (payload.get("placements") or {}).items():
+                if lv not in LEVEL_KEYS:
+                    continue
+                meta = items_index.get(item_key) or {}
+                placements_by_level.setdefault(lv, []).append({
+                    "key": item_key,
+                    "label": meta.get("label", item_key),
+                    "expert_level": meta.get("level"),
+                    "match": meta.get("level") == lv,
+                })
+
+            # custom_items: [{text, level}]
+            customs_view = [
+                {"level": c.get("level"), "text": c.get("text")}
+                for c in (payload.get("custom_items") or [])
+                if isinstance(c, dict) and c.get("text")
+            ]
+
+            # chain: { level: "текст" } — пользовательское описание цепочки
+            chain_view = [
+                {"level": lk, "text": (payload.get("chain") or {}).get(lk, "")}
+                for lk in LEVEL_KEYS
+                if (payload.get("chain") or {}).get(lk)
+            ]
+
+            superficial_view = []
+            for key, val in (payload.get("superficial") or {}).items():
+                expert = superficial_index.get(key) or {}
+                expert_is_symptom = bool(expert.get("is_symptom"))
+                user_is_symptom = bool(val)
+                superficial_view.append({
+                    "key": key,
+                    "text": expert.get("text", key),
+                    "user_is_symptom": user_is_symptom,
+                    "expert_is_symptom": expert_is_symptom,
+                    "correct": user_is_symptom == expert_is_symptom,
+                    "rationale": expert.get("rationale"),
+                })
+
+            # interventions: { level: "текст" } — одна строка на уровень
+            interventions_view = []
+            for lk in LEVEL_KEYS:
+                txt = (payload.get("interventions") or {}).get(lk)
+                if isinstance(txt, str) and txt.strip():
+                    interventions_view.append({"level": lk, "text": txt.strip()})
+
+            per_case.append({
+                "case_key": a.case_key,
+                "case_title": case.get("title", a.case_key),
+                "case_category": case.get("category", ""),
+                "depth_score": int(a.depth_score or 0),
+                "primary_level": a.primary_level,
+                "placements_by_level": placements_by_level,
+                "custom_items": customs_view,
+                "chain": chain_view,
+                "superficial": superficial_view,
+                "interventions": interventions_view,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+            total_score += int(a.depth_score or 0)
+
+        rows.append({
+            "id": p.id,
+            "display_name": p.display_name or f"#{idx}",
+            "anonymous_label": f"#{idx}",
+            "joined_at": p.created_at.isoformat() if p.created_at else None,
+            "cases_answered": len(answers),
+            "total_depth_score": total_score,
+            "avg_depth_score": round(total_score / len(answers), 1) if answers else 0,
+            "answers": per_case,
+        })
+    return jsonify({
+        "group": {"id": g.id, "name": g.name, "slug": g.slug},
+        "participants": rows,
+    })

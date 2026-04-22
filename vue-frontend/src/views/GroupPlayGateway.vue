@@ -29,10 +29,11 @@
 import axios from 'axios';
 import AgilePrinciplesPlay from '@/views/AgilePrinciplesPlay.vue';
 import AgileCynefinPlay from '@/views/AgileCynefinPlay.vue';
+import AgileIcebergPlay from '@/views/AgileIcebergPlay.vue';
 
 export default {
   name: 'GroupPlayGateway',
-  components: { AgilePrinciplesPlay, AgileCynefinPlay },
+  components: { AgilePrinciplesPlay, AgileCynefinPlay, AgileIcebergPlay },
   data() {
     return {
       loading: true,
@@ -46,7 +47,9 @@ export default {
       return (this.session && this.session.exercise_key) || 'agile_principles';
     },
     playComponent() {
-      return this.exerciseKey === 'cynefin' ? 'AgileCynefinPlay' : 'AgilePrinciplesPlay';
+      if (this.exerciseKey === 'cynefin') return 'AgileCynefinPlay';
+      if (this.exerciseKey === 'iceberg') return 'AgileIcebergPlay';
+      return 'AgilePrinciplesPlay';
     },
   },
   async mounted() {

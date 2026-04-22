@@ -102,6 +102,7 @@ from qa_user_story import bp_qa_user_story
 from qa_test_docs import bp_qa_test_docs
 from agile_training import bp_agile_training
 from agile_cynefin import bp_agile_cynefin
+from agile_iceberg import bp_agile_iceberg
 from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
@@ -208,6 +209,13 @@ with app.app_context():
         db.session.commit()
     except Exception:
         db.session.rollback()
+    try:
+        db.session.execute(
+            text("ALTER TABLE agile_training_session ADD COLUMN exercise_key VARCHAR(64) NOT NULL DEFAULT 'agile_principles'")
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 register_ai_limit_hooks(app)
 start_message_cleanup_loop(app)
@@ -239,6 +247,7 @@ app.register_blueprint(bp_qa_user_story)
 app.register_blueprint(bp_qa_test_docs)
 app.register_blueprint(bp_agile_training)
 app.register_blueprint(bp_agile_cynefin)
+app.register_blueprint(bp_agile_iceberg)
 app.register_blueprint(bp_ai_limits)
 app.register_blueprint(bp_tests)
 app.register_blueprint(bp_interview_simulator)

@@ -72,6 +72,7 @@ const routes = [
   {path: '/agile-training', name: 'AgileTrainingHub', component: () => import('@/views/AgileTrainingHub.vue')},
   {path: '/agile-training/principles', name: 'AgilePrinciplesFacilitator', component: () => import('@/views/AgilePrinciplesFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/cynefin', name: 'AgileCynefinFacilitator', component: () => import('@/views/AgileCynefinFacilitator.vue'), meta: { requiresAuth: true }},
+  {path: '/agile-training/iceberg', name: 'AgileIcebergFacilitator', component: () => import('@/views/AgileIcebergFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/g/:slug', name: 'GroupPlay', component: () => import('@/views/GroupPlayGateway.vue')},
   {path: '/testing-types', name: 'TestingTypesAssignment', component: () => import('@/views/TestingTypesAssignment.vue'), meta: { requiresAuth: true }},
   {path: '/usability-report', name: 'UsabilityReport', component: () => import('@/views/UsabilityReport.vue'), meta: { requiresAuth: true }},

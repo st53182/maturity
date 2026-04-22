@@ -725,6 +725,43 @@ class AgileTrainingCynefinAnswer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingIcebergAnswer(db.Model):
+    """Ответ участника по одному кейсу упражнения «Айсберг».
+
+    В отличие от принципов / Cynefin у нас не один атом ответа, а
+    комплексный: размещения карточек по уровням, классификация
+    поверхностных объяснений, причинная цепочка, интервенции.
+    Храним всё в JSON-поле `data_json`, чтобы не плодить таблицы.
+    """
+
+    __tablename__ = "agile_training_iceberg_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id", "case_key",
+            name="uq_iceberg_answer_participant_case",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    case_key = db.Column(db.String(64), nullable=False, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    depth_score = db.Column(db.Integer, nullable=False, default=0)
+    primary_level = db.Column(db.String(32), nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

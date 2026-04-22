@@ -200,6 +200,13 @@ with app.app_context():
         db.session.commit()
     except Exception:
         db.session.rollback()
+    try:
+        db.session.execute(
+            text("ALTER TABLE agile_training_session ADD COLUMN locale VARCHAR(8) NOT NULL DEFAULT 'ru'")
+        )
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 register_ai_limit_hooks(app)
 start_message_cleanup_loop(app)

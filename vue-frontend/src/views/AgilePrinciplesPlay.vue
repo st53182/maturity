@@ -1,5 +1,21 @@
 <template>
   <div class="atp-page">
+    <!-- Переключатель языка в правом верхнем углу, доступен всегда -->
+    <div v-if="!loading" class="atp-lang" role="group" :aria-label="$t('agileTraining.common.language')">
+      <button
+        type="button"
+        class="atp-lang__btn"
+        :class="{ 'atp-lang__btn--active': $i18n.locale === 'ru' }"
+        @click="switchLang('ru')"
+      >RU</button>
+      <button
+        type="button"
+        class="atp-lang__btn"
+        :class="{ 'atp-lang__btn--active': $i18n.locale === 'en' }"
+        @click="switchLang('en')"
+      >EN</button>
+    </div>
+
     <!-- Загрузка / ошибка -->
     <div v-if="loading" class="atp-state">
       <p>{{ $t('agileTraining.common.loading') }}…</p>
@@ -278,6 +294,12 @@ export default {
     },
 
     async loadGroup() {
+      // Если пользователь ещё не выбирал язык сам — применим язык из сессии фасилитатора.
+      // Если выбирал — уважаем его выбор (не трогаем i18n.locale).
+      const hadExplicitLanguage = (() => {
+        try { return !!localStorage.getItem('language'); } catch (_) { return false; }
+      })();
+
       try {
         const [groupRes, principlesRes] = await Promise.all([
           axios.get(`/api/agile-training/g/${this.slug}`),
@@ -287,6 +309,14 @@ export default {
         this.session = groupRes.data.session;
         this.principlesTotal = groupRes.data.principles_total || 12;
         this.principles = principlesRes.data.principles || [];
+
+        const sessionLocale = this.session?.locale;
+        if (!hadExplicitLanguage && (sessionLocale === 'ru' || sessionLocale === 'en')) {
+          this.$i18n.locale = sessionLocale;
+          // В localStorage не пишем — это подсказка от организатора, а не явный выбор пользователя.
+          // Так при возвращении на главную сайта автодетект продолжит работать.
+        }
+
         this.participantToken = localStorage.getItem(this.storageKey) || '';
         try {
           const rawSeen = localStorage.getItem(this.seenKey);
@@ -299,6 +329,12 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    switchLang(lang) {
+      if (lang !== 'ru' && lang !== 'en') return;
+      this.$i18n.locale = lang;
+      try { localStorage.setItem('language', lang); } catch (_) { /* ignore */ }
     },
 
     async startSession() {
@@ -452,7 +488,38 @@ export default {
   padding: 24px 16px 48px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
   color: #0f172a;
+  position: relative;
 }
+.atp-lang {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: inline-flex;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  z-index: 10;
+}
+.atp-lang__btn {
+  background: transparent;
+  border: none;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+}
+.atp-lang__btn:hover { color: #7c3aed; background: #faf5ff; }
+.atp-lang__btn--active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+}
+.atp-lang__btn--active:hover { color: #fff; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
 .atp-state {
   max-width: 520px;
   margin: 120px auto;

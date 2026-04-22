@@ -599,6 +599,7 @@ class AgileTrainingSession(db.Model):
     owner_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     title = db.Column(db.String(255), nullable=False, default="Agile training")
     exercise_key = db.Column(db.String(64), nullable=False, default="agile_principles", index=True)
+    locale = db.Column(db.String(8), nullable=False, default="ru")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     owner = db.relationship("User", backref=db.backref("agile_training_sessions", lazy="dynamic"))

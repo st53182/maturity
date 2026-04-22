@@ -17,6 +17,13 @@
             :placeholder="$t('agileTraining.facilitator.newSessionPlaceholder')"
             maxlength="120"
           />
+          <label class="atf-locale-field" :title="$t('agileTraining.facilitator.contentLanguageHint')">
+            <span class="atf-locale-field__label">{{ $t('agileTraining.facilitator.contentLanguage') }}</span>
+            <select v-model="newSessionLocale" class="atf-locale-field__select">
+              <option value="ru">{{ $t('agileTraining.common.languageRu') }}</option>
+              <option value="en">{{ $t('agileTraining.common.languageEn') }}</option>
+            </select>
+          </label>
           <button type="submit" class="atf-btn atf-btn--primary" :disabled="creatingSession">
             {{ creatingSession ? $t('agileTraining.common.loading') : $t('agileTraining.facilitator.createSession') }}
           </button>
@@ -38,6 +45,7 @@
           <div class="atf-session-card__meta">
             <span>{{ formatDate(s.created_at) }}</span>
             <span class="atf-badge">{{ $tc('agileTraining.facilitator.groupsCount', s.groups_count) }}</span>
+            <span class="atf-badge atf-badge--locale">{{ (s.locale || 'ru').toUpperCase() }}</span>
           </div>
           <span class="atf-session-card__cta">{{ $t('agileTraining.facilitator.open') }} →</span>
         </article>
@@ -49,8 +57,16 @@
       <button class="atf-back" @click="closeSession">← {{ $t('agileTraining.facilitator.backToSessions') }}</button>
 
       <header class="atf-session__head">
-        <h2>{{ currentSession?.title }}</h2>
+        <div>
+          <h2>{{ currentSession?.title }}</h2>
+          <span v-if="currentSession?.locale" class="atf-session__locale">
+            {{ $t('agileTraining.facilitator.sessionLocale') }}: {{ (currentSession.locale || 'ru').toUpperCase() }}
+          </span>
+        </div>
         <div class="atf-session__actions">
+          <button class="atf-btn atf-btn--primary" @click="openCompareAll" :disabled="!(currentSession?.groups?.length)">
+            📊 {{ $t('agileTraining.facilitator.compareAll') }}
+          </button>
           <button class="atf-btn atf-btn--ghost" @click="refreshSession">⟲ {{ $t('agileTraining.facilitator.refresh') }}</button>
           <button class="atf-btn atf-btn--danger" @click="deleteSession">🗑 {{ $t('agileTraining.facilitator.deleteSession') }}</button>
         </div>
@@ -187,6 +203,111 @@
           </div>
         </div>
       </div>
+
+      <!-- Модалка: сравнение всех групп -->
+      <div v-if="compareAll.open" class="atf-modal-overlay" @click.self="closeCompareAll">
+        <div class="atf-modal atf-modal--wide" role="dialog" aria-modal="true">
+          <header class="atf-modal__head">
+            <h3>📊 {{ $t('agileTraining.facilitator.compareAllTitle') }} · {{ currentSession?.title }}</h3>
+            <button class="atf-modal__close" @click="closeCompareAll">×</button>
+          </header>
+          <div class="atf-modal__body" v-if="compareAll.data">
+            <p class="atf-muted atf-compare-all__lead">
+              {{ $t('agileTraining.facilitator.compareAllLead') }}
+            </p>
+
+            <div class="atf-totals">
+              <div class="atf-totals__item">
+                <div class="atf-totals__num">{{ compareAll.data.totals.groups }}</div>
+                <div class="atf-totals__lbl">{{ $t('agileTraining.facilitator.totalsGroups') }}</div>
+              </div>
+              <div class="atf-totals__item">
+                <div class="atf-totals__num">{{ compareAll.data.totals.participants }}</div>
+                <div class="atf-totals__lbl">{{ $t('agileTraining.facilitator.totalsParticipants') }}</div>
+              </div>
+              <div class="atf-totals__item">
+                <div class="atf-totals__num">{{ compareAll.data.totals.answers }}</div>
+                <div class="atf-totals__lbl">{{ $t('agileTraining.facilitator.totalsAnswers') }}</div>
+              </div>
+            </div>
+
+            <p v-if="!compareAll.data.totals.answers" class="atf-muted">
+              {{ $t('agileTraining.facilitator.noAnswersYet') }}
+            </p>
+
+            <template v-else>
+              <h4>💥 {{ $t('agileTraining.facilitator.mostSplit') }}</h4>
+              <p class="atf-muted">{{ $t('agileTraining.facilitator.mostSplitHint') }}</p>
+              <ul class="atf-top-list">
+                <li v-for="row in compareAll.data.most_split" :key="'ms-'+row.key">
+                  <div class="atf-top-list__name">{{ row.short }}</div>
+                  <div class="atf-top-list__bar">
+                    <div class="atf-top-list__fill atf-top-list__fill--mix" :style="{ width: row.avg_relevant_pct + '%' }"></div>
+                  </div>
+                  <div class="atf-top-list__pct">
+                    {{ $t('agileTraining.facilitator.spread') }} {{ row.spread }} {{ $t('agileTraining.common.pp') }}
+                  </div>
+                </li>
+                <li v-if="!compareAll.data.most_split.length" class="atf-muted">
+                  {{ $t('agileTraining.common.notEnoughData') }}
+                </li>
+              </ul>
+
+              <h4>🤝 {{ $t('agileTraining.facilitator.mostAligned') }}</h4>
+              <p class="atf-muted">{{ $t('agileTraining.facilitator.mostAlignedHint') }}</p>
+              <ul class="atf-top-list">
+                <li v-for="row in compareAll.data.most_aligned" :key="'ma-'+row.key">
+                  <div class="atf-top-list__name">{{ row.short }}</div>
+                  <div class="atf-top-list__bar">
+                    <div class="atf-top-list__fill" :style="{ width: row.avg_relevant_pct + '%' }"></div>
+                  </div>
+                  <div class="atf-top-list__pct">
+                    {{ row.avg_relevant_pct }}% · Δ {{ row.spread }} {{ $t('agileTraining.common.pp') }}
+                  </div>
+                </li>
+                <li v-if="!compareAll.data.most_aligned.length" class="atf-muted">
+                  {{ $t('agileTraining.common.notEnoughData') }}
+                </li>
+              </ul>
+
+              <h4>🗺 {{ $t('agileTraining.facilitator.heatmapTitle') }}</h4>
+              <p class="atf-muted">
+                {{ $t('agileTraining.facilitator.heatmapHint') }}<br>
+                <span class="atf-legend">{{ $t('agileTraining.facilitator.heatmapLegend') }}</span>
+              </p>
+              <div class="atf-heatmap-wrap">
+                <table class="atf-heatmap">
+                  <thead>
+                    <tr>
+                      <th class="atf-heatmap__corner">{{ $t('agileTraining.facilitator.principleColumn') }}</th>
+                      <th v-for="g in compareAll.data.results" :key="'th-'+g.group.id">
+                        {{ g.group.name }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in compareAll.data.cross_group" :key="'cg-'+row.key">
+                      <th class="atf-heatmap__name">{{ row.short }}</th>
+                      <td
+                        v-for="cell in row.by_group"
+                        :key="'cell-'+row.key+'-'+cell.group_id"
+                        :class="heatmapClass(cell.relevant_pct)"
+                        :title="cellTitle(row, cell)"
+                      >
+                        <span v-if="cell.relevant_pct === null">{{ $t('agileTraining.facilitator.noData') }}</span>
+                        <span v-else>{{ cell.relevant_pct }}%</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </div>
+          <div class="atf-modal__body" v-else>
+            <p class="atf-muted">{{ $t('agileTraining.common.loading') }}…</p>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 </template>
@@ -202,13 +323,15 @@ export default {
       loadingSessions: false,
       creatingSession: false,
       newSessionTitle: '',
+      newSessionLocale: (typeof localStorage !== 'undefined' && localStorage.getItem('language') === 'en') ? 'en' : 'ru',
       activeSessionId: null,
       currentSession: null,
       newGroupName: '',
       creatingGroup: false,
       copiedSlug: '',
       principlesTotal: 12,
-      resultsModal: { open: false, group: null, data: null }
+      resultsModal: { open: false, group: null, data: null },
+      compareAll: { open: false, data: null }
     };
   },
   async mounted() {
@@ -239,7 +362,7 @@ export default {
       this.creatingSession = true;
       try {
         const res = await axios.post('/api/agile-training/sessions',
-          { title },
+          { title, locale: this.newSessionLocale === 'en' ? 'en' : 'ru' },
           { headers: this.authHeaders() });
         this.newSessionTitle = '';
         await this.loadSessions();
@@ -349,6 +472,39 @@ export default {
     closeResults() {
       this.resultsModal = { open: false, group: null, data: null };
       document.body.style.overflow = '';
+    },
+    async openCompareAll() {
+      if (!this.activeSessionId) return;
+      this.compareAll = { open: true, data: null };
+      document.body.style.overflow = 'hidden';
+      try {
+        const res = await axios.get(
+          `/api/agile-training/sessions/${this.activeSessionId}/results`,
+          { headers: this.authHeaders() }
+        );
+        this.compareAll.data = res.data;
+      } catch (e) {
+        this.compareAll.data = null;
+        alert(e.response?.data?.error || 'Failed to load comparison');
+      }
+    },
+    closeCompareAll() {
+      this.compareAll = { open: false, data: null };
+      document.body.style.overflow = '';
+    },
+    heatmapClass(pct) {
+      if (pct === null || pct === undefined) return 'atf-heatmap__cell atf-heatmap__cell--empty';
+      if (pct >= 80) return 'atf-heatmap__cell atf-heatmap__cell--hot';
+      if (pct >= 60) return 'atf-heatmap__cell atf-heatmap__cell--warm';
+      if (pct >= 40) return 'atf-heatmap__cell atf-heatmap__cell--mid';
+      if (pct >= 20) return 'atf-heatmap__cell atf-heatmap__cell--cool';
+      return 'atf-heatmap__cell atf-heatmap__cell--cold';
+    },
+    cellTitle(row, cell) {
+      if (cell.relevant_pct === null) {
+        return `${row.short} · ${cell.group_name}: —`;
+      }
+      return `${row.short} · ${cell.group_name}: ${cell.relevant_pct}% ${this.$t('agileTraining.common.relevant')} (${cell.total})`;
     },
     formatDate(iso) {
       if (!iso) return '';
@@ -557,4 +713,106 @@ export default {
 .atf-raw__bar div { height: 100%; background: #8b5cf6; }
 .atf-raw__name { color: #0f172a; }
 .atf-raw__meta { text-align: right; font-weight: 600; }
+
+/* locale field in create form */
+.atf-locale-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 4px 10px;
+}
+.atf-locale-field__label { color: #475569; font-size: 12px; font-weight: 600; }
+.atf-locale-field__select {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 6px 4px;
+  cursor: pointer;
+  color: #0f172a;
+}
+.atf-locale-field__select:focus { outline: none; }
+.atf-badge--locale { background: #f1f5f9; color: #334155; letter-spacing: 1px; }
+
+.atf-session__head > div:first-child { display: flex; flex-direction: column; gap: 4px; }
+.atf-session__locale {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  width: fit-content;
+}
+
+/* wide modal for cross-group comparison */
+.atf-modal--wide { max-width: 1040px; }
+.atf-compare-all__lead { margin: 0 0 14px; }
+
+.atf-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.atf-totals__item {
+  background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%);
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.atf-totals__num { font-size: 22px; font-weight: 700; color: #312e81; }
+.atf-totals__lbl { font-size: 12px; color: #64748b; text-transform: lowercase; }
+
+.atf-top-list__fill--mix {
+  background: linear-gradient(90deg, #22c55e 0%, #ef4444 100%);
+}
+
+.atf-legend { color: #94a3b8; font-size: 11px; }
+
+.atf-heatmap-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-top: 10px;
+  background: #fff;
+}
+.atf-heatmap {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 520px;
+}
+.atf-heatmap th, .atf-heatmap td {
+  padding: 8px 10px;
+  border: 1px solid #f1f5f9;
+  text-align: center;
+}
+.atf-heatmap thead th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.atf-heatmap__corner { text-align: left; min-width: 180px; }
+.atf-heatmap__name {
+  text-align: left;
+  font-weight: 600;
+  background: #fafafa;
+  color: #1e293b;
+  min-width: 180px;
+}
+.atf-heatmap__cell { font-weight: 700; color: #0f172a; }
+.atf-heatmap__cell--empty { background: #f8fafc; color: #94a3b8; font-weight: 500; }
+.atf-heatmap__cell--cold { background: #fecaca; color: #7f1d1d; }
+.atf-heatmap__cell--cool { background: #fed7aa; color: #7c2d12; }
+.atf-heatmap__cell--mid  { background: #fef08a; color: #713f12; }
+.atf-heatmap__cell--warm { background: #bbf7d0; color: #14532d; }
+.atf-heatmap__cell--hot  { background: #86efac; color: #14532d; }
 </style>

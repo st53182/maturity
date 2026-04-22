@@ -1,5 +1,22 @@
 <template>
   <div class="at-hub">
+    <div class="at-hub__toolbar">
+      <div class="at-lang" role="group" :aria-label="$t('agileTraining.common.language')">
+        <button
+          type="button"
+          class="at-lang__btn"
+          :class="{ 'at-lang__btn--active': $i18n.locale === 'ru' }"
+          @click="switchLang('ru')"
+        >RU</button>
+        <button
+          type="button"
+          class="at-lang__btn"
+          :class="{ 'at-lang__btn--active': $i18n.locale === 'en' }"
+          @click="switchLang('en')"
+        >EN</button>
+      </div>
+    </div>
+
     <header class="at-hub__head">
       <h1>🎓 {{ $t('agileTraining.hub.title') }}</h1>
       <p class="at-hub__subtitle">{{ $t('agileTraining.hub.subtitle') }}</p>
@@ -48,7 +65,14 @@
 
 <script>
 export default {
-  name: 'AgileTrainingHub'
+  name: 'AgileTrainingHub',
+  methods: {
+    switchLang(lang) {
+      if (lang !== 'ru' && lang !== 'en') return;
+      this.$i18n.locale = lang;
+      try { localStorage.setItem('language', lang); } catch (_) { /* ignore */ }
+    }
+  }
 };
 </script>
 
@@ -60,6 +84,38 @@ export default {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
   color: #0f172a;
 }
+.at-hub__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.at-lang {
+  display: inline-flex;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+.at-lang__btn {
+  background: transparent;
+  border: none;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+}
+.at-lang__btn:hover { color: #7c3aed; background: #faf5ff; }
+.at-lang__btn--active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+}
+.at-lang__btn--active:hover { color: #fff; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+
 .at-hub__head { text-align: center; margin-bottom: 32px; }
 .at-hub__head h1 {
   font-size: 34px;

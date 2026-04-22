@@ -1470,7 +1470,10 @@
       "outdated": "Outdated",
       "notEnoughData": "Not enough data yet",
       "votes": "votes",
-      "pp": "pp"
+      "pp": "pp",
+      "language": "Language",
+      "languageRu": "Русский",
+      "languageEn": "English"
     },
     "hub": {
       "title": "Agile Training",
@@ -1536,7 +1539,27 @@
       "compareNoDiff": "This group's answers are close to the session average.",
       "thisGroup": "This group",
       "otherGroups": "Other groups",
-      "allPrinciples": "All principles"
+      "allPrinciples": "All principles",
+      "contentLanguage": "Content language",
+      "contentLanguageHint": "Participants who open a group link will see principles in this language (they can still switch it manually).",
+      "sessionLocale": "Training language",
+      "compareAll": "Compare all groups",
+      "compareAllTitle": "Cross-team comparison",
+      "compareAllLead": "Bird's-eye view across all groups: where teams disagreed and where they aligned. Great for projecting during the debrief.",
+      "totalsGroups": "groups",
+      "totalsParticipants": "participants",
+      "totalsAnswers": "answers",
+      "mostSplit": "Where teams disagreed the most",
+      "mostSplitHint": "Biggest gap between max and min 'relevant %' across groups.",
+      "mostAligned": "Where teams aligned",
+      "mostAlignedHint": "Principles all groups answered similarly.",
+      "heatmapTitle": "Heatmap: principles × groups",
+      "heatmapHint": "Percent who answered 'Relevant' per team. Hover a cell for details.",
+      "heatmapLegend": "0% outdated · 100% relevant",
+      "principleColumn": "Principle",
+      "spread": "spread",
+      "noData": "—",
+      "noAnswersYet": "Nobody has answered in this session yet."
     },
     "play": {
       "start": {
@@ -1582,7 +1605,8 @@
       "error": {
         "title": "Could not open the training",
         "notFound": "Group not found. Check the link with your facilitator."
-      }
+      },
+      "languageHint": "Language chosen by the facilitator. You can switch it."
     }
   },
   "strategyBuilder": {

@@ -84,11 +84,15 @@ def _group_for_owner(group_id: int, uid: int) -> Optional[AgileTrainingGroup]:
     )
 
 
+ALLOWED_LOCALES = {"ru", "en"}
+
+
 def _serialize_session(s: AgileTrainingSession, include_groups: bool = False) -> Dict:
     data = {
         "id": s.id,
         "title": s.title or "",
         "exercise_key": s.exercise_key,
+        "locale": getattr(s, "locale", None) or "ru",
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "groups_count": s.groups.count(),
     }
@@ -273,6 +277,7 @@ def group_public(slug: str):
         "session": {
             "id": session.id if session else None,
             "title": session.title if session else "",
+            "locale": (getattr(session, "locale", None) or "ru") if session else "ru",
         },
         "principles_total": len(AGILE_PRINCIPLES),
     })
@@ -412,10 +417,14 @@ def sessions_create():
     uid = _uid()
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "").strip()[:255] or "Agile training"
+    locale = (data.get("locale") or "ru").strip().lower()
+    if locale not in ALLOWED_LOCALES:
+        locale = "ru"
     s = AgileTrainingSession(
         owner_user_id=uid,
         title=title,
         exercise_key="agile_principles",
+        locale=locale,
     )
     db.session.add(s)
     db.session.commit()
@@ -496,8 +505,10 @@ def sessions_results(session_id: int):
 
     groups = s.groups.order_by(AgileTrainingGroup.id.asc()).all()
     results = []
+    per_group_stats: Dict[int, Dict[str, Dict]] = {}
     for g in groups:
         stats = _aggregate_group_stats(g.id)
+        per_group_stats[g.id] = stats
         tops = _top_lists(stats)
         compare = _group_compare(s.id, g.id)
         per_principle = []
@@ -547,8 +558,73 @@ def sessions_results(session_id: int):
             "total": total,
         })
 
+    # Сравнение между группами: для каждого принципа — % «Актуально» в каждой группе,
+    # разброс (max - min), среднее. Сортируем по разбросу, чтобы увидеть,
+    # по каким пунктам команды сильно разошлись.
+    cross_group: List[Dict] = []
+    for p in AGILE_PRINCIPLES:
+        by_group: List[Dict] = []
+        pcts: List[int] = []
+        total_answers = 0
+        for g in groups:
+            st = per_group_stats.get(g.id, {}).get(p["key"], {}) or {}
+            tot = int(st.get("total", 0) or 0)
+            if tot == 0:
+                by_group.append({
+                    "group_id": g.id,
+                    "group_name": g.name,
+                    "relevant_pct": None,
+                    "total": 0,
+                })
+                continue
+            by_group.append({
+                "group_id": g.id,
+                "group_name": g.name,
+                "relevant_pct": int(st.get("relevant_pct", 0) or 0),
+                "total": tot,
+            })
+            pcts.append(int(st.get("relevant_pct", 0) or 0))
+            total_answers += tot
+        if pcts:
+            spread = max(pcts) - min(pcts)
+            avg_pct = round(sum(pcts) / len(pcts))
+        else:
+            spread = 0
+            avg_pct = 0
+        principle = _principle_by_key(p["key"]) or {}
+        cross_group.append({
+            "key": p["key"],
+            "short": p["short"],
+            "text": principle.get("text", ""),
+            "by_group": by_group,
+            "spread": spread,
+            "avg_relevant_pct": avg_pct,
+            "total": total_answers,
+            "groups_answered": len(pcts),
+        })
+
+    most_split = sorted(
+        [r for r in cross_group if r["groups_answered"] >= 2],
+        key=lambda r: (-r["spread"], -r["total"]),
+    )[:5]
+    most_aligned = sorted(
+        [r for r in cross_group if r["groups_answered"] >= 2],
+        key=lambda r: (r["spread"], -r["total"]),
+    )[:5]
+
+    participants_total = sum(g.participants.count() for g in groups)
+    answers_total = sum(g.answers.count() for g in groups)
+
     return jsonify({
         "session": _serialize_session(s),
         "results": results,
         "overall": overall,
+        "cross_group": cross_group,
+        "most_split": most_split,
+        "most_aligned": most_aligned,
+        "totals": {
+            "groups": len(groups),
+            "participants": participants_total,
+            "answers": answers_total,
+        },
     })

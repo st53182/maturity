@@ -71,8 +71,14 @@
               <span v-if="g.with_board_count">· {{ g.with_board_count }} {{ $t('agileTraining.kanban.facilitator.withBoards') }}</span>
             </div>
             <div class="kf__row-meta kf__row-meta--link">
-              <code>/g/{{ g.slug }}</code>
-              <button class="btn-mini" @click="copy(g.slug)">📋</button>
+              <a
+                :href="`/g/${g.slug}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="kf__group-link"
+                :title="$t('agileTraining.facilitator.openLink')"
+              >/g/{{ g.slug }} ↗</a>
+              <button class="btn-mini" @click="copy(g.slug)" :title="$t('agileTraining.facilitator.copyLink')">📋</button>
             </div>
           </div>
           <div class="kf__group-actions">
@@ -329,6 +335,13 @@ export default {
 .kf__row-title { font-weight: 700; color: #0f172a; }
 .kf__row-meta { color: #64748b; font-size: 13px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .kf__row-meta--link { margin-top: 4px; }
+.kf__group-link {
+  color: #0ea5e9; text-decoration: none; font-weight: 600;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  padding: 2px 6px; border-radius: 6px; background: #ecfeff; border: 1px solid #bae6fd;
+  transition: all 0.15s ease;
+}
+.kf__group-link:hover { background: #e0f2fe; border-color: #0ea5e9; text-decoration: underline; }
 .kf__badge { background: #0ea5e9; color: #fff; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
 .kf__hint, .kf__empty { color: #64748b; padding: 16px; text-align: center; }
 .kf__active-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }

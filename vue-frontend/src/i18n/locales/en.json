@@ -1639,6 +1639,7 @@
       "participants": "Participants: {n}",
       "backToList": "Back to training list",
       "copyLink": "Copy",
+      "openLink": "Open participant link in a new tab",
       "copied": "Copied",
       "reset": "Reset",
       "delete": "Delete",

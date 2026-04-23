@@ -1539,8 +1539,8 @@
       },
       "scrumEvents": {
         "title": "Team rhythm: Scrum events",
-        "desc": "Participants assemble 4 key events (Planning, Daily, Review, Retro) from atomic cards, see why each step exists, meet typical mistakes and get a Miro-style board of their process.",
-        "bullet1": "4 stages, 5 card categories, strong focus on the 'why'",
+        "desc": "Participants assemble 5 events (Planning, Backlog Refinement, Daily, Review, Retro) from atomic cards, see why each step exists, meet typical mistakes and get a Miro-style board of their process.",
+        "bullet1": "5 events, 5 card categories, strong focus on the 'why'",
         "bullet2": "The “right” answer and debrief are with the facilitator, not the app",
         "bullet3": "Group choice comparison and a 'build your own process' mode"
       },
@@ -2315,22 +2315,22 @@
       "participantsDrill": "Per-participant drill-down",
 
       "startTitle": "Team rhythm",
-      "startLead": "A team works in short cycles and regularly: plans, syncs, shows the result, improves. Assemble 4 key events — and you'll see the whole rhythm on a single board.",
+      "startLead": "A team works in short cycles: plans, refines the backlog, syncs, shows the result, improves. Assemble the five events — and you'll see the whole rhythm on a single board.",
       "start": "Start",
 
       "contextTitle": "What is a team rhythm",
-      "contextLead": "A team moves in short cycles. Every cycle has 4 events — and they are not random: each has its own purpose, participants and outcome.",
+      "contextLead": "A team moves in short cycles. The rhythm has five events — including a separate product backlog refinement; each has its own purpose, participants and outcome.",
 
       "cardsTitle": "Card set",
       "cardsLead": "Meet the cards. You'll pick from them: why, who, what we use, when and how long.",
       "buildCta": "Build the events",
-      "buildTitle": "Build 4 events",
-      "buildLead": "The four tabs are your sprint events. In each, pick card stickers in all five columns that fit that event. Every column must have at least one selection.",
+      "buildTitle": "Build five events",
+      "buildLead": "The tabs are your rhythm events, including backlog refinement. In each, pick card stickers in all five columns that fit that event. Every column must have at least one selection.",
       "buildSwipeHint": "On a phone or tablet, scroll the columns horizontally, like a Miro board.",
       "nextEventCta": "Next event: {name} →",
       "cycleEvents": "Next tab →",
       "stageComplete": "This event is complete",
-      "fillAllStages": "Fill in all 4 stages",
+      "fillAllStages": "Fill in all 5 events",
       "seeWhyCta": "Next: why it's needed",
       "pickedCount": "nothing picked | {n} picked | {n} picked",
 
@@ -2424,7 +2424,8 @@
         "meetings_too_long": { "title": "Meetings are too long" },
         "no_clear_goal": { "title": "No clear sprint goal" },
         "daily_as_status": { "title": "Daily becomes a status report" },
-        "review_without_increment": { "title": "Nothing to show at Review" }
+        "review_without_increment": { "title": "Nothing to show at Review" },
+        "no_refinement": { "title": "No habit of backlog refinement" }
       }
     },
     "scrumRoles": {

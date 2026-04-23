@@ -433,7 +433,13 @@ export default {
       return 'se-heatmap__bad';
     },
     stageEmoji(key) {
-      return { planning: '📋', daily: '🔄', review: '📊', retro: '🛠️' }[key] || '•';
+      return {
+        planning: '📋',
+        refinement: '🔍',
+        daily: '🔄',
+        review: '📊',
+        retro: '🛠️',
+      }[key] || '•';
     },
     refCardTitle(fc, cat, key) {
       for (const c of (fc.cards[cat] || [])) if (c.key === key) return c.title;
@@ -630,8 +636,8 @@ export default {
 .se-modal__lead { color: #475569; font-size: 14px; margin: 0 0 12px; }
 
 /* Board */
-.se-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.se-board--mini { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.se-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.se-board--mini { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .se-col {
   background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
   padding: 12px; display: flex; flex-direction: column; gap: 10px;

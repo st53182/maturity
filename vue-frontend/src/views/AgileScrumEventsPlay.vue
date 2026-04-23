@@ -86,7 +86,7 @@
       </div>
     </section>
 
-    <!-- 3. Build — доска в стиле Miro: 4 этапа + 5 колонок-категорий -->
+    <!-- 3. Build — доска в стиле Miro: 5 событий + 5 колонок-категорий -->
     <section v-else-if="step === 'build'" class="se-card se-card--build">
       <div class="se-build__header">
         <div>
@@ -403,10 +403,11 @@ import axios from 'axios';
 import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const EMPTY_SELECTION = () => ({
-  planning: { goals: [], participants: [], artifacts: [], time: [], duration: [] },
-  daily:    { goals: [], participants: [], artifacts: [], time: [], duration: [] },
-  review:   { goals: [], participants: [], artifacts: [], time: [], duration: [] },
-  retro:    { goals: [], participants: [], artifacts: [], time: [], duration: [] },
+  planning:  { goals: [], participants: [], artifacts: [], time: [], duration: [] },
+  refinement: { goals: [], participants: [], artifacts: [], time: [], duration: [] },
+  daily:     { goals: [], participants: [], artifacts: [], time: [], duration: [] },
+  review:    { goals: [], participants: [], artifacts: [], time: [], duration: [] },
+  retro:     { goals: [], participants: [], artifacts: [], time: [], duration: [] },
 });
 
 export default {
@@ -511,7 +512,13 @@ export default {
     stepIndex(key) { return this.steps.findIndex(s => s.key === key); },
     goStep(s) { this.step = s; window.scrollTo({ top: 0, behavior: 'smooth' }); },
     stageEmoji(key) {
-      return { planning: '📋', daily: '🔄', review: '📊', retro: '🛠️' }[key] || '•';
+      return {
+        planning: '📋',
+        refinement: '🔍',
+        daily: '🔄',
+        review: '📊',
+        retro: '🛠️',
+      }[key] || '•';
     },
     cardTitle(cat, key) {
       for (const c of (this.content.cards[cat] || [])) if (c.key === key) return c.title;
@@ -978,7 +985,7 @@ export default {
 .se-summary__label { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 .se-summary__val { font-size: 32px; font-weight: 800; color: #0f766e; }
 
-.se-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
+.se-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
 .se-col {
   background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px;
   padding: 12px; display: flex; flex-direction: column; gap: 10px;
@@ -1040,7 +1047,7 @@ export default {
 .se-ref-pill--acceptable { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
 
 .se-section-title { margin: 18px 0 8px; font-size: 15px; font-weight: 800; }
-.se-group-comp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.se-group-comp { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 .se-group-stage { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: #fff; }
 .se-group-stage h4 { margin: 0 0 6px; font-size: 13px; }
 .se-group-stage__cat { margin-top: 6px; }

@@ -2,10 +2,10 @@
 
 Задача модуля — научить новичков собирать рабочий цикл команды из
 атомарных карточек (цель, участники, артефакты и сущности, время, длительность)
-для 4 ключевых событий: Planning, Daily, Review, Retrospective.
+для 5 событий: Planning, Product Backlog Refinement, Daily, Review, Retrospective.
 
 Структура:
-  - STAGES       — 4 этапа с ожидаемыми наборами карточек
+  - STAGES       — 5 этапов с ожидаемыми наборами карточек
   - CARDS        — банк всех карточек по 5 категориям
   - COMMON_ERRORS — типовые ошибки и их последствия
   - CUSTOM_CONTEXTS — альтернативные контексты для режима «Собери своё»
@@ -40,7 +40,7 @@ STAGES: List[Dict] = [
             "goals": ["plan_work", "set_sprint_goal", "decompose_tasks", "prepare_tasks"],
             "participants": ["team", "product_owner", "scrum_master"],
             "artifacts": [
-                "product_backlog", "backlog_refinement", "sprint_backlog", "sprint_goal",
+                "product_backlog", "sprint_backlog", "sprint_goal",
                 "task_list", "definition_of_ready",
             ],
             "time": ["before_sprint", "first_day"],
@@ -109,7 +109,7 @@ STAGES: List[Dict] = [
         "acceptable": {
             "goals": ["sync_team"],
             "participants": ["scrum_master"],
-            "artifacts": ["definition_of_done", "backlog_refinement"],
+            "artifacts": ["definition_of_done"],
             "time": [],
             "duration": ["30_min"],
         },
@@ -285,6 +285,14 @@ COMMON_ERRORS: List[Dict] = [
         "consequences": [
             {"ru": "Нет прогресса для обсуждения", "en": "No progress to discuss"},
             {"ru": "Стейкхолдеры теряют доверие", "en": "Stakeholders lose trust"},
+        ],
+    },
+    {
+        "key": "no_refinement",
+        "title": {"ru": "Нет отдельного уточнения бэклога", "en": "No backlog refinement habit"},
+        "consequences": [
+            {"ru": "Бэклог сырой, планирование растягивается", "en": "The backlog stays vague and planning drags"},
+            {"ru": "В спринт попадают непрозрачные элементы", "en": "Unclear work enters the sprint"},
         ],
     },
 ]

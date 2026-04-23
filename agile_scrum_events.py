@@ -2,8 +2,8 @@
 
 API под префиксом `/api/agile-training/scrum-events`.
 
-Сценарий: участник собирает 4 события (Planning, Daily, Review, Retro) из
-атомарных карточек (goals/participants/artifacts/time/duration). Эталон для
+Сценарий: участник собирает 5 событий (Planning, Backlog Refinement, Daily,
+Review, Retro) из атомарных карточек (goals/participants/artifacts/time/duration). Эталон для
 дебрифа отдаётся только фасилитатору (JWT); в ответе state/content для
 участника поле reference не передаётся.
 

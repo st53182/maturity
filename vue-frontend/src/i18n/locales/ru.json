@@ -1521,6 +1521,9 @@
         "completed": "Завершили"
       },
       "viewResults": "Результаты",
+      "view": "Показать участников",
+      "hide": "Скрыть участников",
+      "resetAnswers": "Сбросить ответы",
       "resetGroup": "Сбросить ответы",
       "deleteGroup": "Удалить",
       "confirmResetGroup": "Сбросить все ответы группы «{name}»?",

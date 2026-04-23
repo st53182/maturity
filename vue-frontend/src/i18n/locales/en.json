@@ -1592,6 +1592,9 @@
         "completed": "Completed"
       },
       "viewResults": "Results",
+      "view": "Show participants",
+      "hide": "Hide participants",
+      "resetAnswers": "Reset answers",
       "resetGroup": "Reset answers",
       "deleteGroup": "Delete",
       "confirmResetGroup": "Reset all answers for group '{name}'?",

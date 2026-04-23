@@ -30,6 +30,7 @@ from wsjf_content import (
     analyze_adaptation,
     evaluate_round,
     get_content_for_locale,
+    normalize_score_block,
     pick_event_for_choice,
     sanitize_round,
     simulate_outcome,
@@ -161,7 +162,7 @@ def participant_answer(slug: str):
         "participant_token": "...",
         "role_key": "business" | "engineer" | "strategist",
         "round": "initial" | "revised",
-        "scores": { option_key: { value, urgency, complexity } },
+        "scores": { option_key: { value, time, risk, size } },
         "choice": option_key | null
       }
     Для raсчёта: WSJF считается на сервере, ошибки тоже.
@@ -407,7 +408,7 @@ def group_results(group_id: int):
         "revised": defaultdict(int),
     })
     avg_scores: Dict[str, Dict[str, List[int]]] = defaultdict(
-        lambda: {"value": [], "urgency": [], "complexity": []}
+        lambda: {"value": [], "time": [], "risk": [], "size": []}
     )
     for r in rows:
         if r.initial_choice:
@@ -431,14 +432,15 @@ def group_results(group_id: int):
         source = payload.get("revised") or payload.get("initial") or {}
         for opt_key, block in (source.get("scores") or {}).items():
             if isinstance(block, dict):
-                for dim in ("value", "urgency", "complexity"):
-                    v = block.get(dim)
+                nb = normalize_score_block(block)
+                for dim in ("value", "time", "risk", "size"):
+                    v = nb.get(dim)
                     if isinstance(v, (int, float)):
                         avg_scores[opt_key][dim].append(int(v))
 
     avg_view = []
     for o in content["options"]:
-        blk = avg_scores.get(o["key"], {"value": [], "urgency": [], "complexity": []})
+        blk = avg_scores.get(o["key"], {"value": [], "time": [], "risk": [], "size": []})
         def _avg(arr):
             return round(sum(arr) / len(arr), 1) if arr else 0.0
         avg_view.append({
@@ -446,8 +448,9 @@ def group_results(group_id: int):
             "title": o["title"],
             "expected_scores": o["expected_scores"],
             "avg_value": _avg(blk["value"]),
-            "avg_urgency": _avg(blk["urgency"]),
-            "avg_complexity": _avg(blk["complexity"]),
+            "avg_time": _avg(blk["time"]),
+            "avg_risk": _avg(blk["risk"]),
+            "avg_size": _avg(blk["size"]),
             "initial_pct": round(100 * init_cnt.get(o["key"], 0) / len(rows)) if rows else 0,
             "revised_pct": round(100 * rev_cnt.get(o["key"], 0) / len(rows)) if rows else 0,
         })
@@ -530,12 +533,14 @@ def group_participants(group_id: int):
             for opt_key, block in (side.get("scores") or {}).items():
                 o = options_index.get(opt_key)
                 wsjf = (side.get("eval") or {}).get("wsjf", {}).get(opt_key)
+                nb = normalize_score_block(block) if isinstance(block, dict) else {}
                 scores.append({
                     "key": opt_key,
                     "title": o["title"] if o else opt_key,
-                    "value": block.get("value"),
-                    "urgency": block.get("urgency"),
-                    "complexity": block.get("complexity"),
+                    "value": nb.get("value"),
+                    "time": nb.get("time"),
+                    "risk": nb.get("risk"),
+                    "size": nb.get("size"),
                     "wsjf": wsjf,
                 })
             return {

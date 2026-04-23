@@ -4,12 +4,11 @@
 автомобильной компании, выбирающей одно из трёх направлений:
 гибрид / электро / водород.
 
-Формула:
-    priority = (value + urgency) / complexity
+Формула (как в SAFe WSJF, относительные оценки Cost of Delay / размера):
+    priority = (user_business_value + time_criticality + rroe) / job_size
 
-где value, urgency и complexity участник ставит по шкале 1-2-3-5-8-13
-(Fibonacci). Ценим не формулу, а разговор вокруг неё: что поставил
-выше, почему, какой trade-off принял.
+где все слагаемые и размер работы — относительные оценки по шкале
+1-2-3-5-8-13 (Fibonacci). Ценим не формулу, а разговор вокруг неё.
 """
 
 from __future__ import annotations
@@ -33,7 +32,7 @@ ROLES: List[Dict] = [
             "en": "You look at revenue and timing: near-term money matters most, risks come second.",
         },
         # На что роль склонна обращать больше внимания при оценке
-        "bias": {"value": 1, "urgency": 0, "complexity": -1},
+        "bias": {"value": 1, "time": 0, "risk": 0, "size": -1},
     },
     {
         "key": "engineer",
@@ -43,7 +42,7 @@ ROLES: List[Dict] = [
             "ru": "Ты знаешь цену сроков и технических рисков. Важно, чтобы команда вообще смогла это сделать — и не развалилась.",
             "en": "You know the cost of timelines and tech risk. Making it actually work without burning the team matters most.",
         },
-        "bias": {"value": 0, "urgency": -1, "complexity": 1},
+        "bias": {"value": 0, "time": -1, "risk": 0, "size": 1},
     },
     {
         "key": "strategist",
@@ -53,7 +52,7 @@ ROLES: List[Dict] = [
             "ru": "Смотришь за горизонт: где будет рынок через 3-5 лет и на чём можно сыграть «в долгую», даже если сейчас больно.",
             "en": "You look over the horizon: where will the market be in 3-5 years and where can we play a long game even if it hurts now.",
         },
-        "bias": {"value": 0, "urgency": 1, "complexity": 0},
+        "bias": {"value": 0, "time": 1, "risk": 0, "size": 0},
     },
 ]
 
@@ -65,9 +64,8 @@ def valid_role_keys() -> Set[str]:
 # --------------------------- Опции ---------------------------
 
 
-# expected_scores — «экспертные» оценки value/urgency/complexity. Мы
-# не настаиваем, что это «правильные» значения — но сравнение с ними
-# помогает подсветить типичные ошибки.
+# expected_scores — «экспертные» оценки: бизнес-ценность, критичность по
+# времени, RROE, размер работы. Сравнение с ними подсвечивает типовые ошибки.
 OPTIONS: List[Dict] = [
     {
         "key": "hybrid",
@@ -90,7 +88,7 @@ OPTIONS: List[Dict] = [
         },
         "revenue_label": {"ru": "+150 M€", "en": "+€150M"},
         "time_label": {"ru": "≈ 5 месяцев", "en": "≈ 5 months"},
-        "expected_scores": {"value": 5, "urgency": 8, "complexity": 3},
+        "expected_scores": {"value": 5, "time": 8, "risk": 3, "size": 3},
         "strengths": {
             "ru": ["Быстро до денег", "Технология отработана", "Низкий риск срыва"],
             "en": ["Quick path to money", "Proven technology", "Low execution risk"],
@@ -127,7 +125,7 @@ OPTIONS: List[Dict] = [
         },
         "revenue_label": {"ru": "+300 M€", "en": "+€300M"},
         "time_label": {"ru": "≈ 7 месяцев", "en": "≈ 7 months"},
-        "expected_scores": {"value": 13, "urgency": 8, "complexity": 8},
+        "expected_scores": {"value": 13, "time": 8, "risk": 5, "size": 8},
         "strengths": {
             "ru": [
                 "Большая выручка",
@@ -172,7 +170,7 @@ OPTIONS: List[Dict] = [
         },
         "revenue_label": {"ru": "? — позже", "en": "? — later"},
         "time_label": {"ru": "≈ 20 месяцев", "en": "≈ 20 months"},
-        "expected_scores": {"value": 13, "urgency": 2, "complexity": 13},
+        "expected_scores": {"value": 13, "time": 2, "risk": 13, "size": 13},
         "strengths": {
             "ru": [
                 "Возможный прорыв на 3-5 лет",
@@ -246,7 +244,7 @@ EVENTS: List[Dict] = [
         },
         "shifts": [
             {"option": "hybrid", "dim": "value", "to": 2, "reason_key": "shift.hybrid_value_drop"},
-            {"option": "hybrid", "dim": "urgency", "to": 3, "reason_key": "shift.hybrid_urgency_drop"},
+            {"option": "hybrid", "dim": "time", "to": 3, "reason_key": "shift.hybrid_urgency_drop"},
         ],
         "favors": "electric",
     },
@@ -261,8 +259,8 @@ EVENTS: List[Dict] = [
             "en": "Fuel cells are 30% cheaper YoY, industrial partners are emerging. The breakthrough horizon gets closer.",
         },
         "shifts": [
-            {"option": "hydrogen", "dim": "complexity", "to": 5, "reason_key": "shift.h2_easier"},
-            {"option": "hydrogen", "dim": "urgency", "to": 5, "reason_key": "shift.h2_urgency_up"},
+            {"option": "hydrogen", "dim": "size", "to": 5, "reason_key": "shift.h2_easier"},
+            {"option": "hydrogen", "dim": "time", "to": 5, "reason_key": "shift.h2_urgency_up"},
         ],
         "favors": "hydrogen",
     },
@@ -364,19 +362,39 @@ def _coerce_score(v) -> Optional[int]:
     return iv if iv in FIBO_SCALE else None
 
 
+def normalize_score_block(block) -> Dict[str, int]:
+    """Канон: value, time, risk, size. Старые ответы: urgency→time, complexity→size, risk=1."""
+    b = block if isinstance(block, dict) else {}
+    v = _coerce_score(b.get("value")) or 1
+    t = _coerce_score(b.get("time"))
+    if t is None:
+        t = _coerce_score(b.get("urgency"))
+    if t is None:
+        t = 1
+    r = _coerce_score(b.get("risk"))
+    if r is None:
+        r = 1
+    s = _coerce_score(b.get("size"))
+    if s is None:
+        s = _coerce_score(b.get("complexity"))
+    if s is None:
+        s = 1
+    return {"value": v, "time": t, "risk": r, "size": s}
+
+
 def sanitize_round(payload: Dict) -> Dict:
     """Приводит ответ пользователя к каноничному виду:
 
         {
           "scores": {
-              "hybrid": { "value": 5, "urgency": 8, "complexity": 3 },
+              "hybrid": { "value", "time", "risk", "size" },
               ...
           },
           "choice": "electric" | "hybrid" | "hydrogen" | None
         }
 
-    Пропущенные размерности заполняются 1 (минимум) — чтобы формула
-    не падала. Выбор валидируется по списку опций.
+    Пропущенные размерности заполняются 1 (минимум). Старые ключи
+    urgency/complexity по-прежнему принимаются.
     """
     if not isinstance(payload, dict):
         payload = {}
@@ -384,12 +402,7 @@ def sanitize_round(payload: Dict) -> Dict:
     scores: Dict[str, Dict[str, int]] = {}
     for opt in OPTIONS:
         block = raw_scores.get(opt["key"]) if isinstance(raw_scores, dict) else None
-        block = block if isinstance(block, dict) else {}
-        scores[opt["key"]] = {
-            "value": _coerce_score(block.get("value")) or 1,
-            "urgency": _coerce_score(block.get("urgency")) or 1,
-            "complexity": _coerce_score(block.get("complexity")) or 1,
-        }
+        scores[opt["key"]] = normalize_score_block(block)
     choice_raw = payload.get("choice") or ""
     choice = choice_raw if choice_raw in valid_option_keys() else None
     return {"scores": scores, "choice": choice}
@@ -399,13 +412,15 @@ def sanitize_round(payload: Dict) -> Dict:
 
 
 def compute_wsjf(block: Dict) -> float:
-    """priority = (value + urgency) / complexity, с защитой от деления на 0."""
-    v = float(block.get("value") or 1)
-    u = float(block.get("urgency") or 1)
-    c = float(block.get("complexity") or 1)
-    if c <= 0:
-        c = 1.0
-    return round((v + u) / c, 2)
+    """priority = (value + time_criticality + rroe) / job_size."""
+    b = normalize_score_block(block)
+    v = float(b["value"])
+    t = float(b["time"])
+    r = float(b["risk"])
+    s = float(b["size"])
+    if s <= 0:
+        s = 1.0
+    return round((v + t + r) / s, 2)
 
 
 def evaluate_round(role_key: str, round_data: Dict) -> Dict:
@@ -435,28 +450,25 @@ def evaluate_round(role_key: str, round_data: Dict) -> Dict:
     for opt in OPTIONS:
         exp = opt["expected_scores"]
         cur = scores[opt["key"]]
-        # Недооценка рисков: complexity сильно ниже, чем ожидается (разница ≥ 5).
-        if exp["complexity"] - cur["complexity"] >= 5:
-            warnings_per_opt[opt["key"]].append("undervalued_complexity")
-        # Игнорирование срочности: поставил 1-2 там, где эксперт ждёт 8+.
-        if exp["urgency"] >= 8 and cur["urgency"] <= 2:
-            warnings_per_opt[opt["key"]].append("ignored_urgency")
-        # Переоценка водорода как «быстрого»: complexity <=2 или time <=2 у hydrogen.
-        if opt["key"] == "hydrogen" and cur["complexity"] <= 2:
-            warnings_per_opt[opt["key"]].append("hydrogen_too_easy")
+        if exp["size"] - cur["size"] >= 5:
+            warnings_per_opt[opt["key"]].append("undervalued_size")
+        if exp["time"] >= 8 and cur["time"] <= 2:
+            warnings_per_opt[opt["key"]].append("ignored_time")
+        if opt["key"] == "hydrogen" and cur["size"] <= 2:
+            warnings_per_opt[opt["key"]].append("hydrogen_size_too_small")
 
     # Глобальные ошибки
     for opt_key, wlist in warnings_per_opt.items():
-        if "undervalued_complexity" in wlist and "undervalued_complexity" not in errors:
-            errors.append("undervalued_risk")
-        if "ignored_urgency" in wlist and "ignored_urgency" not in errors:
-            errors.append("ignored_urgency")
+        if "undervalued_size" in wlist and "undervalued_size" not in errors:
+            errors.append("undervalued_size")
+        if "ignored_time" in wlist and "ignored_time" not in errors:
+            errors.append("ignored_time")
     if choice and recommended and choice != recommended:
         errors.append("math_blind")
     # Ролевые смещения
     if role_key == "business" and choice == "hydrogen":
         errors.append("role_mismatch_business_hydrogen")
-    if role_key == "engineer" and choice == "hydrogen" and scores["hydrogen"]["complexity"] <= 3:
+    if role_key == "engineer" and choice == "hydrogen" and scores["hydrogen"]["size"] <= 3:
         errors.append("role_mismatch_engineer_too_easy")
 
     return {

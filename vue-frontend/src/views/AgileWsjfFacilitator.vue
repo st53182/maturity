@@ -160,8 +160,9 @@
                 <th>{{ $t('agileTraining.wsjf.initialPct') }}</th>
                 <th>{{ $t('agileTraining.wsjf.revisedPct') }}</th>
                 <th>{{ $t('agileTraining.wsjf.avgValue') }}</th>
-                <th>{{ $t('agileTraining.wsjf.avgUrgency') }}</th>
-                <th>{{ $t('agileTraining.wsjf.avgComplexity') }}</th>
+                <th>{{ $t('agileTraining.wsjf.avgTime') }}</th>
+                <th>{{ $t('agileTraining.wsjf.avgRisk') }}</th>
+                <th>{{ $t('agileTraining.wsjf.avgSize') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -169,7 +170,7 @@
                 <td><b>{{ o.title }}</b>
                   <div class="wsjf-fac__hint">
                     {{ $t('agileTraining.wsjf.expected') }}:
-                    {{ o.expected_scores.value }}/{{ o.expected_scores.urgency }}/{{ o.expected_scores.complexity }}
+                    {{ o.expected_scores.value }}/{{ o.expected_scores.time }}/{{ o.expected_scores.risk }}/{{ o.expected_scores.size }}
                   </div>
                 </td>
                 <td><span class="wsjf-bar"><span :style="{width: o.initial_pct + '%'}"></span></span>
@@ -177,8 +178,9 @@
                 <td><span class="wsjf-bar wsjf-bar--rev"><span :style="{width: o.revised_pct + '%'}"></span></span>
                   {{ o.revised_pct }}%</td>
                 <td>{{ o.avg_value }}</td>
-                <td>{{ o.avg_urgency }}</td>
-                <td>{{ o.avg_complexity }}</td>
+                <td>{{ o.avg_time }}</td>
+                <td>{{ o.avg_risk }}</td>
+                <td>{{ o.avg_size }}</td>
               </tr>
             </tbody>
           </table>
@@ -275,7 +277,11 @@
                         <thead>
                           <tr>
                             <th>{{ $t('agileTraining.wsjf.option') }}</th>
-                            <th>V</th><th>U</th><th>C</th><th>WSJF</th>
+                            <th>{{ $t('agileTraining.wsjf.dimAbbr.value') }}</th>
+                            <th>{{ $t('agileTraining.wsjf.dimAbbr.time') }}</th>
+                            <th>{{ $t('agileTraining.wsjf.dimAbbr.risk') }}</th>
+                            <th>{{ $t('agileTraining.wsjf.dimAbbr.size') }}</th>
+                            <th>WSJF</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -283,8 +289,9 @@
                               :class="{ 'wsjf-row--pick': p[stage].choice && row.key === p[stage].choice.key }">
                             <td>{{ row.title }}</td>
                             <td>{{ row.value }}</td>
-                            <td>{{ row.urgency }}</td>
-                            <td>{{ row.complexity }}</td>
+                            <td>{{ row.time }}</td>
+                            <td>{{ row.risk }}</td>
+                            <td>{{ row.size }}</td>
                             <td><b>{{ row.wsjf }}</b></td>
                           </tr>
                         </tbody>

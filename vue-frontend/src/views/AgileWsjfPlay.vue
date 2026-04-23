@@ -171,9 +171,10 @@
             <span :style="{ width: row.pct + '%' }"></span>
           </div>
           <div class="wsjf-priority__dims">
-            <span>V: {{ row.scores.value }}</span>
-            <span>U: {{ row.scores.urgency }}</span>
-            <span>C: {{ row.scores.complexity }}</span>
+            <span>{{ $t('agileTraining.wsjf.dimAbbr.value') }}: {{ row.scores.value }}</span>
+            <span>{{ $t('agileTraining.wsjf.dimAbbr.time') }}: {{ row.scores.time }}</span>
+            <span>{{ $t('agileTraining.wsjf.dimAbbr.risk') }}: {{ row.scores.risk }}</span>
+            <span>{{ $t('agileTraining.wsjf.dimAbbr.size') }}: {{ row.scores.size }}</span>
           </div>
         </li>
       </ul>
@@ -390,7 +391,7 @@ const DEFAULT_OPTION_KEYS = ['hybrid', 'electric', 'hydrogen'];
 function blankScores() {
   const out = {};
   for (const k of DEFAULT_OPTION_KEYS) {
-    out[k] = { value: 0, urgency: 0, complexity: 0 };
+    out[k] = { value: 0, time: 0, risk: 0, size: 0 };
   }
   return out;
 }
@@ -430,8 +431,9 @@ export default {
     dims() {
       return [
         { key: 'value' },
-        { key: 'urgency' },
-        { key: 'complexity' },
+        { key: 'time' },
+        { key: 'risk' },
+        { key: 'size' },
       ];
     },
     steps() {
@@ -461,9 +463,13 @@ export default {
     },
     rankedRows() {
       const rows = this.content.options.map(o => {
-        const scores = this.currentScores[o.key] || { value: 1, urgency: 1, complexity: 1 };
-        const c = Math.max(1, Number(scores.complexity) || 1);
-        const wsjf = Math.round(((Number(scores.value) || 1) + (Number(scores.urgency) || 1)) / c * 100) / 100;
+        const s = this.currentScores[o.key] || {};
+        const v = Math.max(1, Number(s.value) || 1);
+        const t = Math.max(1, Number(s.time) || 1);
+        const r = Math.max(1, Number(s.risk) || 1);
+        const size = Math.max(1, Number(s.size) || 1);
+        const scores = { value: v, time: t, risk: r, size };
+        const wsjf = Math.round((v + t + r) / size * 100) / 100;
         return { key: o.key, title: o.title, scores, wsjf };
       });
       const maxW = Math.max(...rows.map(r => r.wsjf), 1);
@@ -543,13 +549,21 @@ export default {
     ensureScoreShape() {
       // восстанавливаем пустые объекты, если API вернул меньше ключей
       const keys = this.content.options.map(o => o.key);
+      const num = (v, legacy) => {
+        const n = v !== undefined && v !== null && v !== '' ? Number(v) : NaN;
+        if (Number.isFinite(n)) return n;
+        const ln = legacy !== undefined && legacy !== null && legacy !== '' ? Number(legacy) : NaN;
+        return Number.isFinite(ln) ? ln : 0;
+      };
       const fix = (src) => {
         const out = {};
         for (const k of keys) {
+          const b = src?.[k] || {};
           out[k] = {
-            value: src?.[k]?.value || 0,
-            urgency: src?.[k]?.urgency || 0,
-            complexity: src?.[k]?.complexity || 0,
+            value: num(b.value),
+            time: num(b.time, b.urgency),
+            risk: num(b.risk),
+            size: num(b.size, b.complexity),
           };
         }
         return out;
@@ -640,7 +654,7 @@ export default {
     allScoresFilled(scores) {
       return this.content.options.every(o => {
         const s = scores[o.key];
-        return s && s.value && s.urgency && s.complexity;
+        return s && s.value && s.time && s.risk && s.size;
       });
     },
     async submitCurrentRound() {
@@ -649,7 +663,7 @@ export default {
       const scores = round === 'initial' ? this.initialScores : this.revisedScores;
       // если какая-то оценка 0 — подставим 1, чтобы не ронять формулу
       for (const k of Object.keys(scores)) {
-        for (const dim of ['value', 'urgency', 'complexity']) {
+        for (const dim of ['value', 'time', 'risk', 'size']) {
           if (!scores[k][dim]) scores[k][dim] = 1;
         }
       }

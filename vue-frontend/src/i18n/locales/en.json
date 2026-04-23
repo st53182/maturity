@@ -1531,9 +1531,9 @@
       },
       "wsjf": {
         "title": "WSJF: prioritization at a strategic crossroads",
-        "desc": "The team picks a direction at a car company — hybrid, electric or hydrogen. They score value, urgency and complexity, see consequences, get breaking news and revise the decision.",
+        "desc": "The team picks a direction at a car company — hybrid, electric or hydrogen. They score SAFe-style WSJF (Cost of Delay vs job size), see consequences, get breaking news and revise the decision.",
         "bullet1": "Strong business context and 3 options with limited resources",
-        "bullet2": "Fibonacci-like scale 1–13 and (value + urgency) / complexity",
+        "bullet2": "Fibonacci-like scale 1–13 and WSJF: (user–business value + time criticality + RROE) / job size",
         "bullet3": "News event and revision reveal who actually adapts"
       },
       "scrumEvents": {
@@ -2144,9 +2144,10 @@
       "option": "Option",
       "initialPct": "Before the news",
       "revisedPct": "After the news",
-      "avgValue": "Value (avg)",
-      "avgUrgency": "Urgency (avg)",
-      "avgComplexity": "Complexity (avg)",
+      "avgValue": "User / business value (avg)",
+      "avgTime": "Time criticality (avg)",
+      "avgRisk": "RROE (avg)",
+      "avgSize": "Job size (avg)",
       "expected": "expert",
       "byRole": "By role",
       "noRevisedYet": "no revisions yet",
@@ -2158,7 +2159,7 @@
 
       "startTitle": "Where does the company go?",
       "startLead": "You are on the team of a car company. Resources will only fuel one direction. The task is not to guess — it's to understand trade-offs.",
-      "startBullet1": "Three-dimensional score: value, urgency, complexity",
+      "startBullet1": "Four WSJF dimensions: user–business value, time criticality, RROE, job size",
       "startBullet2": "Scale 1, 2, 3, 5, 8, 13",
       "startBullet3": "News will hit after the decision — and you'll get a chance to revise",
       "start": "Let's go",
@@ -2173,25 +2174,33 @@
 
       "scoresTitle": "Score each direction",
       "reviseScoresTitle": "Re-score the directions",
-      "scoresLead": "Pick value, urgency and complexity on the scale for each option. Choose the number that matches your gut.",
+      "scoresLead": "For each option, score the four SAFe drivers: user–business value, time criticality, risk reduction & opportunity enablement (RROE), and job size. Pick the number that matches your gut.",
       "legend": {
         "low": "low",
         "mid": "moderate",
         "high": "very high"
       },
       "dim": {
-        "value": "Value",
-        "urgency": "Urgency",
-        "complexity": "Complexity",
-        "valueHint": "how much it pays the business",
-        "urgencyHint": "how important it is right now",
-        "complexityHint": "resources, timeline and risk"
+        "value": "User / business value",
+        "time": "Time criticality",
+        "risk": "Risk reduction & opportunity enablement (RROE)",
+        "size": "Job size",
+        "valueHint": "relative value to the user and the business (User / Business value)",
+        "timeHint": "how time-sensitive the work is: deadlines, dependencies, go-to-market windows (Time criticality)",
+        "riskHint": "RROE: risk mitigation, compliance, enablement, cost of not doing the work",
+        "sizeHint": "relative effort, duration, and uncertainty of the work item (divisor in WSJF)"
+      },
+      "dimAbbr": {
+        "value": "V",
+        "time": "T",
+        "risk": "R",
+        "size": "S"
       },
       "calcPriority": "Calculate priority",
 
       "prioritiesTitle": "Priorities",
       "prioritiesLead": "Here's the formula output. The top one is what the math favors — but the call is yours.",
-      "formula": "priority = (value + urgency) / complexity",
+      "formula": "WSJF = (user–business value + time criticality + RROE) / job size",
       "goToChoose": "Make a choice",
 
       "chooseTitle": "What do we launch first?",
@@ -2234,11 +2243,11 @@
       },
 
       "err": {
-        "undervalued_risk": "Risks and complexity underestimated",
-        "ignored_urgency": "Urgency ignored",
+        "undervalued_size": "Job size (denominator) set too low",
+        "ignored_time": "Time criticality ignored",
         "math_blind": "Chose something other than the formula",
         "role_mismatch_business_hydrogen": "Business role chose hydrogen — no quick revenue",
-        "role_mismatch_engineer_too_easy": "Engineer set hydrogen complexity too low"
+        "role_mismatch_engineer_too_easy": "Engineer set hydrogen job size too low"
       },
 
       "strengths": "Strengths",

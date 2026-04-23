@@ -55,6 +55,41 @@ STAGES: List[Dict] = [
         },
     },
     {
+        "key": "refinement",
+        "title": {
+            "ru": "Уточнение бэклога продукта",
+            "en": "Product Backlog Refinement",
+        },
+        "short": {"ru": "Refinement", "en": "Refinement"},
+        "purpose": {
+            "ru": "Отдельный процесс: детализация, оценка и порядок элементов бэклога, чтобы планирование и работа в спринте опирались на прозрачные и готовые к работе требования.",
+            "en": "A separate ongoing activity: detail, size and order backlog items so planning and the sprint are based on clear, ready work.",
+        },
+        "problem_it_solves": {
+            "ru": "Уменьшает сырые требования и сюрпризы на планировании спринта.",
+            "en": "Reduces vague items and last-minute surprises at sprint planning.",
+        },
+        "expected": {
+            "goals": ["prepare_tasks", "decompose_tasks", "update_backlog"],
+            "participants": ["team", "product_owner", "scrum_master"],
+            "artifacts": [
+                "product_backlog",
+                "backlog_refinement",
+                "task_list",
+                "definition_of_ready",
+            ],
+            "time": ["before_sprint", "middle_of_sprint", "first_day"],
+            "duration": ["30_min", "1h", "1_2h"],
+        },
+        "acceptable": {
+            "goals": ["sync_team", "set_sprint_goal", "plan_work"],
+            "participants": ["stakeholders", "customer"],
+            "artifacts": ["sprint_backlog", "sprint_goal", "team_agreements", "blockers"],
+            "time": ["every_day", "end_of_sprint"],
+            "duration": ["up_to_3h", "up_to_4h"],
+        },
+    },
+    {
         "key": "daily",
         "title": {"ru": "Ежедневная синхронизация", "en": "Daily"},
         "short": {"ru": "Daily", "en": "Daily"},

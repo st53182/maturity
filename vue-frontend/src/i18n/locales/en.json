@@ -1548,7 +1548,7 @@
         "desc": "The team figures out what the Product Owner, the team and the Scrum Master own. Sticky-note cards are distributed across 3 roles with levels 🟢 accountable · 🟡 participates · 🔴 should not do.",
         "bullet1": "15 responsibility cards and 3 roles as columns",
         "bullet2": "Levels of involvement, common mistakes and consequences",
-        "bullet3": "Final Miro-style board and comparison with the team"
+        "bullet3": "Final board and comparison with the team"
       },
       "backHome": "Back to exercises",
       "howItWorks": {
@@ -2460,7 +2460,7 @@
       "goDistribute": "Go to the cards",
 
       "distributeTitle": "Distribute the cards",
-      "distributeLead": "For each card pick the level of involvement for every role. A card can apply to several roles with different levels.",
+      "distributeLead": "For each card pick the level of involvement for every role. A card can apply to several roles with different levels. Card order is shuffled so the \"obvious\" sequence does not give hints.",
       "toWhy": "Next: why it matters",
 
       "whyTitle": "Why this distribution",
@@ -2476,7 +2476,7 @@
       "fixNothing": "Great job — every card is distributed correctly. Move on to the final board.",
       "finishBtn": "Done — show the board",
 
-      "finalTitle": "Your Miro-style roles board",
+      "finalTitle": "Summary: your role mapping",
       "yourHealth": "Your accuracy",
       "groupHealth": "Group average",
       "compareTitle": "How others distributed",

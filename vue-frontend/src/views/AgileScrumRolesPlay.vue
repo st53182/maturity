@@ -56,7 +56,7 @@
           </p>
         </article>
       </div>
-      <button class="sr-btn sr-btn--primary" @click="step = 'distribute'">
+      <button class="sr-btn sr-btn--primary" @click="openDistribute">
         {{ $t('agileTraining.scrumRoles.goDistribute') }} →
       </button>
     </section>
@@ -71,7 +71,7 @@
         </span>
       </div>
       <div class="sr-cards-grid">
-        <article v-for="c in allCardsForPlay" :key="c.key" class="sr-card">
+        <article v-for="c in orderedPlayCards" :key="c.key" class="sr-card">
           <div class="sr-card__title">{{ c.title }}</div>
           <div class="sr-card__roles">
             <div v-for="r in content.roles" :key="r.key" class="sr-card__role">
@@ -112,7 +112,7 @@
       <h2>💡 {{ $t('agileTraining.scrumRoles.whyTitle') }}</h2>
       <p class="sr-play__lead">{{ $t('agileTraining.scrumRoles.whyLead') }}</p>
       <ul class="sr-why">
-        <li v-for="c in content.cards" :key="c.key">
+        <li v-for="c in orderedPlayCards" :key="c.key">
           <b>{{ c.title }}</b>
           <div class="sr-play__hint">{{ c.rationale }}</div>
         </li>
@@ -159,7 +159,7 @@
         ✅ {{ $t('agileTraining.scrumRoles.fixNothing') }}
       </div>
       <div v-else class="sr-cards-grid">
-        <article v-for="c in cardsToFix" :key="c.key" class="sr-card sr-card--warn">
+        <article v-for="c in shuffledCardsToFix" :key="c.key" class="sr-card sr-card--warn">
           <div class="sr-card__title">{{ c.title }}</div>
           <div class="sr-play__hint">💡 {{ c.rationale }}</div>
           <div class="sr-card__roles">
@@ -196,7 +196,7 @@
       </div>
     </section>
 
-    <!-- ШАГ 8: финальная Miro-доска -->
+    <!-- ШАГ 8: итоговая доска по ролям -->
     <section v-else-if="step === 'final'" class="sr-play__section">
       <h2>🖼 {{ $t('agileTraining.scrumRoles.finalTitle') }}</h2>
       <p class="sr-pdf-bar">
@@ -229,29 +229,29 @@
           <span class="sr-pill sr-pill--muted">◻ {{ $t('agileTraining.scrumRoles.missingLabel') }}: {{ evalTotals.missing }}</span>
         </div>
 
-        <div class="sr-miro">
-          <article v-for="r in content.roles" :key="r.key" class="sr-miro__col">
-            <header class="sr-miro__col-head">
-              <div class="sr-miro__emoji">{{ r.emoji }}</div>
+        <div class="sr-board">
+          <article v-for="r in content.roles" :key="r.key" class="sr-board__col">
+            <header class="sr-board__col-head">
+              <div class="sr-board__emoji">{{ r.emoji }}</div>
               <h3>{{ r.title }}</h3>
               <p>{{ r.desc }}</p>
             </header>
-            <div class="sr-miro__buckets">
-              <div class="sr-miro__bucket sr-miro__bucket--responsible">
+            <div class="sr-board__buckets">
+              <div class="sr-board__bucket sr-board__bucket--responsible">
                 <h4>🟢 {{ $t('agileTraining.scrumRoles.levels.responsible') }}</h4>
                 <div v-for="c in cardsPerRole(r.key, 'responsible')" :key="'b1-' + r.key + '-' + c.key"
                      class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
                   {{ c.title }}
                 </div>
               </div>
-              <div class="sr-miro__bucket sr-miro__bucket--participates">
+              <div class="sr-board__bucket sr-board__bucket--participates">
                 <h4>🟡 {{ $t('agileTraining.scrumRoles.levels.participates') }}</h4>
                 <div v-for="c in cardsPerRole(r.key, 'participates')" :key="'b2-' + r.key + '-' + c.key"
                      class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
                   {{ c.title }}
                 </div>
               </div>
-              <div class="sr-miro__bucket sr-miro__bucket--should_not">
+              <div class="sr-board__bucket sr-board__bucket--should_not">
                 <h4>🔴 {{ $t('agileTraining.scrumRoles.levels.should_not') }}</h4>
                 <div v-for="c in cardsPerRole(r.key, 'should_not')" :key="'b3-' + r.key + '-' + c.key"
                      class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
@@ -364,6 +364,10 @@ export default {
       evaluation: null,
       customLocale: null,
       pdfExporting: false,
+      /** Порядок карточек на шаге «Распределение» (перемешивается для усложнения) */
+      cardPlayOrder: null,
+      /** Порядок карточек на шаге «Исправление» */
+      fixCardOrder: null,
     };
   },
   computed: {
@@ -379,7 +383,21 @@ export default {
         .map(([k]) => k);
       return (this.content?.cards || []).filter(c => warn.includes(c.key));
     },
-    allCardsForPlay() { return this.content?.cards || []; },
+    orderedPlayCards() {
+      const cards = this.content?.cards || [];
+      if (!this.cardPlayOrder?.length
+          || this.cardPlayOrder.length !== cards.length) {
+        return cards;
+      }
+      const map = new Map(cards.map(c => [c.key, c]));
+      return this.cardPlayOrder.map(k => map.get(k)).filter(Boolean);
+    },
+    shuffledCardsToFix() {
+      const list = this.cardsToFix;
+      if (!this.fixCardOrder?.length) return list;
+      const map = new Map(list.map(c => [c.key, c]));
+      return this.fixCardOrder.map(k => map.get(k)).filter(Boolean);
+    },
   },
   async mounted() {
     const tokenKey = `${STORAGE_NS}:${this.slug}:participantToken`;
@@ -392,6 +410,19 @@ export default {
     this.ready = true;
   },
   methods: {
+    shuffleKeys(keys) {
+      const a = keys.slice();
+      for (let i = a.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    },
+    openDistribute() {
+      const cards = this.content?.cards || [];
+      this.cardPlayOrder = this.shuffleKeys(cards.map(c => c.key));
+      this.step = 'distribute';
+    },
     async loadState() {
       try {
         const params = { participant_token: this.participantToken };
@@ -430,6 +461,8 @@ export default {
     },
     async start() {
       if (!this.displayName) return;
+      this.cardPlayOrder = null;
+      this.fixCardOrder = null;
       localStorage.setItem(`${STORAGE_NS}:${this.slug}:displayName`, this.displayName);
       try {
         await axios.post('/api/agile-training/participants', {
@@ -460,6 +493,10 @@ export default {
     },
     async goFix() {
       await this.persist(false);
+      const toFix = this.cardsToFix;
+      this.fixCardOrder = toFix.length
+        ? this.shuffleKeys(toFix.map(c => c.key))
+        : [];
       this.step = 'fix';
     },
     async finish() {
@@ -540,10 +577,16 @@ export default {
 <style scoped>
 .sr-pdf-bar { margin: 0 0 12px; }
 .sr-pdf-root { min-height: 20px; }
-.sr-play { max-width: 1180px; margin: 0 auto; padding: 22px 18px 60px; color: #0f172a; }
+.sr-play {
+  max-width: 1180px; margin: 0 auto; padding: 22px 18px 60px; color: #0f172a;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 .sr-play__head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
 .sr-play__group { color: #7c3aed; font-weight: 700; font-size: 13px; }
-.sr-play__head h1 { margin: 4px 0 0; font-size: 22px; }
+.sr-play__head h1 { margin: 4px 0 0; font-size: 22px; line-height: 1.3; font-weight: 800; }
 .sr-play__lang { display: flex; gap: 6px; }
 .sr-lang__btn {
   padding: 6px 12px !important; border: 1px solid #cbd5e1 !important; border-radius: 10px !important;
@@ -589,18 +632,18 @@ export default {
 .sr-role__desc { margin: 0 0 6px; color: #334155; font-size: 13px; }
 .sr-role__focus { margin: 0; color: #7c3aed; font-size: 12px; }
 
-.sr-legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; color: #475569; margin-bottom: 12px; }
+.sr-legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 14px; color: #334155; margin-bottom: 12px; line-height: 1.4; }
 .sr-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 14px; }
 .sr-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; }
 .sr-card--warn { border-color: #f59e0b; background: #fffbeb; }
-.sr-card__title { font-weight: 800; margin-bottom: 8px; font-size: 14px; }
+.sr-card__title { font-weight: 800; margin-bottom: 8px; font-size: 17px; line-height: 1.35; color: #0f172a; }
 .sr-card__roles { display: flex; flex-direction: column; gap: 6px; }
 .sr-card__role { background: #f8fafc; border-radius: 10px; padding: 8px; }
 .sr-card__role-name { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
 .sr-chip-row { display: flex; gap: 4px; flex-wrap: wrap; }
 .sr-chip {
-  padding: 4px 10px !important; border: 1px solid #cbd5e1 !important; border-radius: 999px !important;
-  background: #fff !important; cursor: pointer; font-size: 12px; font-weight: 600;
+  padding: 6px 12px !important; border: 1px solid #cbd5e1 !important; border-radius: 999px !important;
+  background: #fff !important; cursor: pointer; font-size: 13px; font-weight: 600; line-height: 1.3;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .sr-chip:hover { background: #f1f5f9 !important; }
@@ -645,18 +688,18 @@ export default {
 .sr-pill--should_not { background: #fee2e2; color: #991b1b; }
 .sr-pill--muted { background: #f1f5f9; color: #64748b; }
 
-.sr-miro { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; padding: 14px; background: #fafaf9; border-radius: 16px; border: 1px dashed #cbd5e1; }
-.sr-miro__col { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; }
-.sr-miro__col-head { border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; margin-bottom: 10px; }
-.sr-miro__emoji { font-size: 24px; }
-.sr-miro__col-head h3 { margin: 4px 0 2px; font-size: 15px; }
-.sr-miro__col-head p { margin: 0; font-size: 12px; color: #475569; }
-.sr-miro__buckets { display: flex; flex-direction: column; gap: 10px; }
-.sr-miro__bucket { border-radius: 10px; padding: 8px; background: #f8fafc; }
-.sr-miro__bucket--responsible { background: #f0fdf4; }
-.sr-miro__bucket--participates { background: #fffbeb; }
-.sr-miro__bucket--should_not { background: #fef2f2; }
-.sr-miro__bucket h4 { margin: 0 0 6px; font-size: 12px; color: #334155; }
+.sr-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; padding: 14px; background: #fafaf9; border-radius: 16px; border: 1px dashed #cbd5e1; }
+.sr-board__col { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; }
+.sr-board__col-head { border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; margin-bottom: 10px; }
+.sr-board__emoji { font-size: 24px; }
+.sr-board__col-head h3 { margin: 4px 0 2px; font-size: 16px; line-height: 1.3; font-weight: 800; }
+.sr-board__col-head p { margin: 0; font-size: 13px; line-height: 1.45; color: #475569; }
+.sr-board__buckets { display: flex; flex-direction: column; gap: 10px; }
+.sr-board__bucket { border-radius: 10px; padding: 8px; background: #f8fafc; }
+.sr-board__bucket--responsible { background: #f0fdf4; }
+.sr-board__bucket--participates { background: #fffbeb; }
+.sr-board__bucket--should_not { background: #fef2f2; }
+.sr-board__bucket h4 { margin: 0 0 6px; font-size: 13px; line-height: 1.35; color: #334155; font-weight: 700; }
 .sr-sticker {
   background: #fef08a; padding: 6px 8px; border-radius: 6px; font-size: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); margin-bottom: 4px;

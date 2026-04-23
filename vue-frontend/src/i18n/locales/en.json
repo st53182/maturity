@@ -2387,7 +2387,7 @@
       "cat": {
         "goals": "Purpose (why)",
         "participants": "Participants (who)",
-        "artifacts": "Artifacts",
+        "artifacts": "Artifacts & entities",
         "time": "When",
         "duration": "How long"
       },

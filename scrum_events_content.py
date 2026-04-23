@@ -1,7 +1,7 @@
 """Контент тренажёра Scrum events / «Ритм работы команды».
 
 Задача модуля — научить новичков собирать рабочий цикл команды из
-атомарных карточек (цель, участники, артефакты, время, длительность)
+атомарных карточек (цель, участники, артефакты и сущности, время, длительность)
 для 4 ключевых событий: Planning, Daily, Review, Retrospective.
 
 Структура:
@@ -40,7 +40,7 @@ STAGES: List[Dict] = [
             "goals": ["plan_work", "set_sprint_goal", "decompose_tasks", "prepare_tasks"],
             "participants": ["team", "product_owner", "scrum_master"],
             "artifacts": [
-                "product_backlog", "sprint_backlog", "sprint_goal",
+                "product_backlog", "backlog_refinement", "sprint_backlog", "sprint_goal",
                 "task_list", "definition_of_ready",
             ],
             "time": ["before_sprint", "first_day"],
@@ -51,7 +51,7 @@ STAGES: List[Dict] = [
             "participants": ["stakeholders"],
             "artifacts": ["team_agreements", "definition_of_done"],
             "time": [],
-            "duration": ["1_2h"],
+            "duration": ["1_2h", "up_to_3h"],
         },
     },
     {
@@ -86,15 +86,15 @@ STAGES: List[Dict] = [
     },
     {
         "key": "review",
-        "title": {"ru": "Демонстрация результата", "en": "Sprint Review"},
-        "short": {"ru": "Review", "en": "Review"},
+        "title": {"ru": "Обзор спринта (Sprint Review)", "en": "Sprint Review (sprint review)"},
+        "short": {"ru": "Sprint Review", "en": "Sprint Review"},
         "purpose": {
-            "ru": "Позволяет получить обратную связь и убедиться, что результат полезен.",
-            "en": "Gathers feedback and checks that the outcome is useful.",
+            "ru": "Событие Sprint Review: показать инкремент, получить обратную связь и скорректировать бэклог продукта.",
+            "en": "The Sprint Review: show the increment, gather feedback, and adapt the Product Backlog.",
         },
         "problem_it_solves": {
-            "ru": "Снимает риск «сделали и никому не нужно» и обновляет планы.",
-            "en": "Prevents shipping the wrong thing and refreshes plans.",
+            "ru": "Снимает риск «сделали и никому не нужно» и согласует ожидания стейкхолдеров с инкрементом.",
+            "en": "Prevents shipping the wrong thing and aligns stakeholders with the increment.",
         },
         "expected": {
             "goals": ["show_result", "get_feedback", "update_backlog"],
@@ -104,27 +104,27 @@ STAGES: List[Dict] = [
                 "product_backlog", "sprint_goal",
             ],
             "time": ["end_of_sprint"],
-            "duration": ["1h", "1_2h", "up_to_4h"],
+            "duration": ["1h", "1_2h", "up_to_3h", "up_to_4h"],
         },
         "acceptable": {
             "goals": ["sync_team"],
             "participants": ["scrum_master"],
-            "artifacts": ["definition_of_done"],
+            "artifacts": ["definition_of_done", "backlog_refinement"],
             "time": [],
             "duration": ["30_min"],
         },
     },
     {
         "key": "retro",
-        "title": {"ru": "Улучшение процесса", "en": "Retrospective"},
+        "title": {"ru": "Ретроспектива (улучшение процесса)", "en": "Retrospective (process improvement)"},
         "short": {"ru": "Retrospective", "en": "Retrospective"},
         "purpose": {
-            "ru": "Помогает команде становиться эффективнее.",
-            "en": "Helps the team get better every sprint.",
+            "ru": "Событие «Ретроспектива Спринта»: командно разобрать, как прошла работа, и спланировать улучшения процесса.",
+            "en": "The Sprint Retrospective: inspect how the sprint went and plan improvements to how the team works.",
         },
         "problem_it_solves": {
-            "ru": "Превращает усталость и раздражение в конкретные улучшения.",
-            "en": "Turns friction into concrete improvements.",
+            "ru": "Превращает усталость и раздражение в конкретные улучшения и договорённости.",
+            "en": "Turns friction into concrete improvements and working agreements.",
         },
         "expected": {
             "goals": ["analyze_process", "find_improvements"],
@@ -133,7 +133,7 @@ STAGES: List[Dict] = [
                 "improvements", "team_agreements", "blockers",
             ],
             "time": ["end_of_sprint", "after_sprint"],
-            "duration": ["1h", "1_2h"],
+            "duration": ["1h", "1_2h", "up_to_3h"],
         },
         "acceptable": {
             "goals": ["spot_issues"],
@@ -181,6 +181,13 @@ CARDS: Dict[str, List[Dict]] = {
     ],
     "artifacts": [
         {"key": "product_backlog", "title": {"ru": "Бэклог продукта", "en": "Product backlog"}},
+        {
+            "key": "backlog_refinement",
+            "title": {
+                "ru": "Уточнение бэклога продукта (PBI)",
+                "en": "Product Backlog Refinement (PBI)",
+            },
+        },
         {"key": "sprint_backlog", "title": {"ru": "Бэклог спринта", "en": "Sprint backlog"}},
         {"key": "sprint_goal", "title": {"ru": "Цель спринта", "en": "Sprint goal"}},
         {"key": "increment", "title": {"ru": "Инкремент продукта", "en": "Product increment"}},
@@ -207,6 +214,7 @@ CARDS: Dict[str, List[Dict]] = {
         {"key": "30_min", "title": {"ru": "30 минут", "en": "30 minutes"}},
         {"key": "1h", "title": {"ru": "1 час", "en": "1 hour"}},
         {"key": "1_2h", "title": {"ru": "1–2 часа", "en": "1–2 hours"}},
+        {"key": "up_to_3h", "title": {"ru": "До 3 часов", "en": "Up to 3 hours"}},
         {"key": "up_to_4h", "title": {"ru": "До 4 часов", "en": "Up to 4 hours"}},
         {"key": "up_to_8h", "title": {"ru": "До 8 часов", "en": "Up to 8 hours"}},
     ],

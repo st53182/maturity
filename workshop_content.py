@@ -35,13 +35,39 @@ def _content_product_stories(loc: str) -> Dict[str, Any]:
             "js": "Когда мне нужно записаться, я хочу сделать это онлайн, чтобы быстро выбрать удобное время",
             "diff": "User Story фокусируется на роли и ценности. Job Story — на ситуации и работе, которую пользователь \"нанимает\" продукт сделать.",
         },
+        "usPrompts": [
+            "Кто пользователь?",
+            "Что он хочет сделать?",
+            "Зачем ему это?",
+        ],
+        "jsPrompts": [
+            "Когда это происходит?",
+            "Что человек хочет сделать?",
+            "Зачем?",
+        ],
+        "decompGuidanceQ": [
+            "Можно ли это сделать в разумно коротком цикле (поставить и проверить)?",
+            "Есть ли польза, если поставить этот кусок отдельно?",
+            "Как поймёте, что результат достигнут (тест, интервью, метрика)?",
+        ],
+        "epicTitle": "Эпик, который предстоит расколоть",
+        "epicBody": (
+            "Онлайн-запись в вашем контексте — крупный объём работы: его редко «закрывают одним куском». "
+            "Как правило, его раскладывают на меньшие части с понятной ценностью — так проще планировать и не терять прозрачность. "
+            "Ниже — пример, как мыслить о частях."
+        ),
+        "compareLead": "Нет кнопки «сдал / не сдал» — это подсказки к живому обсуждению с фасилитатором. Обратите внимание на:",
+        "s10improvementLead": (
+            "С учётом SPIDR / 7 dimensions уточните шаги: переименуйте, укрупните, раздробите, если это помогает. "
+            "Цель — список, по которому команде и стейкхолдерам понятно, что поставляется."
+        ),
         "decompExample": ["Выбрать дату", "Выбрать время", "Подтвердить запись", "Получить уведомление"],
         "toolSpidr": "SPIDR: Spikes, Performance, Internationalization, Data, Re-engineering. Отметьте, что важно уточнить в вашем контексте.",
         "tool7d": "7 dimensions: вопросы о ценности, рисках, неопределённости, зависимостях и т.д. — кратко отметьте, что важно для вас.",
         "discussionQ": [
             "Понятно ли, кто пользователь?",
             "Есть ли ценность в формулировке?",
-            "Можно ли проверить результат тестом?",
+            "Можно ли проверить результат тестом или исследованием?",
         ],
     }
     E = {
@@ -53,13 +79,39 @@ def _content_product_stories(loc: str) -> Dict[str, Any]:
             "js": "When I need an appointment, I want to do it online so I can quickly pick a convenient time",
             "diff": "A User Story centres on a role and value. A Job Story centres on a situation and the job the user is hiring the product to do.",
         },
+        "usPrompts": [
+            "Who is the user?",
+            "What do they want to do?",
+            "Why do they need it?",
+        ],
+        "jsPrompts": [
+            "When does it happen?",
+            "What does the person want to do?",
+            "Why (what outcome)?",
+        ],
+        "decompGuidanceQ": [
+            "Can you ship and verify it in a reasonably short loop?",
+            "Is there value if you deliver this part on its own?",
+            "How will you know it worked (test, interview, metric)?",
+        ],
+        "epicTitle": "A big epic to break down",
+        "epicBody": (
+            "Online booking, in a real org, is usually a large body of work — rarely a single 'done' chunk. "
+            "Most teams break it into smaller, checkable parts so planning stays clear. "
+            "Below is an example of how to think in parts."
+        ),
+        "compareLead": "There is no 'pass / fail' — use these for live discussion with the facilitator. Look at:",
+        "s10improvementLead": (
+            "With SPIDR / 7 dimensions in mind, refine the steps: rename, split, or merge. "
+            "Aim for a list that stakeholders and the team can align on as shippable value."
+        ),
         "decompExample": ["Pick a date", "Pick a time", "Confirm the booking", "Get a notification"],
         "toolSpidr": "SPIDR: Spikes, Performance, Internationalization, Data, Re-engineering — note what matters in your context.",
         "tool7d": "7 dimensions: value, risk, uncertainty, dependencies — short notes on what matters for you.",
         "discussionQ": [
             "Is the user clear?",
             "Is there value in the wording?",
-            "Can the outcome be tested?",
+            "Can the outcome be tested or validated?",
         ],
     }
     S = R if loc == "ru" else E

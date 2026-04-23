@@ -63,6 +63,10 @@ def assist() -> Any:
     user_msg = f"Workshop: {exercise}\nCurrent step: {step}\nLearner text:\n{user_text or '(empty)'}"
     if extra:
         user_msg += f"\n\nContext:\n{extra}"
+    if exercise == "product_stories":
+        ps = _product_stories_step_hint(step, lang)
+        if ps:
+            user_msg += f"\n\nStep focus (follow this):\n{ps}"
 
     try:
         r = client.chat.completions.create(
@@ -82,6 +86,42 @@ def assist() -> Any:
             "reply": _fallback_text(locale, exercise, step, user_text),
             "fallback": True,
         }), 200
+
+
+def _product_stories_step_hint(step: str, lang: str) -> str:
+    s = (step or "").lower()
+    ru = lang == "Russian"
+    if "us_draft" in s or "user story" in s:
+        return (
+            "Уточните роль, действие и ценность; предложите черновик User Story в формате «Как …, я хочу …, чтобы …»."
+            if ru else
+            "Clarify role, action, value; offer one User Story draft 'As … I want … so that …'."
+        )
+    if "js_draft" in s or "job story" in s:
+        return (
+            "Сфокусируйтесь на ситуации и желаемом результате; черновик Job Story: «Когда …, я хочу …, чтобы …»."
+            if ru else
+            "Focus on situation and outcome; draft Job Story 'When … I want … so that …'."
+        )
+    if "decomp" in s or "разбив" in s or "decomposition" in s:
+        return (
+            "Помогите разбить на проверяемые шаги; не оценивайте 'правильность', предложите 1–2 альтернативы разбиения."
+            if ru else
+            "Help split into verifiable steps; offer 1–2 alternative breakdowns without judging."
+        )
+    if "spidr" in s or "7 dim" in s or "tool" in s:
+        return (
+            "Кратко подсветите, что стоит уточнить по SPIDR или по измерениям; без вердикта."
+            if ru else
+            "Highlight what to clarify with SPIDR or 7 dimensions; no verdict."
+        )
+    if "refine" in s or "улучш" in s or "improve" in s:
+        return (
+            "Помогите переформулировать шаги списка; цель — ясность для команды."
+            if ru else
+            "Help rephrase the task list for team clarity."
+        )
+    return ""
 
 
 def _fallback_text(locale: str, exercise: str, step: str, user_text: str) -> str:

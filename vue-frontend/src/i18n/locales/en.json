@@ -2588,10 +2588,12 @@
       },
       "example": {
         "title": "Step 2 — example",
+        "lead": "To avoid hinting the answer, we show User Story and Job Story on an example from a completely different domain. Same pattern — but you'll craft the answer for your own epic on the next steps.",
+        "patternLabel": "Pattern example (different domain)",
         "userStoryLabel": "User Story",
         "jobStoryLabel": "Job Story",
         "note": "The same scenario can be described differently — and that shapes how the team understands the task",
-        "explain": "A User Story focuses on the user, a Job Story focuses on the situation.",
+        "explain": "A User Story focuses on the user, a Job Story focuses on the situation. On the next screens you'll write both for your own epic.",
         "explainUserStory": "User Story → focus on the user",
         "explainJobStory": "Job Story → focus on the situation"
       },
@@ -2635,12 +2637,22 @@
         "badge": "This is a big epic — it needs to be broken down",
         "ourEpicLabel": "Our epic",
         "whyLabel": "Why it is an epic",
-        "yourAnswersLabel": "Your wording"
+        "yourAnswersLabel": "Your wording",
+        "envIntro": "The context we're working in",
+        "envHint": "Lean on this reality when you slice the epic on the next screens — don't optimise for an imaginary perfect world."
+      },
+      "env": {
+        "audience": "Audience",
+        "stack": "Stack and cadence",
+        "architecture": "Architecture and flows",
+        "existing": "What already works",
+        "constraints": "Constraints",
+        "stakeholders": "Stakeholders"
       },
       "decompositionExample": {
         "title": "Step 7 — example decomposition",
-        "lead": "Teams rarely do it all at once — they move step by step. Here are two ways to slice the same epic.",
-        "compare": "Both options are valid. Different angles help the team see the problem differently. On the next step you'll try it yourself."
+        "lead": "Teams rarely do it all at once — they move step by step. The same epic can be sliced in 4 ways: along the customer journey, from simple to rich, by SPIDR (Spike, Path, Interfaces, Data, Rules) and by the 7 dimensions of decomposition.",
+        "compare": "All four options are valid. Different angles help you see the epic from different sides. On the next step pick one approach (or combine) and apply it to your own epic."
       },
       "decomposition": {
         "title": "Step 8 — decomposition",

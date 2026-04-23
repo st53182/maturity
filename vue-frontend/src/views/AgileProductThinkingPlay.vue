@@ -93,19 +93,28 @@
       <!-- 2. Example -->
       <div v-else-if="stage === 'example'" class="pt-card">
         <h2>{{ $t('agileTraining.productThinking.example.title') }}</h2>
-        <div class="pt-compare" v-if="selectedCase">
+        <p class="pt-card__lead">{{ $t('agileTraining.productThinking.example.lead') }}</p>
+
+        <div class="pt-example-warn" v-if="selectedCase && selectedCase.examples">
+          <div class="pt-example-warn__h">⚠️ {{ $t('agileTraining.productThinking.example.patternLabel') }}</div>
+          <p class="pt-example-warn__p">{{ selectedCase.examples.scenario }}</p>
+        </div>
+
+        <div class="pt-compare" v-if="selectedCase && selectedCase.examples">
           <div class="pt-compare__col">
             <div class="pt-compare__h">👤 {{ $t('agileTraining.productThinking.example.userStoryLabel') }}</div>
             <p class="pt-compare__quote">«{{ selectedCase.examples.user_story }}»</p>
-            <div class="pt-compare__explain">{{ $t('agileTraining.productThinking.example.explainUserStory') }}</div>
+            <div class="pt-compare__explain" v-if="selectedCase.examples.focus_us">{{ selectedCase.examples.focus_us }}</div>
+            <div class="pt-compare__explain" v-else>{{ $t('agileTraining.productThinking.example.explainUserStory') }}</div>
           </div>
           <div class="pt-compare__col">
             <div class="pt-compare__h">🎬 {{ $t('agileTraining.productThinking.example.jobStoryLabel') }}</div>
             <p class="pt-compare__quote">«{{ selectedCase.examples.job_story }}»</p>
-            <div class="pt-compare__explain">{{ $t('agileTraining.productThinking.example.explainJobStory') }}</div>
+            <div class="pt-compare__explain" v-if="selectedCase.examples.focus_js">{{ selectedCase.examples.focus_js }}</div>
+            <div class="pt-compare__explain" v-else>{{ $t('agileTraining.productThinking.example.explainJobStory') }}</div>
           </div>
         </div>
-        <div class="pt-note" v-if="selectedCase">👉 {{ selectedCase.examples.note }}</div>
+        <div class="pt-note" v-if="selectedCase && selectedCase.examples && selectedCase.examples.note">👉 {{ selectedCase.examples.note }}</div>
         <p class="pt-explain">{{ $t('agileTraining.productThinking.example.explain') }}</p>
       </div>
 
@@ -228,6 +237,49 @@
           </div>
         </div>
 
+        <div class="pt-env" v-if="selectedCase && selectedCase.environment">
+          <div class="pt-env__intro">🧰 {{ $t('agileTraining.productThinking.epic.envIntro') }}</div>
+          <div class="pt-env__grid">
+            <section class="pt-env__block" v-if="hasEnvList('audience')">
+              <div class="pt-env__h">👥 {{ $t('agileTraining.productThinking.env.audience') }}</div>
+              <ul>
+                <li v-for="(line, i) in selectedCase.environment.audience" :key="'aud'+i">{{ line }}</li>
+              </ul>
+            </section>
+            <section class="pt-env__block" v-if="hasEnvList('stack')">
+              <div class="pt-env__h">⚙️ {{ $t('agileTraining.productThinking.env.stack') }}</div>
+              <ul>
+                <li v-for="(line, i) in selectedCase.environment.stack" :key="'st'+i">{{ line }}</li>
+              </ul>
+            </section>
+            <section class="pt-env__block" v-if="hasEnvList('architecture')">
+              <div class="pt-env__h">🧩 {{ $t('agileTraining.productThinking.env.architecture') }}</div>
+              <ul>
+                <li v-for="(line, i) in selectedCase.environment.architecture" :key="'arc'+i">{{ line }}</li>
+              </ul>
+            </section>
+            <section class="pt-env__block" v-if="hasEnvList('existing')">
+              <div class="pt-env__h">📦 {{ $t('agileTraining.productThinking.env.existing') }}</div>
+              <ul>
+                <li v-for="(line, i) in selectedCase.environment.existing" :key="'ex'+i">{{ line }}</li>
+              </ul>
+            </section>
+            <section class="pt-env__block" v-if="hasEnvList('constraints')">
+              <div class="pt-env__h">🚧 {{ $t('agileTraining.productThinking.env.constraints') }}</div>
+              <ul>
+                <li v-for="(line, i) in selectedCase.environment.constraints" :key="'cn'+i">{{ line }}</li>
+              </ul>
+            </section>
+            <section class="pt-env__block" v-if="hasEnvList('stakeholders')">
+              <div class="pt-env__h">🤝 {{ $t('agileTraining.productThinking.env.stakeholders') }}</div>
+              <ul>
+                <li v-for="(line, i) in selectedCase.environment.stakeholders" :key="'sh'+i">{{ line }}</li>
+              </ul>
+            </section>
+          </div>
+          <div class="pt-env__hint">💡 {{ $t('agileTraining.productThinking.epic.envHint') }}</div>
+        </div>
+
         <div class="pt-primer" v-if="primer.epic_text">
           <div class="pt-primer__h">💡 {{ primer.epic_title }}</div>
           <p>{{ primer.epic_text }}</p>
@@ -265,8 +317,14 @@
             <div class="pt-variant__sub">{{ variant.subtitle }}</div>
             <ul class="pt-steps">
               <li v-for="(step, i) in variant.items" :key="i">
-                <span class="pt-steps__num">{{ i + 1 }}</span>
-                <span>{{ step }}</span>
+                <template v-if="isStepObject(step)">
+                  <span class="pt-steps__tag">{{ step.tag }}</span>
+                  <span class="pt-steps__text">{{ step.text }}</span>
+                </template>
+                <template v-else>
+                  <span class="pt-steps__num">{{ i + 1 }}</span>
+                  <span>{{ step }}</span>
+                </template>
               </li>
             </ul>
           </article>
@@ -343,9 +401,15 @@
             :class="{ 'pt-tech--active': chosenTechnique === 'spidr' }"
             @click="selectTechnique('spidr')"
           >
-            <div class="pt-tech__h">🧭 {{ $t('agileTraining.productThinking.technique.spidrTitle') }}</div>
+            <div class="pt-tech__h">🧭 {{ content.techniques.spidr.title || $t('agileTraining.productThinking.technique.spidrTitle') }}</div>
+            <div class="pt-tech__sub" v-if="content.techniques.spidr.subtitle">{{ content.techniques.spidr.subtitle }}</div>
             <ul>
-              <li v-for="(it, i) in content.techniques.spidr.items" :key="i">{{ it }}</li>
+              <li v-for="(it, i) in content.techniques.spidr.items" :key="i">
+                <template v-if="isStepObject(it)">
+                  <strong class="pt-tech__tag">{{ it.tag }}</strong> — {{ it.text }}
+                </template>
+                <template v-else>{{ it }}</template>
+              </li>
             </ul>
           </article>
           <article
@@ -353,9 +417,15 @@
             :class="{ 'pt-tech--active': chosenTechnique === 'seven_dim' }"
             @click="selectTechnique('seven_dim')"
           >
-            <div class="pt-tech__h">🔍 {{ $t('agileTraining.productThinking.technique.sevenDimTitle') }}</div>
+            <div class="pt-tech__h">🔍 {{ content.techniques.seven_dim.title || $t('agileTraining.productThinking.technique.sevenDimTitle') }}</div>
+            <div class="pt-tech__sub" v-if="content.techniques.seven_dim.subtitle">{{ content.techniques.seven_dim.subtitle }}</div>
             <ul>
-              <li v-for="(it, i) in content.techniques.seven_dim.items" :key="i">{{ it }}</li>
+              <li v-for="(it, i) in content.techniques.seven_dim.items" :key="i">
+                <template v-if="isStepObject(it)">
+                  <strong class="pt-tech__tag">{{ it.tag }}</strong> — {{ it.text }}
+                </template>
+                <template v-else>{{ it }}</template>
+              </li>
             </ul>
           </article>
         </div>
@@ -613,6 +683,14 @@ export default {
       if (lang !== 'ru' && lang !== 'en') return;
       this.$i18n.locale = lang;
       try { localStorage.setItem('language', lang); } catch (_) { /* noop */ }
+    },
+    isStepObject(step) {
+      return step !== null && typeof step === 'object' && (typeof step.tag === 'string' || typeof step.text === 'string');
+    },
+    hasEnvList(key) {
+      const env = this.selectedCase && this.selectedCase.environment;
+      const arr = env && env[key];
+      return Array.isArray(arr) && arr.length > 0;
     },
     async loadState() {
       const params = { locale: this.locale };
@@ -966,6 +1044,52 @@ export default {
 }
 .pt-variant__h { font-weight: 700; color: #5b21b6; font-size: 15px; }
 .pt-variant__sub { font-size: 13px; color: #64748b; margin: 4px 0 10px; line-height: 1.5; }
+
+.pt-example-warn {
+  margin: 14px 0; padding: 10px 14px;
+  background: #fffbeb; border: 1px dashed #fcd34d; border-radius: 10px;
+  color: #92400e;
+}
+.pt-example-warn__h { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.pt-example-warn__p { margin: 0; color: #78350f; font-size: 14px; line-height: 1.5; }
+
+.pt-env {
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+.pt-env__intro { font-weight: 700; color: #0f172a; margin-bottom: 10px; font-size: 14px; }
+.pt-env__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) { .pt-env__grid { grid-template-columns: 1fr; } }
+.pt-env__block {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 10px 12px;
+}
+.pt-env__h {
+  font-size: 12px; font-weight: 700; color: #334155;
+  text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+}
+.pt-env__block ul { margin: 0; padding-left: 18px; color: #475569; line-height: 1.55; font-size: 13px; }
+.pt-env__block li { margin-bottom: 3px; }
+.pt-env__hint { margin-top: 10px; font-size: 13px; color: #475569; font-style: italic; }
+
+.pt-steps__tag {
+  flex-shrink: 0;
+  min-width: 110px;
+  background: #ede9fe; color: #5b21b6;
+  border-radius: 8px; padding: 4px 8px;
+  font-size: 12px; font-weight: 700;
+  text-align: center;
+}
+.pt-steps__text { color: #1e293b; line-height: 1.5; }
+.pt-tech__sub { font-size: 12px; color: #64748b; margin-bottom: 6px; font-style: italic; }
+.pt-tech__tag { color: #5b21b6; }
 
 .pt-good-bad {
   display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0;

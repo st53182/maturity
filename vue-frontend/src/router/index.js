@@ -78,6 +78,7 @@ const routes = [
   {path: '/agile-training/wsjf', name: 'AgileWsjfFacilitator', component: () => import('@/views/AgileWsjfFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/scrum-events', name: 'AgileScrumEventsFacilitator', component: () => import('@/views/AgileScrumEventsFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/scrum-roles', name: 'AgileScrumRolesFacilitator', component: () => import('@/views/AgileScrumRolesFacilitator.vue'), meta: { requiresAuth: true }},
+  {path: '/agile-training/product-thinking', name: 'AgileProductThinkingFacilitator', component: () => import('@/views/AgileProductThinkingFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/g/:slug', name: 'GroupPlay', component: () => import('@/views/GroupPlayGateway.vue')},
   {path: '/testing-types', name: 'TestingTypesAssignment', component: () => import('@/views/TestingTypesAssignment.vue'), meta: { requiresAuth: true }},
   {path: '/usability-report', name: 'UsabilityReport', component: () => import('@/views/UsabilityReport.vue'), meta: { requiresAuth: true }},

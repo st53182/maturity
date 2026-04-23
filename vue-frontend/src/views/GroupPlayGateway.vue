@@ -35,6 +35,7 @@ import AgileDorDodPlay from '@/views/AgileDorDodPlay.vue';
 import AgileWsjfPlay from '@/views/AgileWsjfPlay.vue';
 import AgileScrumEventsPlay from '@/views/AgileScrumEventsPlay.vue';
 import AgileScrumRolesPlay from '@/views/AgileScrumRolesPlay.vue';
+import AgileProductThinkingPlay from '@/views/AgileProductThinkingPlay.vue';
 
 const REMOVED_WORKSHOP_KEYS = new Set(['product_stories', 'user_story_map', 'kanban_system']);
 
@@ -49,6 +50,7 @@ export default {
     AgileWsjfPlay,
     AgileScrumEventsPlay,
     AgileScrumRolesPlay,
+    AgileProductThinkingPlay,
   },
   data() {
     return {
@@ -70,6 +72,7 @@ export default {
       if (this.exerciseKey === 'wsjf') return 'AgileWsjfPlay';
       if (this.exerciseKey === 'scrum_events') return 'AgileScrumEventsPlay';
       if (this.exerciseKey === 'scrum_roles') return 'AgileScrumRolesPlay';
+      if (this.exerciseKey === 'product_thinking') return 'AgileProductThinkingPlay';
       return 'AgilePrinciplesPlay';
     },
   },

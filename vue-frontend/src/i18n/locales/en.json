@@ -1551,6 +1551,13 @@
         "bullet2": "Levels of involvement, common mistakes and consequences",
         "bullet3": "Final board and comparison with the team"
       },
+      "productThinking": {
+        "title": "Product thinking: User Story, Job Story and decomposition",
+        "desc": "Participants work through an \"online appointment booking\" case: write a User Story and a Job Story, break the epic into tasks and refine decomposition with SPIDR / 7 dimensions. No grading — only questions, hints and an AI helper.",
+        "bullet1": "11 screens: context → example → practice → decomposition → improve → summary",
+        "bullet2": "AI helper: asks questions and suggests rewording",
+        "bullet3": "Save results as PDF and a facilitator view for discussion"
+      },
       "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
@@ -2523,6 +2530,170 @@
         "no_product_ownership":{ "title": "No one owns the product" },
         "sm_as_secretary":     { "title": "SM becomes a meeting secretary instead of a process coach" },
         "po_designs_solution": { "title": "PO dictates how to implement" }
+      }
+    },
+    "productThinking": {
+      "playTitle": "Product thinking: User Story, Job Story and decomposition",
+      "facTitle": "Product thinking — facilitator panel",
+      "facSubtitle": "Create a session, add groups and share links. Answers are collected per group, and discussion is the core of the learning.",
+      "newSessionTitle": "Training name «Product thinking»",
+      "importantTitle": "Important",
+      "important1": "There is no \"right\" or \"wrong\" here — only questions and hints.",
+      "important2": "Learning through practice and discussion matters more than automated grading.",
+      "aiLimitLabel": "AI requests left",
+      "case": {
+        "title": "Case",
+        "contextTitle": "Today",
+        "goal": "The company wants to improve this process",
+        "hint": "You need to describe the solution so that the team can implement it"
+      },
+      "progress": "Step {current} of {total}",
+      "next": "Next",
+      "back": "Back",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "nameAsk": "Your name (optional)",
+      "namePlaceholder": "Name or nickname",
+      "start": "Start training",
+      "notStarted": "Press \"Start\" to join the group and save your results.",
+      "needJoinHint": "Start the training on screen 1 so the AI helper and save can work.",
+      "aiHelperTitle": "AI helper",
+      "aiHelperCta": "Help me",
+      "aiHelperLoading": "Thinking about your answer…",
+      "aiHelperEmpty": "Write a rough draft first — the helper will ask clarifying questions and suggest a version.",
+      "aiHelperInputPlaceholder": "Text you want help with",
+      "aiHelperSend": "Send",
+      "aiHelperLimit": "AI requests are used up for this training. Try to rephrase on your own — hints are still available.",
+      "aiHelperError": "Couldn't reach the helper. Please try later.",
+      "aiHelperHistoryTitle": "AI helper history",
+      "aiModeUserStory": "Help with the User Story",
+      "aiModeJobStory": "Help with the Job Story",
+      "aiModeDecomposition": "Help with decomposition",
+      "aiModeImprove": "Help me improve",
+      "intro": {
+        "title": "Step 1 — context",
+        "lead": "Dive into the case"
+      },
+      "example": {
+        "title": "Step 2 — example",
+        "userStoryLabel": "User Story",
+        "jobStoryLabel": "Job Story",
+        "note": "The same scenario can be described differently — and that shapes how the team understands the task",
+        "explain": "A User Story focuses on the user, a Job Story focuses on the situation.",
+        "explainUserStory": "User Story → focus on the user",
+        "explainJobStory": "Job Story → focus on the situation"
+      },
+      "userStoryScreen": {
+        "title": "Step 3 — User Story",
+        "context": "The delivery team needs to understand what to do and why.",
+        "questionsTitle": "Questions to think about",
+        "q1": "Who is the user?",
+        "q2": "What do they want to do?",
+        "q3": "Why does it matter?",
+        "hintTitle": "Template",
+        "hint": "As [who], I want [what], so that [why]",
+        "placeholder": "As a customer, I want…"
+      },
+      "jobStoryScreen": {
+        "title": "Step 4 — Job Story",
+        "context": "Sometimes the situation matters more than who the user is.",
+        "questionsTitle": "Questions to think about",
+        "q1": "When does this happen?",
+        "q2": "What are they trying to achieve?",
+        "q3": "What outcome do they want?",
+        "hintTitle": "Template",
+        "hint": "When [situation], I want [motivation], so that [outcome]",
+        "placeholder": "When I need to book, I want…"
+      },
+      "compare": {
+        "title": "Step 5 — comparison",
+        "lead": "Different wordings lead to different solutions.",
+        "yourUserStory": "Your User Story",
+        "yourJobStory": "Your Job Story",
+        "empty": "— empty —",
+        "q1": "Which wording is clearer?",
+        "q2": "Where is value easier to see?",
+        "q3": "Which one is easier to implement?",
+        "notesLabel": "Discussion notes",
+        "notesPlaceholder": "Jot down what you notice"
+      },
+      "epic": {
+        "title": "Step 6 — the epic",
+        "lead": "You have the idea. But it can't be delivered in one step.",
+        "badge": "This is a big epic — it needs to be broken down"
+      },
+      "decompositionExample": {
+        "title": "Step 7 — example decomposition",
+        "lead": "Teams rarely do it all at once — they move step by step."
+      },
+      "decomposition": {
+        "title": "Step 8 — decomposition",
+        "context": "Your task is to split the solution into pieces that can be delivered step by step.",
+        "questionsTitle": "Questions to think about",
+        "q1": "Can it be done quickly?",
+        "q2": "Does it bring value on its own?",
+        "q3": "Can it be tested?",
+        "placeholder": "Short task title",
+        "addTask": "Add task",
+        "removeTask": "Remove",
+        "emptyHint": "Add your first task — keep it small and clear."
+      },
+      "technique": {
+        "title": "Step 9 — a tool",
+        "lead": "If splitting feels hard — try a technique.",
+        "choose": "Which approach do you want to try?",
+        "spidrTitle": "SPIDR (simplified)",
+        "sevenDimTitle": "7 dimensions",
+        "skip": "I'll skip"
+      },
+      "improve": {
+        "title": "Step 10 — improve",
+        "lead": "Now try to improve your decomposition.",
+        "explain": "You can refine the same tasks or rewrite them remembering the technique you chose.",
+        "copyFromInitial": "Copy from step 8",
+        "improvedTitle": "Improved decomposition"
+      },
+      "summary": {
+        "title": "Step 11 — result",
+        "lead": "This is your take on the task.",
+        "userStoryTitle": "User Story",
+        "jobStoryTitle": "Job Story",
+        "tasksTitle": "Decomposition",
+        "improvedTitle": "Improved decomposition",
+        "techniqueTitle": "Approach",
+        "downloadPdf": "Save as PDF",
+        "downloadPdfLoading": "Preparing PDF…",
+        "downloadPdfError": "Couldn't save PDF. Please try again.",
+        "date": "Date",
+        "participant": "Participant",
+        "caseTitle": "Case",
+        "techniqueNone": "not picked",
+        "techniqueSpidr": "SPIDR",
+        "techniqueSevenDim": "7 dimensions"
+      },
+      "facilitator": {
+        "participantsTitle": "Group participants",
+        "noAnswers": "No answers yet in this group.",
+        "loadError": "Failed to load",
+        "openGroup": "Open link",
+        "copyLink": "Copy link",
+        "copied": "Copied",
+        "resetGroup": "Reset answers",
+        "resetConfirm": "Delete all answers in this group?",
+        "participantsCount": "no participants | {n} participant | {n} participants",
+        "answersCount": "no answers | {n} answer | {n} answers",
+        "tasksCountLabel": "Tasks",
+        "stageLabel": "Stage",
+        "techniqueLabel": "Approach",
+        "pickExample": "Show to group",
+        "hideExample": "Hide",
+        "discussionTitle": "Discussion questions",
+        "discussion1": "Where did the User Story and Job Story differ in focus?",
+        "discussion2": "Which tasks appear across different participants?",
+        "discussion3": "Which tasks could be split further?",
+        "examplesTitle": "Selected examples",
+        "examplesEmpty": "No examples selected yet — press \"Show to group\" on a participant card."
       }
     }
   },

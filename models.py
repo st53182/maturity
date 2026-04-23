@@ -960,6 +960,47 @@ class AgileTrainingScrumEventsAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingProductThinkingAnswer(db.Model):
+    """Ответ участника тренинга «Продуктовое мышление: User Story / Job Story / декомпозиция».
+
+    Одна запись на участника. `data_json` хранит весь артефакт:
+    user_story, job_story, epic_summary, tasks[], improved_tasks[],
+    chosen_technique ('spidr' | 'seven_dim' | null), notes по экранам,
+    history AI-помощника и счётчик AI-обращений для лимита.
+    """
+
+    __tablename__ = "agile_training_product_thinking_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_product_thinking_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    stage = db.Column(db.String(32), nullable=True, index=True)
+    user_story = db.Column(db.Text, nullable=True)
+    job_story = db.Column(db.Text, nullable=True)
+    tasks_count = db.Column(db.Integer, nullable=True, index=True)
+    chosen_technique = db.Column(db.String(16), nullable=True, index=True)
+    ai_calls = db.Column(db.Integer, nullable=False, default=0)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

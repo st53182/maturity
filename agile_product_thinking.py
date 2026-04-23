@@ -45,6 +45,7 @@ AI_CALLS_LIMIT_PER_PARTICIPANT = 15
 AI_PROMPT_LIMIT_CHARS = 2000
 
 ALLOWED_STAGES = (
+    "case_choice",
     "intro",
     "example",
     "user_story",
@@ -59,30 +60,136 @@ ALLOWED_STAGES = (
 )
 STAGE_SET = set(ALLOWED_STAGES)
 
+ALLOWED_CASE_KEYS = {"it", "event"}
+
 
 CONTENT = {
     "ru": {
-        "case": {
-            "title": "Клиенты хотят записываться на приём онлайн, не звоня",
-            "context": [
-                "Сейчас клиенты тратят время на звонки",
-                "Операторы перегружены",
-                "Записи теряются или происходят с ошибками",
-            ],
-            "goal": "Компания хочет улучшить этот процесс",
-            "hint": "Вам нужно описать решение так, чтобы команда могла его реализовать",
-        },
-        "examples": {
-            "user_story": "Как клиент, я хочу записаться онлайн, чтобы не тратить время на звонки",
-            "job_story": "Когда мне нужно записаться, я хочу сделать это онлайн, чтобы быстро выбрать удобное время",
-            "note": "Один и тот же сценарий можно описать по-разному — это влияет на понимание задачи командой",
-        },
-        "decomposition_example": [
-            "выбрать дату",
-            "выбрать время",
-            "подтвердить запись",
-            "получить уведомление",
+        "cases": [
+            {
+                "key": "it",
+                "emoji": "💻",
+                "label": "IT-кейс: онлайн-запись",
+                "short": "Пример из мира IT. Попробуйте на кейсе «онлайн-запись на приём».",
+                "title": "Клиенты хотят записываться на приём онлайн, не звоня",
+                "context": [
+                    "Сейчас клиенты тратят время на звонки",
+                    "Операторы перегружены — всё время занята линия",
+                    "Записи теряются или происходят с ошибками",
+                ],
+                "goal": "Компания хочет улучшить этот процесс",
+                "hint": "Опишите решение так, чтобы команда могла его реализовать",
+                "epic_summary": "Онлайн-запись на приём",
+                "epic_why": (
+                    "Это не одна маленькая задача, а целая история: нужен экран "
+                    "выбора услуги, календарь, подтверждение, напоминание. "
+                    "Всё сразу за один вечер не сделать — поэтому это эпик."
+                ),
+                "examples": {
+                    "user_story": "Как клиент, я хочу записаться онлайн, чтобы не тратить время на звонки",
+                    "job_story": "Когда мне нужно записаться, я хочу сделать это онлайн, чтобы быстро выбрать удобное время",
+                    "note": "Один и тот же сценарий можно описать по-разному — это влияет на понимание задачи командой",
+                },
+                "decomposition_examples": [
+                    {
+                        "label": "Вариант 1 — по шагам клиента",
+                        "subtitle": "Режем по пути пользователя: что он делает по очереди",
+                        "items": [
+                            "Выбрать услугу",
+                            "Выбрать дату",
+                            "Выбрать удобное время",
+                            "Подтвердить запись",
+                            "Получить напоминание",
+                        ],
+                    },
+                    {
+                        "label": "Вариант 2 — от минимального к полному",
+                        "subtitle": "Режем по уровню готовности: сначала самое простое, потом добавляем",
+                        "items": [
+                            "MVP: форма «имя + телефон», администратор сам назначает время",
+                            "+ выбор даты из календаря",
+                            "+ выбор конкретного времени",
+                            "+ автоматическое подтверждение",
+                            "+ напоминание за день",
+                        ],
+                    },
+                ],
+                "good_task": "Добавить кнопку «Записаться» на главной странице",
+                "bad_task": "Сделать систему онлайн-записи",
+            },
+            {
+                "key": "event",
+                "emoji": "🎉",
+                "label": "Не-IT: организовать корпоратив",
+                "short": "Пример не из IT. Возьмите кейс «организовать корпоратив на 30 человек».",
+                "title": "Руководитель попросил организовать корпоратив команде из 30 человек",
+                "context": [
+                    "Праздник нужно провести через 3 недели",
+                    "Бюджет ограничен — надо уложиться",
+                    "У людей разные ожидания: кто-то хочет активности, кто-то — спокойно поговорить",
+                ],
+                "goal": "Команда должна остаться довольной и провести вечер вместе",
+                "hint": "Опишите, каким должен быть корпоратив, чтобы коллеги поняли, что делать",
+                "epic_summary": "Организовать корпоратив на 30 человек",
+                "epic_why": (
+                    "Тут сразу много движений: место, еда, программа, приглашения, "
+                    "фотограф. Если браться за всё одновременно, легко утонуть — "
+                    "поэтому это эпик, его надо разбить на шаги."
+                ),
+                "examples": {
+                    "user_story": "Как участник команды, я хочу прийти на корпоратив и хорошо отдохнуть, чтобы зарядиться перед новым кварталом",
+                    "job_story": "Когда я получаю приглашение на корпоратив, я хочу быстро понять где, во сколько и что надевать, чтобы спокойно запланировать вечер",
+                    "note": "Кейсы без IT тоже полезно описывать через User Story и Job Story — это помогает договориться с коллегами",
+                },
+                "decomposition_examples": [
+                    {
+                        "label": "Вариант 1 — по шагам подготовки",
+                        "subtitle": "Режем по этапам: от выбора даты до самого праздника",
+                        "items": [
+                            "Выбрать дату",
+                            "Найти подходящее место",
+                            "Составить меню",
+                            "Разослать приглашения",
+                            "Продумать программу вечера",
+                            "В день X — провести корпоратив",
+                        ],
+                    },
+                    {
+                        "label": "Вариант 2 — от простого к полному",
+                        "subtitle": "Режем по «богатству» праздника: сначала простой минимум, потом украшаем",
+                        "items": [
+                            "Минимум: просто собраться в кафе после работы",
+                            "+ заранее согласованное меню",
+                            "+ программа с играми или ведущим",
+                            "+ фотограф и оформление зала",
+                            "+ подарки и сюрпризы для команды",
+                        ],
+                    },
+                ],
+                "good_task": "Позвонить в 3 кафе и узнать цену на 30 человек",
+                "bad_task": "Организовать корпоратив",
+            },
         ],
+        "primer": {
+            "epic_title": "Что такое «эпик»?",
+            "epic_text": (
+                "Эпик — это большая задача. Её нельзя сделать за один день, "
+                "потому что внутри много маленьких шагов. Когда мы «декомпозируем», "
+                "мы режем эпик на эти маленькие шаги, которые команда сможет делать по очереди."
+            ),
+            "decomposition_title": "Что такое «декомпозиция»?",
+            "decomposition_text": (
+                "Декомпозиция — это разделить одну большую цель на маленькие задачи. "
+                "Хорошая маленькая задача — та, которую понятно, как сделать, и "
+                "можно проверить отдельно. Плохая — это ещё целый проект, просто с новым словом."
+            ),
+            "good_task_label": "Так выглядит маленькая задача — её видно, что делать",
+            "bad_task_label": "А это ещё не задача, а целый эпик — его надо резать дальше",
+            "start_small_hint": (
+                "Не пытайтесь описать всё идеально. Начните с 3–5 задач — каждую "
+                "можно уточнить или разбить позже. Смело копируйте и меняйте примеры выше."
+            ),
+        },
         "techniques": {
             "spidr": {
                 "title": "SPIDR (упрощённо)",
@@ -104,27 +211,131 @@ CONTENT = {
         },
     },
     "en": {
-        "case": {
-            "title": "Customers want to book appointments online without calling",
-            "context": [
-                "Customers spend time calling in",
-                "Operators are overloaded",
-                "Bookings get lost or recorded with errors",
-            ],
-            "goal": "The company wants to improve this process",
-            "hint": "You need to describe the solution so that the team can implement it",
-        },
-        "examples": {
-            "user_story": "As a customer, I want to book online, so I don't waste time on phone calls",
-            "job_story": "When I need to book, I want to do it online, so I can quickly pick a convenient time",
-            "note": "The same scenario can be described in different ways — and that shapes how the team understands the task",
-        },
-        "decomposition_example": [
-            "pick a date",
-            "pick a time",
-            "confirm the booking",
-            "receive a notification",
+        "cases": [
+            {
+                "key": "it",
+                "emoji": "💻",
+                "label": "IT case: online booking",
+                "short": "A case from the IT world. Try the «online appointment booking» scenario.",
+                "title": "Customers want to book appointments online without calling",
+                "context": [
+                    "Customers spend time calling in",
+                    "Operators are overloaded — the phone line is always busy",
+                    "Bookings get lost or recorded with errors",
+                ],
+                "goal": "The company wants to improve this process",
+                "hint": "Describe the solution so that the team can implement it",
+                "epic_summary": "Online appointment booking",
+                "epic_why": (
+                    "This isn't a single small task, it's a whole story: a service "
+                    "picker, a calendar, confirmation, a reminder. You can't build "
+                    "it all in one evening — that's why it's an epic."
+                ),
+                "examples": {
+                    "user_story": "As a customer, I want to book online, so I don't waste time on phone calls",
+                    "job_story": "When I need to book, I want to do it online, so I can quickly pick a convenient time",
+                    "note": "The same scenario can be described differently — and that shapes how the team understands the task",
+                },
+                "decomposition_examples": [
+                    {
+                        "label": "Option 1 — along the customer journey",
+                        "subtitle": "Slice by user path: what the customer does step by step",
+                        "items": [
+                            "Pick a service",
+                            "Pick a date",
+                            "Pick a convenient time",
+                            "Confirm the booking",
+                            "Receive a reminder",
+                        ],
+                    },
+                    {
+                        "label": "Option 2 — from minimum to full",
+                        "subtitle": "Slice by richness: start with the simplest thing, then grow it",
+                        "items": [
+                            "MVP: name + phone form, the admin assigns the time manually",
+                            "+ pick the date from a calendar",
+                            "+ pick a specific time",
+                            "+ automatic confirmation",
+                            "+ reminder the day before",
+                        ],
+                    },
+                ],
+                "good_task": "Add a «Book now» button on the home page",
+                "bad_task": "Build the online booking system",
+            },
+            {
+                "key": "event",
+                "emoji": "🎉",
+                "label": "Non-IT: organize a team party",
+                "short": "A non-IT case. Try «organize a team party for 30 people».",
+                "title": "Your manager asked you to organize a team party for 30 people",
+                "context": [
+                    "The party must happen in 3 weeks",
+                    "The budget is limited — you must fit in",
+                    "People have different expectations: some want activities, some want to chat",
+                ],
+                "goal": "The team should feel great and enjoy the evening together",
+                "hint": "Describe what this party should be like so your colleagues know what to do",
+                "epic_summary": "Organize a team party for 30 people",
+                "epic_why": (
+                    "There's a lot going on here: venue, food, programme, invitations, "
+                    "a photographer. If you grab it all at once, you drown — that's why "
+                    "it's an epic and needs to be broken down."
+                ),
+                "examples": {
+                    "user_story": "As a team member, I want to come to the party and genuinely rest, so that I feel energized for the new quarter",
+                    "job_story": "When I receive the invite, I want to quickly see where, when, and what to wear, so that I can plan my evening calmly",
+                    "note": "Non-IT cases also benefit from User Story / Job Story — it helps you align with colleagues",
+                },
+                "decomposition_examples": [
+                    {
+                        "label": "Option 1 — along the preparation steps",
+                        "subtitle": "Slice by phases: from picking the date to the day itself",
+                        "items": [
+                            "Pick the date",
+                            "Find a suitable venue",
+                            "Plan the menu",
+                            "Send out invitations",
+                            "Plan the evening's programme",
+                            "Day X — run the party",
+                        ],
+                    },
+                    {
+                        "label": "Option 2 — from simple to rich",
+                        "subtitle": "Slice by how elaborate the party is: start small, then decorate",
+                        "items": [
+                            "Minimum: just gather in a café after work",
+                            "+ pre-agreed menu",
+                            "+ programme with games or a host",
+                            "+ photographer and venue decoration",
+                            "+ gifts and surprises for the team",
+                        ],
+                    },
+                ],
+                "good_task": "Call 3 cafés and ask for the price for 30 people",
+                "bad_task": "Organize the party",
+            },
         ],
+        "primer": {
+            "epic_title": "What is an «epic»?",
+            "epic_text": (
+                "An epic is a big task. You can't finish it in a day because it "
+                "contains many small steps. When we «decompose», we slice the epic "
+                "into those small steps so the team can tackle them one by one."
+            ),
+            "decomposition_title": "What is «decomposition»?",
+            "decomposition_text": (
+                "Decomposition is splitting one big goal into small tasks. A good "
+                "small task is one you clearly know how to do and can verify on its "
+                "own. A bad one is still a whole project in disguise."
+            ),
+            "good_task_label": "This looks like a small task — you can tell what to do",
+            "bad_task_label": "This is still an epic — it needs more splitting",
+            "start_small_hint": (
+                "Don't try to be perfect. Start with 3–5 tasks — you can refine or "
+                "split them later. Feel free to copy and adapt the examples above."
+            ),
+        },
         "techniques": {
             "spidr": {
                 "title": "SPIDR (simplified)",
@@ -243,8 +454,12 @@ def _get_or_create_answer(group_id: int, participant_id: int) -> AgileTrainingPr
 
 def _serialize_answer(a: AgileTrainingProductThinkingAnswer) -> Dict:
     data = _safe_json_load(a.data_json)
+    case_key = data.get("case_key")
+    if case_key not in ALLOWED_CASE_KEYS:
+        case_key = None
     return {
         "stage": a.stage,
+        "case_key": case_key,
         "user_story": a.user_story,
         "job_story": a.job_story,
         "chosen_technique": a.chosen_technique,
@@ -336,6 +551,14 @@ def participant_answer(slug: str):
     a = _get_or_create_answer(g.id, p.id)
     data = _safe_json_load(a.data_json)
 
+    if "case_key" in body:
+        ck = body.get("case_key")
+        if ck is None or ck == "":
+            data.pop("case_key", None)
+        else:
+            ck = str(ck).strip().lower()
+            if ck in ALLOWED_CASE_KEYS:
+                data["case_key"] = ck
     if "user_story" in body:
         a.user_story = _clamp_text(body.get("user_story"))
     if "job_story" in body:
@@ -549,11 +772,22 @@ def participant_ai_assist(slug: str):
     client = _openai_client()
     reply_text = ""
     model_used = None
+    stored = _safe_json_load(a.data_json)
+    chosen_case_key = stored.get("case_key")
+    locale_content = CONTENT.get(locale, CONTENT["ru"])
+    cases_list = locale_content.get("cases") or []
+    case = None
+    if chosen_case_key:
+        case = next((c for c in cases_list if c.get("key") == chosen_case_key), None)
+    if case is None and cases_list:
+        case = cases_list[0]
     if client:
         system = _SYSTEM_PROMPTS.get(locale, _SYSTEM_PROMPTS["ru"])
         instruction = _ai_mode_instruction(mode, locale)
-        case = CONTENT.get(locale, CONTENT["ru"])["case"]
-        case_summary = f"{case['title']}. {' '.join(case['context'])} {case['goal']}".strip()
+        if case:
+            case_summary = f"{case['title']}. {' '.join(case.get('context') or [])} {case.get('goal') or ''}".strip()
+        else:
+            case_summary = ""
         user_msg = (
             f"{instruction}\n\n"
             f"Контекст кейса: {case_summary}\n\n"

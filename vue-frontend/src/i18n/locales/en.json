@@ -1553,9 +1553,9 @@
       },
       "productThinking": {
         "title": "Product thinking: User Story, Job Story and decomposition",
-        "desc": "Participants work through an \"online appointment booking\" case: write a User Story and a Job Story, break the epic into tasks and refine decomposition with SPIDR / 7 dimensions. No grading — only questions, hints and an AI helper.",
-        "bullet1": "11 screens: context → example → practice → decomposition → improve → summary",
-        "bullet2": "AI helper: asks questions and suggests rewording",
+        "desc": "Participant picks a case (IT or non-IT), writes a User Story and a Job Story, breaks the epic into tasks and refines decomposition with SPIDR / 7 dimensions. No grading — only questions, hints and an AI helper. Friendly to people who have never done decomposition.",
+        "bullet1": "12 screens: case choice → context → example → practice → decomposition → improve → summary",
+        "bullet2": "2 cases to choose from (an IT product and «organize a team party»), AI helper and guiding questions",
         "bullet3": "Save results as PDF and a facilitator view for discussion"
       },
       "backHome": "Back to exercises",
@@ -2571,6 +2571,14 @@
       "aiModeJobStory": "Help with the Job Story",
       "aiModeDecomposition": "Help with decomposition",
       "aiModeImprove": "Help me improve",
+      "caseChoice": {
+        "title": "Pick a case",
+        "lead": "First decide which example feels easier to start with. The IT case is about a product, the non-IT case is about everyday life. Both work equally well to practice User Stories, Job Stories and decomposition.",
+        "pickCta": "Pick this",
+        "picked": "Picked",
+        "afterPick": "Great — press «Next» and we'll dive into the case.",
+        "switch": "Switch case"
+      },
       "intro": {
         "title": "Step 1 — context",
         "lead": "Dive into the case"
@@ -2621,23 +2629,30 @@
       "epic": {
         "title": "Step 6 — the epic",
         "lead": "You have the idea. But it can't be delivered in one step.",
-        "badge": "This is a big epic — it needs to be broken down"
+        "badge": "This is a big epic — it needs to be broken down",
+        "ourEpicLabel": "Our epic",
+        "whyLabel": "Why it is an epic",
+        "yourAnswersLabel": "Your wording"
       },
       "decompositionExample": {
         "title": "Step 7 — example decomposition",
-        "lead": "Teams rarely do it all at once — they move step by step."
+        "lead": "Teams rarely do it all at once — they move step by step. Here are two ways to slice the same epic.",
+        "compare": "Both options are valid. Different angles help the team see the problem differently. On the next step you'll try it yourself."
       },
       "decomposition": {
         "title": "Step 8 — decomposition",
-        "context": "Your task is to split the solution into pieces that can be delivered step by step.",
-        "questionsTitle": "Questions to think about",
-        "q1": "Can it be done quickly?",
-        "q2": "Does it bring value on its own?",
-        "q3": "Can it be tested?",
-        "placeholder": "Short task title",
+        "context": "Your task is to split the epic into small tasks you can do one by one. It doesn't have to be perfect — 3–5 tasks is enough to start, you can refine later.",
+        "questionsTitle": "Questions to think about for each task",
+        "q1": "Can it be done in a couple of days (or less)?",
+        "q2": "Does it bring value on its own? Can you show the result separately?",
+        "q3": "Can you verify or test that the task is done?",
+        "q4": "If the task feels big — how else can you slice it: by data, scenarios, or people?",
+        "q5": "If you had very little time, where would you start?",
+        "startSmallTitle": "Start small",
+        "placeholder": "Short task title (what exactly to do)",
         "addTask": "Add task",
         "removeTask": "Remove",
-        "emptyHint": "Add your first task — keep it small and clear."
+        "emptyHint": "Add your first task — feel free to look at the examples above and take something similar."
       },
       "technique": {
         "title": "Step 9 — a tool",
@@ -2668,6 +2683,7 @@
         "date": "Date",
         "participant": "Participant",
         "caseTitle": "Case",
+        "epicLabel": "Epic",
         "techniqueNone": "not picked",
         "techniqueSpidr": "SPIDR",
         "techniqueSevenDim": "7 dimensions"

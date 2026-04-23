@@ -24,20 +24,56 @@
     <div v-else-if="loading" class="pt-play__loading">{{ $t('common.loading') }}…</div>
 
     <section v-else class="pt-play__stage">
+      <!-- 0. Case choice -->
+      <div v-if="stage === 'case_choice'" class="pt-card">
+        <h2>{{ $t('agileTraining.productThinking.caseChoice.title') }}</h2>
+        <p class="pt-card__lead">{{ $t('agileTraining.productThinking.caseChoice.lead') }}</p>
+        <div class="pt-case-grid">
+          <article
+            v-for="c in availableCases"
+            :key="c.key"
+            class="pt-case-card"
+            :class="{ 'pt-case-card--active': caseKey === c.key }"
+            @click="pickCase(c.key)"
+          >
+            <div class="pt-case-card__emoji">{{ c.emoji }}</div>
+            <div class="pt-case-card__label">{{ c.label }}</div>
+            <div class="pt-case-card__title">{{ c.title }}</div>
+            <div class="pt-case-card__short">{{ c.short }}</div>
+            <div class="pt-case-card__pick" v-if="caseKey === c.key">
+              ✓ {{ $t('agileTraining.productThinking.caseChoice.picked') }}
+            </div>
+            <div class="pt-case-card__pick pt-case-card__pick--ghost" v-else>
+              {{ $t('agileTraining.productThinking.caseChoice.pickCta') }}
+            </div>
+          </article>
+        </div>
+        <div v-if="caseKey" class="pt-note">
+          👉 {{ $t('agileTraining.productThinking.caseChoice.afterPick') }}
+        </div>
+      </div>
+
       <!-- 1. Intro -->
-      <div v-if="stage === 'intro'" class="pt-card">
+      <div v-else-if="stage === 'intro'" class="pt-card">
         <h2>{{ $t('agileTraining.productThinking.intro.title') }}</h2>
         <p class="pt-card__lead">{{ $t('agileTraining.productThinking.intro.lead') }}</p>
-        <div class="pt-case">
-          <div class="pt-case__title">🎯 {{ content.case.title }}</div>
+        <div class="pt-case" v-if="selectedCase">
+          <div class="pt-case__title">{{ selectedCase.emoji }} {{ selectedCase.title }}</div>
           <div class="pt-case__block">
             <div class="pt-case__h">{{ $t('agileTraining.productThinking.case.contextTitle') }}</div>
             <ul>
-              <li v-for="(line, i) in content.case.context" :key="i">{{ line }}</li>
+              <li v-for="(line, i) in selectedCase.context" :key="i">{{ line }}</li>
             </ul>
           </div>
-          <div class="pt-case__goal">👉 {{ content.case.goal }}</div>
-          <div class="pt-case__hint">💡 {{ content.case.hint }}</div>
+          <div class="pt-case__goal">👉 {{ selectedCase.goal }}</div>
+          <div class="pt-case__hint">💡 {{ selectedCase.hint }}</div>
+          <button
+            type="button"
+            class="pt-btn pt-btn--ghost pt-case__switch"
+            @click="stage = 'case_choice'"
+          >
+            🔄 {{ $t('agileTraining.productThinking.caseChoice.switch') }}
+          </button>
         </div>
         <div v-if="!participantToken" class="pt-start">
           <label class="pt-label">{{ $t('agileTraining.productThinking.nameAsk') }}</label>
@@ -57,19 +93,19 @@
       <!-- 2. Example -->
       <div v-else-if="stage === 'example'" class="pt-card">
         <h2>{{ $t('agileTraining.productThinking.example.title') }}</h2>
-        <div class="pt-compare">
+        <div class="pt-compare" v-if="selectedCase">
           <div class="pt-compare__col">
             <div class="pt-compare__h">👤 {{ $t('agileTraining.productThinking.example.userStoryLabel') }}</div>
-            <p class="pt-compare__quote">«{{ content.examples.user_story }}»</p>
+            <p class="pt-compare__quote">«{{ selectedCase.examples.user_story }}»</p>
             <div class="pt-compare__explain">{{ $t('agileTraining.productThinking.example.explainUserStory') }}</div>
           </div>
           <div class="pt-compare__col">
             <div class="pt-compare__h">🎬 {{ $t('agileTraining.productThinking.example.jobStoryLabel') }}</div>
-            <p class="pt-compare__quote">«{{ content.examples.job_story }}»</p>
+            <p class="pt-compare__quote">«{{ selectedCase.examples.job_story }}»</p>
             <div class="pt-compare__explain">{{ $t('agileTraining.productThinking.example.explainJobStory') }}</div>
           </div>
         </div>
-        <div class="pt-note">👉 {{ content.examples.note }}</div>
+        <div class="pt-note" v-if="selectedCase">👉 {{ selectedCase.examples.note }}</div>
         <p class="pt-explain">{{ $t('agileTraining.productThinking.example.explain') }}</p>
       </div>
 
@@ -182,8 +218,23 @@
       <div v-else-if="stage === 'epic'" class="pt-card">
         <h2>{{ $t('agileTraining.productThinking.epic.title') }}</h2>
         <p class="pt-card__lead">👉 {{ $t('agileTraining.productThinking.epic.lead') }}</p>
-        <div class="pt-epic-badge">🧱 {{ $t('agileTraining.productThinking.epic.badge') }}</div>
+
+        <div class="pt-epic-card" v-if="selectedCase">
+          <div class="pt-epic-card__label">🧱 {{ $t('agileTraining.productThinking.epic.ourEpicLabel') }}</div>
+          <div class="pt-epic-card__title">{{ selectedCase.epic_summary }}</div>
+          <div class="pt-epic-card__why">
+            <strong>{{ $t('agileTraining.productThinking.epic.whyLabel') }}:</strong>
+            {{ selectedCase.epic_why }}
+          </div>
+        </div>
+
+        <div class="pt-primer" v-if="primer.epic_text">
+          <div class="pt-primer__h">💡 {{ primer.epic_title }}</div>
+          <p>{{ primer.epic_text }}</p>
+        </div>
+
         <div class="pt-epic-summary" v-if="userStory || jobStory">
+          <div class="pt-epic-summary__h">📝 {{ $t('agileTraining.productThinking.epic.yourAnswersLabel') }}</div>
           <div v-if="userStory"><strong>User Story:</strong> {{ userStory }}</div>
           <div v-if="jobStory"><strong>Job Story:</strong> {{ jobStory }}</div>
         </div>
@@ -193,26 +244,74 @@
       <div v-else-if="stage === 'decomposition_example'" class="pt-card">
         <h2>{{ $t('agileTraining.productThinking.decompositionExample.title') }}</h2>
         <p class="pt-card__lead">👉 {{ $t('agileTraining.productThinking.decompositionExample.lead') }}</p>
-        <ul class="pt-steps">
-          <li v-for="(step, i) in content.decomposition_example" :key="i">
-            <span class="pt-steps__num">{{ i + 1 }}</span>
-            <span>{{ step }}</span>
-          </li>
-        </ul>
+
+        <div class="pt-primer" v-if="primer.decomposition_text">
+          <div class="pt-primer__h">💡 {{ primer.decomposition_title }}</div>
+          <p>{{ primer.decomposition_text }}</p>
+        </div>
+
+        <div class="pt-epic-card pt-epic-card--compact" v-if="selectedCase">
+          <div class="pt-epic-card__label">🧱 {{ $t('agileTraining.productThinking.epic.ourEpicLabel') }}</div>
+          <div class="pt-epic-card__title">{{ selectedCase.epic_summary }}</div>
+        </div>
+
+        <div class="pt-variants" v-if="decompositionVariants.length">
+          <article
+            class="pt-variant"
+            v-for="(variant, vi) in decompositionVariants"
+            :key="vi"
+          >
+            <div class="pt-variant__h">{{ variant.label }}</div>
+            <div class="pt-variant__sub">{{ variant.subtitle }}</div>
+            <ul class="pt-steps">
+              <li v-for="(step, i) in variant.items" :key="i">
+                <span class="pt-steps__num">{{ i + 1 }}</span>
+                <span>{{ step }}</span>
+              </li>
+            </ul>
+          </article>
+        </div>
+
+        <p class="pt-explain">{{ $t('agileTraining.productThinking.decompositionExample.compare') }}</p>
       </div>
 
       <!-- 8. Decomposition practice -->
       <div v-else-if="stage === 'decomposition'" class="pt-card">
         <h2>{{ $t('agileTraining.productThinking.decomposition.title') }}</h2>
         <div class="pt-note">👉 {{ $t('agileTraining.productThinking.decomposition.context') }}</div>
+
+        <div class="pt-epic-card pt-epic-card--compact" v-if="selectedCase">
+          <div class="pt-epic-card__label">🧱 {{ $t('agileTraining.productThinking.epic.ourEpicLabel') }}</div>
+          <div class="pt-epic-card__title">{{ selectedCase.epic_summary }}</div>
+        </div>
+
+        <div class="pt-good-bad" v-if="selectedCase">
+          <div class="pt-good-bad__item pt-good-bad__item--good">
+            <div class="pt-good-bad__h">✅ {{ primer.good_task_label }}</div>
+            <p>«{{ selectedCase.good_task }}»</p>
+          </div>
+          <div class="pt-good-bad__item pt-good-bad__item--bad">
+            <div class="pt-good-bad__h">🚫 {{ primer.bad_task_label }}</div>
+            <p>«{{ selectedCase.bad_task }}»</p>
+          </div>
+        </div>
+
         <div class="pt-questions">
           <div class="pt-questions__h">{{ $t('agileTraining.productThinking.decomposition.questionsTitle') }}</div>
           <ul>
             <li>{{ $t('agileTraining.productThinking.decomposition.q1') }}</li>
             <li>{{ $t('agileTraining.productThinking.decomposition.q2') }}</li>
             <li>{{ $t('agileTraining.productThinking.decomposition.q3') }}</li>
+            <li>{{ $t('agileTraining.productThinking.decomposition.q4') }}</li>
+            <li>{{ $t('agileTraining.productThinking.decomposition.q5') }}</li>
           </ul>
         </div>
+
+        <div class="pt-hint" v-if="primer.start_small_hint">
+          <strong>{{ $t('agileTraining.productThinking.decomposition.startSmallTitle') }}:</strong>
+          {{ primer.start_small_hint }}
+        </div>
+
         <TaskList
           :tasks="tasks"
           :placeholder="$t('agileTraining.productThinking.decomposition.placeholder')"
@@ -303,7 +402,8 @@
         <div class="pt-summary__meta">
           <div><strong>{{ $t('agileTraining.productThinking.summary.participant') }}:</strong> {{ displayName || '—' }}</div>
           <div><strong>{{ $t('agileTraining.productThinking.summary.date') }}:</strong> {{ todayStr }}</div>
-          <div><strong>{{ $t('agileTraining.productThinking.summary.caseTitle') }}:</strong> {{ content.case.title }}</div>
+          <div v-if="selectedCase"><strong>{{ $t('agileTraining.productThinking.summary.caseTitle') }}:</strong> {{ selectedCase.title }}</div>
+          <div v-if="selectedCase"><strong>{{ $t('agileTraining.productThinking.summary.epicLabel') }}:</strong> {{ selectedCase.epic_summary }}</div>
         </div>
 
         <div class="pt-summary__block">
@@ -383,6 +483,7 @@ import AiHelper from '@/components/ProductThinking/AiHelper.vue';
 import TaskList from '@/components/ProductThinking/TaskList.vue';
 
 const STAGES = [
+  'case_choice',
   'intro',
   'example',
   'user_story',
@@ -423,10 +524,11 @@ export default {
     return {
       loading: true,
       loadError: '',
-      stage: 'intro',
+      stage: 'case_choice',
       group: null,
       sessionInfo: this.prefetchedSession,
-      content: { case: { title: '', context: [] }, examples: {}, decomposition_example: [], techniques: { spidr: { items: [] }, seven_dim: { items: [] } } },
+      content: { cases: [], primer: {}, techniques: { spidr: { items: [] }, seven_dim: { items: [] } } },
+      caseKey: '',
       participantToken: '',
       displayName: '',
       joining: false,
@@ -454,8 +556,20 @@ export default {
     totalSteps() { return STAGES.length; },
     progressPct() { return Math.round(((this.stepIndex + 1) / this.totalSteps) * 100); },
     canAdvance() {
+      if (this.stage === 'case_choice') return !!this.caseKey;
       if (this.stage === 'intro') return !!this.participantToken;
       return true;
+    },
+    availableCases() { return this.content && Array.isArray(this.content.cases) ? this.content.cases : []; },
+    selectedCase() {
+      if (!this.caseKey) return null;
+      return this.availableCases.find(c => c.key === this.caseKey) || null;
+    },
+    primer() { return (this.content && this.content.primer) || {}; },
+    decompositionVariants() {
+      return this.selectedCase && Array.isArray(this.selectedCase.decomposition_examples)
+        ? this.selectedCase.decomposition_examples
+        : [];
     },
     aiRemaining() { return Math.max(0, this.aiLimit - (this.aiCalls || 0)); },
     tasksAsText() {
@@ -521,7 +635,11 @@ export default {
         this.improvedTasks = (a.improved_tasks || []).map((t, i) => ({ id: t.id || `i${i+1}`, title: t.title || '', note: t.note || '' }));
         this.notes = Object.assign({ intro: '', compare: '' }, a.notes || {});
         this.aiCalls = a.ai_calls || 0;
+        if (a.case_key) this.caseKey = a.case_key;
         if (a.stage && STAGES.includes(a.stage)) this.stage = a.stage;
+      }
+      if (!this.caseKey && this.stage !== 'case_choice') {
+        this.stage = 'case_choice';
       }
     },
     async loadContent() {
@@ -563,6 +681,11 @@ export default {
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { /* noop */ }
       });
     },
+    pickCase(key) {
+      if (!key) return;
+      this.caseKey = key;
+      this.persist();
+    },
     onTasksUpdate(next) { this.tasks = next; this.persist(); },
     onImprovedUpdate(next) { this.improvedTasks = next; this.persist(); },
     copyTasksToImproved() {
@@ -601,6 +724,7 @@ export default {
         await axios.post(`/api/agile-training/product-thinking/g/${this.slug}/answer`, {
           participant_token: this.participantToken,
           stage: this.stage,
+          case_key: this.caseKey || null,
           user_story: this.userStory,
           job_story: this.jobStory,
           chosen_technique: this.chosenTechnique,
@@ -769,16 +893,91 @@ export default {
   border-left: 3px solid #10b981;
 }
 
-.pt-epic-badge {
-  display: inline-block; padding: 10px 18px; background: #fef3c7;
-  border-radius: 999px; font-weight: 700; color: #92400e; font-size: 15px;
-  margin: 10px 0;
+.pt-epic-card {
+  margin: 14px 0;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  color: #7c2d12;
+}
+.pt-epic-card--compact { padding: 12px 16px; margin: 12px 0; }
+.pt-epic-card__label {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  color: #92400e; margin-bottom: 4px;
+}
+.pt-epic-card__title {
+  font-size: 20px; font-weight: 800; color: #7c2d12; line-height: 1.35;
+}
+.pt-epic-card--compact .pt-epic-card__title { font-size: 17px; }
+.pt-epic-card__why {
+  margin-top: 8px; font-size: 14px; line-height: 1.55; color: #7c2d12;
 }
 .pt-epic-summary {
   margin-top: 14px; padding: 12px 16px; background: #f8fafc;
   border-radius: 10px; color: #334155; line-height: 1.6;
+  border: 1px solid #e2e8f0;
+}
+.pt-epic-summary__h {
+  font-weight: 700; color: #1e293b; margin-bottom: 8px; font-size: 14px;
 }
 .pt-epic-summary div { margin-bottom: 6px; }
+.pt-epic-summary div:last-child { margin-bottom: 0; }
+
+.pt-case-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0;
+}
+@media (max-width: 640px) { .pt-case-grid { grid-template-columns: 1fr; } }
+.pt-case-card {
+  background: #fff; border: 2px solid #e5e7eb; border-radius: 14px;
+  padding: 16px 18px; cursor: pointer; transition: all 0.15s ease;
+  display: flex; flex-direction: column;
+}
+.pt-case-card:hover { border-color: #c4b5fd; transform: translateY(-1px); }
+.pt-case-card--active { border-color: #7c3aed; background: #faf5ff; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.15); }
+.pt-case-card__emoji { font-size: 28px; margin-bottom: 6px; }
+.pt-case-card__label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  color: #6d28d9; margin-bottom: 4px;
+}
+.pt-case-card__title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px; line-height: 1.4; }
+.pt-case-card__short { font-size: 13px; color: #64748b; line-height: 1.5; flex: 1; }
+.pt-case-card__pick {
+  margin-top: 12px; padding: 6px 12px; border-radius: 999px;
+  background: #7c3aed; color: #fff; font-size: 12px; font-weight: 600;
+  text-align: center;
+}
+.pt-case-card__pick--ghost { background: #f1f5f9; color: #475569; }
+
+.pt-case__switch { margin-top: 12px; font-size: 13px; padding: 6px 12px; }
+
+.pt-primer {
+  margin: 14px 0; padding: 12px 16px;
+  background: #eff6ff; border-left: 3px solid #3b82f6;
+  border-radius: 10px; color: #1e3a8a;
+}
+.pt-primer__h { font-weight: 700; margin-bottom: 4px; font-size: 14px; }
+.pt-primer p { margin: 0; line-height: 1.6; font-size: 14px; color: #1e293b; }
+
+.pt-variants { display: grid; gap: 14px; margin: 14px 0; }
+.pt-variant {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 14px 16px;
+}
+.pt-variant__h { font-weight: 700; color: #5b21b6; font-size: 15px; }
+.pt-variant__sub { font-size: 13px; color: #64748b; margin: 4px 0 10px; line-height: 1.5; }
+
+.pt-good-bad {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0;
+}
+@media (max-width: 640px) { .pt-good-bad { grid-template-columns: 1fr; } }
+.pt-good-bad__item {
+  padding: 12px 14px; border-radius: 12px; border: 1px solid;
+}
+.pt-good-bad__item--good { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+.pt-good-bad__item--bad  { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+.pt-good-bad__h { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+.pt-good-bad__item p { margin: 0; font-style: italic; line-height: 1.5; }
 
 .pt-steps {
   list-style: none; padding: 0; margin: 16px 0 0;

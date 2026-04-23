@@ -1499,8 +1499,11 @@
         "desc": "Cards with Scrum statements; participants vote 'myth' or 'truth' and you debrief together."
       },
       "kanban": {
-        "title": "WIP limits in Kanban",
-        "desc": "A flow simulation: teams pick WIP limits and see how lead time and throughput change."
+        "title": "Kanban system & systems thinking",
+        "desc": "12 screens for beginners: context, STATIK (dissatisfaction, demand, flow, classes, policies, cadences), a visual Kanban board with swimlanes and WIP limits, consequences and improvement.",
+        "bullet1": "2 cases to pick (rental agency or support team)",
+        "bullet2": "Interactive board: columns, swimlanes, classes of service, WIP limits",
+        "bullet3": "Consequences engine + AI helper on every screen + PDF export"
       },
       "cynefin": {
         "title": "Cynefin — where does this problem belong?",
@@ -2710,6 +2713,155 @@
         "discussion3": "Which tasks could be split further?",
         "examplesTitle": "Selected examples",
         "examplesEmpty": "No examples selected yet — press \"Show to group\" on a participant card."
+      }
+    },
+    "kanban": {
+      "playTitle": "Kanban system & systems thinking",
+      "facTitle": "Kanban — facilitator panel",
+      "facSubtitle": "Create a session, add teams and share the links. Browse their boards, compare solutions and lead the discussion.",
+      "newSessionTitle": "«Kanban» training title",
+      "progress": "Step {current} of {total}",
+      "next": "Next",
+      "back": "Back",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "start": "Start the training",
+      "nameAsk": "Your name (optional)",
+      "namePlaceholder": "Name or nickname",
+      "needJoinHint": "To save progress and use the AI helper, start the training on the first screen.",
+      "aiLimitLabel": "AI calls left",
+      "aiHelperLimit": "You've used all AI calls for this training. The hints and guiding questions are still available.",
+      "aiHelperError": "Couldn't reach the helper. Please try later.",
+      "aiModeDissatisfaction": "Help me with sources of pain",
+      "aiModeDemand": "Help me with demand types",
+      "aiModeWorkflow": "Help me with the flow",
+      "aiModeClasses": "Help me with classes of service",
+      "aiModePolicies": "Help me with policies",
+      "aiModeBoard": "Help me with the board",
+      "aiModeImprove": "Help me improve the system",
+      "remove": "Remove",
+      "importantTitle": "Important",
+      "important1": "There is no «right» or «wrong» here — only hints and consequences of your choices.",
+      "important2": "The real value is the discussion: what worked, what the consequences were, and how to improve.",
+      "caseChoice": {
+        "title": "Pick a case",
+        "lead": "Which example is easier for you to work with? First one is the classic rental-agency (non-IT) from the brief. Second is a customer-support team (fits both IT and non-IT).",
+        "pickCta": "Choose",
+        "picked": "Selected",
+        "switch": "Change case"
+      },
+      "intro": {
+        "title": "Step 1 — context",
+        "lead": "We start from a real situation, not an abstraction. Read the company description and what bothers them today.",
+        "contextTitle": "Right now"
+      },
+      "example": {
+        "title": "Step 2 — example (simplified)",
+        "lead": "To reduce the «blank page» fear, here is how a filled STATIK could look for your case.",
+        "dissatisfactionInternal": "Internal pain",
+        "dissatisfactionClient": "Client-side pain",
+        "demandSample": "Demand sample",
+        "note": "This is just an example. You will build your own version on the next screens — it doesn't have to match."
+      },
+      "dissatisfaction": {
+        "title": "Step 3 — sources of dissatisfaction",
+        "lead": "We start with symptoms: what hurts inside the team and what clients notice. No blaming — just the picture.",
+        "internalQ": "What bothers the team inside?",
+        "clientQ": "What bothers the clients?",
+        "internalPlaceholder": "E.g. we don't understand priorities, tasks get lost between people…",
+        "clientPlaceholder": "E.g. they wait too long for an answer, the same question is asked twice…"
+      },
+      "demand": {
+        "title": "Step 4 — demand analysis",
+        "lead": "Split incoming work by type. It helps see whom we really serve and what they expect.",
+        "type": "Work type",
+        "source": "Source",
+        "frequency": "Frequency",
+        "expectations": "Expectations",
+        "typePh": "E.g. urgent VIP request",
+        "sourcePh": "E.g. chat or account manager",
+        "freqPh": "E.g. 3–5 a week",
+        "expPh": "E.g. answer in 30 minutes",
+        "add": "Add a row",
+        "seed": "Use the example"
+      },
+      "workflow": {
+        "title": "Step 5 — workflow",
+        "lead": "Describe the path a task takes. If the flow is invisible, bottlenecks are invisible too.",
+        "stagePh": "Stage name (e.g. «Review»)",
+        "add": "Add a stage",
+        "seed": "Use the example"
+      },
+      "classes": {
+        "title": "Step 6 — classes of service",
+        "lead": "Not all tasks are equal. 3–4 classes help the team agree whom we attend to first.",
+        "namePh": "Class name (VIP, Urgent…)",
+        "critPh": "When a task falls into this class",
+        "add": "Add a class",
+        "seed": "Use the example"
+      },
+      "policies": {
+        "title": "Step 7 — policies and rules",
+        "lead": "Rules aren't for paper — they're for the team to handle edge cases without the manager.",
+        "ph": "E.g. «Finish what you started before taking new work»",
+        "add": "Add a rule"
+      },
+      "cadences": {
+        "title": "Step 8 — cadences",
+        "lead": "Kanban is also about rhythm. How often do we pull new work in, and how often do we review the board?"
+      },
+      "board": {
+        "title": "Step 9 — build the Kanban board",
+        "lead": "Turn the flow into columns, add swimlanes for classes and put WIP limits on the stages.",
+        "wipLabel": "WIP",
+        "wipPh": "—",
+        "addCard": "Add a card",
+        "addSwimlane": "Add swimlane",
+        "seedSwimlanes": "Use example swimlanes",
+        "removeSwimlane": "Remove swimlane",
+        "renameSwimlane": "Swimlane name",
+        "cardTitle": "Card title",
+        "cardClass": "Class of service",
+        "cardNote": "Note (optional)",
+        "cardSave": "Save",
+        "cardCancel": "Cancel",
+        "cardDelete": "Delete",
+        "noClass": "No class",
+        "emptyColumns": "Add stages in «Workflow» first — columns will appear on the board.",
+        "emptyLanes": "Add 2–3 swimlanes — one for each class of task.",
+        "overLimit": "More cards than the WIP limit allows"
+      },
+      "consequences": {
+        "title": "Step 10 — consequences",
+        "lead": "We will look at your system from the outside. No grading — only «what will likely happen» and why.",
+        "refresh": "Refresh from the current board"
+      },
+      "improve": {
+        "title": "Step 11 — improve",
+        "lead": "Now that you see the consequences, change the system. Less WIP? Different swimlanes? New rules?",
+        "explain": "Change right on the board — limits, lanes, cards and their classes."
+      },
+      "summary": {
+        "title": "Step 12 — final system",
+        "lead": "This is your Kanban system. Save it to PDF and bring it to the debrief.",
+        "participant": "Participant",
+        "date": "Date",
+        "case": "Case",
+        "dissatisfaction": "Sources of dissatisfaction",
+        "demand": "Demand types",
+        "classes": "Classes of service",
+        "policies": "Policies",
+        "cadences": "Cadences",
+        "board": "Kanban board",
+        "downloadPdf": "Save as PDF",
+        "downloadPdfLoading": "Preparing PDF…",
+        "downloadPdfError": "Couldn't save the PDF. Please try later."
+      },
+      "facilitator": {
+        "participantsCount": "no participants | {n} participant | {n} participants",
+        "withBoards": "with a board built",
+        "noParticipants": "Nobody has built a system in this group yet.",
+        "pickParticipant": "Pick a participant to see their system."
       }
     }
   },

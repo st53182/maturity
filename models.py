@@ -1001,6 +1001,47 @@ class AgileTrainingProductThinkingAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingKanbanAnswer(db.Model):
+    """Ответ участника тренинга «Kanban-система и системное мышление».
+
+    Одна запись на участника. Весь артефакт хранится в `data_json`:
+    case_key, dissatisfaction, demand[], workflow[], classes[], policies[],
+    cadences{}, swimlanes[], column_limits{}, cards[], improved_board,
+    notes, ai_history, счётчик AI-обращений.
+    """
+
+    __tablename__ = "agile_training_kanban_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_kanban_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    stage = db.Column(db.String(32), nullable=True, index=True)
+    case_key = db.Column(db.String(32), nullable=True, index=True)
+    cards_count = db.Column(db.Integer, nullable=True, index=True)
+    columns_count = db.Column(db.Integer, nullable=True, index=True)
+    swimlanes_count = db.Column(db.Integer, nullable=True, index=True)
+    ai_calls = db.Column(db.Integer, nullable=False, default=0)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

@@ -131,6 +131,18 @@
         </ul>
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
+
+      <article class="at-card" @click="$router.push('/agile-training/kanban')">
+        <span class="at-card__icon">🧩</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.kanban.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.kanban.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.kanban.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.kanban.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.kanban.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
     </div>
 
     <section class="at-hub__helper">

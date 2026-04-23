@@ -36,8 +36,9 @@ import AgileWsjfPlay from '@/views/AgileWsjfPlay.vue';
 import AgileScrumEventsPlay from '@/views/AgileScrumEventsPlay.vue';
 import AgileScrumRolesPlay from '@/views/AgileScrumRolesPlay.vue';
 import AgileProductThinkingPlay from '@/views/AgileProductThinkingPlay.vue';
+import AgileKanbanPlay from '@/views/AgileKanbanPlay.vue';
 
-const REMOVED_WORKSHOP_KEYS = new Set(['product_stories', 'user_story_map', 'kanban_system']);
+const REMOVED_WORKSHOP_KEYS = new Set(['product_stories', 'user_story_map']);
 
 export default {
   name: 'GroupPlayGateway',
@@ -51,6 +52,7 @@ export default {
     AgileScrumEventsPlay,
     AgileScrumRolesPlay,
     AgileProductThinkingPlay,
+    AgileKanbanPlay,
   },
   data() {
     return {
@@ -73,6 +75,7 @@ export default {
       if (this.exerciseKey === 'scrum_events') return 'AgileScrumEventsPlay';
       if (this.exerciseKey === 'scrum_roles') return 'AgileScrumRolesPlay';
       if (this.exerciseKey === 'product_thinking') return 'AgileProductThinkingPlay';
+      if (this.exerciseKey === 'kanban_system') return 'AgileKanbanPlay';
       return 'AgilePrinciplesPlay';
     },
   },

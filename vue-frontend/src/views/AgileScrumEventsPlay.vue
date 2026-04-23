@@ -959,9 +959,9 @@ export default {
 .se-build-col__sub { margin: 2px 0 0; font-size: 11px; color: #64748b; font-weight: 600; }
 .se-build-col__notes { display: flex; flex-direction: column; gap: 8px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
 .se-note {
-  position: relative; display: block; width: 100%;
-  text-align: left; cursor: pointer; border: none; font: inherit; font-size: 12px; line-height: 1.35;
-  padding: 10px 10px 10px 11px; border-radius: 2px 10px 10px 3px; color: #0f172a;
+  position: relative; display: block; width: 100%; box-sizing: border-box;
+  text-align: left; cursor: pointer; border: 2px solid transparent; font: inherit; font-size: 12px; line-height: 1.35;
+  padding: 8px 8px 8px 9px; border-radius: 2px 10px 10px 3px; color: #0f172a;
   background: linear-gradient(145deg, #fffde7 0%, #fff9c4 50%, #fefce8 100%);
   box-shadow: 1px 2px 0 rgba(15, 23, 42, 0.08), 0 3px 10px rgba(0, 0, 0, 0.05);
   transform: rotate(var(--note-rot, 0deg));
@@ -975,9 +975,16 @@ export default {
 .se-note.is-active {
   z-index: 2;
   color: #fff;
-  background: linear-gradient(145deg, #2dd4bf, #0d9488) !important;
-  box-shadow: 0 6px 16px rgba(20, 184, 166, 0.35);
+  background: linear-gradient(145deg, #0d9488, #047857) !important;
+  border: 2px solid #065f46 !important;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.85),
+    0 6px 18px rgba(4, 120, 87, 0.45);
   transform: rotate(0deg) scale(1.02);
+}
+.se-note.is-active .se-note__text::before {
+  content: '✓ ';
+  font-weight: 800;
 }
 .se-note__text { display: block; }
 .se-build__footer { display: flex; align-items: center; justify-content: center; min-height: 40px; margin-top: 10px; gap: 8px; }

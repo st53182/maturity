@@ -631,7 +631,6 @@
       "Готовность (DoR)": "Definition of Ready (DoR)",
       "НФ-требования": "Non-functional requirements (NFR)",
       "Изменения": "Changes",
-      "Демо": "Demo",
       "Кросс-функц": "Cross-functionality",
       "Мотивация": "Motivation",
       "Мышление": "Mindset",
@@ -1568,6 +1567,13 @@
         "step2": "Each group gets a unique link like /g/team-xyz.",
         "step3": "Participants open the link on their own devices — no sign-up required.",
         "step4": "The facilitator sees progress, the most controversial principles and how groups differ."
+      },
+      "scrumSim": {
+        "title": "Scrum Team Simulator",
+        "desc": "Multiplayer simulator: 5-day sprint with events, daily discussions and team decisions, all on a shared Scrum board.",
+        "bullet1": "Team joins by one link and acts on the shared board",
+        "bullet2": "Each day: event → daily → decision → board update",
+        "bullet3": "Sprint Review, Retrospective and picking next-sprint improvements"
       }
     },
     "facilitator": {
@@ -1634,7 +1640,6 @@
       "mySessions": "My trainings",
       "newSessionTitle": "Training title, e.g. 'Cynefin — April'",
       "newGroupName": "Group name, e.g. 'Team Alpha'",
-      "noGroups": "Add at least one group to get a link.",
       "groups": "Groups",
       "participants": "Participants: {n}",
       "backToList": "Back to training list",
@@ -2027,7 +2032,6 @@
       "noAnswer": "no answer",
       "score": "score",
       "mapping": "Rule → effect",
-
       "startTitle": "Why do we even need DoR and DoD?",
       "startLead": "You'll step into a team: pick its type, assemble the rules, see the consequences and rebuild the solution.",
       "defDor": "criteria for a task to be ready to start",
@@ -2035,10 +2039,8 @@
       "start": "Start",
       "next": "Next",
       "back": "Back",
-
       "teamTitle": "Pick a team type",
       "teamLead": "DoR/DoD rules depend heavily on context. Pick the team you can relate to the most.",
-
       "introTitle": "What usually hurts",
       "introLead": "Typical problems a team faces without clear rules:",
       "problem1": "tasks get picked up too early",
@@ -2046,35 +2048,28 @@
       "problem3": "lots of rework and misunderstandings",
       "taskTitle": "Your task",
       "taskText": "Create DoR and DoD rules for your team. There is no single right answer — only what fits the context.",
-
       "rulesTitle": "Rule cards set",
       "rulesLead": "Here are the available rules. Next you'll sort them: what we check before starting (DoR) vs. before delivering (DoD).",
       "distributeCta": "Sort into columns",
-
       "distributeTitle": "Sort the rules into DoR and DoD",
       "distributeLead": "Click '→ DoR' or '→ DoD' on a rule card. One rule goes into one column.",
       "availableRules": "Available rules",
       "mappingCta": "Next: why this matters",
-
       "mappingTitle": "Why each rule matters",
       "mappingLead": "For each selected rule, pick the effects you think it really produces. You can pick several, or none at all.",
       "priorityForTeam": "Especially important for this team",
       "selectFirst": "Select at least one rule on the previous step first.",
       "seeConsequences": "See consequences",
-
       "simulateTitle": "The team worked like this for a couple of sprints…",
       "whyTitle": "What led to this",
       "mappingFeedback": "Feedback on the meaning of your rules",
       "noMapping": "no effects selected",
-
       "antipatternsTitle": "Antipatterns",
       "antipatternsLead": "Here are the typical mistakes. The ones you hit are in red, the rest are for reference.",
       "knownAntipatterns": "Known DoR/DoD antipatterns",
       "improveNow": "Rebuild and improve",
       "finishCta": "Finish the exercise",
-
       "improveTitle": "Rebuild your DoR and DoD",
-
       "finalTitle": "Final result",
       "finalLead": "How your team compares with the others and what DoR / DoD you ended up with.",
       "resolvedAntipatterns": "Antipatterns resolved",
@@ -2085,7 +2080,6 @@
       "topDod": "Most often in DoD",
       "replay": "Play again",
       "replayConfirm": "Reset your result and start the simulator over?",
-
       "round": {
         "initial": "First build",
         "improved": "After improvement"
@@ -2099,7 +2093,6 @@
       "stepAntipatterns": "Mistakes",
       "stepImprove": "Improve",
       "stepFinal": "Results",
-
       "outcome": {
         "blocked": "Tasks got stuck",
         "rework_heavy": "Lots of rework",
@@ -2112,7 +2105,6 @@
         "stable": "Basic discipline is in place, the team starts working smoothly.",
         "predictable": "Rules are well balanced — the outcome is predictable, mistakes are rare."
       },
-
       "reason": {
         "dor_too_strict": "Too many conditions in DoR — tasks can't enter the work.",
         "dor_too_soft": "Almost nothing in DoR — raw tasks cause pain later.",
@@ -2123,7 +2115,6 @@
         "balanced": "You found the balance: a filter on the way in and a clear gate on the way out.",
         "basic_works": "Basic discipline is already paying off."
       },
-
       "ap": {
         "dor_too_strict": "DoR is too strict",
         "dor_too_soft": "DoR is too soft",
@@ -2172,7 +2163,6 @@
       "eventsShown": "News events shown",
       "participantsDrill": "Per-participant details",
       "noAnswer": "no answer",
-
       "startTitle": "Where does the company go?",
       "startLead": "You are on the team of a car company. Resources will only fuel one direction. The task is not to guess — it's to understand trade-offs.",
       "startBullet1": "Four WSJF dimensions: user–business value, time criticality, RROE, job size",
@@ -2181,13 +2171,10 @@
       "start": "Let's go",
       "next": "Next",
       "back": "Back",
-
       "roleTitle": "Pick your role",
       "roleLead": "Your role doesn't change the formula — it changes what you look at first. Share that with the team afterwards.",
-
       "contextTitle": "The situation",
       "goToScores": "To scoring",
-
       "scoresTitle": "Score each direction",
       "reviseScoresTitle": "Re-score the directions",
       "scoresLead": "For each option, score the four SAFe drivers: user–business value, time criticality, risk reduction & opportunity enablement (RROE), and job size. Pick the number that matches your gut.",
@@ -2213,28 +2200,23 @@
         "size": "S"
       },
       "calcPriority": "Calculate priority",
-
       "prioritiesTitle": "Priorities",
       "prioritiesLead": "Here's the formula output. The top one is what the math favors — but the call is yours.",
       "formula": "WSJF = (user–business value + time criticality + RROE) / job size",
       "goToChoose": "Make a choice",
-
       "chooseTitle": "What do we launch first?",
       "reviseChooseTitle": "What do we launch now?",
       "chooseLead": "Go with the formula or with your gut. Whichever — own the argument.",
       "lockIn": "Lock it in",
       "finish": "Finish",
-
       "consequencesTitle": "Consequences",
       "youGained": "What you gained",
       "youLost": "What you lost",
       "heyLook": "Heads up",
       "nextNews": "Read the news",
-
       "breaking": "BREAKING",
       "eventNote": "Events like these happen in reality all the time. Teams that can revise decisions outperform those who 'already decided, full stop'.",
       "rethink": "Revise the decision",
-
       "finalTitle": "Done",
       "adaptationLead": {
         "stayed_right": "You kept the decision — and the news only confirmed it. Confidence isn't stubbornness.",
@@ -2249,7 +2231,6 @@
       "adaptations": "Adaptation",
       "refreshGroup": "Refresh group data",
       "tryAgain": "Try again",
-
       "adaptation": {
         "stayed_right": "kept and was right",
         "stayed_risky": "kept though shouldn't",
@@ -2257,7 +2238,6 @@
         "over_adjusted": "over-adjusted",
         "no_change": "didn't revise"
       },
-
       "err": {
         "undervalued_size": "Job size (denominator) set too low",
         "ignored_time": "Time criticality ignored",
@@ -2265,15 +2245,12 @@
         "role_mismatch_business_hydrogen": "Business role chose hydrogen — no quick revenue",
         "role_mismatch_engineer_too_easy": "Engineer set hydrogen job size too low"
       },
-
       "strengths": "Strengths",
       "risks": "Risks",
-
       "round": {
         "initial": "First round",
         "revised": "After the news"
       },
-
       "step": {
         "role": "Role",
         "context": "Context",
@@ -2284,7 +2261,6 @@
         "event": "News",
         "final": "Outcome"
       },
-
       "consequences": {
         "gain": {
           "quick_revenue": "Quick revenue in under 5 months.",
@@ -2328,14 +2304,11 @@
       "errorsSeenTop": "Mistakes participants recognise",
       "customMode": "Custom mode",
       "participantsDrill": "Per-participant drill-down",
-
       "startTitle": "Team rhythm",
       "startLead": "A team works in short cycles: plans, refines the backlog, syncs, shows the result, improves. Assemble the five events — and you'll see the whole rhythm on a single board.",
       "start": "Start",
-
       "contextTitle": "What is a team rhythm",
       "contextLead": "A team moves in short cycles. The rhythm has five events — including a separate product backlog refinement; each has its own purpose, participants and outcome.",
-
       "cardsTitle": "Card set",
       "cardsLead": "Meet the cards. You'll pick from them: why, who, what we use, when and how long.",
       "buildCta": "Build the events",
@@ -2348,20 +2321,16 @@
       "fillAllStages": "Fill in all 5 events",
       "seeWhyCta": "Next: why it's needed",
       "pickedCount": "nothing picked | {n} picked | {n} picked",
-
       "whyTitle": "Why each event",
       "whyLead": "Before looking at the result — figure out what problem each event is solving. That's the point of a rhythm, not just 'meeting for the sake of it'.",
       "saveAndErrors": "Save and see typical mistakes",
-
       "errorsTitle": "Typical mistakes and consequences",
       "errorsLead": "Mark the mistakes you've seen in real life. We'll come back to them on the board.",
       "fixCta": "Fix the process",
       "toResult": "To the final board",
-
       "fixTitle": "Fix the process",
       "fixLead": "See where you went red and change your picks. You can remove cards or add new ones.",
       "needsAttention": "needs attention",
-
       "finalTitle": "Your process board",
       "finalLead": "Your assembled rhythm is in the columns below. What the training considers “right” and why will come from the facilitator in the debrief; the app deliberately does not show the reference on its own.",
       "finalDebriefHint": "Percentages in the comparison block show how answers spread in the group — not an automated “better/worse” score from the system.",
@@ -2385,23 +2354,19 @@
       "tryCustomMode": "Build your own process",
       "replay": "Rebuild from scratch",
       "replayConfirm": "Reset your answers and rebuild?",
-
       "customTitle": "Build your own process",
       "customLead": "Pick a context and assemble the event the way you would run it. We'll save it with your answer so the facilitator can discuss.",
       "customNoteLabel": "Comment (optional)",
       "customNotePh": "For example: 'We run this as a weekly Monday 10am planner.'",
       "saveCustom": "Save",
-
       "next": "Next",
       "back": "Back",
-
       "stepContext": "Context",
       "stepCards": "Cards",
       "stepBuild": "Build",
       "stepWhy": "Why",
       "stepErrors": "Mistakes",
       "stepFinal": "Board",
-
       "cat": {
         "goals": "Purpose (why)",
         "participants": "Participants (who)",
@@ -2409,14 +2374,12 @@
         "time": "When",
         "duration": "How long"
       },
-
       "colors": {
         "green": "makes sense",
         "yellow": "debatable",
         "red": "has issues",
         "gray": "—"
       },
-
       "customs": {
         "team_meeting": {
           "title": "Team meeting",
@@ -2431,16 +2394,31 @@
           "desc": "A service shift handover: yesterday, today, tomorrow."
         }
       },
-
       "errors": {
-        "no_team_on_planning": { "title": "No team at planning" },
-        "no_customer_on_review": { "title": "No customer at the review" },
-        "no_retro": { "title": "No retrospective" },
-        "meetings_too_long": { "title": "Meetings are too long" },
-        "no_clear_goal": { "title": "No clear sprint goal" },
-        "daily_as_status": { "title": "Daily becomes a status report" },
-        "review_without_increment": { "title": "Nothing to show at Review" },
-        "no_refinement": { "title": "No habit of backlog refinement" }
+        "no_team_on_planning": {
+          "title": "No team at planning"
+        },
+        "no_customer_on_review": {
+          "title": "No customer at the review"
+        },
+        "no_retro": {
+          "title": "No retrospective"
+        },
+        "meetings_too_long": {
+          "title": "Meetings are too long"
+        },
+        "no_clear_goal": {
+          "title": "No clear sprint goal"
+        },
+        "daily_as_status": {
+          "title": "Daily becomes a status report"
+        },
+        "review_without_increment": {
+          "title": "Nothing to show at Review"
+        },
+        "no_refinement": {
+          "title": "No habit of backlog refinement"
+        }
       }
     },
     "scrumRoles": {
@@ -2467,7 +2445,6 @@
       "heatmap": "What people picked per role",
       "card": "Card",
       "expected": "expected",
-
       "welcome": "Welcome!",
       "welcomeLead": "We'll figure out who owns what in Scrum: PO, the team and the Scrum Master. No 'by-the-book' answers — just clear understanding.",
       "yourName": "How should we call you?",
@@ -2475,42 +2452,34 @@
       "startBtn": "Start",
       "nextBtn": "Next",
       "backBtn": "Back",
-
       "contextTitle": "Why this exercise",
       "contextLead": "When roles are blurred, the team stalls — someone decides the wrong thing, someone else doesn't do their own. For a team to work well, we need to know:",
       "contextItem1": "who owns what",
       "contextItem2": "who participates",
       "contextItem3": "who should stay out of it",
       "contextHint": "Next you'll see 3 roles and cards with responsibilities, and you'll distribute them across levels of accountability.",
-
       "rolesTitle": "3 Scrum roles",
       "rolesLead": "Each role has its own focus. Read the short descriptions — they'll help on the next step.",
       "focus": "Focus",
       "goDistribute": "Go to the cards",
-
       "distributeTitle": "Distribute the cards",
       "distributeLead": "For each card pick the level of involvement for every role. A card can apply to several roles with different levels. Card order is shuffled so the \"obvious\" sequence does not give hints.",
       "toWhy": "Next: why it matters",
-
       "whyTitle": "Why this distribution",
       "whyLead": "Here's why a healthy Scrum team splits responsibility this way. It's not a dogma — it's about consequences.",
       "toErrors": "Next: typical mistakes",
-
       "errorsTitle": "Typical mistakes and their consequences",
       "errorsLead": "Tick the mistakes you or your team have faced. In the next step you'll get a chance to rework the weak spots.",
       "toFix": "Rework weak spots",
-
       "fixTitle": "Rework the weak cards",
       "fixLead": "Below are only the cards where your distribution is yellow or red. Adjust the levels and hit 'Done'.",
       "fixNothing": "Great job — every card is distributed correctly. Move on to the final board.",
       "finishBtn": "Done — show the board",
-
       "finalTitle": "Summary: your role mapping",
       "yourHealth": "Your accuracy",
       "groupHealth": "Group average",
       "compareTitle": "How others distributed",
       "compareLead": "For each card — the percentage of group members that picked each level per role.",
-
       "customToggle": "Add your own cards or a role",
       "customLead": "If your team has its own specifics — add a card and assign it to roles. Or describe a custom role (e.g. 'Lead' or 'Analyst').",
       "customCardPh": "Your card (short phrase)",
@@ -2519,24 +2488,41 @@
       "customRoleTitle": "Custom role name",
       "customRoleDesc": "What this role owns (short)",
       "saveCustom": "Save",
-
       "roles": {
-        "po":   { "title": "Product Owner" },
-        "team": { "title": "The Team" },
-        "sm":   { "title": "Scrum Master" }
+        "po": {
+          "title": "Product Owner"
+        },
+        "team": {
+          "title": "The Team"
+        },
+        "sm": {
+          "title": "Scrum Master"
+        }
       },
       "levels": {
-        "responsible":  "🟢 Accountable",
+        "responsible": "🟢 Accountable",
         "participates": "🟡 Participates",
-        "should_not":   "🔴 Should not do"
+        "should_not": "🔴 Should not do"
       },
       "errors": {
-        "sm_runs_dev":         { "title": "Scrum Master runs development" },
-        "po_runs_team":        { "title": "PO manages the team" },
-        "team_not_planning":   { "title": "The team is not part of planning" },
-        "no_product_ownership":{ "title": "No one owns the product" },
-        "sm_as_secretary":     { "title": "SM becomes a meeting secretary instead of a process coach" },
-        "po_designs_solution": { "title": "PO dictates how to implement" }
+        "sm_runs_dev": {
+          "title": "Scrum Master runs development"
+        },
+        "po_runs_team": {
+          "title": "PO manages the team"
+        },
+        "team_not_planning": {
+          "title": "The team is not part of planning"
+        },
+        "no_product_ownership": {
+          "title": "No one owns the product"
+        },
+        "sm_as_secretary": {
+          "title": "SM becomes a meeting secretary instead of a process coach"
+        },
+        "po_designs_solution": {
+          "title": "PO dictates how to implement"
+        }
       }
     },
     "productThinking": {
@@ -2878,6 +2864,108 @@
         "withBoards": "with a board built",
         "noParticipants": "Nobody has built a system in this group yet.",
         "pickParticipant": "Pick a participant to see their system."
+      }
+    },
+    "scrumSim": {
+      "title": "Scrum Simulator",
+      "facTitle": "Scrum Simulator — facilitator panel",
+      "facSubtitle": "Create a session, share links with teams and watch their Scrum boards in real time.",
+      "newSessionTitle": "Scrum Simulator session title",
+      "joinTitle": "Join the team",
+      "joinIntro": "Write how we should call you on the team and we'll add you. You can pick a role (PO / SM / Developer) at any time after.",
+      "yourName": "Your name",
+      "join": "Join",
+      "teamSize": "on team: {n}",
+      "myRole": "My role",
+      "noRole": "— no role —",
+      "whatIsThis": "what is this?",
+      "hide": "hide",
+      "boardTitle": "Team Scrum board",
+      "core": "core",
+      "optional": "optional",
+      "fromStakeholder": "from stakeholder",
+      "split": "after split",
+      "complexityTitle": "Complexity in points (work left)",
+      "waitingFor": "Waits for",
+      "todayCapacity": "today",
+      "startPlanning": "Start sprint planning",
+      "planningTitle": "Planning — assembling the Sprint Backlog",
+      "sprintGoal": "Sprint Goal",
+      "sprintGoalPh": "E.g. \"Ready flat with a photo shoot for the listing — by Friday 8pm\"",
+      "planningHow": "How we plan",
+      "planningBullet1": "Click a card in the Product Backlog → it's pulled into the Sprint Backlog. Click again — back.",
+      "planningBullet2": "Mind dependencies: you can't do \"Bathroom tiling\" without \"Rough plumbing\".",
+      "planningBullet3": "State a short Sprint Goal — it will be the anchor you come back to in the daily.",
+      "plannedPts": "Pulled into sprint",
+      "teamCapacity5d": "Capacity over 5 days",
+      "overCapacityWarn": "You're pulling more than the team can do in 5 days. Likely not everything will make it to Done.",
+      "planningTap": "Click cards on the board to move them between Product and Sprint Backlog.",
+      "dayHeading": "Day {n} of {total}",
+      "dayBeforeEvent": "A new day begins. Before the daily, something important is happening — let's see what.",
+      "eventOfTheDay": "Event of the day",
+      "dailyTitle": "Daily — 3 questions around the board",
+      "dailyHint": "Don't re-state task statuses — talk about obstacles. The board shows what changed.",
+      "dailyQ1": "What changed on the board after the event?",
+      "dailyQ2": "What is blocking the Sprint Goal?",
+      "dailyQ3": "Which tasks are at risk, and who can help?",
+      "allocHint": "Distribute the team's capacity for today. Tasks with unmet deps or blocks are not workable.",
+      "noWorkable": "No tasks you can move today (all blocked or waiting on predecessors). Make a decision below to unblock.",
+      "need": "left",
+      "allocTotal": "Today's total",
+      "saveAlloc": "Save allocation",
+      "decisionHint": "One key decision per day. Swarm / split / descope / escalate require picking a task on the board.",
+      "selectedTask": "picked: {title}",
+      "selectTaskOnBoard": "pick a task by clicking a card",
+      "askAi": "Ask the AI coach",
+      "aiHelperTitle": "AI coach (Scrum)",
+      "aiPh": "What to ask? Is the team stuck?",
+      "aiRemaining": "Remaining requests: {n}",
+      "aiSend": "Send",
+      "aiSeedDaily": "We got stuck because …",
+      "aiSeedRetro": "What can we improve next sprint, if …",
+      "reviewTitle": "Sprint Review — what came out",
+      "tasksDone": "tasks in Done",
+      "coreDone": "core tasks done",
+      "coreDoneShort": "core done",
+      "stillBlocked": "still blocked",
+      "reworkLeft": "rework left",
+      "stakeholderSays": "The stakeholder says",
+      "stakeholderOutcome": {
+        "great": "Great job — the flat is ready to go, the listing gets published this weekend. The team worked well and managed risks.",
+        "ok": "Overall OK, but some work had to slip. Launch is possible, yet the first tenants will run into small issues.",
+        "rough": "Rough: most of the core work isn't done, the listing can't go out. Launch slips, which hurts revenue.",
+        "fail": "Failure: the flat isn't ready, money and time are spent. The conversation needs to be about process and priorities, not dates."
+      },
+      "retroTitle": "Retrospective — what will we improve",
+      "retroHint": "Pick 1–3 improvements to try next sprint. Think about what would give the biggest effect given what just happened.",
+      "summaryTitle": "Sprint summary",
+      "summaryLead": "This is the final state of your Scrum board, sprint events and the improvements chosen for the next time.",
+      "summaryDone": "Completed",
+      "summaryNotDone": "Didn't make it",
+      "retroChosen": "Improvements for the next sprint",
+      "dailyLog": "Sprint timeline",
+      "dayLabel": "Day {n}",
+      "uneventfulDay": "uneventful day",
+      "noDecision": "no specific decision",
+      "resetConfirm": "Reset the simulation for the whole team? This can't be undone.",
+      "capacity": "Capacity",
+      "outcome": "Outcome",
+      "outcomes": {
+        "great": "great",
+        "ok": "ok",
+        "rough": "rough",
+        "fail": "failure"
+      },
+      "refresh": "Refresh",
+      "noTeamState": "The team hasn't started the simulation yet",
+      "participantsCount": "participants: {n}",
+      "phases": {
+        "lobby": "Lobby",
+        "planning": "Planning",
+        "day": "Day {n}",
+        "review": "Review",
+        "retro": "Retro",
+        "summary": "Summary"
       }
     }
   },
@@ -3343,10 +3431,10 @@
     "copied": "Copied!",
     "progressText": "{pct}% complete"
   },
-    "metricsTree": {
-      "panelTitle": "Metrics tree",
-      "pageTitleLong": "Product and delivery metrics tree",
-      "subtitle": "PROFIT → Revenue/Costs → delivery and team metrics",
+  "metricsTree": {
+    "panelTitle": "Metrics tree",
+    "pageTitleLong": "Product and delivery metrics tree",
+    "subtitle": "PROFIT → Revenue/Costs → delivery and team metrics",
     "searchPlaceholder": "Search a metric (e.g. Lead Time, MTTR, Velocity)",
     "filterAll": "All",
     "filterAllActive": "✓ All",

@@ -1042,6 +1042,40 @@ class AgileTrainingKanbanAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingScrumSimState(db.Model):
+    """Общее состояние симулятора Scrum для всей команды (одна запись на группу).
+
+    Multiplayer-тренажёр: действия любого участника меняют эту одну запись
+    через серверные эндпоинты, а клиенты опрашивают `/state` для синхронизации.
+    Весь игровой артефакт хранится в `data_json`:
+      phase ("lobby" | "planning" | "day_1..day_5" | "review" | "retro" | "summary"),
+      current_day, team_capacity_per_day, sprint_goal,
+      product_backlog[], sprint_backlog[], tasks{id: {...}},
+      days[] (история шагов), roles{token: role}, participants{token: {...}},
+      event_queue[], retro_picks[], review_metrics{}, notes{}, ai_calls{token: n}.
+    """
+
+    __tablename__ = "agile_training_scrum_sim_state"
+    __table_args__ = (
+        db.UniqueConstraint("group_id", name="uq_scrum_sim_state_group"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    phase = db.Column(db.String(32), nullable=False, default="lobby")
+    current_day = db.Column(db.Integer, nullable=False, default=0)
+    version = db.Column(db.Integer, nullable=False, default=0)
+    paused = db.Column(db.Boolean, nullable=False, default=False)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

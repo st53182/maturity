@@ -1,5 +1,5 @@
 <template>
-  <div class="pt-play" ref="pdfRoot">
+  <div class="pt-play modern-ui" ref="pdfRoot">
     <header class="pt-play__head">
       <div class="pt-play__lang">
         <button type="button" :class="{ active: locale === 'ru' }" @click="switchLang('ru')">RU</button>

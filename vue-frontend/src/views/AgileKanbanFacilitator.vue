@@ -1,5 +1,5 @@
 <template>
-  <div class="kf">
+  <div class="kf modern-ui">
     <header class="kf__head">
       <div>
         <h1>🧩 {{ $t('agileTraining.kanban.facTitle') }}</h1>

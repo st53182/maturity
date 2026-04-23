@@ -1,5 +1,5 @@
 <template>
-  <div class="kb-play" ref="pdfRoot">
+  <div class="kb-play modern-ui" ref="pdfRoot">
     <header class="kb-play__head">
       <div class="kb-play__lang">
         <button type="button" :class="{ active: locale === 'ru' }" @click="switchLang('ru')">RU</button>

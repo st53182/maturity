@@ -119,6 +119,42 @@
         </ul>
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
+
+      <article class="at-card" @click="$router.push('/agile-training/product-stories')">
+        <span class="at-card__icon">📘</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.workshopProductStories.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.workshopProductStories.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.workshopProductStories.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.workshopProductStories.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.workshopProductStories.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
+
+      <article class="at-card" @click="$router.push('/agile-training/user-story-map')">
+        <span class="at-card__icon">🗺️</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.workshopUserStoryMap.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.workshopUserStoryMap.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.workshopUserStoryMap.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.workshopUserStoryMap.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.workshopUserStoryMap.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
+
+      <article class="at-card" @click="$router.push('/agile-training/kanban-system')">
+        <span class="at-card__icon">📶</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.workshopKanbanSystem.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.workshopKanbanSystem.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.workshopKanbanSystem.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.workshopKanbanSystem.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.workshopKanbanSystem.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
     </div>
 
     <section class="at-hub__helper">

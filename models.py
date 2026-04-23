@@ -960,6 +960,42 @@ class AgileTrainingScrumEventsAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingProductStoriesAnswer(db.Model):
+    """Тренажёр: User Story / Job Story, декомпозиция (без автооценки)."""
+    __tablename__ = "agile_training_product_stories_answer"
+    __table_args__ = (db.UniqueConstraint("participant_id", name="uq_product_stories_participant"),)
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("agile_training_group.id", ondelete="CASCADE"), nullable=False, index=True)
+    participant_id = db.Column(db.Integer, db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"), nullable=False, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class AgileTrainingUserStoryMapAnswer(db.Model):
+    """Тренажёр: User Story Map (карта пути, шаги, задачи, US)."""
+    __tablename__ = "agile_training_user_story_map_answer"
+    __table_args__ = (db.UniqueConstraint("participant_id", name="uq_user_story_map_participant"),)
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("agile_training_group.id", ondelete="CASCADE"), nullable=False, index=True)
+    participant_id = db.Column(db.Integer, db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"), nullable=False, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class AgileTrainingKanbanSystemAnswer(db.Model):
+    """Тренажёр: Kanban-система, STATIC, поток, политики (без автооценки)."""
+    __tablename__ = "agile_training_kanban_system_answer"
+    __table_args__ = (db.UniqueConstraint("participant_id", name="uq_kanban_system_participant"),)
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("agile_training_group.id", ondelete="CASCADE"), nullable=False, index=True)
+    participant_id = db.Column(db.Integer, db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"), nullable=False, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

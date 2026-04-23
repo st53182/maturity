@@ -111,6 +111,7 @@ AI_LIMITED_POST_PATHS = {
     "/openai_recommend",
     "/generate_plan",
     "/api/agile-kata/ai",
+    "/api/agile-training/ws-copilot/assist",
     "/api/agile-tools/ask",
     "/api/meeting-design/ai-conversation-topics",
     "/api/meeting-design/ai-facilitator-help",

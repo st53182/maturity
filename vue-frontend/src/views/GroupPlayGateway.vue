@@ -35,10 +35,25 @@ import AgileDorDodPlay from '@/views/AgileDorDodPlay.vue';
 import AgileWsjfPlay from '@/views/AgileWsjfPlay.vue';
 import AgileScrumEventsPlay from '@/views/AgileScrumEventsPlay.vue';
 import AgileScrumRolesPlay from '@/views/AgileScrumRolesPlay.vue';
+import AgileProductStoriesPlay from '@/views/AgileProductStoriesPlay.vue';
+import AgileUserStoryMapPlay from '@/views/AgileUserStoryMapPlay.vue';
+import AgileKanbanSystemPlay from '@/views/AgileKanbanSystemPlay.vue';
 
 export default {
   name: 'GroupPlayGateway',
-  components: { AgilePrinciplesPlay, AgileCynefinPlay, AgileIcebergPlay, AgileMvpPlay, AgileDorDodPlay, AgileWsjfPlay, AgileScrumEventsPlay, AgileScrumRolesPlay },
+  components: {
+    AgilePrinciplesPlay,
+    AgileCynefinPlay,
+    AgileIcebergPlay,
+    AgileMvpPlay,
+    AgileDorDodPlay,
+    AgileWsjfPlay,
+    AgileScrumEventsPlay,
+    AgileScrumRolesPlay,
+    AgileProductStoriesPlay,
+    AgileUserStoryMapPlay,
+    AgileKanbanSystemPlay,
+  },
   data() {
     return {
       loading: true,
@@ -59,6 +74,9 @@ export default {
       if (this.exerciseKey === 'wsjf') return 'AgileWsjfPlay';
       if (this.exerciseKey === 'scrum_events') return 'AgileScrumEventsPlay';
       if (this.exerciseKey === 'scrum_roles') return 'AgileScrumRolesPlay';
+      if (this.exerciseKey === 'product_stories') return 'AgileProductStoriesPlay';
+      if (this.exerciseKey === 'user_story_map') return 'AgileUserStoryMapPlay';
+      if (this.exerciseKey === 'kanban_system') return 'AgileKanbanSystemPlay';
       return 'AgilePrinciplesPlay';
     },
   },

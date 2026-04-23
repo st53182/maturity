@@ -392,6 +392,24 @@ def get_content_for_locale(locale: str) -> Dict:
     }
 
 
+def get_content_for_participant(locale: str) -> Dict:
+    """Контент для участника: без эталона (разбор — на дебрифе с фасилитатором)."""
+    out = dict(get_content_for_locale(locale))
+    out.pop("reference", None)
+    return out
+
+
+def get_facilitator_reference_view(locale: str) -> Dict:
+    """Эталон + подписи карточек — только для панели фасилитатора / JWT API."""
+    full = get_content_for_locale(locale)
+    return {
+        "stages": full["stages"],
+        "categories": full["categories"],
+        "cards": full["cards"],
+        "reference": full["reference"],
+    }
+
+
 # --------------------------- Оценка выбора ---------------------------
 
 

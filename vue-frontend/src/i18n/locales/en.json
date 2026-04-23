@@ -1539,10 +1539,10 @@
       },
       "scrumEvents": {
         "title": "Team rhythm: Scrum events",
-        "desc": "Participants assemble 4 key events (Planning, Daily, Review, Retro) from atomic cards, see why each step exists, meet typical mistakes and get a Miro-style final board.",
+        "desc": "Participants assemble 4 key events (Planning, Daily, Review, Retro) from atomic cards, see why each step exists, meet typical mistakes and get a Miro-style board of their process.",
         "bullet1": "4 stages, 5 card categories, strong focus on the 'why'",
-        "bullet2": "Miro-style final board with 🟢🟡🔴 highlights",
-        "bullet3": "Group comparison and a 'build your own process' mode"
+        "bullet2": "The “right” answer and debrief are with the facilitator, not the app",
+        "bullet3": "Group choice comparison and a 'build your own process' mode"
       },
       "scrumRoles": {
         "title": "Scrum roles: who owns what",
@@ -2348,7 +2348,10 @@
       "needsAttention": "needs attention",
 
       "finalTitle": "Your process board",
-      "finalLead": "Below is the reference set of cards for each event (required and optional) and your choice with color coding. Green — hit the “required” set, yellow — within “allowed”, red — disputable. “Missing” — required cards you did not select.",
+      "finalLead": "Your assembled rhythm is in the columns below. What the training considers “right” and why will come from the facilitator in the debrief; the app deliberately does not show the reference on its own.",
+      "finalDebriefHint": "Percentages in the comparison block show how answers spread in the group — not an automated “better/worse” score from the system.",
+      "facilitatorReferenceTitle": "Reference for debrief",
+      "facilitatorReferenceLead": "Use on the projector: required and allowed cards by stage. Participants do not see this list in the exercise — only you.",
       "finalLegendTitle": "How to read the colors",
       "finalLegendGreen": "required set (reference)",
       "finalLegendYellow": "allowed alternatives",
@@ -2359,7 +2362,7 @@
       "refExpected": "Required",
       "refAcceptable": "Also allowed",
       "yourPicks": "You selected",
-      "yourBoardTitle": "Your board (quality of picks)",
+      "yourBoardTitle": "Your choices by stage",
       "yourHealth": "Your score",
       "groupAvg": "Group average",
       "groupComparison": "What other teams picked",

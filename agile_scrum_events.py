@@ -3,8 +3,9 @@
 API под префиксом `/api/agile-training/scrum-events`.
 
 Сценарий: участник собирает 4 события (Planning, Daily, Review, Retro) из
-атомарных карточек (goals/participants/artifacts/time/duration) и
-получает цветную финальную схему.
+атомарных карточек (goals/participants/artifacts/time/duration). Эталон для
+дебрифа отдаётся только фасилитатору (JWT); в ответе state/content для
+участника поле reference не передаётся.
 
 Одна запись на участника (AgileTrainingScrumEventsAnswer). В data_json
 лежит selection + evaluation + список ошибок, с которыми сталкивался +
@@ -31,6 +32,8 @@ from scrum_events_content import (
     STAGE_KEYS,
     card_title,
     evaluate_selection,
+    get_content_for_participant,
+    get_facilitator_reference_view,
     get_content_for_locale,
     sanitize_selection,
     stage_title,
@@ -123,7 +126,7 @@ def _sanitize_custom(raw) -> Optional[Dict]:
 @bp_agile_scrum_events.get("/content")
 def content_public():
     locale = _resolve_locale(request.args.get("locale"), None)
-    return jsonify({"locale": locale, **get_content_for_locale(locale)})
+    return jsonify({"locale": locale, **get_content_for_participant(locale)})
 
 
 @bp_agile_scrum_events.get("/g/<slug>/state")
@@ -399,6 +402,7 @@ def group_results(group_id: int):
     locale = _resolve_locale(request.args.get("locale"), sess)
     return jsonify({
         "group": {"id": g.id, "name": g.name, "slug": g.slug},
+        "facilitator_content": get_facilitator_reference_view(locale),
         **_aggregate_group(g.id, locale),
     })
 

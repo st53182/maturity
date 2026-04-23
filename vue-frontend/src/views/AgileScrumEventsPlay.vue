@@ -289,65 +289,11 @@
       </div>
 
       <div ref="pdfExportRoot" class="se-pdf-export-root">
-        <div class="se-final-legend" aria-label="legend">
-          <div class="se-final-legend__title">{{ $t('agileTraining.scrumEvents.finalLegendTitle') }}</div>
-          <ul class="se-final-legend__list">
-            <li><span class="se-leg se-leg--green"></span> {{ $t('agileTraining.scrumEvents.finalLegendGreen') }}</li>
-            <li><span class="se-leg se-leg--yellow"></span> {{ $t('agileTraining.scrumEvents.finalLegendYellow') }}</li>
-            <li><span class="se-leg se-leg--red"></span> {{ $t('agileTraining.scrumEvents.finalLegendRed') }}</li>
-            <li><span class="se-leg se-leg--missing"></span> {{ $t('agileTraining.scrumEvents.finalLegendMissing') }}</li>
-          </ul>
-        </div>
-
-        <h3 class="se-section-title">{{ $t('agileTraining.scrumEvents.referenceBlockTitle') }}</h3>
-        <p class="se-ref__intro">{{ $t('agileTraining.scrumEvents.referenceIntro') }}</p>
-        <div v-for="s in content.stages" :key="'ref-' + s.key" class="se-ref-stage">
-          <h4 class="se-ref-stage__title"><span class="se-ref-stage__emoji">{{ stageEmoji(s.key) }}</span> {{ s.title }}</h4>
-          <div v-for="cat in content.categories" :key="'ref-' + s.key + '-' + cat" class="se-ref-cat">
-            <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
-            <div class="se-ref-cols">
-              <div class="se-ref-block se-ref-block--exp">
-                <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refExpected') }}</div>
-                <ul class="se-ref-pills">
-                  <li
-                    v-for="k in (content.reference?.[s.key]?.expected?.[cat] || [])"
-                    :key="'e-' + s.key + '-' + cat + '-' + k"
-                    class="se-ref-pill se-ref-pill--expected"
-                  >{{ cardTitle(cat, k) }}</li>
-                  <li v-if="!(content.reference?.[s.key]?.expected?.[cat] || []).length" class="se-fac__hint">—</li>
-                </ul>
-              </div>
-              <div class="se-ref-block se-ref-block--acc">
-                <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refAcceptable') }}</div>
-                <ul class="se-ref-pills">
-                  <li
-                    v-for="k in (content.reference?.[s.key]?.acceptable?.[cat] || [])"
-                    :key="'a-' + s.key + '-' + cat + '-' + k"
-                    class="se-ref-pill se-ref-pill--acceptable"
-                  >{{ cardTitle(cat, k) }}</li>
-                  <li v-if="!(content.reference?.[s.key]?.acceptable?.[cat] || []).length" class="se-fac__hint">—</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <h3 class="se-section-title">{{ $t('agileTraining.scrumEvents.yourBoardTitle') }}</h3>
-        <div class="se-summary">
-          <div class="se-summary__box">
-            <div class="se-summary__label">{{ $t('agileTraining.scrumEvents.yourHealth') }}</div>
-            <div class="se-summary__val">{{ healthPct }}%</div>
-          </div>
-          <div class="se-summary__box">
-            <div class="se-summary__label">{{ $t('agileTraining.scrumEvents.groupAvg') }}</div>
-            <div class="se-summary__val">{{ groupResults?.avg_health_pct || 0 }}%</div>
-          </div>
-        </div>
+        <p class="se-final__debrief-hint">{{ $t('agileTraining.scrumEvents.finalDebriefHint') }}</p>
 
-        <div class="se-board">
-          <div v-for="s in content.stages" :key="'fin-' + s.key"
-               class="se-col"
-               :class="'se-col--' + (lastEval?.stages?.[s.key]?.color || 'gray')">
+        <div class="se-board se-board--final-plain">
+          <div v-for="s in content.stages" :key="'fin-' + s.key" class="se-col se-col--final">
             <div class="se-col__head">
               <h4>{{ s.title }}</h4>
               <span class="se-col__purpose">{{ s.purpose }}</span>
@@ -356,19 +302,11 @@
                  class="se-col__cat">
               <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
               <ul class="se-col__picks">
-                <li v-for="k in (selection[s.key]?.[cat] || [])" :key="k"
-                    class="se-pick"
-                    :class="pickClass(s.key, cat, k)">
+                <li v-for="k in (selection[s.key]?.[cat] || [])" :key="k" class="se-pick se-pick--plain">
                   {{ cardTitle(cat, k) }}
                 </li>
                 <li v-if="!(selection[s.key]?.[cat] || []).length" class="se-fac__hint">—</li>
               </ul>
-              <div v-if="(lastEval?.stages?.[s.key]?.categories?.[cat]?.missing || []).length"
-                   class="se-col__missing">
-                <b>{{ $t('agileTraining.scrumEvents.missing') }}:</b>
-                {{ (lastEval.stages[s.key].categories[cat].missing)
-                      .map(k => cardTitle(cat, k)).join(', ') }}
-              </div>
             </div>
           </div>
         </div>
@@ -1068,6 +1006,10 @@ export default {
 
 .se-final__toolbar { margin: 0 0 16px; }
 .se-pdf-export-root { padding-top: 4px; }
+.se-final__debrief-hint { color: #64748b; font-size: 14px; margin: 0 0 16px; line-height: 1.5; }
+.se-board--final-plain { margin-top: 0; }
+.se-col--final { border-color: #e2e8f0; background: #f8fafc; }
+.se-pick--plain { background: #f1f5f9; border: 1px solid #e2e8f0; color: #0f172a; }
 .se-final-legend {
   display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px;
   padding: 12px 14px; margin-bottom: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;

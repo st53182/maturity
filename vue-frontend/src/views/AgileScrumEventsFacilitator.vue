@@ -136,6 +136,49 @@
             <b>{{ resultsModal.data.avg_health_pct || 0 }}%</b>
           </p>
 
+          <div v-if="resultsModal.data.facilitator_content" class="se-fac__reference">
+            <h4 class="se-section-title">📋 {{ $t('agileTraining.scrumEvents.facilitatorReferenceTitle') }}</h4>
+            <p class="se-fac__reference-lead">{{ $t('agileTraining.scrumEvents.facilitatorReferenceLead') }}</p>
+            <div v-for="s in resultsModal.data.facilitator_content.stages" :key="'fref-'+s.key" class="se-ref-stage">
+              <h5 class="se-ref-stage__title">
+                <span class="se-ref-stage__emoji">{{ stageEmoji(s.key) }}</span> {{ s.title }}
+              </h5>
+              <div v-for="cat in resultsModal.data.facilitator_content.categories" :key="'fref-'+s.key+'-'+cat" class="se-ref-cat">
+                <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
+                <div class="se-ref-cols">
+                  <div class="se-ref-block se-ref-block--exp">
+                    <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refExpected') }}</div>
+                    <ul class="se-ref-pills">
+                      <li
+                        v-for="k in (resultsModal.data.facilitator_content.reference?.[s.key]?.expected?.[cat] || [])"
+                        :key="'e-'+s.key+'-'+cat+'-'+k"
+                        class="se-ref-pill se-ref-pill--expected"
+                      >{{ refCardTitle(resultsModal.data.facilitator_content, cat, k) }}</li>
+                      <li
+                        v-if="!(resultsModal.data.facilitator_content.reference?.[s.key]?.expected?.[cat] || []).length"
+                        class="se-fac__hint"
+                      >—</li>
+                    </ul>
+                  </div>
+                  <div class="se-ref-block se-ref-block--acc">
+                    <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refAcceptable') }}</div>
+                    <ul class="se-ref-pills">
+                      <li
+                        v-for="k in (resultsModal.data.facilitator_content.reference?.[s.key]?.acceptable?.[cat] || [])"
+                        :key="'a-'+s.key+'-'+cat+'-'+k"
+                        class="se-ref-pill se-ref-pill--acceptable"
+                      >{{ refCardTitle(resultsModal.data.facilitator_content, cat, k) }}</li>
+                      <li
+                        v-if="!(resultsModal.data.facilitator_content.reference?.[s.key]?.acceptable?.[cat] || []).length"
+                        class="se-fac__hint"
+                      >—</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="se-board">
             <div v-for="stage in resultsModal.data.stages" :key="stage.key"
                  class="se-col" :class="'se-col--' + stage.key">
@@ -261,6 +304,49 @@
                     compareAll.data.totals.participants || 0) }}
           </p>
 
+          <div v-if="compareAll.data.facilitator_content" class="se-fac__reference se-fac__reference--compare">
+            <h4 class="se-section-title">📋 {{ $t('agileTraining.scrumEvents.facilitatorReferenceTitle') }}</h4>
+            <p class="se-fac__reference-lead">{{ $t('agileTraining.scrumEvents.facilitatorReferenceLead') }}</p>
+            <div v-for="s in compareAll.data.facilitator_content.stages" :key="'cfref-'+s.key" class="se-ref-stage">
+              <h5 class="se-ref-stage__title">
+                <span class="se-ref-stage__emoji">{{ stageEmoji(s.key) }}</span> {{ s.title }}
+              </h5>
+              <div v-for="cat in compareAll.data.facilitator_content.categories" :key="'cfref-'+s.key+'-'+cat" class="se-ref-cat">
+                <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
+                <div class="se-ref-cols">
+                  <div class="se-ref-block se-ref-block--exp">
+                    <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refExpected') }}</div>
+                    <ul class="se-ref-pills">
+                      <li
+                        v-for="k in (compareAll.data.facilitator_content.reference?.[s.key]?.expected?.[cat] || [])"
+                        :key="'ce-'+s.key+'-'+cat+'-'+k"
+                        class="se-ref-pill se-ref-pill--expected"
+                      >{{ refCardTitle(compareAll.data.facilitator_content, cat, k) }}</li>
+                      <li
+                        v-if="!(compareAll.data.facilitator_content.reference?.[s.key]?.expected?.[cat] || []).length"
+                        class="se-fac__hint"
+                      >—</li>
+                    </ul>
+                  </div>
+                  <div class="se-ref-block se-ref-block--acc">
+                    <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refAcceptable') }}</div>
+                    <ul class="se-ref-pills">
+                      <li
+                        v-for="k in (compareAll.data.facilitator_content.reference?.[s.key]?.acceptable?.[cat] || [])"
+                        :key="'ca-'+s.key+'-'+cat+'-'+k"
+                        class="se-ref-pill se-ref-pill--acceptable"
+                      >{{ refCardTitle(compareAll.data.facilitator_content, cat, k) }}</li>
+                      <li
+                        v-if="!(compareAll.data.facilitator_content.reference?.[s.key]?.acceptable?.[cat] || []).length"
+                        class="se-fac__hint"
+                      >—</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <h4 class="se-section-title">🏆 {{ $t('agileTraining.scrumEvents.bestGroups') }}</h4>
           <ol class="se-leaderboard">
             <li v-for="(g, idx) in compareAll.data.leaderboard" :key="g.id">
@@ -345,6 +431,13 @@ export default {
       if (v >= 70) return 'se-heatmap__ok';
       if (v >= 40) return 'se-heatmap__warn';
       return 'se-heatmap__bad';
+    },
+    stageEmoji(key) {
+      return { planning: '📋', daily: '🔄', review: '📊', retro: '🛠️' }[key] || '•';
+    },
+    refCardTitle(fc, cat, key) {
+      for (const c of (fc.cards[cat] || [])) if (c.key === key) return c.title;
+      return key;
     },
     async loadSessions() {
       this.loadingSessions = true;
@@ -597,6 +690,24 @@ export default {
 .se-part__body { padding: 10px 14px 14px; }
 .se-part__errors { margin-top: 8px; font-size: 13px; color: #991b1b; }
 .se-part__custom { margin-top: 8px; font-size: 13px; color: #0891b2; }
+
+/* Reference answer — debrief with participants */
+.se-fac__reference { margin: 0 0 20px; padding: 14px; background: #f0fdfa; border: 1px solid #a7f3d0; border-radius: 14px; }
+.se-fac__reference--compare { background: #fffbeb; border-color: #fde68a; }
+.se-fac__reference-lead { color: #475569; font-size: 13px; margin: 0 0 10px; line-height: 1.45; }
+.se-ref-stage { margin-top: 12px; }
+.se-ref-stage__title { margin: 0 0 8px; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.se-ref-stage__emoji { font-size: 16px; }
+.se-ref-cat { border-top: 1px dashed #cbd5e1; padding: 8px 0; }
+.se-ref-cat:first-of-type { border-top: none; padding-top: 0; }
+.se-ref-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.se-ref-block { font-size: 12px; }
+.se-ref-block__label { font-weight: 700; color: #64748b; margin-bottom: 4px; }
+.se-ref-pills { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.se-ref-pill { padding: 3px 8px; border-radius: 6px; font-size: 12px; line-height: 1.3; }
+.se-ref-pill--expected { background: #dcfce7; border: 1px solid #86efac; color: #14532d; }
+.se-ref-pill--acceptable { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+@media (max-width: 700px) { .se-ref-cols { grid-template-columns: 1fr; } }
 
 @media (max-width: 900px) {
   .se-board, .se-board--mini { grid-template-columns: 1fr 1fr; }

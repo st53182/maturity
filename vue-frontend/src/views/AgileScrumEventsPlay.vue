@@ -273,68 +273,123 @@
       </div>
     </section>
 
-    <!-- 7. Final Miro-like board -->
-    <section v-else-if="step === 'final'" class="se-card">
+    <!-- 7. Final Miro-like board + эталон -->
+    <section v-else-if="step === 'final'" class="se-card se-card--final">
       <h2>{{ $t('agileTraining.scrumEvents.finalTitle') }}</h2>
       <p class="se-card__lead">{{ $t('agileTraining.scrumEvents.finalLead') }}</p>
-
-      <div class="se-summary">
-        <div class="se-summary__box">
-          <div class="se-summary__label">{{ $t('agileTraining.scrumEvents.yourHealth') }}</div>
-          <div class="se-summary__val">{{ healthPct }}%</div>
-        </div>
-        <div class="se-summary__box">
-          <div class="se-summary__label">{{ $t('agileTraining.scrumEvents.groupAvg') }}</div>
-          <div class="se-summary__val">{{ groupResults?.avg_health_pct || 0 }}%</div>
-        </div>
+      <div class="se-final__toolbar">
+        <button
+          type="button"
+          class="se-btn se-btn--ghost"
+          :disabled="pdfExporting"
+          @click="exportFinalToPdf"
+        >
+          {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+        </button>
       </div>
 
-      <div class="se-board">
-        <div v-for="s in content.stages" :key="'fin-' + s.key"
-             class="se-col"
-             :class="'se-col--' + (lastEval?.stages?.[s.key]?.color || 'gray')">
-          <div class="se-col__head">
-            <h4>{{ s.title }}</h4>
-            <span class="se-col__purpose">{{ s.purpose }}</span>
-          </div>
-          <div v-for="cat in content.categories" :key="'fin-' + s.key + '-' + cat"
-               class="se-col__cat">
+      <div ref="pdfExportRoot" class="se-pdf-export-root">
+        <div class="se-final-legend" aria-label="legend">
+          <div class="se-final-legend__title">{{ $t('agileTraining.scrumEvents.finalLegendTitle') }}</div>
+          <ul class="se-final-legend__list">
+            <li><span class="se-leg se-leg--green"></span> {{ $t('agileTraining.scrumEvents.finalLegendGreen') }}</li>
+            <li><span class="se-leg se-leg--yellow"></span> {{ $t('agileTraining.scrumEvents.finalLegendYellow') }}</li>
+            <li><span class="se-leg se-leg--red"></span> {{ $t('agileTraining.scrumEvents.finalLegendRed') }}</li>
+            <li><span class="se-leg se-leg--missing"></span> {{ $t('agileTraining.scrumEvents.finalLegendMissing') }}</li>
+          </ul>
+        </div>
+
+        <h3 class="se-section-title">{{ $t('agileTraining.scrumEvents.referenceBlockTitle') }}</h3>
+        <p class="se-ref__intro">{{ $t('agileTraining.scrumEvents.referenceIntro') }}</p>
+        <div v-for="s in content.stages" :key="'ref-' + s.key" class="se-ref-stage">
+          <h4 class="se-ref-stage__title"><span class="se-ref-stage__emoji">{{ stageEmoji(s.key) }}</span> {{ s.title }}</h4>
+          <div v-for="cat in content.categories" :key="'ref-' + s.key + '-' + cat" class="se-ref-cat">
             <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
-            <ul class="se-col__picks">
-              <li v-for="k in (selection[s.key]?.[cat] || [])" :key="k"
-                  class="se-pick"
-                  :class="pickClass(s.key, cat, k)">
-                {{ cardTitle(cat, k) }}
-              </li>
-              <li v-if="!(selection[s.key]?.[cat] || []).length" class="se-fac__hint">—</li>
-            </ul>
-            <div v-if="(lastEval?.stages?.[s.key]?.categories?.[cat]?.missing || []).length"
-                 class="se-col__missing">
-              <b>{{ $t('agileTraining.scrumEvents.missing') }}:</b>
-              {{ (lastEval.stages[s.key].categories[cat].missing)
-                    .map(k => cardTitle(cat, k)).join(', ') }}
+            <div class="se-ref-cols">
+              <div class="se-ref-block se-ref-block--exp">
+                <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refExpected') }}</div>
+                <ul class="se-ref-pills">
+                  <li
+                    v-for="k in (content.reference?.[s.key]?.expected?.[cat] || [])"
+                    :key="'e-' + s.key + '-' + cat + '-' + k"
+                    class="se-ref-pill se-ref-pill--expected"
+                  >{{ cardTitle(cat, k) }}</li>
+                  <li v-if="!(content.reference?.[s.key]?.expected?.[cat] || []).length" class="se-fac__hint">—</li>
+                </ul>
+              </div>
+              <div class="se-ref-block se-ref-block--acc">
+                <div class="se-ref-block__label">{{ $t('agileTraining.scrumEvents.refAcceptable') }}</div>
+                <ul class="se-ref-pills">
+                  <li
+                    v-for="k in (content.reference?.[s.key]?.acceptable?.[cat] || [])"
+                    :key="'a-' + s.key + '-' + cat + '-' + k"
+                    class="se-ref-pill se-ref-pill--acceptable"
+                  >{{ cardTitle(cat, k) }}</li>
+                  <li v-if="!(content.reference?.[s.key]?.acceptable?.[cat] || []).length" class="se-fac__hint">—</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Group comparison -->
-      <h3 class="se-section-title">📊 {{ $t('agileTraining.scrumEvents.groupComparison') }}</h3>
-      <div v-if="!groupResults" class="se-fac__hint">—</div>
-      <div v-else class="se-group-comp">
-        <div v-for="stage in groupResults.stages" :key="'grp-' + stage.key" class="se-group-stage">
-          <h4>{{ stage.title }}</h4>
-          <div v-for="cat in content.categories" :key="'grp-' + stage.key + '-' + cat"
-               class="se-group-stage__cat">
-            <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
-            <ul class="se-col__picks">
-              <li v-for="it in (stage.categories[cat] || []).slice(0, 3)" :key="it.key"
-                  class="se-pick">
-                <span>{{ it.title }}</span>
-                <span class="se-pick__pct">{{ it.pct }}%</span>
-              </li>
-              <li v-if="!(stage.categories[cat] || []).length" class="se-fac__hint">—</li>
-            </ul>
+        <h3 class="se-section-title">{{ $t('agileTraining.scrumEvents.yourBoardTitle') }}</h3>
+        <div class="se-summary">
+          <div class="se-summary__box">
+            <div class="se-summary__label">{{ $t('agileTraining.scrumEvents.yourHealth') }}</div>
+            <div class="se-summary__val">{{ healthPct }}%</div>
+          </div>
+          <div class="se-summary__box">
+            <div class="se-summary__label">{{ $t('agileTraining.scrumEvents.groupAvg') }}</div>
+            <div class="se-summary__val">{{ groupResults?.avg_health_pct || 0 }}%</div>
+          </div>
+        </div>
+
+        <div class="se-board">
+          <div v-for="s in content.stages" :key="'fin-' + s.key"
+               class="se-col"
+               :class="'se-col--' + (lastEval?.stages?.[s.key]?.color || 'gray')">
+            <div class="se-col__head">
+              <h4>{{ s.title }}</h4>
+              <span class="se-col__purpose">{{ s.purpose }}</span>
+            </div>
+            <div v-for="cat in content.categories" :key="'fin-' + s.key + '-' + cat"
+                 class="se-col__cat">
+              <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
+              <ul class="se-col__picks">
+                <li v-for="k in (selection[s.key]?.[cat] || [])" :key="k"
+                    class="se-pick"
+                    :class="pickClass(s.key, cat, k)">
+                  {{ cardTitle(cat, k) }}
+                </li>
+                <li v-if="!(selection[s.key]?.[cat] || []).length" class="se-fac__hint">—</li>
+              </ul>
+              <div v-if="(lastEval?.stages?.[s.key]?.categories?.[cat]?.missing || []).length"
+                   class="se-col__missing">
+                <b>{{ $t('agileTraining.scrumEvents.missing') }}:</b>
+                {{ (lastEval.stages[s.key].categories[cat].missing)
+                      .map(k => cardTitle(cat, k)).join(', ') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="se-section-title">📊 {{ $t('agileTraining.scrumEvents.groupComparison') }}</h3>
+        <div v-if="!groupResults" class="se-fac__hint">—</div>
+        <div v-else class="se-group-comp">
+          <div v-for="stage in groupResults.stages" :key="'grp-' + stage.key" class="se-group-stage">
+            <h4>{{ stage.title }}</h4>
+            <div v-for="cat in content.categories" :key="'grp-' + stage.key + '-' + cat"
+                 class="se-group-stage__cat">
+              <div class="se-col__cat-title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</div>
+              <ul class="se-col__picks">
+                <li v-for="it in (stage.categories[cat] || []).slice(0, 3)" :key="it.key"
+                    class="se-pick">
+                  <span>{{ it.title }}</span>
+                  <span class="se-pick__pct">{{ it.pct }}%</span>
+                </li>
+                <li v-if="!(stage.categories[cat] || []).length" class="se-fac__hint">—</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -407,6 +462,7 @@
 
 <script>
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const EMPTY_SELECTION = () => ({
   planning: { goals: [], participants: [], artifacts: [], time: [], duration: [] },
@@ -426,7 +482,7 @@ export default {
       loading: true,
       locale: 'ru',
       group: null,
-      content: { stages: [], cards: {}, categories: [], errors: [], customs: [] },
+      content: { stages: [], cards: {}, categories: [], errors: [], customs: [], reference: {} },
       participantToken: '',
       displayName: '',
       step: 'start',
@@ -447,6 +503,7 @@ export default {
       submitting: false,
       custom: { context_key: '', selection: {}, note: '' },
       activeBuildCat: 'goals',
+      pdfExporting: false,
     };
   },
   computed: {
@@ -723,6 +780,20 @@ export default {
       this.custom = { context_key: '', selection: {}, note: '' };
       this.goStep('context');
     },
+    async exportFinalToPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-scrum-events-${this.slug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
   },
 };
 </script>
@@ -987,6 +1058,37 @@ export default {
 .se-pill--yellow { background: #fef3c7; color: #92400e; }
 .se-pill--red { background: #fee2e2; color: #991b1b; }
 .se-pill--gray { background: #e2e8f0; color: #475569; }
+
+.se-final__toolbar { margin: 0 0 16px; }
+.se-pdf-export-root { padding-top: 4px; }
+.se-final-legend {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px;
+  padding: 12px 14px; margin-bottom: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+}
+.se-final-legend__title { font-weight: 800; font-size: 13px; color: #0f172a; min-width: 100%; }
+@media (min-width: 600px) { .se-final-legend__title { min-width: 140px; } }
+.se-final-legend__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: #475569; }
+.se-leg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: middle; }
+.se-leg--green { background: #22c55e; }
+.se-leg--yellow { background: #f59e0b; }
+.se-leg--red { background: #ef4444; }
+.se-leg--missing { background: transparent; border: 1px dashed #b91c1c; }
+.se-ref__intro { color: #475569; font-size: 13px; margin: 0 0 12px; }
+.se-ref-stage {
+  border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 12px 6px; margin-bottom: 12px; background: #fff;
+}
+.se-ref-stage__title { margin: 0 0 10px; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.se-ref-stage__emoji { font-size: 18px; }
+.se-ref-cat { border-top: 1px dashed #e2e8f0; padding: 8px 0; }
+.se-ref-cat:first-of-type { border-top: none; padding-top: 0; }
+.se-ref-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 700px) { .se-ref-cols { grid-template-columns: 1fr; } }
+.se-ref-block { font-size: 12px; }
+.se-ref-block__label { font-weight: 700; color: #64748b; margin-bottom: 4px; }
+.se-ref-pills { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.se-ref-pill { padding: 3px 8px; border-radius: 6px; font-size: 12px; line-height: 1.3; }
+.se-ref-pill--expected { background: #dcfce7; border: 1px solid #86efac; color: #14532d; }
+.se-ref-pill--acceptable { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
 
 .se-section-title { margin: 18px 0 8px; font-size: 15px; font-weight: 800; }
 .se-group-comp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }

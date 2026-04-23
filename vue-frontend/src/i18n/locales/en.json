@@ -1475,7 +1475,10 @@
       "languageRu": "Русский",
       "languageEn": "English",
       "yourName": "Your name",
-      "yourNamePh": "Name (optional)"
+      "yourNamePh": "Name (optional)",
+      "downloadPdf": "Download PDF",
+      "downloadPdfLoading": "Preparing PDF…",
+      "downloadPdfError": "Could not save PDF. Please try again."
     },
     "hub": {
       "title": "Agile Training",
@@ -2335,7 +2338,18 @@
       "needsAttention": "needs attention",
 
       "finalTitle": "Your process board",
-      "finalLead": "This is your 'Miro board' — the team's rhythm at a glance. Compare with what other teams picked and try building your own context.",
+      "finalLead": "Below is the reference set of cards for each event (required and optional) and your choice with color coding. Green — hit the “required” set, yellow — within “allowed”, red — disputable. “Missing” — required cards you did not select.",
+      "finalLegendTitle": "How to read the colors",
+      "finalLegendGreen": "required set (reference)",
+      "finalLegendYellow": "allowed alternatives",
+      "finalLegendRed": "disputable pick",
+      "finalLegendMissing": "you skipped a required card",
+      "referenceBlockTitle": "Reference vs your pick",
+      "referenceIntro": "Each row: what we recommend for the event, what else is acceptable, and what you selected.",
+      "refExpected": "Required",
+      "refAcceptable": "Also allowed",
+      "yourPicks": "You selected",
+      "yourBoardTitle": "Your board (quality of picks)",
       "yourHealth": "Your score",
       "groupAvg": "Group average",
       "groupComparison": "What other teams picked",

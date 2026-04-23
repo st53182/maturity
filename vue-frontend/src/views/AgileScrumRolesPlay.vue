@@ -199,70 +199,82 @@
     <!-- ШАГ 8: финальная Miro-доска -->
     <section v-else-if="step === 'final'" class="sr-play__section">
       <h2>🖼 {{ $t('agileTraining.scrumRoles.finalTitle') }}</h2>
+      <p class="sr-pdf-bar">
+        <button
+          type="button"
+          class="sr-btn sr-btn--ghost"
+          :disabled="pdfExporting"
+          @click="exportResultPdf"
+        >
+          {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+        </button>
+      </p>
 
-      <div class="sr-final-score">
-        <div>
-          <div class="sr-final-score__label">{{ $t('agileTraining.scrumRoles.yourHealth') }}</div>
-          <div class="sr-final-score__value" :class="healthClass(myHealth)">{{ myHealth }}%</div>
-        </div>
-        <div v-if="groupResults && groupResults.participants_count > 1">
-          <div class="sr-final-score__label">{{ $t('agileTraining.scrumRoles.groupHealth') }}</div>
-          <div class="sr-final-score__value">{{ groupResults.avg_health_pct }}%</div>
-        </div>
-      </div>
-
-      <div class="sr-color-totals">
-        <span class="sr-pill sr-pill--green">🟢 {{ evalTotals.green }}</span>
-        <span class="sr-pill sr-pill--yellow">🟡 {{ evalTotals.yellow }}</span>
-        <span class="sr-pill sr-pill--red">🔴 {{ evalTotals.red }}</span>
-        <span class="sr-pill sr-pill--muted">◻ {{ $t('agileTraining.scrumRoles.missingLabel') }}: {{ evalTotals.missing }}</span>
-      </div>
-
-      <div class="sr-miro">
-        <article v-for="r in content.roles" :key="r.key" class="sr-miro__col">
-          <header class="sr-miro__col-head">
-            <div class="sr-miro__emoji">{{ r.emoji }}</div>
-            <h3>{{ r.title }}</h3>
-            <p>{{ r.desc }}</p>
-          </header>
-          <div class="sr-miro__buckets">
-            <div class="sr-miro__bucket sr-miro__bucket--responsible">
-              <h4>🟢 {{ $t('agileTraining.scrumRoles.levels.responsible') }}</h4>
-              <div v-for="c in cardsPerRole(r.key, 'responsible')" :key="'b1-' + r.key + '-' + c.key"
-                   class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
-                {{ c.title }}
-              </div>
-            </div>
-            <div class="sr-miro__bucket sr-miro__bucket--participates">
-              <h4>🟡 {{ $t('agileTraining.scrumRoles.levels.participates') }}</h4>
-              <div v-for="c in cardsPerRole(r.key, 'participates')" :key="'b2-' + r.key + '-' + c.key"
-                   class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
-                {{ c.title }}
-              </div>
-            </div>
-            <div class="sr-miro__bucket sr-miro__bucket--should_not">
-              <h4>🔴 {{ $t('agileTraining.scrumRoles.levels.should_not') }}</h4>
-              <div v-for="c in cardsPerRole(r.key, 'should_not')" :key="'b3-' + r.key + '-' + c.key"
-                   class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
-                {{ c.title }}
-              </div>
-            </div>
+      <div ref="pdfExportRoot" class="sr-pdf-root">
+        <div class="sr-final-score">
+          <div>
+            <div class="sr-final-score__label">{{ $t('agileTraining.scrumRoles.yourHealth') }}</div>
+            <div class="sr-final-score__value" :class="healthClass(myHealth)">{{ myHealth }}%</div>
           </div>
-        </article>
-      </div>
+          <div v-if="groupResults && groupResults.participants_count > 1">
+            <div class="sr-final-score__label">{{ $t('agileTraining.scrumRoles.groupHealth') }}</div>
+            <div class="sr-final-score__value">{{ groupResults.avg_health_pct }}%</div>
+          </div>
+        </div>
 
-      <div v-if="groupResults && groupResults.cards?.length" class="sr-compare">
-        <h3>👥 {{ $t('agileTraining.scrumRoles.compareTitle') }}</h3>
-        <p class="sr-play__hint">{{ $t('agileTraining.scrumRoles.compareLead') }}</p>
-        <div class="sr-compare__grid">
-          <div v-for="c in groupResults.cards" :key="'cmp-' + c.key" class="sr-compare__item">
-            <b>{{ c.title }}</b>
-            <div v-for="r in content.roles" :key="'cmp-' + c.key + '-' + r.key" class="sr-compare__row">
-              <span class="sr-compare__role">{{ r.emoji }} {{ r.title }}</span>
-              <span v-for="lv in (c.roles?.[r.key]?.levels || [])" :key="'cmp-' + c.key + '-' + r.key + '-' + (lv.level || 'n')"
-                    class="sr-pill" :class="lv.level ? 'sr-pill--' + lv.level : 'sr-pill--muted'">
-                {{ levelEmoji(lv.level) }} {{ lv.pct }}%
-              </span>
+        <div class="sr-color-totals">
+          <span class="sr-pill sr-pill--green">🟢 {{ evalTotals.green }}</span>
+          <span class="sr-pill sr-pill--yellow">🟡 {{ evalTotals.yellow }}</span>
+          <span class="sr-pill sr-pill--red">🔴 {{ evalTotals.red }}</span>
+          <span class="sr-pill sr-pill--muted">◻ {{ $t('agileTraining.scrumRoles.missingLabel') }}: {{ evalTotals.missing }}</span>
+        </div>
+
+        <div class="sr-miro">
+          <article v-for="r in content.roles" :key="r.key" class="sr-miro__col">
+            <header class="sr-miro__col-head">
+              <div class="sr-miro__emoji">{{ r.emoji }}</div>
+              <h3>{{ r.title }}</h3>
+              <p>{{ r.desc }}</p>
+            </header>
+            <div class="sr-miro__buckets">
+              <div class="sr-miro__bucket sr-miro__bucket--responsible">
+                <h4>🟢 {{ $t('agileTraining.scrumRoles.levels.responsible') }}</h4>
+                <div v-for="c in cardsPerRole(r.key, 'responsible')" :key="'b1-' + r.key + '-' + c.key"
+                     class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
+                  {{ c.title }}
+                </div>
+              </div>
+              <div class="sr-miro__bucket sr-miro__bucket--participates">
+                <h4>🟡 {{ $t('agileTraining.scrumRoles.levels.participates') }}</h4>
+                <div v-for="c in cardsPerRole(r.key, 'participates')" :key="'b2-' + r.key + '-' + c.key"
+                     class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
+                  {{ c.title }}
+                </div>
+              </div>
+              <div class="sr-miro__bucket sr-miro__bucket--should_not">
+                <h4>🔴 {{ $t('agileTraining.scrumRoles.levels.should_not') }}</h4>
+                <div v-for="c in cardsPerRole(r.key, 'should_not')" :key="'b3-' + r.key + '-' + c.key"
+                     class="sr-sticker" :class="'sr-sticker--' + stickerColor(c.key, r.key)">
+                  {{ c.title }}
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div v-if="groupResults && groupResults.cards?.length" class="sr-compare">
+          <h3>👥 {{ $t('agileTraining.scrumRoles.compareTitle') }}</h3>
+          <p class="sr-play__hint">{{ $t('agileTraining.scrumRoles.compareLead') }}</p>
+          <div class="sr-compare__grid">
+            <div v-for="c in groupResults.cards" :key="'cmp-' + c.key" class="sr-compare__item">
+              <b>{{ c.title }}</b>
+              <div v-for="r in content.roles" :key="'cmp-' + c.key + '-' + r.key" class="sr-compare__row">
+                <span class="sr-compare__role">{{ r.emoji }} {{ r.title }}</span>
+                <span v-for="lv in (c.roles?.[r.key]?.levels || [])" :key="'cmp-' + c.key + '-' + r.key + '-' + (lv.level || 'n')"
+                      class="sr-pill" :class="lv.level ? 'sr-pill--' + lv.level : 'sr-pill--muted'">
+                  {{ levelEmoji(lv.level) }} {{ lv.pct }}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -318,6 +330,7 @@
 
 <script>
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const STORAGE_NS = 'agile_training_scrum_roles';
 
@@ -350,6 +363,7 @@ export default {
       groupResults: null,
       evaluation: null,
       customLocale: null,
+      pdfExporting: false,
     };
   },
   computed: {
@@ -505,11 +519,27 @@ export default {
     },
     removeCustomCard(i) { this.customCards.splice(i, 1); },
     async saveCustom() { await this.persist(true); },
+    async exportResultPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-scrum-roles-${this.slug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
+.sr-pdf-bar { margin: 0 0 12px; }
+.sr-pdf-root { min-height: 20px; }
 .sr-play { max-width: 1180px; margin: 0 auto; padding: 22px 18px 60px; color: #0f172a; }
 .sr-play__head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
 .sr-play__group { color: #7c3aed; font-weight: 700; font-size: 13px; }

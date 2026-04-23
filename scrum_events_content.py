@@ -366,12 +366,21 @@ def get_content_for_locale(locale: str) -> Dict:
         for c in CUSTOM_CONTEXTS
     ]
 
+    # Эталонные ключи карточек по этапам (для финального экрана «как должно быть»)
+    reference: Dict[str, Dict] = {}
+    for s in STAGES:
+        reference[s["key"]] = {
+            "expected": {c: list(s["expected"].get(c, [])) for c in CATEGORIES},
+            "acceptable": {c: list(s["acceptable"].get(c, [])) for c in CATEGORIES},
+        }
+
     return {
         "stages": stages,
         "cards": cards,
         "categories": CATEGORIES,
         "errors": errors,
         "customs": customs,
+        "reference": reference,
     }
 
 

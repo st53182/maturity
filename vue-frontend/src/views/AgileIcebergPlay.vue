@@ -341,6 +341,17 @@
 
       <div v-if="resultsLoading" class="ice-hint">{{ $t('common.loading') }}…</div>
       <div v-else-if="results">
+        <p class="ice-pdf-bar">
+          <button
+            type="button"
+            class="ice-btn ice-btn--ghost"
+            :disabled="pdfExporting"
+            @click="exportResultsPdf"
+          >
+            {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+          </button>
+        </p>
+        <div ref="pdfExportRoot" class="ice-pdf-root">
         <div class="ice-results__head">
           <div class="ice-results__score">
             <div class="ice-results__score-val">{{ results.my.avg_score }}</div>
@@ -410,6 +421,7 @@
             </li>
           </ul>
         </div>
+        </div>
 
         <div class="ice-chain__actions ice-chain__actions--end">
           <button class="ice-btn ice-btn--ghost" @click="restart">{{ $t('agileTraining.iceberg.play.restart') }}</button>
@@ -434,6 +446,7 @@
  * скор сам, а доверяет ответу сервера (`depth_score`, `primary_level`).
  */
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const TOKEN_KEY_PREFIX = 'at_iceberg_pt_';
 const LANG_KEY = 'language';
@@ -482,6 +495,7 @@ export default {
       participantToken: '',
       results: null,
       resultsLoading: false,
+      pdfExporting: false,
     };
   },
   computed: {
@@ -727,6 +741,20 @@ export default {
         this.resultsLoading = false;
       }
     },
+    async exportResultsPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-iceberg-${this.effectiveSlug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
 
     restart() {
       this.currentIndex = 0;
@@ -739,6 +767,8 @@ export default {
 </script>
 
 <style scoped>
+.ice-pdf-bar { margin: 0 0 12px; }
+.ice-pdf-root { min-height: 20px; }
 .ice-play {
   min-height: 100vh;
   background: linear-gradient(180deg, #f0f9ff 0%, #ecfeff 100%);

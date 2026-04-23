@@ -209,34 +209,46 @@
     <section v-else-if="step === 'final' && activeCase" class="mvp-card">
       <h2>🏁 {{ $t('agileTraining.mvp.finalTitle') }}</h2>
       <p class="mvp-card__lead">{{ $t('agileTraining.mvp.finalLead') }}</p>
+      <p class="mvp-pdf-bar">
+        <button
+          type="button"
+          class="mvp-btn mvp-btn--ghost"
+          :disabled="pdfExporting"
+          @click="exportResultPdf"
+        >
+          {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+        </button>
+      </p>
 
-      <div class="mvp-recap">
-        <div v-for="s in STAGES" :key="'recap-'+s"
-             :class="['mvp-recap__item', 'mvp-recap__item--'+(caseData[s] && caseData[s].status || 'empty')]">
-          <div class="mvp-recap__head">
-            <span :class="['mvp-stage-badge', 'mvp-stage-badge--'+s]">{{ $t('agileTraining.mvp.stage.'+s) }}</span>
-            <span v-if="caseData[s] && caseData[s].status"
-                  :class="['mvp-badge-status', 'mvp-badge-status--'+caseData[s].status]">
-              {{ $t('agileTraining.mvp.status.' + caseData[s].status) }}
-            </span>
-          </div>
-          <div class="mvp-recap__explain">{{ $t('agileTraining.mvp.explain.'+s) }}</div>
-          <div v-if="caseData[s] && caseData[s].features.length" class="mvp-recap__chips">
-            <span v-for="k in caseData[s].features" :key="'rc-'+s+'-'+k"
-                  :class="['mvp-feat-chip', 'mvp-feat-chip--' + featureWeight(k)]">
-              {{ featureTitle(k) }}
-            </span>
+      <div ref="pdfExportRoot" class="mvp-pdf-root">
+        <div class="mvp-recap">
+          <div v-for="s in STAGES" :key="'recap-'+s"
+               :class="['mvp-recap__item', 'mvp-recap__item--'+(caseData[s] && caseData[s].status || 'empty')]">
+            <div class="mvp-recap__head">
+              <span :class="['mvp-stage-badge', 'mvp-stage-badge--'+s]">{{ $t('agileTraining.mvp.stage.'+s) }}</span>
+              <span v-if="caseData[s] && caseData[s].status"
+                    :class="['mvp-badge-status', 'mvp-badge-status--'+caseData[s].status]">
+                {{ $t('agileTraining.mvp.status.' + caseData[s].status) }}
+              </span>
+            </div>
+            <div class="mvp-recap__explain">{{ $t('agileTraining.mvp.explain.'+s) }}</div>
+            <div v-if="caseData[s] && caseData[s].features.length" class="mvp-recap__chips">
+              <span v-for="k in caseData[s].features" :key="'rc-'+s+'-'+k"
+                    :class="['mvp-feat-chip', 'mvp-feat-chip--' + featureWeight(k)]">
+                {{ featureTitle(k) }}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="mvp-group-hint" v-if="groupResults">
-        <div class="mvp-group-hint__title">👥 {{ $t('agileTraining.mvp.groupHint') }}</div>
-        <div class="mvp-group-hint__text">
-          {{ $t('agileTraining.mvp.groupStats', {
-            answers: groupResults.answers_count || 0,
-            avg: groupResults.avg_score || 0
-          }) }}
+        <div class="mvp-group-hint" v-if="groupResults">
+          <div class="mvp-group-hint__title">👥 {{ $t('agileTraining.mvp.groupHint') }}</div>
+          <div class="mvp-group-hint__text">
+            {{ $t('agileTraining.mvp.groupStats', {
+              answers: groupResults.answers_count || 0,
+              avg: groupResults.avg_score || 0
+            }) }}
+          </div>
         </div>
       </div>
 
@@ -254,6 +266,7 @@
 
 <script>
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const STAGES = ['mvp', 'mmp', 'mlp'];
 
@@ -280,6 +293,7 @@ export default {
       submitting: false,
       stageResult: null,
       groupResults: null,
+      pdfExporting: false,
     };
   },
   computed: {
@@ -526,11 +540,28 @@ export default {
       const f = this.activeCase.features.find(f => f.key === key);
       return f ? f.weight : 'optional';
     },
+    async exportResultPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const casePart = this.activeCaseKey || 'case';
+        const res = await exportElementToPdf(el, `agile-mvp-${this.slug}-${casePart}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
+.mvp-pdf-bar { margin: 0 0 14px; }
+.mvp-pdf-root { min-height: 20px; }
 .mvp-play { max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; color: #0f172a; }
 .mvp-play__top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
 .mvp-play__brand { display: flex; align-items: center; gap: 10px; }

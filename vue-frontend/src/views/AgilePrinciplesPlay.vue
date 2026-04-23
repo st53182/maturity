@@ -151,6 +151,17 @@
         <p>{{ $t('agileTraining.common.loading') }}…</p>
       </div>
       <div v-else>
+        <p class="atp-pdf-bar">
+          <button
+            type="button"
+            class="atp-bigbtn atp-bigbtn--ghost"
+            :disabled="pdfExporting"
+            @click="exportResultsPdf"
+          >
+            {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+          </button>
+        </p>
+        <div ref="pdfExportRoot" class="atp-pdf-root">
         <section class="atp-block">
           <h2>🔥 {{ $t('agileTraining.play.resultsScreen.topControversial') }}</h2>
           <p class="atp-muted">{{ $t('agileTraining.play.resultsScreen.controversialHint') }}</p>
@@ -261,6 +272,7 @@
             </li>
           </ul>
         </details>
+        </div>
 
         <div class="atp-results__actions">
           <button class="atp-bigbtn atp-bigbtn--ghost" @click="restart">
@@ -274,6 +286,7 @@
 
 <script>
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const STORAGE_KEY_PREFIX = 'agile_training_participant_';
 const ANSWER_SEEN_PREFIX = 'agile_training_seen_';
@@ -303,7 +316,8 @@ export default {
       drag: { active: false, startX: 0, dx: 0 },
       suggestions: {},
       suggestionDrafts: {},
-      savingSuggestion: null
+      savingSuggestion: null,
+      pdfExporting: false,
     };
   },
   computed: {
@@ -579,6 +593,21 @@ export default {
       }
     },
 
+    async exportResultsPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-principles-${this.slug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
+
     async restart() {
       localStorage.removeItem(this.seenKey);
       this.answeredKeys = [];
@@ -593,6 +622,8 @@ export default {
 </script>
 
 <style scoped>
+.atp-pdf-bar { margin: 0 0 12px; }
+.atp-pdf-root { min-height: 20px; }
 .atp-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%);

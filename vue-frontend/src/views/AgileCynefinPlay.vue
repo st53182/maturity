@@ -205,6 +205,17 @@
         <div>{{ $t('common.loading') }}…</div>
       </div>
       <div v-else-if="results">
+        <p class="cp-pdf-bar">
+          <button
+            type="button"
+            class="cp-btn cp-btn--ghost"
+            :disabled="pdfExporting"
+            @click="exportResultsPdf"
+          >
+            {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+          </button>
+        </p>
+        <div ref="pdfExportRoot" class="cp-pdf-root">
         <div class="cp-results__summary">
           <div class="cp-results__stat">
             <span class="cp-results__stat-val">{{ results.my.matches_expert }}/{{ results.per_case.length }}</span>
@@ -275,6 +286,7 @@
             </li>
           </ul>
         </details>
+        </div>
 
         <div class="cp-results__actions">
           <button class="cp-btn cp-btn--ghost" @click="restart">{{ $t('agileTraining.cynefin.play.restart') }}</button>
@@ -295,6 +307,7 @@
  * (`at_cynefin_pt_<slug>`), чтобы несколько упражнений не мешали друг другу.
  */
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const TOKEN_KEY_PREFIX = 'at_cynefin_pt_';
 const LANG_KEY = 'language';
@@ -334,6 +347,7 @@ export default {
       // финальные результаты
       results: null,
       resultsLoading: false,
+      pdfExporting: false,
     };
   },
   computed: {
@@ -522,6 +536,20 @@ export default {
         this.resultsLoading = false;
       }
     },
+    async exportResultsPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-cynefin-${this.effectiveSlug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
     restart() {
       this.currentIndex = 0;
       this.resetChoice();
@@ -533,6 +561,8 @@ export default {
 </script>
 
 <style scoped>
+.cp-pdf-bar { margin: 0 0 12px; }
+.cp-pdf-root { min-height: 20px; }
 .cp-play {
   max-width: 720px;
   margin: 0 auto;

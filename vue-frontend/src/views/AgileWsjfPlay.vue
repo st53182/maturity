@@ -293,66 +293,78 @@
       <p class="wsjf-card__lead" v-if="adaptationStatus">
         {{ $t('agileTraining.wsjf.adaptationLead.' + adaptationStatus) }}
       </p>
+      <p class="wsjf-pdf-bar">
+        <button
+          type="button"
+          class="wsjf-btn wsjf-btn--ghost"
+          :disabled="pdfExporting"
+          @click="exportResultPdf"
+        >
+          {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+        </button>
+      </p>
 
-      <div class="wsjf-final-grid">
-        <div class="wsjf-final-card">
-          <div class="wsjf-fac__hint">{{ $t('agileTraining.wsjf.initialChoice') }}</div>
-          <b>{{ optionTitle(initialChoice) || '—' }}</b>
+      <div ref="pdfExportRoot" class="wsjf-pdf-root">
+        <div class="wsjf-final-grid">
+          <div class="wsjf-final-card">
+            <div class="wsjf-fac__hint">{{ $t('agileTraining.wsjf.initialChoice') }}</div>
+            <b>{{ optionTitle(initialChoice) || '—' }}</b>
+          </div>
+          <div class="wsjf-final-card">
+            <div class="wsjf-fac__hint">{{ $t('agileTraining.wsjf.revisedChoice') }}</div>
+            <b>{{ optionTitle(revisedChoice) || '—' }}</b>
+          </div>
+          <div class="wsjf-final-card"
+               :class="{ 'wsjf-final-card--changed': initialChoice !== revisedChoice && revisedChoice }">
+            <div class="wsjf-fac__hint">{{ $t('agileTraining.wsjf.changedMind') }}</div>
+            <b>
+              {{ initialChoice !== revisedChoice && revisedChoice
+                 ? $t('agileTraining.wsjf.yesChanged')
+                 : $t('agileTraining.wsjf.noKept') }}
+            </b>
+          </div>
         </div>
-        <div class="wsjf-final-card">
-          <div class="wsjf-fac__hint">{{ $t('agileTraining.wsjf.revisedChoice') }}</div>
-          <b>{{ optionTitle(revisedChoice) || '—' }}</b>
-        </div>
-        <div class="wsjf-final-card"
-             :class="{ 'wsjf-final-card--changed': initialChoice !== revisedChoice && revisedChoice }">
-          <div class="wsjf-fac__hint">{{ $t('agileTraining.wsjf.changedMind') }}</div>
-          <b>
-            {{ initialChoice !== revisedChoice && revisedChoice
-               ? $t('agileTraining.wsjf.yesChanged')
-               : $t('agileTraining.wsjf.noKept') }}
-          </b>
-        </div>
-      </div>
 
-      <div v-if="groupResults" class="wsjf-group">
-        <h3>👥 {{ $t('agileTraining.wsjf.yourGroup') }}</h3>
-        <p class="wsjf-fac__hint">
-          {{ $t('agileTraining.facilitator.participants',
-                { n: groupResults.total_participants || 0 }, groupResults.total_participants || 0) }}
-          · {{ $t('agileTraining.wsjf.answersCount',
-                   { n: groupResults.total_answers || 0 }, groupResults.total_answers || 0) }}
-        </p>
-        <div class="wsjf-group-cols">
-          <div>
-            <b>{{ $t('agileTraining.wsjf.initialChoice') }}</b>
-            <ul class="wsjf-group-list">
-              <li v-for="o in content.options" :key="'ig-' + o.key">
-                <span>{{ o.title }}</span>
-                <b>{{ groupResults.initial_counts[o.key] || 0 }}</b>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <b>{{ $t('agileTraining.wsjf.revisedChoice') }}</b>
-            <ul class="wsjf-group-list">
-              <li v-for="o in content.options" :key="'rg-' + o.key">
-                <span>{{ o.title }}</span>
-                <b>{{ groupResults.revised_counts[o.key] || 0 }}</b>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <b>{{ $t('agileTraining.wsjf.adaptations') }}</b>
-            <ul class="wsjf-group-list">
-              <li v-for="(cnt, key) in groupResults.adaptation_counts" :key="'a-' + key">
-                <span>{{ $t('agileTraining.wsjf.adaptation.' + key) }}</span>
-                <b>{{ cnt }}</b>
-              </li>
-              <li v-if="!Object.keys(groupResults.adaptation_counts || {}).length"
-                  class="wsjf-fac__hint">
-                — {{ $t('agileTraining.wsjf.noAdaptationYet') }}
-              </li>
-            </ul>
+        <div v-if="groupResults" class="wsjf-group">
+          <h3>👥 {{ $t('agileTraining.wsjf.yourGroup') }}</h3>
+          <p class="wsjf-fac__hint">
+            {{ $t('agileTraining.facilitator.participants',
+                  { n: groupResults.total_participants || 0 }, groupResults.total_participants || 0) }}
+            · {{ $t('agileTraining.wsjf.answersCount',
+                     { n: groupResults.total_answers || 0 }, groupResults.total_answers || 0) }}
+          </p>
+          <div class="wsjf-group-cols">
+            <div>
+              <b>{{ $t('agileTraining.wsjf.initialChoice') }}</b>
+              <ul class="wsjf-group-list">
+                <li v-for="o in content.options" :key="'ig-' + o.key">
+                  <span>{{ o.title }}</span>
+                  <b>{{ groupResults.initial_counts[o.key] || 0 }}</b>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <b>{{ $t('agileTraining.wsjf.revisedChoice') }}</b>
+              <ul class="wsjf-group-list">
+                <li v-for="o in content.options" :key="'rg-' + o.key">
+                  <span>{{ o.title }}</span>
+                  <b>{{ groupResults.revised_counts[o.key] || 0 }}</b>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <b>{{ $t('agileTraining.wsjf.adaptations') }}</b>
+              <ul class="wsjf-group-list">
+                <li v-for="(cnt, key) in groupResults.adaptation_counts" :key="'a-' + key">
+                  <span>{{ $t('agileTraining.wsjf.adaptation.' + key) }}</span>
+                  <b>{{ cnt }}</b>
+                </li>
+                <li v-if="!Object.keys(groupResults.adaptation_counts || {}).length"
+                    class="wsjf-fac__hint">
+                  — {{ $t('agileTraining.wsjf.noAdaptationYet') }}
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -371,6 +383,7 @@
 
 <script>
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 const DEFAULT_OPTION_KEYS = ['hybrid', 'electric', 'hydrogen'];
 
@@ -410,6 +423,7 @@ export default {
       eventLead: '',
       adaptationStatus: '',
       groupResults: null,
+      pdfExporting: false,
     };
   },
   computed: {
@@ -685,6 +699,20 @@ export default {
         this.groupResults = res.data;
       } catch (_) { this.groupResults = null; }
     },
+    async exportResultPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-wsjf-${this.slug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
     restart() {
       // не удаляем ответ на сервере, но позволяем пройти ещё раз локально
       this.initialScores = blankScores();
@@ -701,6 +729,8 @@ export default {
 </script>
 
 <style scoped>
+.wsjf-pdf-bar { margin: 0 0 12px; }
+.wsjf-pdf-root { min-height: 20px; }
 .wsjf-play {
   max-width: 1000px;
   margin: 0 auto;

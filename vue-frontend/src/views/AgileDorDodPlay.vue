@@ -297,40 +297,52 @@
     <section v-else-if="step === 'final'" class="dd-card">
       <h2>{{ $t('agileTraining.dorDod.finalTitle') }}</h2>
       <p class="dd-card__lead">{{ $t('agileTraining.dorDod.finalLead') }}</p>
+      <p class="dd-pdf-bar">
+        <button
+          type="button"
+          class="dd-btn dd-btn--ghost"
+          :disabled="pdfExporting"
+          @click="exportResultPdf"
+        >
+          {{ pdfExporting ? $t('agileTraining.common.downloadPdfLoading') : $t('agileTraining.common.downloadPdf') }}
+        </button>
+      </p>
 
-      <div class="dd-score-row">
-        <div class="dd-score-box dd-score-box--strong">
-          <div class="dd-score-box__label">{{ $t('agileTraining.dorDod.scoreInitial') }}</div>
-          <div class="dd-score-box__val">{{ scoreInitial }}</div>
-          <div v-if="outcomeInitial" class="dd-pill" :class="outcomeClass(outcomeInitial)">
-            {{ $t('agileTraining.dorDod.outcome.' + outcomeInitial) }}
-          </div>
-        </div>
-      </div>
-
-      <h3 class="dd-subtitle">📊 {{ $t('agileTraining.dorDod.groupStats') }}</h3>
-      <div v-if="!groupResults" class="dd-fac__hint">—</div>
-      <div v-else class="dd-group-stats">
-        <div v-for="team in groupResults.teams.filter(t => t.participants)" :key="team.key"
-             class="dd-team-stat">
-          <div class="dd-team-stat__title">{{ team.title }}
-            <span class="dd-pill dd-pill--muted">
-              {{ $t('agileTraining.facilitator.participants', { n: team.participants }, team.participants) }}
-            </span>
-          </div>
-          <div class="dd-team-stat__bars">
-            <div class="dd-bar">
-              <span class="dd-bar__label">{{ $t('agileTraining.dorDod.avgInitial') }}</span>
-              <span class="dd-bar__val">{{ team.avg_initial }}</span>
+      <div ref="pdfExportRoot" class="dd-pdf-root">
+        <div class="dd-score-row">
+          <div class="dd-score-box dd-score-box--strong">
+            <div class="dd-score-box__label">{{ $t('agileTraining.dorDod.scoreInitial') }}</div>
+            <div class="dd-score-box__val">{{ scoreInitial }}</div>
+            <div v-if="outcomeInitial" class="dd-pill" :class="outcomeClass(outcomeInitial)">
+              {{ $t('agileTraining.dorDod.outcome.' + outcomeInitial) }}
             </div>
           </div>
-          <div v-if="team.dor_top.length" class="dd-team-stat__top">
-            🎯 {{ $t('agileTraining.dorDod.topDor') }}:
-            <span v-for="t in team.dor_top.slice(0, 3)" :key="'t-dor-'+t.rule">{{ ruleTitle(t.rule) }} ({{ t.count }}), </span>
-          </div>
-          <div v-if="team.dod_top.length" class="dd-team-stat__top">
-            ✅ {{ $t('agileTraining.dorDod.topDod') }}:
-            <span v-for="t in team.dod_top.slice(0, 3)" :key="'t-dod-'+t.rule">{{ ruleTitle(t.rule) }} ({{ t.count }}), </span>
+        </div>
+
+        <h3 class="dd-subtitle">📊 {{ $t('agileTraining.dorDod.groupStats') }}</h3>
+        <div v-if="!groupResults" class="dd-fac__hint">—</div>
+        <div v-else class="dd-group-stats">
+          <div v-for="team in groupResults.teams.filter(t => t.participants)" :key="team.key"
+               class="dd-team-stat">
+            <div class="dd-team-stat__title">{{ team.title }}
+              <span class="dd-pill dd-pill--muted">
+                {{ $t('agileTraining.facilitator.participants', { n: team.participants }, team.participants) }}
+              </span>
+            </div>
+            <div class="dd-team-stat__bars">
+              <div class="dd-bar">
+                <span class="dd-bar__label">{{ $t('agileTraining.dorDod.avgInitial') }}</span>
+                <span class="dd-bar__val">{{ team.avg_initial }}</span>
+              </div>
+            </div>
+            <div v-if="team.dor_top.length" class="dd-team-stat__top">
+              🎯 {{ $t('agileTraining.dorDod.topDor') }}:
+              <span v-for="t in team.dor_top.slice(0, 3)" :key="'t-dor-'+t.rule">{{ ruleTitle(t.rule) }} ({{ t.count }}), </span>
+            </div>
+            <div v-if="team.dod_top.length" class="dd-team-stat__top">
+              ✅ {{ $t('agileTraining.dorDod.topDod') }}:
+              <span v-for="t in team.dod_top.slice(0, 3)" :key="'t-dod-'+t.rule">{{ ruleTitle(t.rule) }} ({{ t.count }}), </span>
+            </div>
           </div>
         </div>
       </div>
@@ -345,6 +357,7 @@
 
 <script>
 import axios from 'axios';
+import exportElementToPdf from '@/utils/trainingPdfExport.js';
 
 export default {
   name: 'AgileDorDodPlay',
@@ -371,6 +384,7 @@ export default {
       scoreInitial: 0,
       outcomeInitial: null,
       groupResults: null,
+      pdfExporting: false,
       steps: [
         { key: 'team', labelKey: 'agileTraining.dorDod.stepTeam' },
         { key: 'intro', labelKey: 'agileTraining.dorDod.stepIntro' },
@@ -606,11 +620,27 @@ export default {
       if (o === 'blocked') return 'dd-pill--bad';
       return '';
     },
+    async exportResultPdf() {
+      const el = this.$refs.pdfExportRoot;
+      if (!el) return;
+      this.pdfExporting = true;
+      try {
+        const res = await exportElementToPdf(el, `agile-dor-dod-${this.slug}`);
+        if (!res.ok) throw new Error(res.error || 'export');
+      } catch (e) {
+        console.error(e);
+        alert(this.$t('agileTraining.common.downloadPdfError'));
+      } finally {
+        this.pdfExporting = false;
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
+.dd-pdf-bar { margin: 0 0 14px; }
+.dd-pdf-root { min-height: 20px; }
 .dd-play { max-width: 960px; margin: 0 auto; padding: 20px 18px 80px; color: #0f172a; }
 .dd-play__top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
 .dd-play__brand { display: flex; align-items: center; gap: 10px; }

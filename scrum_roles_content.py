@@ -121,6 +121,10 @@ CARDS: List[Dict] = [
         "key": "priorities",
         "title": {"ru": "Определяет приоритеты продукта",
                   "en": "Sets product priorities"},
+        "subtitle": {
+            "ru": "Что важнее в бэклоге сейчас: порядок и фокус — что делаем раньше, что позже, исходя из ценности.",
+            "en": "What matters most in the backlog: ordering and focus — what to do sooner vs. later, based on value.",
+        },
         "expected": {"po": "responsible", "team": "participates", "sm": "should_not"},
         "rationale": {
             "ru": "Если приоритеты размазаны — продукт теряет фокус.",
@@ -131,6 +135,10 @@ CARDS: List[Dict] = [
         "key": "value",
         "title": {"ru": "Отвечает за ценность продукта",
                   "en": "Owns product value"},
+        "subtitle": {
+            "ru": "Связь «продукт — польза» для пользователей и бизнеса: зачем этот продукт существует и что считаем успехом.",
+            "en": "How the product links to user and business benefit — why the product exists and what “success” means.",
+        },
         "expected": {"po": "responsible", "team": "participates", "sm": "should_not"},
         "rationale": {
             "ru": "Без одного ответственного за ценность команда делает «всё подряд».",
@@ -141,6 +149,10 @@ CARDS: List[Dict] = [
         "key": "product_decisions",
         "title": {"ru": "Принимает решения по продукту",
                   "en": "Makes product decisions"},
+        "subtitle": {
+            "ru": "Что войдёт в релиз, готовность инкремента, accept/reject, продуктовые компромиссы (не «как писать код»).",
+            "en": "What ships, when the increment is “done”, accept/reject, and product trade‑offs (not how to implement).",
+        },
         "expected": {"po": "responsible", "team": "participates", "sm": "should_not"},
         "rationale": {
             "ru": "Если решения принимает SM или команда — теряется ориентир на клиента.",
@@ -151,6 +163,10 @@ CARDS: List[Dict] = [
         "key": "formulate_tasks",
         "title": {"ru": "Формулирует задачи",
                   "en": "Writes user stories / tasks"},
+        "subtitle": {
+            "ru": "Понятные формулировки PBI, критерии приёмки с точки зрения продукта; команда уточняет, как реализовать.",
+            "en": "Clear backlog items and acceptance criteria as a product view; the team refines how to build it.",
+        },
         "expected": {"po": "responsible", "team": "participates", "sm": "should_not"},
         "rationale": {
             "ru": "Формулировки — это продукт: PO отвечает, команда уточняет.",
@@ -161,6 +177,10 @@ CARDS: List[Dict] = [
         "key": "maintain_backlog",
         "title": {"ru": "Поддерживает бэклог продукта",
                   "en": "Maintains the product backlog"},
+        "subtitle": {
+            "ru": "Актуальность, порядок, прозрачность: из чего состоит бэклог и в каком он виде для планирования.",
+            "en": "Keeping the backlog current, ordered, and transparent for planning and discussion.",
+        },
         "expected": {"po": "responsible", "team": "participates", "sm": "participates"},
         "rationale": {
             "ru": "Бэклог — зона PO, но команда и SM регулярно помогают его чистить.",
@@ -171,6 +191,10 @@ CARDS: List[Dict] = [
         "key": "build_product",
         "title": {"ru": "Создаёт продукт",
                   "en": "Builds the product"},
+        "subtitle": {
+            "ru": "Проектирует, разрабатывает, тестирует и поставляет рабочий инкремент (код, контент, интеграции) — не «идеи в общем», а конкретная поставка.",
+            "en": "Design, build, test, and ship a working increment (code, content, integrations) — concrete delivery, not vague “making something”.",
+        },
         "expected": {"po": "should_not", "team": "responsible", "sm": "should_not"},
         "rationale": {
             "ru": "Делает только команда. PO не пишет код/контент за команду, SM тоже.",
@@ -181,6 +205,10 @@ CARDS: List[Dict] = [
         "key": "how_to_work",
         "title": {"ru": "Определяет, как делать работу",
                   "en": "Decides how to do the work"},
+        "subtitle": {
+            "ru": "Практики, архитектура, стандарты кода, распределение задач внутри команды — «как» делаем работу, которую взяли.",
+            "en": "Practices, architecture, standards, and how the team organises the work it commits to.",
+        },
         "expected": {"po": "should_not", "team": "responsible", "sm": "should_not"},
         "rationale": {
             "ru": "«Как» — это всегда команда. Если решает PO или SM — теряется ответственность.",
@@ -191,6 +219,10 @@ CARDS: List[Dict] = [
         "key": "estimate_tasks",
         "title": {"ru": "Оценивает задачи",
                   "en": "Estimates tasks"},
+        "subtitle": {
+            "ru": "Сложность, риск, трудоёмкость, прогноз срока — исходя из того, кто реально будет выполнять работу.",
+            "en": "Size, risk, and forecast — from the people who will actually do the work.",
+        },
         "expected": {"po": "participates", "team": "responsible", "sm": "should_not"},
         "rationale": {
             "ru": "Без команды в оценке — планы нереалистичны.",
@@ -201,6 +233,10 @@ CARDS: List[Dict] = [
         "key": "quality",
         "title": {"ru": "Отвечает за качество",
                   "en": "Owns quality"},
+        "subtitle": {
+            "ru": "Definition of Done, тестирование, устойчивое качество поставляемого инкремента — в первую очередь зона команды.",
+            "en": "Definition of Done, testing, and sustainable quality of the increment — first and foremost the team’s area.",
+        },
         "expected": {"po": "participates", "team": "responsible", "sm": "participates"},
         "rationale": {
             "ru": "Качество делает команда, но оно волнует всех.",
@@ -211,6 +247,10 @@ CARDS: List[Dict] = [
         "key": "remove_impediments",
         "title": {"ru": "Устраняет препятствия",
                   "en": "Removes impediments"},
+        "subtitle": {
+            "ru": "Снимает внешние блокеры с пути команды: согласования, зависимости, ожидания, организационные тупики.",
+            "en": "Clears external blockers: approvals, dependencies, hand‑offs, and organisational issues slowing the team.",
+        },
         "expected": {"po": "participates", "team": "participates", "sm": "responsible"},
         "rationale": {
             "ru": "Это ключевая функция SM — расчищать дорогу команде.",
@@ -221,6 +261,10 @@ CARDS: List[Dict] = [
         "key": "help_team_effective",
         "title": {"ru": "Помогает команде работать эффективно",
                   "en": "Helps the team work effectively"},
+        "subtitle": {
+            "ru": "Коучинг, обучение, среда и культура — не постановка задач вместо команды и не «микроменеджмент».",
+            "en": "Coaching, learning, and environment — not replacing the team or micromanaging the work.",
+        },
         "expected": {"po": "should_not", "team": "participates", "sm": "responsible"},
         "rationale": {
             "ru": "Это не управление командой — это коучинг и сервис.",
@@ -231,6 +275,10 @@ CARDS: List[Dict] = [
         "key": "organize_events",
         "title": {"ru": "Организует встречи команды",
                   "en": "Facilitates team events"},
+        "subtitle": {
+            "ru": "Scrum-церемонии, фасилитация, timebox, чтобы встречи давали пользу, а не только «прошли в календаре».",
+            "en": "Scrum events, facilitation, and timeboxes so meetings deliver value, not just calendar time.",
+        },
         "expected": {"po": "participates", "team": "participates", "sm": "responsible"},
         "rationale": {
             "ru": "SM отвечает, что встречи проходят и идут по делу, остальные — приходят и работают.",
@@ -241,6 +289,10 @@ CARDS: List[Dict] = [
         "key": "improve_process",
         "title": {"ru": "Улучшает процесс работы",
                   "en": "Improves the way of working"},
+        "subtitle": {
+            "ru": "Ретро, адаптация правил и практик под контекст: как команда работает вместе и со стейкхолдерами.",
+            "en": "Retros and evolving practices to fit the context: how the team works together and with stakeholders.",
+        },
         "expected": {"po": "participates", "team": "responsible", "sm": "responsible"},
         "rationale": {
             "ru": "Процесс — совместная зона команды и SM, PO подключается.",
@@ -251,6 +303,10 @@ CARDS: List[Dict] = [
         "key": "customer_contact",
         "title": {"ru": "Взаимодействует с заказчиками",
                   "en": "Talks to customers and stakeholders"},
+        "subtitle": {
+            "ru": "Основной контакт по продукту: стейкхолдеры, пользователи, внешние ожидания; команда подключается на демо и уточнениях.",
+            "en": "Main product contact with stakeholders and users; the team joins demos and Q&A as needed.",
+        },
         "expected": {"po": "responsible", "team": "participates", "sm": "should_not"},
         "rationale": {
             "ru": "PO — лицо продукта наружу, команда участвует по делу.",
@@ -261,6 +317,10 @@ CARDS: List[Dict] = [
         "key": "shared_understanding",
         "title": {"ru": "Следит, что команда понимает задачи",
                   "en": "Ensures shared understanding of tasks"},
+        "subtitle": {
+            "ru": "Снимает рассинхрон «все по-разному поняли»: уточнения до старта работы, совместные refinement, ясные договорённости.",
+            "en": "Closes gaps in what people think was agreed: clarify before work, joint refinement, shared clarity.",
+        },
         "expected": {"po": "participates", "team": "participates", "sm": "responsible"},
         "rationale": {
             "ru": "SM ловит рассинхрон и организует уточнение: PO + команда.",
@@ -392,6 +452,7 @@ def get_content_for_locale(locale: str) -> Dict:
         {
             "key": c["key"],
             "title": _loc(c["title"], locale),
+            "subtitle": _loc(c.get("subtitle") or {}, locale),
             "rationale": _loc(c["rationale"], locale),
         }
         for c in CARDS

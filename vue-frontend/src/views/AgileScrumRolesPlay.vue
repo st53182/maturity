@@ -73,6 +73,7 @@
       <div class="sr-cards-grid">
         <article v-for="c in orderedPlayCards" :key="c.key" class="sr-card">
           <div class="sr-card__title">{{ c.title }}</div>
+          <p v-if="c.subtitle" class="sr-card__subtitle">{{ c.subtitle }}</p>
           <div class="sr-card__roles">
             <div v-for="r in content.roles" :key="r.key" class="sr-card__role">
               <div class="sr-card__role-name">
@@ -114,6 +115,7 @@
       <ul class="sr-why">
         <li v-for="c in orderedPlayCards" :key="c.key">
           <b>{{ c.title }}</b>
+          <div v-if="c.subtitle" class="sr-why__subtitle">{{ c.subtitle }}</div>
           <div class="sr-play__hint">{{ c.rationale }}</div>
         </li>
       </ul>
@@ -161,6 +163,7 @@
       <div v-else class="sr-cards-grid">
         <article v-for="c in shuffledCardsToFix" :key="c.key" class="sr-card sr-card--warn">
           <div class="sr-card__title">{{ c.title }}</div>
+          <p v-if="c.subtitle" class="sr-card__subtitle">{{ c.subtitle }}</p>
           <div class="sr-play__hint">💡 {{ c.rationale }}</div>
           <div class="sr-card__roles">
             <div v-for="r in content.roles" :key="r.key" class="sr-card__role">
@@ -636,7 +639,9 @@ export default {
 .sr-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 14px; }
 .sr-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; }
 .sr-card--warn { border-color: #f59e0b; background: #fffbeb; }
-.sr-card__title { font-weight: 800; margin-bottom: 8px; font-size: 17px; line-height: 1.35; color: #0f172a; }
+.sr-card__title { font-weight: 800; margin-bottom: 6px; font-size: 17px; line-height: 1.35; color: #0f172a; }
+.sr-card__subtitle { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: #475569; font-weight: 500; }
+.sr-why__subtitle { font-size: 14px; line-height: 1.45; color: #475569; margin: 4px 0 6px; font-weight: 500; }
 .sr-card__roles { display: flex; flex-direction: column; gap: 6px; }
 .sr-card__role { background: #f8fafc; border-radius: 10px; padding: 8px; }
 .sr-card__role-name { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; margin-bottom: 4px; }

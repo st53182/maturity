@@ -1,5 +1,5 @@
 <template>
-  <div class="se-play">
+  <div class="se-play" :class="{ 'se-play--board': step === 'build' }">
     <header class="se-play__top">
       <div class="se-play__brand">
         <span class="se-play__icon">🗓️</span>
@@ -86,47 +86,87 @@
       </div>
     </section>
 
-    <!-- 3. Build (per stage, tabs) -->
-    <section v-else-if="step === 'build'" class="se-card">
-      <h2>{{ $t('agileTraining.scrumEvents.buildTitle') }}</h2>
-      <p class="se-card__lead">{{ $t('agileTraining.scrumEvents.buildLead') }}</p>
+    <!-- 3. Build — доска в стиле Miro: 4 этапа + 5 колонок-категорий -->
+    <section v-else-if="step === 'build'" class="se-card se-card--build">
+      <div class="se-build__header">
+        <div>
+          <h2 class="se-build__title">{{ $t('agileTraining.scrumEvents.buildTitle') }}</h2>
+          <p class="se-card__lead se-build__lead">{{ $t('agileTraining.scrumEvents.buildLead') }}</p>
+        </div>
+        <p class="se-build__swipe-hint" aria-hidden="true">{{ $t('agileTraining.scrumEvents.buildSwipeHint') }}</p>
+      </div>
 
-      <nav class="se-stage-tabs">
+      <nav class="se-stage-tabs se-stage-tabs--board" aria-label="stages">
         <button v-for="s in content.stages" :key="s.key"
                 type="button" class="se-stage-tab"
                 :class="{ 'is-active': activeStage === s.key, 'is-filled': isStageFilled(s.key) }"
                 @click="activeStage = s.key">
-          <span class="se-stage-tab__mark">{{ isStageFilled(s.key) ? '●' : '○' }}</span>
-          <span>{{ s.title }}</span>
+          <span class="se-stage-tab__mark">{{ isStageFilled(s.key) ? '✓' : '○' }}</span>
+          <span class="se-stage-tab__text">{{ s.title }}</span>
         </button>
       </nav>
 
-      <div v-if="activeStageObj" class="se-stage-body">
-        <div class="se-stage-body__intro">{{ activeStageObj.purpose }}</div>
+      <div v-if="activeStageObj" class="se-build__canvas">
+        <div class="se-stage-body__intro se-build__event-banner">
+          <span class="se-build__event-emoji">{{ stageEmoji(activeStage) }}</span>
+          <p>{{ activeStageObj.purpose }}</p>
+        </div>
 
-        <div v-for="cat in content.categories" :key="cat" class="se-builder-cat">
-          <div class="se-builder-cat__head">
-            <h4>{{ $t('agileTraining.scrumEvents.cat.' + cat) }}
-              <span class="se-fac__hint">
-                · {{ $t('agileTraining.scrumEvents.pickedCount',
-                        { n: (selection[activeStage]?.[cat] || []).length },
-                        (selection[activeStage]?.[cat] || []).length) }}
-              </span>
-            </h4>
-          </div>
-          <ul class="se-cards-list">
-            <li v-for="c in (content.cards[cat] || [])" :key="c.key">
-              <button type="button" class="se-chip se-chip--selectable"
+        <div class="se-build__category-strip" role="tablist" aria-label="categories">
+          <button v-for="cat in content.categories" :id="'se-strip-'+activeStage+'-'+cat" :key="'strip-'+cat"
+                  type="button" role="tab"
+                  class="se-build__strip-pill"
+                  :class="{
+                    'is-done': (selection[activeStage]?.[cat] || []).length > 0,
+                    'is-active': activeBuildCat === cat
+                  }"
+                  :aria-selected="activeBuildCat === cat"
+                  @click="focusBuildColumn(cat)">
+            <span class="se-build__strip-ic">{{ categoryEmoji(cat) }}</span>
+            <span class="se-build__strip-label">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</span>
+            <span v-if="(selection[activeStage]?.[cat] || []).length" class="se-build__strip-badge">
+              {{ (selection[activeStage]?.[cat] || []).length }}
+            </span>
+          </button>
+        </div>
+
+        <div ref="buildBoard" class="se-build__board">
+          <div v-for="cat in content.categories" :id="'se-col-'+activeStage+'-'+cat" :key="activeStage + '-' + cat"
+               class="se-build-col"
+               :class="['se-build-col--' + categoryAccent(cat), { 'se-build-col--focus': activeBuildCat === cat }]">
+            <header class="se-build-col__head">
+              <span class="se-build-col__ic">{{ categoryEmoji(cat) }}</span>
+              <div>
+                <h3 class="se-build-col__title">{{ $t('agileTraining.scrumEvents.cat.' + cat) }}</h3>
+                <p class="se-build-col__sub">
+                  {{ $t('agileTraining.scrumEvents.pickedCount',
+                    { n: (selection[activeStage]?.[cat] || []).length },
+                    (selection[activeStage]?.[cat] || []).length) }}
+                </p>
+              </div>
+            </header>
+            <div class="se-build-col__notes">
+              <button v-for="(c, idx) in (content.cards[cat] || [])" :key="c.key" type="button"
+                      class="se-note"
                       :class="{ 'is-active': isPicked(activeStage, cat, c.key) }"
+                      :style="{ '--note-rot': ((idx * 7 + cat.length * 3) % 5 - 2) * 0.4 + 'deg' }"
                       @click="togglePick(activeStage, cat, c.key)">
-                {{ c.title }}
+                <span class="se-note__text">{{ c.title }}</span>
               </button>
-            </li>
-          </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="se-build__footer">
+          <button v-if="!isStageFilled(activeStage)" type="button" class="se-btn se-btn--soft"
+                  @click="goNextUnfilledStage">
+            {{ nextStageButtonLabel }}
+          </button>
+          <span v-else class="se-build__stage-ok">✓ {{ $t('agileTraining.scrumEvents.stageComplete') }}</span>
         </div>
       </div>
 
-      <div class="se-card__actions">
+      <div class="se-card__actions se-card__actions--build">
         <button class="se-btn se-btn--ghost" @click="goStep('cards')">
           ← {{ $t('agileTraining.scrumEvents.back') }}
         </button>
@@ -406,9 +446,23 @@ export default {
       groupResults: null,
       submitting: false,
       custom: { context_key: '', selection: {}, note: '' },
+      activeBuildCat: 'goals',
     };
   },
   computed: {
+    nextStageButtonLabel() {
+      const stages = this.content.stages || [];
+      const n = stages.length;
+      if (n < 2) return this.$t('agileTraining.scrumEvents.cycleEvents');
+      const start = stages.findIndex(s => s.key === this.activeStage);
+      for (let k = 1; k <= n; k++) {
+        const s = stages[(start + k) % n];
+        if (s && !this.isStageFilled(s.key)) {
+          return this.$t('agileTraining.scrumEvents.nextEventCta', { name: s.title });
+        }
+      }
+      return this.$t('agileTraining.scrumEvents.cycleEvents');
+    },
     activeStageObj() {
       return this.content.stages.find(s => s.key === this.activeStage) || null;
     },
@@ -437,6 +491,12 @@ export default {
     },
   },
   watch: {
+    activeStage() {
+      const cats = this.content.categories || [];
+      const st = this.selection[this.activeStage] || {};
+      const firstEmpty = cats.find(c => !(st[c] || []).length);
+      this.activeBuildCat = firstEmpty || cats[0] || 'goals';
+    },
     locale(v) {
       localStorage.setItem('language', v);
       if (this.$i18n) this.$i18n.locale = v;
@@ -461,6 +521,41 @@ export default {
     cardTitle(cat, key) {
       for (const c of (this.content.cards[cat] || [])) if (c.key === key) return c.title;
       return key;
+    },
+    categoryEmoji(cat) {
+      const m = {
+        goals: '🎯', participants: '👥', artifacts: '📋', time: '⏰', duration: '⏱️',
+      };
+      return m[cat] || '•';
+    },
+    categoryAccent(cat) {
+      return {
+        goals: 'goals', participants: 'people', artifacts: 'artifact', time: 'time', duration: 'duration',
+      }[cat] || 'default';
+    },
+    focusBuildColumn(cat) {
+      this.activeBuildCat = cat;
+      this.$nextTick(() => {
+        const id = `se-col-${this.activeStage}-${cat}`;
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      });
+    },
+    goNextUnfilledStage() {
+      const stages = this.content.stages || [];
+      const n = stages.length;
+      const start = stages.findIndex(s => s.key === this.activeStage);
+      for (let k = 1; k <= n; k++) {
+        const s = stages[(start + k) % n];
+        if (s && !this.isStageFilled(s.key)) {
+          this.activeStage = s.key;
+          this.$nextTick(() => {
+            const c0 = (this.content.categories || [])[0];
+            if (c0) this.focusBuildColumn(c0);
+          });
+          return;
+        }
+      }
     },
     isPicked(stageKey, cat, key) {
       return (this.selection[stageKey]?.[cat] || []).includes(key);
@@ -557,6 +652,7 @@ export default {
     },
     startBuilding() {
       this.activeStage = this.content.stages?.[0]?.key || 'planning';
+      this.activeBuildCat = (this.content.categories || [])[0] || 'goals';
       this.goStep('build');
     },
     async loadGroupResults() {
@@ -633,6 +729,7 @@ export default {
 
 <style scoped>
 .se-play { max-width: 1100px; margin: 0 auto; padding: 20px 18px 80px; color: #0f172a; }
+.se-play--board { max-width: 1400px; }
 .se-play__top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
 .se-play__brand { display: flex; align-items: center; gap: 10px; }
 .se-play__icon { font-size: 26px; }
@@ -709,20 +806,135 @@ export default {
 }
 
 .se-stage-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.se-stage-tabs--board { margin-bottom: 10px; }
 .se-stage-tab {
   background: #f1f5f9 !important; color: #0f172a !important; border: 1px solid #e2e8f0 !important;
   padding: 8px 14px !important; border-radius: 999px !important;
   cursor: pointer; font-weight: 700; font-size: 13px;
   display: inline-flex; align-items: center; gap: 6px;
 }
+.se-stage-tab__text { text-align: left; line-height: 1.25; max-width: 200px; }
 .se-stage-tab:hover { background: #e2e8f0 !important; }
 .se-stage-tab.is-active {
   background: linear-gradient(135deg, #14b8a6, #0891b2) !important; color: #fff !important;
   border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.22);
 }
+.se-stage-tab.is-filled:not(.is-active) { border-color: #a7f3d0; background: #f0fdf4 !important; }
 .se-stage-tab.is-filled .se-stage-tab__mark { color: #10b981; }
 .se-stage-tab.is-active.is-filled .se-stage-tab__mark { color: #dcfce7; }
 .se-stage-body__intro { background: #ecfeff; border: 1px solid #a5f3fc; padding: 10px 12px; border-radius: 10px; color: #0f766e; margin-bottom: 12px; font-size: 13px; }
+
+/* —— Сборка: доска Miro —— */
+.se-card--build { padding: 20px 16px 24px; }
+.se-build__header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.se-build__title { margin: 0 0 4px; font-size: 20px; }
+.se-build__lead { margin: 0; max-width: 720px; }
+.se-build__swipe-hint { margin: 0; font-size: 12px; color: #64748b; max-width: 280px; line-height: 1.4; }
+.se-build__canvas {
+  background: #f1f5f9;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 16px 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 10px 12px;
+  margin-top: 8px;
+}
+.se-build__event-banner {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fff !important; border: 1px solid #a5f3fc !important;
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+.se-build__event-banner p { margin: 0; color: #0f766e; font-size: 14px; line-height: 1.45; }
+.se-build__event-emoji { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.se-build__category-strip {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center;
+}
+.se-build__strip-pill {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 6px 10px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff;
+  font-size: 12px; font-weight: 700; color: #334155; transition: all 0.15s ease;
+}
+.se-build__strip-pill:hover { background: #f8fafc; border-color: #cbd5e1; }
+.se-build__strip-pill.is-done { background: #ecfdf5; border-color: #6ee7b7; }
+.se-build__strip-pill.is-active { outline: 2px solid #14b8a6; outline-offset: 1px; }
+.se-build__strip-ic { font-size: 14px; }
+.se-build__strip-label { max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 900px) { .se-build__strip-label { max-width: none; } }
+.se-build__strip-badge {
+  min-width: 1.1rem; text-align: center; background: #0d9488; color: #fff; border-radius: 999px;
+  font-size: 10px; font-weight: 800; padding: 1px 5px; line-height: 1.2;
+}
+.se-build__board {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-items: start;
+  padding: 2px 0 8px;
+}
+.se-build-col {
+  background: #fff; border-radius: 14px; padding: 10px 8px 12px; min-width: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.07);
+  border: 1px solid #e2e8f0; border-top: 4px solid #94a3b8;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s;
+}
+.se-build-col--goals { border-top-color: #f59e0b; }
+.se-build-col--people { border-top-color: #0ea5e9; }
+.se-build-col--artifact { border-top-color: #8b5cf6; }
+.se-build-col--time { border-top-color: #f43f5e; }
+.se-build-col--duration { border-top-color: #22c55e; }
+.se-build-col--focus { box-shadow: 0 4px 16px rgba(20, 184, 166, 0.2); border-color: #99f6e4; }
+.se-build-col__head { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; padding: 0 2px; }
+.se-build-col__ic { font-size: 20px; line-height: 1; }
+.se-build-col__title { margin: 0; font-size: 13px; font-weight: 800; line-height: 1.2; color: #0f172a; }
+.se-build-col__sub { margin: 2px 0 0; font-size: 11px; color: #64748b; font-weight: 600; }
+.se-build-col__notes { display: flex; flex-direction: column; gap: 8px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+.se-note {
+  position: relative; display: block; width: 100%;
+  text-align: left; cursor: pointer; border: none; font: inherit; font-size: 12px; line-height: 1.35;
+  padding: 10px 10px 10px 11px; border-radius: 2px 10px 10px 3px; color: #0f172a;
+  background: linear-gradient(145deg, #fffde7 0%, #fff9c4 50%, #fefce8 100%);
+  box-shadow: 1px 2px 0 rgba(15, 23, 42, 0.08), 0 3px 10px rgba(0, 0, 0, 0.05);
+  transform: rotate(var(--note-rot, 0deg));
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.se-note:hover {
+  z-index: 1;
+  box-shadow: 1px 3px 0 rgba(15, 23, 42, 0.1), 0 6px 14px rgba(0, 0, 0, 0.08);
+  transform: rotate(0deg) scale(1.01);
+}
+.se-note.is-active {
+  z-index: 2;
+  color: #fff;
+  background: linear-gradient(145deg, #2dd4bf, #0d9488) !important;
+  box-shadow: 0 6px 16px rgba(20, 184, 166, 0.35);
+  transform: rotate(0deg) scale(1.02);
+}
+.se-note__text { display: block; }
+.se-build__footer { display: flex; align-items: center; justify-content: center; min-height: 40px; margin-top: 10px; gap: 8px; }
+.se-build__stage-ok { font-size: 13px; font-weight: 700; color: #047857; }
+.se-btn--soft {
+  background: #e0f2fe !important; color: #0369a1 !important; border: 1px solid #7dd3fc !important;
+  font-size: 13px !important; padding: 8px 16px !important;
+}
+.se-btn--soft:hover { background: #bae6fd !important; }
+.se-card__actions--build { margin-top: 18px; }
+@media (max-width: 1100px) {
+  .se-build__board {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px;
+    padding-bottom: 10px; -webkit-overflow-scrolling: touch;
+  }
+  .se-build-col {
+    flex: 0 0 min(90vw, 300px);
+    max-width: 300px;
+    scroll-snap-align: start;
+  }
+  .se-build-col__notes { max-height: 50vh; }
+}
+@media (max-width: 560px) {
+  .se-stage-tab__text { max-width: 120px; font-size: 12px; }
+  .se-build__strip-label { max-width: 72px; font-size: 10px; line-height: 1.15; }
+  .se-build__strip-pill { padding: 8px 8px; }
+  .se-build__strip-ic { font-size: 16px; }
+}
 .se-builder-cat { margin-bottom: 12px; }
 .se-builder-cat__head h4 { margin: 0 0 6px; font-size: 14px; }
 

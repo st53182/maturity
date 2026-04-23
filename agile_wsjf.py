@@ -84,6 +84,21 @@ def _event_by_key(key: Optional[str]) -> Optional[Dict]:
     return None
 
 
+def _event_for_response(key: Optional[str], locale: str) -> Optional[Dict]:
+    """Одно событие для API: `title` и `lead` — строки на выбранном языке, не {ru,en}."""
+    raw = _event_by_key(key)
+    if not raw:
+        return None
+    loc = "en" if (locale or "ru").strip().lower() == "en" else "ru"
+    return {
+        "key": raw["key"],
+        "title": raw["title"][loc],
+        "lead": raw["lead"][loc],
+        "shifts": [dict(s) for s in raw["shifts"]],
+        "favors": raw["favors"],
+    }
+
+
 def _recompute_adaptation(a: AgileTrainingWsjfAnswer) -> None:
     event = _event_by_key(a.event_key)
     adaptation = analyze_adaptation(a.initial_choice, a.revised_choice, event)
@@ -155,7 +170,9 @@ def participant_answer(slug: str):
     if not g:
         return jsonify({"error": "Group not found"}), 404
 
+    sess = AgileTrainingSession.query.get(g.session_id)
     body = request.get_json(silent=True) or {}
+    request_locale = _resolve_locale(body.get("locale"), sess)
     token = (body.get("participant_token") or "").strip()
     role_key = (body.get("role_key") or "").strip()
     round_key = body.get("round") or "initial"
@@ -220,7 +237,6 @@ def participant_answer(slug: str):
     _recompute_adaptation(a)
     db.session.commit()
 
-    event_obj = _event_by_key(a.event_key) if round_key == "initial" else None
     outcome = simulate_outcome(clean["choice"])
 
     resp = {
@@ -233,8 +249,8 @@ def participant_answer(slug: str):
         "event_key": a.event_key,
         "adaptation": a.adaptation,
     }
-    if event_obj:
-        resp["event"] = event_obj
+    if round_key == "initial" and a.event_key:
+        resp["event"] = _event_for_response(a.event_key, request_locale)
     return jsonify(resp)
 
 

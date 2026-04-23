@@ -648,6 +648,7 @@ export default {
             round,
             scores,
             choice: this.currentChoice,
+            locale: this.locale,
           });
         const data = res.data;
         if (round === 'initial') {

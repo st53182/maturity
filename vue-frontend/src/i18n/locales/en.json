@@ -2094,14 +2094,16 @@
         "predictable": "Rules are well balanced — the outcome is predictable, mistakes are rare."
       },
 
-      "reason.dor_too_strict": "Too many conditions in DoR — tasks can't enter the work.",
-      "reason.dor_too_soft": "Almost nothing in DoR — raw tasks cause pain later.",
-      "reason.dod_too_weak": "DoD has no mandatory checks — everyone has their own 'done'.",
-      "reason.dor_dod_mixed": "DoR and DoD rules are swapped — it's unclear what to check when.",
-      "reason.critical_missing": "Critical rules are missing that you really need.",
-      "reason.speed_illusion": "People expect speed from DoR/DoD — they actually slow things down at first.",
-      "reason.balanced": "You found the balance: a filter on the way in and a clear gate on the way out.",
-      "reason.basic_works": "Basic discipline is already paying off.",
+      "reason": {
+        "dor_too_strict": "Too many conditions in DoR — tasks can't enter the work.",
+        "dor_too_soft": "Almost nothing in DoR — raw tasks cause pain later.",
+        "dod_too_weak": "DoD has no mandatory checks — everyone has their own 'done'.",
+        "dor_dod_mixed": "DoR and DoD rules are swapped — it's unclear what to check when.",
+        "critical_missing": "Critical rules are missing that you really need.",
+        "speed_illusion": "People expect speed from DoR/DoD — they actually slow things down at first.",
+        "balanced": "You found the balance: a filter on the way in and a clear gate on the way out.",
+        "basic_works": "Basic discipline is already paying off."
+      },
 
       "ap": {
         "dor_too_strict": "DoR is too strict",

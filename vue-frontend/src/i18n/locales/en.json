@@ -1478,7 +1478,8 @@
       "yourNamePh": "Name (optional)",
       "downloadPdf": "Download PDF",
       "downloadPdfLoading": "Preparing PDF…",
-      "downloadPdfError": "Could not save PDF. Please try again."
+      "downloadPdfError": "Could not save PDF. Please try again.",
+      "saveFailed": "Could not save. Check your connection or refresh and start again."
     },
     "hub": {
       "title": "Agile Training",

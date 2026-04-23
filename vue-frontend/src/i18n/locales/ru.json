@@ -1407,7 +1407,8 @@
       "yourNamePh": "Имя (необязательно)",
       "downloadPdf": "Скачать PDF",
       "downloadPdfLoading": "Готовим PDF…",
-      "downloadPdfError": "Не удалось сохранить PDF. Попробуйте ещё раз."
+      "downloadPdfError": "Не удалось сохранить PDF. Попробуйте ещё раз.",
+      "saveFailed": "Не удалось сохранить. Проверьте соединение или обновите страницу и нажмите «Начать» снова."
     },
     "hub": {
       "title": "Agile Training",

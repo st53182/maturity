@@ -462,18 +462,35 @@ export default {
       this.$i18n.locale = lc;
       await this.loadState();
     },
+    async ensureParticipant() {
+      const tokenKey = `${STORAGE_NS}:${this.slug}:participantToken`;
+      const res = await axios.post(
+        `/api/agile-training/g/${this.slug}/participant`,
+        {
+          display_name: (this.displayName || '').trim() || null,
+          participant_token: this.participantToken,
+        },
+      );
+      if (res.data?.participant_token) {
+        this.participantToken = res.data.participant_token;
+        localStorage.setItem(tokenKey, this.participantToken);
+      }
+    },
     async start() {
       if (!this.displayName) return;
       this.cardPlayOrder = null;
       this.fixCardOrder = null;
       localStorage.setItem(`${STORAGE_NS}:${this.slug}:displayName`, this.displayName);
       try {
-        await axios.post('/api/agile-training/participants', {
-          group_slug: this.slug,
-          participant_token: this.participantToken,
-          display_name: this.displayName,
-        });
-      } catch (e) { console.error(e); }
+        await this.ensureParticipant();
+      } catch (e) {
+        console.error(e);
+        alert(
+          e.response?.data?.error
+          || this.$t('agileTraining.common.saveFailed'),
+        );
+        return;
+      }
       this.step = 'context';
     },
     setLevel(cardKey, roleKey, level) {
@@ -508,17 +525,49 @@ export default {
       await this.refreshGroupResults();
     },
     async persist(final) {
-      try {
+      const postAnswer = async () => {
         const r = await axios.post(
-          `/api/agile-training/scrum-roles/g/${this.slug}/answer`, {
-          participant_token: this.participantToken,
-          selection: this.selection,
-          errors_seen: this.errorsSeen,
-          custom_cards: this.customCards,
-          custom_role: this.customRole,
-        });
+          `/api/agile-training/scrum-roles/g/${this.slug}/answer`,
+          {
+            participant_token: this.participantToken,
+            selection: this.selection,
+            errors_seen: this.errorsSeen,
+            custom_cards: this.customCards,
+            custom_role: this.customRole,
+          },
+        );
         this.evaluation = r.data.evaluation;
-      } catch (e) { if (final) alert('Failed to save'); }
+      };
+      try {
+        await postAnswer();
+      } catch (e) {
+        const msg = String((e.response?.data?.error) || '');
+        const notFound = e.response?.status === 404
+          && /participant/i.test(msg);
+        if (notFound) {
+          try {
+            await this.ensureParticipant();
+            await postAnswer();
+            return;
+          } catch (e2) {
+            console.error(e2);
+            if (final) {
+              alert(
+                e2.response?.data?.error
+                || this.$t('agileTraining.common.saveFailed'),
+              );
+            }
+            return;
+          }
+        }
+        console.error(e);
+        if (final) {
+          alert(
+            e.response?.data?.error
+            || this.$t('agileTraining.common.saveFailed'),
+          );
+        }
+      }
     },
     async refreshGroupResults() {
       try {

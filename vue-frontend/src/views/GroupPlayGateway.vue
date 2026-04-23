@@ -36,6 +36,8 @@ import AgileWsjfPlay from '@/views/AgileWsjfPlay.vue';
 import AgileScrumEventsPlay from '@/views/AgileScrumEventsPlay.vue';
 import AgileScrumRolesPlay from '@/views/AgileScrumRolesPlay.vue';
 
+const REMOVED_WORKSHOP_KEYS = new Set(['product_stories', 'user_story_map', 'kanban_system']);
+
 export default {
   name: 'GroupPlayGateway',
   components: {
@@ -75,6 +77,11 @@ export default {
     try {
       const res = await axios.get(`/api/agile-training/g/${this.slug}`);
       this.session = res.data.session || null;
+      const ex = (this.session && this.session.exercise_key) || '';
+      if (REMOVED_WORKSHOP_KEYS.has(ex)) {
+        this.error = this.$t('agileTraining.play.workshopRemoved');
+        this.session = null;
+      }
     } catch (e) {
       this.error = (e.response && e.response.data && e.response.data.error) || e.message || 'Error';
     } finally {

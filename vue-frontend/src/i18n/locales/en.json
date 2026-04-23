@@ -1719,7 +1719,8 @@
         "notFound": "Group not found. Check the link with your facilitator."
       },
       "languageHint": "Language chosen by the facilitator. You can switch it.",
-      "loadError": "Could not load the training"
+      "loadError": "Could not load the training",
+      "workshopRemoved": "This training format (product workshops) is no longer available. Ask your facilitator to create a new session with a different exercise."
     },
     "cynefin": {
       "facTitle": "Cynefin — facilitator panel",

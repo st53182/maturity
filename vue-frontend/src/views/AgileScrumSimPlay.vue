@@ -303,7 +303,7 @@
                 }"
                 :disabled="!canUseDecision(d) && pendingDecisionKey !== d.key"
                 @click="pickDecision(d)"
-                :title="!canUseDecision(d) ? $t('agileTraining.scrumSim.roleRequiredHint', { roles: rolesLabelOf(d.allowed_roles) }) : ''"
+                :title="decisionLockTitle(d)"
               >
                 <strong>
                   {{ d.title }}
@@ -313,7 +313,7 @@
                 </strong>
                 <span>{{ d.desc }}</span>
                 <em v-if="!canUseDecision(d) && pendingDecisionKey !== d.key" class="sp__decision-locked">
-                  🔒 {{ $t('agileTraining.scrumSim.roleRequiredHint', { roles: rolesLabelOf(d.allowed_roles) }) }}
+                  🔒 {{ decisionLockMessage(d) }}
                 </em>
                 <em v-else-if="d.needs_task && pendingDecisionKey === d.key">
                   {{ decisionTaskLabel() }}
@@ -656,7 +656,7 @@ export default {
       return (this.pendingDay && this.pendingDay.decision && this.pendingDay.decision.task) || '';
     },
     pendingDecisionNeedsTask() {
-      return ['swarm', 'split_task', 'descope', 'escalate'].includes(this.pendingDecisionKey);
+      return ['swarm', 'split_task', 'descope', 'reduce_scope', 'escalate'].includes(this.pendingDecisionKey);
     },
     pendingDecisionChoosing() {
       return this.pendingDecisionNeedsTask && !this.pendingDecisionTask;
@@ -667,6 +667,7 @@ export default {
       if (k === 'descope') return 'in_progress';
       if (k === 'escalate') return 'in_progress';
       if (k === 'swarm') return 'in_progress';
+      if (k === 'reduce_scope') return '';
       return '';
     },
     pendingDecisionMeta() {
@@ -970,6 +971,10 @@ export default {
         }
         return;
       } else if (this.isDayPhase && this.pendingDecisionNeedsTask) {
+        if (this.pendingDecisionKey === 'swarm' && t.column !== 'in_progress') {
+          this.showRoleToast(this.$t('agileTraining.scrumSim.swarmOnlyInProgress'));
+          return;
+        }
         this.commitDecisionWithTask(t.key);
       }
     },
@@ -1156,6 +1161,8 @@ export default {
     },
     canUseDecision(d) {
       if (!d) return false;
+      if (d.key === 'swarm' && this.state && this.state.swarm_used_sprint) return false;
+      if (d.key === 'reduce_scope' && this.state && this.state.reduce_scope_used_sprint) return false;
       const allowed = d.allowed_roles || [];
       if (!allowed.length) return true;
       if (this.myRole && allowed.includes(this.myRole)) return true;
@@ -1163,6 +1170,20 @@ export default {
       let fallback = true;
       for (const r of allowed) { if (teamRoles.has(r)) { fallback = false; break; } }
       return fallback;
+    },
+    decisionLockMessage(d) {
+      if (!d) return '';
+      if (d.key === 'swarm' && this.state && this.state.swarm_used_sprint) {
+        return this.$t('agileTraining.scrumSim.sprintLimitSwarm');
+      }
+      if (d.key === 'reduce_scope' && this.state && this.state.reduce_scope_used_sprint) {
+        return this.$t('agileTraining.scrumSim.sprintLimitReduceScope');
+      }
+      return this.$t('agileTraining.scrumSim.roleRequiredHint', { roles: this.rolesLabelOf(d.allowed_roles) });
+    },
+    decisionLockTitle(d) {
+      if (!d || this.canUseDecision(d)) return '';
+      return this.decisionLockMessage(d);
     },
     rolesShortLabel(roles) {
       const r = (roles && roles[0]) || '';
@@ -1183,7 +1204,13 @@ export default {
     },
     async pickDecision(d) {
       if (!this.canUseDecision(d)) {
-        this.showRoleToast(this.$t('agileTraining.scrumSim.roleRequiredHint', { roles: this.rolesLabelOf(d.allowed_roles) }));
+        if (d.key === 'swarm' && this.state && this.state.swarm_used_sprint) {
+          this.showRoleToast(this.$t('agileTraining.scrumSim.sprintLimitSwarm'));
+        } else if (d.key === 'reduce_scope' && this.state && this.state.reduce_scope_used_sprint) {
+          this.showRoleToast(this.$t('agileTraining.scrumSim.sprintLimitReduceScope'));
+        } else {
+          this.showRoleToast(this.$t('agileTraining.scrumSim.roleRequiredHint', { roles: this.rolesLabelOf(d.allowed_roles) }));
+        }
         return;
       }
       this.roleToast = '';

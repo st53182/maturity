@@ -76,9 +76,10 @@ RISKY_COMPLEXITY_THRESHOLD = 8
 
 DECISION_KEYS = {
     "continue",        # действовать как запланировали
-    "swarm",           # сфокусировать всю команду на одной задаче (+50% к её прогрессу)
+    "swarm",           # бонус к прогрессу выбранной задачи в работе (1× за спринт; остальные задачи двигаются)
     "split_task",      # разбить большую задачу на две меньшие
     "descope",         # убрать задачу из спринта (в Product Backlog)
+    "reduce_scope",    # сузить скоуп: −2 п. к размеру задачи (1× за спринт, бесплатно)
     "buffer_quality",  # потратить 1 капасити на квалити (снижает вероятность rework)
     "escalate",        # привлечь внешний ресурс: разблокировать заблокированную задачу ценой -1 капасити завтра
 }
@@ -271,8 +272,9 @@ def _decisions_ru() -> List[Dict[str, Any]]:
         {"key": "continue",        "title": "Работаем как договорились",
          "desc": "Не меняем план на сегодня — просто распределим капасити по выбранным задачам.",
          "allowed_roles": ["developer", "scrum_master", "product_owner"]},
-        {"key": "swarm",           "title": "Сварм (все на одну задачу)",
-         "desc": "Сегодня вся команда фокусируется на одной задаче — её прогресс +50%. Другие задачи сегодня не двигаются.",
+        {"key": "swarm",           "title": "Сварм (фокус на одной задаче)",
+         "desc": "Бонус +50% от дневной капасити к прогрессу одной задачи в колонке «В работе». "
+                 "Остальные задачи двигаются по обычному распределению. 1 раз за спринт бесплатно.",
          "needs_task": True,
          "allowed_roles": ["scrum_master"]},
         {"key": "split_task",      "title": "Разбить большую задачу",
@@ -281,6 +283,11 @@ def _decisions_ru() -> List[Dict[str, Any]]:
          "allowed_roles": ["developer"]},
         {"key": "descope",         "title": "Убрать задачу из спринта",
          "desc": "Если не успеваем — возвращаем задачу в Product Backlog. Честнее, чем тянуть до последнего.",
+         "needs_task": True,
+         "allowed_roles": ["product_owner"]},
+        {"key": "reduce_scope",    "title": "Сузить скоуп задачи",
+         "desc": "Уменьшить размер задачи на 2 пункта (меньше объёма — быстрее довезти). "
+                 "Только для задач в спринте. 1 раз за спринт бесплатно (решает PO).",
          "needs_task": True,
          "allowed_roles": ["product_owner"]},
         {"key": "buffer_quality",  "title": "Вложиться в качество",
@@ -296,9 +303,10 @@ def _decisions_ru() -> List[Dict[str, Any]]:
 def _decisions_en() -> List[Dict[str, Any]]:
     tr = {
         "continue":       ("Carry on as planned",       "Don't change today's plan — just distribute capacity across the chosen tasks."),
-        "swarm":          ("Swarm (all on one task)",   "The whole team focuses on one task — its progress today gets +50%. Other tasks don't move today."),
+        "swarm":          ("Swarm (focus one task)",    "+50% of daily team capacity as extra progress on one task in «In progress». Other tasks still move per your allocation. Once per sprint, free."),
         "split_task":     ("Split the big task",        "Break a big task into two smaller ones — easier to intervene and ship in pieces."),
         "descope":        ("Descope from sprint",       "If we can't fit it — move the task back to Product Backlog. Fairer than dragging it until the last day."),
+        "reduce_scope":   ("Narrow the task scope",     "Reduce the task by 2 points. Sprint scope only. Once per sprint, free (PO)."),
         "buffer_quality": ("Invest in quality",         "Spend 1 capacity on quality control today. Reduces the chance of hidden defects later."),
         "escalate":       ("Escalate / external help",  "Pull in someone external (PO to the stakeholder / SM to the supplier). Unblock one blocked task at the cost of −1 capacity tomorrow."),
     }
@@ -562,6 +570,8 @@ def _initial_state(locale: str = "ru") -> Dict[str, Any]:
         "ai_calls": {},               # token -> int
         "notes": {},                  # freeform per-phase notes
         "paused": False,
+        "swarm_used_sprint": False,
+        "reduce_scope_used_sprint": False,
         "updated_at": _now_iso(),
     }
 
@@ -579,6 +589,14 @@ def _ensure_task_invariants(data: Dict[str, Any]) -> None:
                 t["risky"] = int(t.get("complexity", 0)) >= RISKY_COMPLEXITY_THRESHOLD
             except Exception:
                 t["risky"] = False
+
+
+def _ensure_sprint_decision_flags(data: Dict[str, Any]) -> None:
+    """Флаги разовых решений за спринт (старые сохранения без полей)."""
+    if "swarm_used_sprint" not in data:
+        data["swarm_used_sprint"] = False
+    if "reduce_scope_used_sprint" not in data:
+        data["reduce_scope_used_sprint"] = False
 
 
 def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingScrumSimState, Dict[str, Any]]:
@@ -604,6 +622,7 @@ def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingScrumSim
     if not data:
         data = _initial_state("ru")
     _ensure_task_invariants(data)
+    _ensure_sprint_decision_flags(data)
     return row, data
 
 
@@ -964,8 +983,8 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
       * прогресс задачи никогда не превышает `need` (complexity + extra);
       * задача, переехавшая в Review сегодня, помечается `_new_in_review=True`
         и сдвигается в Done только на СЛЕДУЮЩЕМ вызове (т.е. через 1 день);
-      * при swarm допускается исчерпание капасити + 50% бонус, но также кэпируется
-        по потребности задачи.
+      * сварм: +50% от дневной капасити как бонус к одной задаче в работе, без отмены
+        обычного распределения по остальным; не чаще 1 раза за спринт.
     """
     notes: List[str] = []
     tasks = data["tasks"]
@@ -998,15 +1017,19 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
     if dkey == "swarm":
         sk = decision.get("task") or pending.get("swarm_task")
         t = tasks.get(sk) if sk else None
-        if t and _is_workable(tasks, t):
-            swarm_delta = int(cap_today * 1.5)
-            actually = _add_progress_capped(t, swarm_delta)
-            allocation = {sk: min(cap_today, actually)}
-            if t.get("column") == TASK_COL_BACKLOG:
-                t["column"] = TASK_COL_IN_PROGRESS
-            notes.append(f"Сварм: {t['title']} (+{actually}п.)")
-            used = cap_today
+        if data.get("swarm_used_sprint"):
+            notes.append("Сварм: в этом спринте бонус уже использовали (1 раз бесплатно)")
+            dkey = "continue"
+        elif t and t.get("column") == TASK_COL_IN_PROGRESS and _is_workable(tasks, t):
+            bonus = max(0, int(cap_today * 0.5))
+            actually = _add_progress_capped(t, bonus)
+            data["swarm_used_sprint"] = True
+            notes.append(
+                f"Сварм: «{t['title']}» +{actually} п. (бонус 50% капасити; остальные задачи — по плану)"
+            )
         else:
+            if t and t.get("column") != TASK_COL_IN_PROGRESS:
+                notes.append("Сварм: выберите задачу в колонке «В работе»")
             dkey = "continue"
     elif dkey == "split_task":
         sk = decision.get("task")
@@ -1045,6 +1068,25 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
             t["state"] = "ok"
             t["state_reason"] = "Убрана из спринта решением команды"
             notes.append(f"Descope: {t['title']}")
+    elif dkey == "reduce_scope":
+        if data.get("reduce_scope_used_sprint"):
+            notes.append("Сужение скоупа: в этом спринте уже применяли (1 раз бесплатно)")
+        else:
+            sk = decision.get("task")
+            t = tasks.get(sk) if sk else None
+            if not t or t.get("column") not in (TASK_COL_BACKLOG, TASK_COL_IN_PROGRESS):
+                notes.append("Сужение скоупа: выберите задачу в спринте (бэклог спринта или в работе)")
+            elif int(t.get("complexity", 0)) < 2:
+                notes.append("Сужение скоупа: у задачи слишком малый объём, нечем резать")
+            else:
+                new_c = max(1, int(t["complexity"]) - 2)
+                t["complexity"] = new_c
+                t["risky"] = new_c >= RISKY_COMPLEXITY_THRESHOLD
+                need = _task_need(t)
+                if int(t.get("progress", 0)) > need:
+                    t["progress"] = need
+                data["reduce_scope_used_sprint"] = True
+                notes.append(f"Сужение скоупа: «{t['title']}» −2 п. (осталось {new_c} п.)")
     elif dkey == "buffer_quality":
         used = min(cap_today, used + 1)
         data["quality_buffer"] = int(data.get("quality_buffer", 0)) + 1
@@ -1076,16 +1118,15 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
                     + ", ".join(missing_titles)
                 )
 
-    if dkey != "swarm":
-        for k, pts in allocation.items():
-            t = tasks.get(k)
-            if not t or pts <= 0:
-                continue
-            if not _is_workable(tasks, t):
-                continue
-            _add_progress_capped(t, int(pts))
-            if t.get("column") == TASK_COL_BACKLOG:
-                t["column"] = TASK_COL_IN_PROGRESS
+    for k, pts in allocation.items():
+        t = tasks.get(k)
+        if not t or pts <= 0:
+            continue
+        if not _is_workable(tasks, t):
+            continue
+        _add_progress_capped(t, int(pts))
+        if t.get("column") == TASK_COL_BACKLOG:
+            t["column"] = TASK_COL_IN_PROGRESS
 
     for t in tasks.values():
         if t.get("column") == TASK_COL_REVIEW and t.get("_new_in_review"):
@@ -1196,6 +1237,8 @@ def _serialize_state(row: AgileTrainingScrumSimState, data: Dict[str, Any], loca
         "retro_picks": data.get("retro_picks", []),
         "review_metrics": data.get("review_metrics"),
         "notes": data.get("notes", {}),
+        "swarm_used_sprint": bool(data.get("swarm_used_sprint", False)),
+        "reduce_scope_used_sprint": bool(data.get("reduce_scope_used_sprint", False)),
         "my": {
             "token": participant_token or None,
             "role": data.get("roles", {}).get(participant_token or ""),
@@ -1351,6 +1394,8 @@ def planning_confirm(slug: str):
 
     data["phase"] = "day_1"
     data["current_day"] = 1
+    data["swarm_used_sprint"] = False
+    data["reduce_scope_used_sprint"] = False
     data["pending_day"] = {
         "day": 1, "event_applied": False, "allocation": {},
         "decision": None, "swarm_task": None, "buffer_used": False,

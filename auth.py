@@ -8,7 +8,7 @@ from functools import wraps
 import jwt
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, decode_token, get_jwt_identity, jwt_required
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 
 from database import db
 from models import User, UserInvite
@@ -22,6 +22,25 @@ def ensure_auth_runtime_migrations():
     insp = inspect(db.engine)
     if "user_invite" not in insp.get_table_names():
         UserInvite.__table__.create(bind=db.engine, checkfirst=True)
+        return
+    cols = {c["name"] for c in insp.get_columns("user_invite")}
+    changed = False
+    if "max_uses" not in cols:
+        db.session.execute(text("ALTER TABLE user_invite ADD COLUMN max_uses INTEGER NOT NULL DEFAULT 1"))
+        changed = True
+    if "use_count" not in cols:
+        db.session.execute(text("ALTER TABLE user_invite ADD COLUMN use_count INTEGER NOT NULL DEFAULT 0"))
+        changed = True
+    if changed:
+        db.session.commit()
+        # backfill: previously single-use completed invites
+        db.session.execute(
+            text(
+                "UPDATE user_invite SET use_count = 1, max_uses = 1 "
+                "WHERE (status = 'used' OR used_by_user_id IS NOT NULL) AND (use_count = 0 OR use_count IS NULL)"
+            )
+        )
+        db.session.commit()
 
 
 def _valid_email(email: str) -> bool:
@@ -52,12 +71,16 @@ def register():
         return jsonify({"error": "Invite code is invalid"}), 400
     if invite.status != "active":
         return jsonify({"error": "Invite is not active"}), 400
-    if invite.used_by_user_id is not None or invite.used_at is not None:
-        return jsonify({"error": "Invite already used"}), 400
     if invite.expires_at and invite.expires_at < now:
         invite.status = "expired"
         db.session.commit()
         return jsonify({"error": "Invite expired"}), 400
+    max_uses = int(invite.max_uses or 1)
+    if max_uses < 1:
+        max_uses = 1
+    use_count = int(invite.use_count or 0)
+    if use_count >= max_uses:
+        return jsonify({"error": "Invite already used"}), 400
     if invite.invitee_email and invite.invitee_email.lower() != email.lower():
         return jsonify({"error": "Invite is bound to another email"}), 400
 
@@ -66,9 +89,11 @@ def register():
     db.session.add(new_user)
     db.session.flush()
 
+    invite.use_count = use_count + 1
     invite.used_by_user_id = new_user.id
     invite.used_at = now
-    invite.status = "used"
+    if invite.use_count >= max_uses:
+        invite.status = "used"
     db.session.commit()
 
     return jsonify({"message": "User registered successfully!"})
@@ -96,6 +121,11 @@ def create_invite():
     invitee_email = (data.get("invitee_email") or "").strip().lower() or None
     ttl_days = int(data.get("ttl_days") or 7)
     ttl_days = max(1, min(ttl_days, 30))
+    max_uses = int(data.get("max_uses") or 1)
+    max_uses = max(1, min(max_uses, 100))
+
+    if max_uses > 1 and invitee_email:
+        return jsonify({"error": "For multi-use codes, leave invitee email empty"}), 400
 
     if invitee_email and not _valid_email(invitee_email):
         return jsonify({"error": "Invalid invitee email"}), 400
@@ -104,6 +134,8 @@ def create_invite():
         code=_new_invite_code(),
         inviter_user_id=inviter_user_id,
         invitee_email=invitee_email,
+        max_uses=max_uses,
+        use_count=0,
         expires_at=datetime.utcnow() + timedelta(days=ttl_days),
         status="active",
     )
@@ -113,6 +145,8 @@ def create_invite():
         "id": invite.id,
         "code": invite.code,
         "invitee_email": invite.invitee_email,
+        "max_uses": invite.max_uses,
+        "use_count": invite.use_count,
         "status": invite.status,
         "expires_at": invite.expires_at.isoformat() + "Z",
         "created_at": invite.created_at.isoformat() + "Z",
@@ -129,15 +163,25 @@ def my_invites():
     out = []
     changed = False
     for inv in invites:
+        max_uses = int(getattr(inv, "max_uses", None) or 1)
+        use_count = int(getattr(inv, "use_count", None) or 0)
+        if max_uses < 1:
+            max_uses = 1
+        uses_remaining = max(0, max_uses - use_count)
         status = inv.status
         if status == "active" and inv.expires_at and inv.expires_at < now:
             status = "expired"
             inv.status = "expired"
             changed = True
+        elif status == "active" and uses_remaining == 0:
+            status = "used"
         out.append({
             "id": inv.id,
             "code": inv.code,
             "invitee_email": inv.invitee_email,
+            "max_uses": max_uses,
+            "use_count": use_count,
+            "uses_remaining": uses_remaining,
             "status": status,
             "expires_at": inv.expires_at.isoformat() + "Z" if inv.expires_at else None,
             "created_at": inv.created_at.isoformat() + "Z" if inv.created_at else None,

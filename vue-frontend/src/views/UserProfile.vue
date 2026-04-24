@@ -74,8 +74,10 @@
 
     <div class="form-section invite-section">
       <h2>Пригласить пользователя</h2>
-      <label>Email приглашённого (необязательно)</label>
+      <label>Email приглашённого (необязательно; для кода на несколько человек оставьте пустым)</label>
       <input v-model="inviteeEmail" type="email" placeholder="name@company.com" />
+      <label>Сколько раз можно использовать код (1 = один человек, до 100)</label>
+      <input v-model.number="maxInviteUses" type="number" min="1" max="100" class="invite-max-uses" />
       <button type="button" class="modern-button purple" :disabled="inviteLoading" @click="createInvite">
         {{ inviteLoading ? 'Создание…' : 'Создать инвайт' }}
       </button>
@@ -83,7 +85,13 @@
       <div v-if="myInvites.length" class="invite-list">
         <div v-for="inv in myInvites" :key="inv.id" class="invite-item">
           <div><strong>{{ inv.code }}</strong></div>
-          <div class="muted">{{ inv.invitee_email || 'любой email' }} · {{ inv.status }}</div>
+          <div class="muted">
+            {{ inv.invitee_email || 'любой email' }} · {{ inv.status }}
+            <span v-if="(inv.max_uses || 1) > 1">
+              · использовано {{ inv.use_count || 0 }} / {{ inv.max_uses || 1 }}
+              (осталось {{ inv.uses_remaining != null ? inv.uses_remaining : Math.max(0, (inv.max_uses || 1) - (inv.use_count || 0)) }})
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -156,6 +164,7 @@ export default {
       latestAssessment: null,
       expandedAssessments: [],
       inviteeEmail: '',
+      maxInviteUses: 1,
       newInviteCode: '',
       myInvites: [],
       inviteLoading: false,
@@ -275,8 +284,10 @@ export default {
       this.newInviteCode = '';
       try {
         const token = localStorage.getItem('token');
+        const maxUses = Math.min(100, Math.max(1, parseInt(this.maxInviteUses, 10) || 1));
         const response = await axios.post('/api/invites', {
-          invitee_email: this.inviteeEmail || null
+          invitee_email: this.inviteeEmail || null,
+          max_uses: maxUses
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -721,6 +732,15 @@ hr {
 }
 .invite-section .modern-button {
   margin-top: 8px;
+}
+.invite-section .invite-max-uses {
+  width: 100%;
+  max-width: 120px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 15px;
 }
 
 .jwt-section {

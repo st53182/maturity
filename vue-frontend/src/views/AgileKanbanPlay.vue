@@ -24,6 +24,44 @@
     <div v-else-if="loading" class="kb-play__loading">{{ $t('common.loading') }}…</div>
 
     <section v-else class="kb-play__stage">
+      <!-- Persistent case context bar (appears on every working step) -->
+      <aside
+        v-if="showCaseContextBar"
+        class="kb-ctx"
+        :class="{ 'kb-ctx--open': contextExpanded }"
+      >
+        <header class="kb-ctx__head" @click="contextExpanded = !contextExpanded">
+          <div class="kb-ctx__title">
+            <span class="kb-ctx__emoji">{{ selectedCase.emoji }}</span>
+            <span class="kb-ctx__name">{{ selectedCase.title }}</span>
+          </div>
+          <div class="kb-ctx__pain" v-if="selectedCase.pain && !contextExpanded">
+            🔥 {{ selectedCase.pain }}
+          </div>
+          <button type="button" class="kb-ctx__toggle">
+            {{ contextExpanded
+                ? $t('agileTraining.kanban.context.collapse')
+                : $t('agileTraining.kanban.context.expand') }}
+          </button>
+        </header>
+        <div v-if="contextExpanded" class="kb-ctx__body">
+          <div class="kb-ctx__col" v-if="selectedCase.context && selectedCase.context.length">
+            <div class="kb-ctx__h">📋 {{ $t('agileTraining.kanban.context.about') }}</div>
+            <ul>
+              <li v-for="(line, i) in selectedCase.context" :key="'ctx'+i">{{ line }}</li>
+            </ul>
+            <div class="kb-ctx__pain-full" v-if="selectedCase.pain">🔥 {{ selectedCase.pain }}</div>
+          </div>
+          <div class="kb-ctx__col" v-if="currentClues.length">
+            <div class="kb-ctx__h">🎧 {{ currentCluesTitle }}</div>
+            <ul>
+              <li v-for="(q, i) in currentClues" :key="'clue'+i">{{ q }}</li>
+            </ul>
+            <div class="kb-ctx__tip">💡 {{ $t('agileTraining.kanban.context.tip') }}</div>
+          </div>
+        </div>
+      </aside>
+
       <!-- 0. Case choice -->
       <div v-if="stage === 'case_choice'" class="kb-card">
         <h2>{{ $t('agileTraining.kanban.caseChoice.title') }}</h2>
@@ -567,6 +605,7 @@ export default {
       pdfBusy: false,
       pdfError: '',
       locale: this.$i18n.locale || 'ru',
+      contextExpanded: false,
     };
   },
   computed: {
@@ -588,6 +627,30 @@ export default {
     },
     primer() { return (this.content && this.content.primer) || {}; },
     hints() { return (this.content && this.content.hints) || {}; },
+    showCaseContextBar() {
+      if (!this.selectedCase) return false;
+      const skip = ['case_choice', 'intro', 'example', 'summary'];
+      return !skip.includes(this.stage);
+    },
+    currentClues() {
+      const clues = this.selectedCase && this.selectedCase.clues;
+      if (!clues) return [];
+      return clues[this.stage] || [];
+    },
+    currentCluesTitle() {
+      const map = {
+        dissatisfaction: this.$t('agileTraining.kanban.context.cluesDissatisfaction'),
+        demand:          this.$t('agileTraining.kanban.context.cluesDemand'),
+        workflow:        this.$t('agileTraining.kanban.context.cluesWorkflow'),
+        classes:         this.$t('agileTraining.kanban.context.cluesClasses'),
+        policies:        this.$t('agileTraining.kanban.context.cluesPolicies'),
+        cadences:        this.$t('agileTraining.kanban.context.cluesCadences'),
+        board:           this.$t('agileTraining.kanban.context.cluesBoard'),
+        consequences:    this.$t('agileTraining.kanban.context.cluesBoard'),
+        improve:         this.$t('agileTraining.kanban.context.cluesBoard'),
+      };
+      return map[this.stage] || this.$t('agileTraining.kanban.context.cluesDefault');
+    },
     aiRemaining() { return Math.max(0, this.aiLimit - (this.aiCalls || 0)); },
     todayStr() {
       const d = new Date();
@@ -626,6 +689,9 @@ export default {
   watch: {
     '$i18n.locale'(val) {
       if (val !== this.locale) { this.locale = val; this.loadContent(); }
+    },
+    stage() {
+      this.contextExpanded = false;
     },
   },
   async mounted() {
@@ -982,6 +1048,29 @@ export default {
 .kb-case-card__short { font-size: 13px; color: #64748b; line-height: 1.5; flex: 1; }
 .kb-case-card__pick { margin-top: 12px; padding: 6px 12px; border-radius: 999px; background: #0ea5e9; color: #fff; font-size: 12px; font-weight: 600; text-align: center; }
 .kb-case-card__pick--ghost { background: #f1f5f9; color: #475569; }
+
+.kb-ctx {
+  margin: 0 0 14px 0; padding: 10px 14px;
+  background: linear-gradient(180deg, #ecfeff 0%, #f0fdfa 100%);
+  border: 1px solid #5eead4; border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.08);
+  transition: background-color 0.2s;
+}
+.kb-ctx--open { background: #f0fdfa; }
+.kb-ctx__head { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.kb-ctx__title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #0f766e; font-size: 14px; flex-shrink: 0; }
+.kb-ctx__emoji { font-size: 20px; }
+.kb-ctx__pain { color: #7c2d12; font-size: 13px; line-height: 1.4; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-ctx__toggle { margin-left: auto; background: #0f766e; color: #fff; border: none; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+.kb-ctx__toggle:hover { background: #0d9488; }
+.kb-ctx__body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #99f6e4; }
+@media (max-width: 720px) { .kb-ctx__body { grid-template-columns: 1fr; } }
+.kb-ctx__col { background: #fff; border: 1px solid #ccfbf1; border-radius: 10px; padding: 10px 12px; }
+.kb-ctx__h { font-weight: 700; color: #0f766e; margin-bottom: 6px; font-size: 13px; }
+.kb-ctx__col ul { margin: 0; padding-left: 18px; color: #0f172a; font-size: 13px; line-height: 1.55; }
+.kb-ctx__col li { margin-bottom: 4px; }
+.kb-ctx__pain-full { margin-top: 8px; padding: 6px 10px; background: #fff1e7; color: #7c2d12; border-radius: 8px; font-size: 13px; line-height: 1.45; }
+.kb-ctx__tip { margin-top: 8px; color: #475569; font-size: 12px; line-height: 1.5; font-style: italic; }
 
 .kb-primer {
   margin: 12px 0; padding: 12px 16px;

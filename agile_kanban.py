@@ -125,6 +125,49 @@ CONTENT = {
                     {"name": "Стандарт"},
                 ],
                 "suggested_wip": {"default": 3},
+                "clues": {
+                    "dissatisfaction": [
+                        "Иван, менеджер аренды: «Утром приходят 3 VIP одновременно и 5 обычных — я теряюсь, за кого браться»",
+                        "Марина, юрист: «Мне в 17:50 приносят срочный договор и ждут, что я уйду домой в 19:00. Так каждый второй день»",
+                        "Фотограф Саша: «Меня записывают на показ через менеджера в чате. Половина запросов теряется»",
+                        "Отзыв клиента в 2ГИС: «2 дня жду ответа по квартире — ушёл к конкурентам»",
+                        "VIP-клиент Пётр С.: «Мне обещали перезвонить за 30 минут, а перезвонили на следующий день»",
+                    ],
+                    "demand": [
+                        "Журнал обращений за прошлую неделю: 23 звонка от VIP, 47 писем от обычных клиентов, 12 лидов с сайта",
+                        "VIP-менеджер: «В пиковые дни — до 6 срочных показов за смену»",
+                        "Маркетинг: «На e-mail рассылки по корпоративным клиентам приходит 8–10 откликов в неделю»",
+                        "Юридический отдел: «На согласование договора уходит 2 дня, если без спешки»",
+                        "Руководитель отдела: «Возвращающиеся клиенты дают 30% выручки и не ждут долго»",
+                    ],
+                    "workflow": [
+                        "Сегодня: клиент звонит → менеджер записывает запрос в личный блокнот → едет на показ → после показа диктует условия юристу → юрист готовит договор → подписываем",
+                        "Ни одна задача не лежит на общей доске — всё в почте конкретного менеджера",
+                        "Если менеджер заболел, его запросы никто не видит",
+                    ],
+                    "classes": [
+                        "VIP и корпоративные — бьёмся за каждого, уходит — теряем контракт на 3 года",
+                        "Срочные показы — бронируются в день обращения, клиент уже едет",
+                        "Обычные аренды — готовы подождать 2–3 дня, главное не теряться",
+                        "Фиксированные даты — заезд в квартиру в конкретный день, просрочить = штраф",
+                    ],
+                    "policies": [
+                        "Сейчас правил нигде не записано — каждый менеджер решает сам",
+                        "VIP обычно берут по звонку руководителя, а не по доске",
+                        "Когда задача застряла, её не эскалируют — «сама разрулится»",
+                        "Обеды и выходные стабильно у всех, кроме срочных показов",
+                    ],
+                    "cadences": [
+                        "Планёрок нет — статус задач обсуждают в корп. чате хаотично",
+                        "Новые запросы попадают в работу сразу, без обсуждения приоритетов",
+                        "Раз в месяц — отчёт по сделкам, но про поток работ там ничего",
+                    ],
+                    "board": [
+                        "Хотим, чтобы VIP были отдельно видны всей команде, а не только персональному менеджеру",
+                        "Нужно, чтобы юристы заранее видели, какие договоры к ним идут",
+                        "Желательно, чтобы руководитель мог сказать «стоп, у нас перегруз» не разбирая почту",
+                    ],
+                },
             },
             {
                 "key": "helpdesk",
@@ -176,6 +219,49 @@ CONTENT = {
                     {"name": "Стандарт"},
                 ],
                 "suggested_wip": {"default": 4},
+                "clues": {
+                    "dissatisfaction": [
+                        "Оператор 1-й линии: «В 10 утра одновременно в чате 12 человек, в почте ещё 25 — за кого браться?»",
+                        "2-я линия: «Нам передают тикеты без контекста, приходится заново собирать данные»",
+                        "Premium-клиент в тикете: «Реакция за 4 часа при SLA 15 минут — верните деньги»",
+                        "Старший оператор: «Один и тот же вопрос мы ответили дважды — клиент в бешенстве»",
+                        "HR-отчёт: у 3-х операторов за полгода — увольнение по причине «переработки»",
+                    ],
+                    "demand": [
+                        "Статистика за неделю: 350 чатов, 200 писем, 80 звонков",
+                        "Понедельник 9:00–12:00 — пик: +60% обращений",
+                        "Premium-клиенты: ~30 инцидентов в день, 15-мин. SLA",
+                        "Корпоративные: ~40 запросов в день, SLA 1 час",
+                        "Обычные клиенты: ~250 вопросов в день, SLA «в течение дня»",
+                    ],
+                    "workflow": [
+                        "Сейчас: тикет → 1-я линия пытается ответить → если не может, тегает 2-ю линию в чате → 2-я линия берёт когда освободится → отвечает клиенту",
+                        "Тикет от premium-клиента может стоять в «общей» очереди часами, если 1-я линия пропустила",
+                        "Между линиями нет чёткой передачи — тикеты «зависают»",
+                    ],
+                    "classes": [
+                        "Premium-клиенты — контракт 5–20 млн в год, потерять одного = −10% выручки",
+                        "Инциденты — что-то не работает прямо сейчас, бизнес клиента стоит",
+                        "Стандартные вопросы — важны, но потерпят до конца дня",
+                        "Релизы и плановые работы — привязаны к конкретной дате",
+                    ],
+                    "policies": [
+                        "Правила эскалации нигде не записаны — каждый оператор решает сам",
+                        "Premium-клиентов по идее берут сразу, но фактически застревают в общей очереди",
+                        "«Закончить начатое перед тем, как брать новое» — никто не соблюдает",
+                        "Ночные смены и выходные обсуждаются в чате раз в неделю",
+                    ],
+                    "cadences": [
+                        "Стендапов нет, 1-я и 2-я линии почти не общаются",
+                        "Новые тикеты берут в работу по мере появления, без фильтра",
+                        "Раз в месяц — разбор жалоб, но уже после того, как клиенты ушли",
+                    ],
+                    "board": [
+                        "Premium и инциденты нужно показать отдельно — чтобы не тонули в общей очереди",
+                        "2-я линия хочет видеть, что к ним идёт, не дожидаясь тега в чате",
+                        "Руководитель хочет одним взглядом понимать, где затык",
+                    ],
+                },
             },
         ],
         "primer": {
@@ -296,6 +382,49 @@ CONTENT = {
                     {"name": "Standard"},
                 ],
                 "suggested_wip": {"default": 3},
+                "clues": {
+                    "dissatisfaction": [
+                        "Ivan, rental manager: \"In the morning 3 VIPs ping me at once plus 5 regular ones — I don't know who to pick first\"",
+                        "Marina, lawyer: \"They bring me an urgent contract at 5:50 PM and expect me to leave at 7. It happens every other day\"",
+                        "Sasha, photographer: \"Managers book me for viewings via chat — half of the requests get lost\"",
+                        "Customer review on Google: \"Waited 2 days for a reply about an apartment — went to a competitor\"",
+                        "VIP client Peter S.: \"I was promised a call-back in 30 minutes, got one the next day\"",
+                    ],
+                    "demand": [
+                        "Last week's request log: 23 VIP calls, 47 emails from regular clients, 12 website leads",
+                        "VIP manager: \"On peak days — up to 6 urgent viewings per shift\"",
+                        "Marketing: \"Our corporate email campaigns bring 8–10 replies per week\"",
+                        "Legal: \"A contract takes 2 days to prepare if we're not rushed\"",
+                        "Head of sales: \"Returning clients are 30% of revenue and won't wait long\"",
+                    ],
+                    "workflow": [
+                        "Today: client calls → manager writes the request in a personal notebook → drives to the viewing → dictates terms to the lawyer → lawyer drafts the contract → signing",
+                        "No task lives on a shared board — everything is in the personal manager's email",
+                        "If a manager is sick, nobody sees their requests",
+                    ],
+                    "classes": [
+                        "VIP and corporate — fight for every one, losing them = a 3-year contract gone",
+                        "Urgent viewings — booked the same day, the client is already driving",
+                        "Regular rentals — willing to wait 2–3 days as long as we don't lose them",
+                        "Fixed-date — move-in on a specific day, missing it means a fine",
+                    ],
+                    "policies": [
+                        "Today there are no written rules — every manager decides for themselves",
+                        "VIPs are usually picked up on a head's phone call, not via the board",
+                        "When a task gets stuck, nobody escalates — \"it'll sort itself out\"",
+                        "Lunches and days off are respected by everyone, except for urgent viewings",
+                    ],
+                    "cadences": [
+                        "No stand-ups — task status is discussed ad-hoc in a corporate chat",
+                        "New requests enter work immediately, without any priority discussion",
+                        "A monthly deal report — but nothing about the flow of work",
+                    ],
+                    "board": [
+                        "We want VIPs visible to the whole team, not only to the personal manager",
+                        "Lawyers need to see which contracts are coming their way in advance",
+                        "The head wants to call 'stop, we're overloaded' without digging through emails",
+                    ],
+                },
             },
             {
                 "key": "helpdesk",
@@ -347,6 +476,49 @@ CONTENT = {
                     {"name": "Standard"},
                 ],
                 "suggested_wip": {"default": 4},
+                "clues": {
+                    "dissatisfaction": [
+                        "1st-line agent: \"At 10 AM there are 12 people in the chat and 25 in email — who do I pick?\"",
+                        "2nd-line: \"They hand us tickets without context, we have to re-collect the data\"",
+                        "Premium client in a ticket: \"4-hour reaction when the SLA is 15 min — I want a refund\"",
+                        "Senior agent: \"We answered the same question twice — the client is furious\"",
+                        "HR report: 3 agents left in half a year, all quoting 'overwork'\",",
+                    ],
+                    "demand": [
+                        "Weekly stats: 350 chats, 200 emails, 80 calls",
+                        "Monday 9–12 AM is a peak: +60% of contacts",
+                        "Premium clients: ~30 incidents per day, 15-min SLA",
+                        "Corporate: ~40 requests per day, 1-hour SLA",
+                        "Regular clients: ~250 questions per day, SLA 'within the day'",
+                    ],
+                    "workflow": [
+                        "Today: ticket → 1st line tries to answer → if not, tags 2nd line in chat → 2nd line takes it when free → replies",
+                        "A premium-client ticket can sit in the common queue for hours if 1st line misses it",
+                        "No formal hand-off between lines — tickets 'hang'",
+                    ],
+                    "classes": [
+                        "Premium clients — contracts of $50k–$200k a year; losing one ≈ −10% revenue",
+                        "Incidents — something is broken right now, the client's business is stalled",
+                        "Standard — important but can wait until end of day",
+                        "Releases and planned work — tied to specific dates",
+                    ],
+                    "policies": [
+                        "Escalation rules aren't written anywhere — each agent guesses",
+                        "In theory premiums go first, in reality they stick in the common queue",
+                        "'Finish what's started before picking new work' — nobody follows it",
+                        "Night shifts and weekends are discussed ad-hoc in chat once a week",
+                    ],
+                    "cadences": [
+                        "No stand-ups — 1st and 2nd line barely communicate",
+                        "New tickets enter work immediately with no filter",
+                        "A monthly complaint review — but only after clients have already left",
+                    ],
+                    "board": [
+                        "Premiums and incidents must be visible separately — so they don't drown in the common queue",
+                        "2nd line wants to see what's coming before being tagged in chat",
+                        "The head wants a one-glance view of where things are stuck",
+                    ],
+                },
             },
         ],
         "primer": {

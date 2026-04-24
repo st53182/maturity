@@ -2752,6 +2752,20 @@
         "picked": "Selected",
         "switch": "Change case"
       },
+      "context": {
+        "expand": "Expand context",
+        "collapse": "Collapse",
+        "about": "About the company",
+        "tip": "Use these quotes and observations as raw material — this step asks you to turn them into entries.",
+        "cluesDefault": "What you know about the situation",
+        "cluesDissatisfaction": "What you hear from the team and clients",
+        "cluesDemand": "What comes in — from logs and managers",
+        "cluesWorkflow": "How work moves today",
+        "cluesClasses": "Types of clients and tasks you have",
+        "cluesPolicies": "Rules that actually govern the work today",
+        "cluesCadences": "When and how you talk about work today",
+        "cluesBoard": "What the team wants to see on the board"
+      },
       "intro": {
         "title": "Step 1 — context",
         "lead": "We start from a real situation, not an abstraction. Read the company description and what bothers them today.",

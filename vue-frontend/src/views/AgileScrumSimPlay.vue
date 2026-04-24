@@ -76,6 +76,7 @@
           :highlight-column="highlightColumn"
           :allocation="pendingAllocation"
           :compact="compactBoard"
+          :planning-mode="phase === 'planning'"
           @task-click="onBoardTaskClick"
         />
       </section>
@@ -96,6 +97,12 @@
       <!-- PHASE: planning -->
       <section v-if="phase === 'planning'" class="sp__card">
         <h3>{{ $t('agileTraining.scrumSim.planningTitle') }}</h3>
+        <div v-if="flashMessage" class="sp__flash sp__flash--chain">
+          🔗 {{ flashMessage }}
+        </div>
+        <p class="sp__hint sp__planning-depshint">
+          💡 {{ $t('agileTraining.scrumSim.planningDepsHint') }}
+        </p>
         <p class="sp__hint">{{ content.context.sprint_goal_hint }}</p>
         <label class="sp__label">{{ $t('agileTraining.scrumSim.sprintGoal') }}</label>
         <textarea
@@ -149,6 +156,20 @@
       <!-- PHASE: day N -->
       <section v-if="isDayPhase" class="sp__card">
         <h3>{{ $t('agileTraining.scrumSim.dayHeading', { n: state.current_day, total: sprintDaysTotal }) }}</h3>
+
+        <!-- Recap of the previous day (apply_notes from last history entry) -->
+        <div
+          v-if="lastDayRecap && !recapDismissed[lastDayRecap.day]"
+          class="sp__recap"
+        >
+          <div class="sp__recap-head">
+            <span class="sp__recap-badge">📖 {{ $t('agileTraining.scrumSim.recapTitle', { n: lastDayRecap.day }) }}</span>
+            <button class="sp__recap-close" @click="dismissRecap(lastDayRecap.day)" :title="$t('agileTraining.scrumSim.recapClose')">✕</button>
+          </div>
+          <ul class="sp__recap-list">
+            <li v-for="(n, i) in lastDayRecap.notes" :key="i">• {{ n }}</li>
+          </ul>
+        </div>
 
         <!-- Step 1: Reveal event -->
         <div v-if="!pendingDay.event_applied" class="sp__day-step">
@@ -337,6 +358,66 @@
           <strong>{{ $t('agileTraining.scrumSim.stakeholderSays') }}:</strong>
           <p>{{ stakeholderText }}</p>
         </div>
+
+        <!-- Expanded per-task breakdown -->
+        <div v-if="reviewBreakdownGroups.length" class="sp__review-break">
+          <h4 class="sp__review-subtitle">📋 {{ $t('agileTraining.scrumSim.reviewBreakdownTitle') }}</h4>
+          <p class="sp__hint">{{ $t('agileTraining.scrumSim.reviewBreakdownHint') }}</p>
+
+          <div v-if="reviewTotals" class="sp__review-totals">
+            <span class="sp__totals-chip">{{ $t('agileTraining.scrumSim.totalDonePts') }}: <strong>{{ reviewTotals.done_points }}</strong></span>
+            <span class="sp__totals-chip">{{ $t('agileTraining.scrumSim.totalScopedPts') }}: <strong>{{ reviewTotals.scoped_points }}</strong></span>
+            <span class="sp__totals-chip" v-if="reviewTotals.extra_points > 0">{{ $t('agileTraining.scrumSim.reworkPtsChip') }}: <strong>+{{ reviewTotals.extra_points }}</strong></span>
+            <span class="sp__totals-chip">{{ $t('agileTraining.scrumSim.eventsCount') }}: <strong>{{ reviewTotals.events_count }}</strong></span>
+            <span class="sp__totals-chip">{{ $t('agileTraining.scrumSim.decisionsCount') }}: <strong>{{ reviewTotals.decisions_count }}</strong></span>
+          </div>
+
+          <div
+            v-for="grp in reviewBreakdownGroups"
+            :key="grp.bucket"
+            class="sp__review-group"
+            :class="'sp__review-group--' + grp.bucket"
+          >
+            <div class="sp__review-group-head">
+              <span class="sp__review-group-icon">{{ grp.icon }}</span>
+              <strong>{{ grp.label }}</strong>
+              <span class="sp__review-group-count">{{ grp.rows.length }}</span>
+            </div>
+            <div class="sp__review-items">
+              <div
+                v-for="row in grp.rows"
+                :key="row.key"
+                class="sp__review-item"
+              >
+                <div class="sp__review-item-head">
+                  <span class="sp__review-item-title">{{ row.title }}</span>
+                  <span v-if="row.core" class="sb__badge sb__badge--core">{{ $t('agileTraining.scrumSim.core') }}</span>
+                  <span v-else class="sb__badge sb__badge--opt">{{ $t('agileTraining.scrumSim.optional') }}</span>
+                  <span v-if="row.origin === 'stakeholder'" class="sb__badge sb__badge--new">{{ $t('agileTraining.scrumSim.fromStakeholder') }}</span>
+                  <span v-if="row.origin === 'split'" class="sb__badge sb__badge--split">{{ $t('agileTraining.scrumSim.split') }}</span>
+                  <span v-if="row.risky" class="sb__badge sb__badge--risky">⚠ {{ $t('agileTraining.scrumSim.badges.risky') }}</span>
+                  <span class="sp__review-item-pts">
+                    {{ row.progress }}/{{ row.need }}{{ row.extra > 0 ? ' (+' + row.extra + ')' : '' }}
+                  </span>
+                </div>
+                <div v-if="row.state_reason" class="sp__review-item-reason">{{ row.state_reason }}</div>
+                <ul v-if="row.touches && row.touches.length" class="sp__review-touches">
+                  <li
+                    v-for="(touch, ti) in row.touches"
+                    :key="ti"
+                    class="sp__review-touch"
+                    :class="'sp__review-touch--' + touch.kind"
+                  >
+                    <span class="sp__review-touch-day">День {{ touch.day }}</span>
+                    <span class="sp__review-touch-icon">{{ touchIcon(touch) }}</span>
+                    <span>{{ touchLabel(touch) }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="sp__actions">
           <button class="sp__btn sp__btn--primary" @click="goToRetro">{{ content.labels.open_retro }} →</button>
         </div>
@@ -507,6 +588,8 @@ export default {
       priorityOrder: [],
       pendingDecisionDraft: null,
       pulseKeys: [],
+      flashMessage: '',
+      recapDismissed: {},
       roleToast: '',
 
       showRoleDesc: false,
@@ -676,6 +759,47 @@ export default {
     showWaitingHint() {
       return this.waitingTasks.length > 0 && this.workableTasks.length < 3;
     },
+    reviewBreakdownRows() {
+      const rm = this.state && this.state.review_metrics;
+      return (rm && rm.breakdown) || [];
+    },
+    reviewTotals() {
+      const rm = this.state && this.state.review_metrics;
+      return (rm && rm.totals) || null;
+    },
+    reviewBreakdownGroups() {
+      const rows = this.reviewBreakdownRows;
+      if (!rows.length) return [];
+      const meta = {
+        done:        { icon: '✅', label: this.$t('agileTraining.scrumSim.grpDone') },
+        review:      { icon: '🔵', label: this.$t('agileTraining.scrumSim.grpReview') },
+        in_progress: { icon: '🟡', label: this.$t('agileTraining.scrumSim.grpInProgress') },
+        blocked:     { icon: '🔴', label: this.$t('agileTraining.scrumSim.grpBlocked') },
+        not_started: { icon: '📦', label: this.$t('agileTraining.scrumSim.grpNotStarted') },
+        descoped:    { icon: '➖', label: this.$t('agileTraining.scrumSim.grpDescoped') },
+      };
+      const order = ['done', 'review', 'in_progress', 'blocked', 'not_started', 'descoped'];
+      const map = {};
+      for (const row of rows) {
+        const b = row.bucket;
+        if (!map[b]) map[b] = [];
+        map[b].push(row);
+      }
+      return order
+        .filter(b => (map[b] || []).length)
+        .map(b => ({ bucket: b, icon: meta[b].icon, label: meta[b].label, rows: map[b] }));
+    },
+    lastDayRecap() {
+      const days = (this.state && this.state.days) || [];
+      if (!days.length) return null;
+      const last = days[days.length - 1];
+      const curDay = (this.state && this.state.current_day) || 0;
+      if (!last || last.day >= curDay) return null;
+      const notes = (last.apply_notes || []).concat(last.risk_notes || []);
+      const uniq = Array.from(new Set(notes));
+      if (!uniq.length) return null;
+      return { day: last.day, notes: uniq };
+    },
     allocTotal() {
       return Object.values(this.allocDraft).reduce((s, v) => s + (Number(v) || 0), 0);
     },
@@ -836,15 +960,126 @@ export default {
     },
     onBoardTaskClick(t) {
       if (this.phase === 'planning') {
-        const action = t.column === 'product' ? 'pull' : (t.column === 'backlog' ? 'push' : null);
-        if (!action) return;
-        axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/planning`, {
-          participant_token: this.participantToken,
-          action, task_key: t.key,
-        }).then(() => this.loadState(true));
+        if (t.column === 'product') {
+          this.planningPullChain(t);
+          return;
+        }
+        if (t.column === 'backlog') {
+          this.planningPush(t);
+          return;
+        }
+        return;
       } else if (this.isDayPhase && this.pendingDecisionNeedsTask) {
         this.commitDecisionWithTask(t.key);
       }
+    },
+    async planningPullChain(t) {
+      const depsInProduct = this.collectDepsInProduct(t.key);
+      try {
+        const res = await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/planning`, {
+          participant_token: this.participantToken,
+          action: depsInProduct.length ? 'pull_chain' : 'pull',
+          task_key: t.key,
+        });
+        await this.loadState(true);
+        const pulled = (res && res.data && res.data.pulled_chain) || [];
+        if (pulled.length) {
+          const titles = pulled.map(k => this.taskTitle(k)).join(', ');
+          this.flashMessage = this.$t('agileTraining.scrumSim.pullChainFlash', { titles });
+          this.pulseKeys = [t.key, ...pulled];
+          setTimeout(() => { this.pulseKeys = []; }, 1400);
+          setTimeout(() => { if (this.flashMessage) this.flashMessage = ''; }, 4500);
+        }
+      } catch (e) {
+        alert((e.response && e.response.data && e.response.data.error) || 'Error');
+      }
+    },
+    async planningPush(t) {
+      const dependents = this.collectDependentsInSprint(t.key);
+      if (dependents.length) {
+        const titles = dependents.map(k => this.taskTitle(k)).join(', ');
+        const ok = window.confirm(
+          this.$t('agileTraining.scrumSim.pushWarnConfirm', { title: t.title, titles })
+        );
+        if (!ok) return;
+      }
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/planning`, {
+          participant_token: this.participantToken,
+          action: 'push',
+          task_key: t.key,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        alert((e.response && e.response.data && e.response.data.error) || 'Error');
+      }
+    },
+    taskTitle(key) {
+      const tasks = (this.state && this.state.tasks) || [];
+      const f = tasks.find(x => x.key === key);
+      return f ? f.title : key;
+    },
+    dismissRecap(day) {
+      this.recapDismissed = { ...this.recapDismissed, [day]: true };
+    },
+    touchIcon(touch) {
+      if (!touch) return '•';
+      if (touch.kind === 'event') return '📣';
+      if (touch.kind === 'alloc') return '⚙️';
+      if (touch.kind === 'decision') {
+        const m = {
+          swarm: '👥', split_task: '✂️', descope: '➖',
+          escalate: '📢', buffer_quality: '🛡️', continue: '▶️',
+        };
+        return m[touch.sub] || '🎯';
+      }
+      return '•';
+    },
+    touchLabel(touch) {
+      if (!touch) return '';
+      if (touch.kind === 'event') {
+        const extra = touch.detail ? ` — ${touch.detail}` : '';
+        return `${this.$t('agileTraining.scrumSim.touchEvent')}: ${touch.label}${extra}`;
+      }
+      if (touch.kind === 'alloc') {
+        return this.$t('agileTraining.scrumSim.touchAlloc', { label: touch.label });
+      }
+      if (touch.kind === 'decision') {
+        const dec = (this.content.decisions || []).find(d => d.key === touch.sub);
+        const decTitle = dec ? dec.title : touch.sub;
+        return `${this.$t('agileTraining.scrumSim.touchDecision')}: ${decTitle}`;
+      }
+      return touch.label || '';
+    },
+    collectDepsInProduct(rootKey) {
+      const tasks = (this.state && this.state.tasks) || [];
+      const byKey = {};
+      for (const t of tasks) byKey[t.key] = t;
+      const seen = new Set();
+      const stack = [rootKey];
+      const out = [];
+      while (stack.length) {
+        const k = stack.pop();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const t = byKey[k];
+        if (!t) continue;
+        for (const d of (t.deps || [])) {
+          const dep = byKey[d];
+          if (dep && dep.column === 'product' && !seen.has(d)) {
+            out.push(d);
+            stack.push(d);
+          }
+        }
+      }
+      return out;
+    },
+    collectDependentsInSprint(key) {
+      const tasks = (this.state && this.state.tasks) || [];
+      const ins = ['backlog', 'in_progress', 'review'];
+      return tasks
+        .filter(t => (t.deps || []).includes(key) && ins.includes(t.column))
+        .map(t => t.key);
     },
     async revealEvent() {
       try {
@@ -1351,6 +1586,79 @@ export default {
 }
 .sp__metric-val { display: block; font-size: 22px; font-weight: 700; color: #0f172a; }
 .sp__metric-lab { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 4px; }
+
+.sp__flash {
+  padding: 10px 14px; border-radius: 10px; margin: 8px 0 12px;
+  font-size: 13px; line-height: 1.4;
+  animation: sp-flash-in 0.25s ease-out both;
+}
+.sp__flash--chain { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+@keyframes sp-flash-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sp__planning-depshint { background: #eff6ff; border: 1px dashed #bfdbfe; border-radius: 8px; padding: 6px 10px; color: #1d4ed8; }
+
+.sp__recap {
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 10px;
+}
+.sp__recap-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.sp__recap-badge { font-weight: 700; color: #92400e; font-size: 13px; }
+.sp__recap-close {
+  background: transparent; border: none; font-size: 16px; color: #92400e;
+  cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.sp__recap-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #78350f; }
+
+.sp__review-break { margin-top: 18px; padding-top: 12px; border-top: 1px dashed #e2e8f0; }
+.sp__review-subtitle { margin: 0 0 4px; font-size: 15px; color: #0f172a; }
+.sp__review-totals { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.sp__totals-chip {
+  background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px;
+  padding: 3px 10px; font-size: 12px; color: #334155;
+}
+.sp__totals-chip strong { color: #0f172a; margin-left: 2px; }
+.sp__review-group {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 10px 12px; margin-bottom: 10px;
+}
+.sp__review-group--done { background: #f0fdf4; border-color: #bbf7d0; }
+.sp__review-group--blocked { background: #fef2f2; border-color: #fecaca; }
+.sp__review-group--descoped { background: #f1f5f9; border-color: #cbd5e1; }
+.sp__review-group--review { background: #f5f3ff; border-color: #ddd6fe; }
+.sp__review-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 14px; color: #0f172a; }
+.sp__review-group-icon { font-size: 16px; }
+.sp__review-group-count {
+  margin-left: auto; background: #fff; border: 1px solid #cbd5e1;
+  border-radius: 999px; padding: 1px 8px; font-size: 11px; color: #475569;
+}
+.sp__review-items { display: flex; flex-direction: column; gap: 8px; }
+.sp__review-item {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 8px 10px;
+}
+.sp__review-item-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sp__review-item-title { font-weight: 600; color: #0f172a; font-size: 13px; margin-right: 6px; }
+.sp__review-item-pts {
+  margin-left: auto; font-variant-numeric: tabular-nums; font-size: 12px; color: #0369a1;
+  background: #e0f2fe; padding: 1px 8px; border-radius: 999px; font-weight: 600;
+}
+.sp__review-item-reason { font-size: 12px; color: #b45309; margin-top: 4px; }
+.sp__review-touches {
+  list-style: none; padding: 0; margin: 6px 0 0;
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 12px; color: #475569;
+}
+.sp__review-touch { display: flex; align-items: center; gap: 6px; }
+.sp__review-touch-day {
+  background: #f1f5f9; color: #475569;
+  padding: 1px 6px; border-radius: 6px; font-size: 11px; font-variant-numeric: tabular-nums;
+  min-width: 58px; text-align: center;
+}
+.sp__review-touch--event .sp__review-touch-day { background: #fef3c7; color: #92400e; }
+.sp__review-touch--decision .sp__review-touch-day { background: #ede9fe; color: #5b21b6; }
+.sp__review-touch--alloc .sp__review-touch-day { background: #dbeafe; color: #1e40af; }
 
 .sp__stakeholder { padding: 12px 14px; border-radius: 10px; margin: 10px 0; font-size: 14px; line-height: 1.5; }
 .sp__stakeholder p { margin: 4px 0 0; }

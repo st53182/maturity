@@ -18,9 +18,13 @@
           :class="[
             'sb__card--' + (t.state || 'ok'),
             { 'sb__card--selectable': selectable, 'sb__card--selected': selectedKeys.includes(t.key) },
-            { 'sb__card--pulse': pulseKeys.includes(t.key) }
+            { 'sb__card--pulse': pulseKeys.includes(t.key) },
+            { 'sb__card--chain-dep': chainDepKeys.includes(t.key) },
+            { 'sb__card--chain-dependent': chainDependentKeys.includes(t.key) }
           ]"
           @click="selectable ? $emit('task-click', t) : null"
+          @mouseenter="onCardHover(t)"
+          @mouseleave="onCardHover(null)"
         >
           <div class="sb__card-head">
             <span class="sb__card-emoji">{{ stateEmoji(t) }}</span>
@@ -51,6 +55,28 @@
           <div v-if="hasBlockingDeps(t)" class="sb__card-deps">
             <span class="sb__deps-label">{{ $t('agileTraining.scrumSim.waitingFor') }}:</span>
             <span v-for="d in missingDeps(t)" :key="d" class="sb__deps-item">{{ titleOf(d) }}</span>
+          </div>
+          <div
+            v-if="planningMode && depsInProduct(t).length"
+            class="sb__card-deps sb__card-deps--plan"
+          >
+            <span class="sb__deps-label">🔗 {{ $t('agileTraining.scrumSim.needsFirst') }}:</span>
+            <span
+              v-for="d in depsInProduct(t)"
+              :key="d"
+              class="sb__deps-item sb__deps-item--plan"
+            >{{ titleOf(d) }}</span>
+          </div>
+          <div
+            v-if="planningMode && dependentsInSprint(t).length"
+            class="sb__card-deps sb__card-deps--users"
+          >
+            <span class="sb__deps-label">👥 {{ $t('agileTraining.scrumSim.neededFor') }}:</span>
+            <span
+              v-for="d in dependentsInSprint(t)"
+              :key="d"
+              class="sb__deps-item sb__deps-item--users"
+            >{{ titleOf(d) }}</span>
           </div>
           <div v-if="allocatedPts(t) > 0" class="sb__card-alloc">
             ⚙️ {{ $t('agileTraining.scrumSim.todayCapacity') }}: +{{ allocatedPts(t) }}
@@ -85,13 +111,25 @@ export default {
     allocation: { type: Object, default: () => ({}) },
     hideEmpty: { type: Boolean, default: false },
     hiddenColumns: { type: Array, default: () => [] },
+    planningMode: { type: Boolean, default: false },
   },
   emits: ["task-click"],
+  data() {
+    return { hoveredKey: null };
+  },
   computed: {
     taskMap() {
       const m = {};
       for (const t of this.tasks || []) m[t.key] = t;
       return m;
+    },
+    chainDepKeys() {
+      if (!this.hoveredKey) return [];
+      return this.collectChain(this.hoveredKey, "down").filter(k => k !== this.hoveredKey);
+    },
+    chainDependentKeys() {
+      if (!this.hoveredKey) return [];
+      return this.collectChain(this.hoveredKey, "up").filter(k => k !== this.hoveredKey);
     },
   },
   methods: {
@@ -143,6 +181,47 @@ export default {
     },
     allocatedPts(t) {
       return Number((this.allocation || {})[t.key] || 0);
+    },
+    depsInProduct(t) {
+      return (t.deps || []).filter(d => {
+        const dep = this.taskMap[d];
+        return dep && dep.column === "product";
+      });
+    },
+    dependentsInSprint(t) {
+      const ins = ["backlog", "in_progress", "review"];
+      return (this.tasks || [])
+        .filter(other => (other.deps || []).includes(t.key) && ins.includes(other.column))
+        .map(other => other.key);
+    },
+    onCardHover(t) {
+      if (!this.planningMode) return;
+      this.hoveredKey = t ? t.key : null;
+    },
+    collectChain(rootKey, direction) {
+      const out = [];
+      const seen = new Set();
+      const stack = [rootKey];
+      while (stack.length) {
+        const k = stack.pop();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(k);
+        const t = this.taskMap[k];
+        if (!t) continue;
+        if (direction === "down") {
+          for (const d of (t.deps || [])) {
+            if (!seen.has(d)) stack.push(d);
+          }
+        } else {
+          for (const other of (this.tasks || [])) {
+            if ((other.deps || []).includes(k) && !seen.has(other.key)) {
+              stack.push(other.key);
+            }
+          }
+        }
+      }
+      return out;
     },
   },
 };
@@ -263,9 +342,31 @@ export default {
 
 .sb__card-reason { font-size: 11px; color: #b91c1c; margin-top: 6px; line-height: 1.3; }
 .sb__card--rework .sb__card-reason, .sb__card--risk .sb__card-reason { color: #b45309; }
-.sb__card-deps { font-size: 11px; color: #64748b; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.sb__card-deps { font-size: 11px; color: #64748b; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .sb__deps-label { color: #94a3b8; }
 .sb__deps-item { background: #f1f5f9; padding: 1px 6px; border-radius: 6px; }
+.sb__card-deps--plan .sb__deps-label { color: #b45309; font-weight: 600; }
+.sb__deps-item--plan { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.sb__card-deps--users .sb__deps-label { color: #2563eb; font-weight: 600; }
+.sb__deps-item--users { background: #dbeafe; color: #1e3a8a; border: 1px solid #bfdbfe; }
+.sb__card--chain-dep {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+.sb__card--chain-dep::after {
+  content: "🔗";
+  position: absolute;
+  top: -6px; left: -6px;
+  background: #f59e0b; color: #fff;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.45);
+}
+.sb__card--chain-dependent {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+}
 .sb__card-alloc { font-size: 11px; color: #0369a1; margin-top: 6px; font-weight: 600; }
 
 @media (max-width: 900px) {

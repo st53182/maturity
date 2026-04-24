@@ -632,6 +632,38 @@ def _touch_participant(data: Dict[str, Any], p: AgileTrainingParticipant) -> Non
 # --------------------------- game engine ---------------------------
 
 
+def _collect_dep_chain(
+    tasks: Dict[str, Dict[str, Any]],
+    root_key: str,
+    only_from_product: bool = False,
+) -> List[str]:
+    """Возвращает корень + транзитивные зависимости (ключи) по deps.
+
+    Если `only_from_product=True`, включаются только задачи, которые сейчас
+    в Product Backlog (плюс сам корень, если он там же). Полезно для
+    планирования: «взять задачу и всё, что ей нужно».
+    """
+    result: List[str] = []
+    seen: set = set()
+    stack: List[str] = [root_key]
+    while stack:
+        k = stack.pop()
+        if k in seen:
+            continue
+        seen.add(k)
+        t = tasks.get(k)
+        if not t:
+            continue
+        if only_from_product and t.get("column") != TASK_COL_PRODUCT:
+            if k != root_key:
+                continue
+        result.append(k)
+        for d in (t.get("deps") or []):
+            if d not in seen:
+                stack.append(d)
+    return result
+
+
 def _tasks_deps_done(tasks: Dict[str, Dict[str, Any]], t: Dict[str, Any]) -> bool:
     """Все ли зависимости задачи готовы для старта.
 
@@ -774,6 +806,9 @@ def _compute_review(data: Dict[str, Any]) -> Dict[str, Any]:
     else:
         outcome = "fail"
 
+    breakdown = _build_task_breakdown(data)
+    totals = _build_review_totals(data, breakdown)
+
     return {
         "done_total":    done_any,
         "in_sprint":     total_sprint,
@@ -783,6 +818,122 @@ def _compute_review(data: Dict[str, Any]) -> Dict[str, Any]:
         "rework":        rework,
         "core_ratio":    round(ratio, 2),
         "outcome":       outcome,
+        "breakdown":     breakdown,
+        "totals":        totals,
+    }
+
+
+def _task_bucket(t: Dict[str, Any]) -> str:
+    """В какую группу попадает задача по состоянию на конец спринта."""
+    col = t.get("column")
+    if col == TASK_COL_DONE:
+        return "done"
+    if col == TASK_COL_REVIEW:
+        return "review"
+    if t.get("state") == "blocked":
+        return "blocked"
+    if col == TASK_COL_IN_PROGRESS:
+        return "in_progress"
+    if col == TASK_COL_BACKLOG:
+        if int(t.get("progress", 0)) == 0:
+            return "not_started"
+        return "in_progress"
+    if col == TASK_COL_PRODUCT:
+        origin = t.get("origin") or ""
+        if origin in ("stakeholder", "split"):
+            return "descoped"
+        if t.get("state_reason"):
+            return "descoped"
+        return "not_planned"
+    return "other"
+
+
+def _build_task_breakdown(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Плоский список карточек спринта с таймлайном — чего с каждой происходило."""
+    tasks = data.get("tasks", {})
+    days = data.get("days", []) or []
+
+    touches: Dict[str, List[Dict[str, Any]]] = {}
+    for day_h in days:
+        d = day_h.get("day")
+        ev = day_h.get("event") or {}
+        ev_title = ev.get("title") or ""
+        for effect in (ev.get("effects", []) or []):
+            tk = effect.get("task")
+            if isinstance(tk, dict):
+                tk = tk.get("key")
+            if tk and tk in tasks:
+                touches.setdefault(tk, []).append({
+                    "day": d,
+                    "kind": "event",
+                    "sub": effect.get("type", ""),
+                    "label": ev_title,
+                    "detail": effect.get("reason") or "",
+                })
+        alloc = day_h.get("allocation", {}) or {}
+        for k, pts in alloc.items():
+            try:
+                p = int(pts)
+            except Exception:
+                p = 0
+            if p > 0 and k in tasks:
+                touches.setdefault(k, []).append({
+                    "day": d, "kind": "alloc", "sub": "work",
+                    "label": f"+{p} капасити", "detail": "",
+                })
+        dec = day_h.get("decision") or {}
+        dk = dec.get("key")
+        dt = dec.get("task")
+        if dk and dk != "continue" and dt and dt in tasks:
+            touches.setdefault(dt, []).append({
+                "day": d, "kind": "decision", "sub": dk,
+                "label": dk, "detail": "",
+            })
+
+    rows: List[Dict[str, Any]] = []
+    for key, t in tasks.items():
+        bucket = _task_bucket(t)
+        if bucket == "not_planned":
+            continue
+        rows.append({
+            "key": key,
+            "title": t.get("title", key),
+            "bucket": bucket,
+            "core": bool(t.get("core")),
+            "origin": t.get("origin") or "initial",
+            "complexity": int(t.get("complexity", 0)),
+            "extra": int(t.get("extra", 0)),
+            "progress": int(t.get("progress", 0)),
+            "need": _task_need(t),
+            "column": t.get("column"),
+            "state": t.get("state"),
+            "state_reason": t.get("state_reason") or "",
+            "risky": bool(t.get("risky")),
+            "touches": sorted(touches.get(key, []), key=lambda x: (x.get("day") or 0)),
+        })
+
+    bucket_order = {b: i for i, b in enumerate([
+        "done", "review", "in_progress", "blocked", "not_started", "descoped", "other"
+    ])}
+    rows.sort(key=lambda r: (bucket_order.get(r["bucket"], 99), 0 if r["core"] else 1, r["title"]))
+    return rows
+
+
+def _build_review_totals(data: Dict[str, Any], breakdown: List[Dict[str, Any]]) -> Dict[str, Any]:
+    done_pts = sum(r["need"] for r in breakdown if r["bucket"] == "done")
+    scoped_pts = sum(r["need"] for r in breakdown if r["bucket"] != "descoped")
+    extra_pts = sum(r["extra"] for r in breakdown)
+    events_count = sum(1 for d in data.get("days", []) if (d.get("event") or {}).get("key"))
+    decisions_count = sum(
+        1 for d in data.get("days", [])
+        if (d.get("decision") or {}).get("key") and (d.get("decision") or {}).get("key") != "continue"
+    )
+    return {
+        "done_points":     done_pts,
+        "scoped_points":   scoped_pts,
+        "extra_points":    extra_pts,
+        "events_count":    events_count,
+        "decisions_count": decisions_count,
     }
 
 
@@ -905,11 +1056,25 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
     elif dkey == "escalate":
         sk = decision.get("task")
         t = tasks.get(sk) if sk else None
-        if t and t.get("state") == "blocked":
+        if t is None:
+            notes.append("Эскалация не прошла: задача для эскалации не была выбрана")
+        elif t.get("state") != "blocked":
+            notes.append(f"Эскалация: «{t.get('title')}» уже не в блоке — вмешательство сегодня не требуется")
+        else:
             t["state"] = "ok"
             t["state_reason"] = ""
             data["next_day_capacity_mod"] = int(data.get("next_day_capacity_mod", 0)) - 1
-            notes.append(f"Эскалация: разблокировали {t['title']} (−1 капасити завтра)")
+            notes.append(f"Эскалация: разблокировали «{t['title']}» (−1 капасити завтра)")
+            missing_titles = [
+                tasks[d].get("title", d)
+                for d in (t.get("deps") or [])
+                if d in tasks and tasks[d].get("column") not in DEP_READY_COLUMNS
+            ]
+            if missing_titles:
+                notes.append(
+                    "Но начать «" + t["title"] + "» нельзя, пока не поедут: "
+                    + ", ".join(missing_titles)
+                )
 
     if dkey != "swarm":
         for k, pts in allocation.items():
@@ -1137,10 +1302,20 @@ def participant_planning(slug: str):
 
     action = (body.get("action") or "").strip()
     task_key = (body.get("task_key") or "").strip()
+    pulled_chain: List[str] = []
     if action == "pull" and task_key:
         t = data.get("tasks", {}).get(task_key)
         if t and t.get("column") == TASK_COL_PRODUCT:
             t["column"] = TASK_COL_BACKLOG
+    elif action == "pull_chain" and task_key:
+        all_tasks = data.get("tasks", {})
+        to_pull = _collect_dep_chain(all_tasks, task_key, only_from_product=True)
+        for k in to_pull:
+            tt = all_tasks.get(k)
+            if tt and tt.get("column") == TASK_COL_PRODUCT:
+                tt["column"] = TASK_COL_BACKLOG
+                if k != task_key:
+                    pulled_chain.append(k)
     elif action == "push" and task_key:
         t = data.get("tasks", {}).get(task_key)
         if t and t.get("column") == TASK_COL_BACKLOG:
@@ -1151,7 +1326,10 @@ def participant_planning(slug: str):
 
     _touch_participant(data, p)
     _save_state(row, data)
-    return jsonify({"ok": True, "state": _serialize_state(row, data, "ru", token)})
+    resp = {"ok": True, "state": _serialize_state(row, data, "ru", token)}
+    if pulled_chain:
+        resp["pulled_chain"] = pulled_chain
+    return jsonify(resp)
 
 
 @bp_agile_scrum_sim.post("/g/<slug>/planning/confirm")

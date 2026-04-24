@@ -81,9 +81,11 @@ export default {
       this.emit();
     },
     emit() {
-      const clean = this.items
-        .map(t => ({ id: t.id, title: (t.title || '').trim(), note: (t.note || '').trim() }))
-        .filter(t => t.title);
+      const clean = this.items.map(t => ({
+        id: t.id,
+        title: t.title || '',
+        note: t.note || '',
+      }));
       this.$emit('update:tasks', clean);
     },
   },

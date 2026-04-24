@@ -488,16 +488,16 @@
 
         <div class="pt-summary__block">
           <div class="pt-summary__h">🧩 {{ $t('agileTraining.productThinking.summary.tasksTitle') }}</div>
-          <ul v-if="tasks.length">
-            <li v-for="t in tasks" :key="t.id">{{ t.title }}<span v-if="t.note"> — {{ t.note }}</span></li>
+          <ul v-if="nonEmptyTasks.length">
+            <li v-for="t in nonEmptyTasks" :key="t.id">{{ t.title }}<span v-if="t.note"> — {{ t.note }}</span></li>
           </ul>
           <p v-else class="pt-muted">{{ $t('agileTraining.productThinking.compare.empty') }}</p>
         </div>
 
-        <div class="pt-summary__block" v-if="improvedTasks.length">
+        <div class="pt-summary__block" v-if="nonEmptyImprovedTasks.length">
           <div class="pt-summary__h">✨ {{ $t('agileTraining.productThinking.summary.improvedTitle') }}</div>
           <ul>
-            <li v-for="t in improvedTasks" :key="t.id">{{ t.title }}<span v-if="t.note"> — {{ t.note }}</span></li>
+            <li v-for="t in nonEmptyImprovedTasks" :key="t.id">{{ t.title }}<span v-if="t.note"> — {{ t.note }}</span></li>
           </ul>
         </div>
 
@@ -642,11 +642,19 @@ export default {
         : [];
     },
     aiRemaining() { return Math.max(0, this.aiLimit - (this.aiCalls || 0)); },
+    nonEmptyTasks() {
+      return this.tasks.filter(t => (t.title || '').trim());
+    },
+    nonEmptyImprovedTasks() {
+      return this.improvedTasks.filter(t => (t.title || '').trim());
+    },
     tasksAsText() {
-      return this.tasks.map((t, i) => `${i + 1}. ${t.title}${t.note ? ' — ' + t.note : ''}`).join('\n');
+      return this.nonEmptyTasks
+        .map((t, i) => `${i + 1}. ${t.title}${t.note ? ' — ' + t.note : ''}`).join('\n');
     },
     improvedAsText() {
-      return this.improvedTasks.map((t, i) => `${i + 1}. ${t.title}${t.note ? ' — ' + t.note : ''}`).join('\n');
+      return this.nonEmptyImprovedTasks
+        .map((t, i) => `${i + 1}. ${t.title}${t.note ? ' — ' + t.note : ''}`).join('\n');
     },
     todayStr() {
       const d = new Date();
@@ -806,8 +814,12 @@ export default {
           user_story: this.userStory,
           job_story: this.jobStory,
           chosen_technique: this.chosenTechnique,
-          tasks: this.tasks.map(t => ({ title: t.title, note: t.note })),
-          improved_tasks: this.improvedTasks.map(t => ({ title: t.title, note: t.note })),
+          tasks: this.tasks
+            .filter(t => (t.title || '').trim())
+            .map(t => ({ title: (t.title || '').trim(), note: (t.note || '').trim() })),
+          improved_tasks: this.improvedTasks
+            .filter(t => (t.title || '').trim())
+            .map(t => ({ title: (t.title || '').trim(), note: (t.note || '').trim() })),
           notes: this.notes,
         });
         this.savingState = 'saved';

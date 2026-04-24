@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 import jwt
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 from flask_jwt_extended import create_access_token, decode_token, get_jwt_identity, jwt_required
 from sqlalchemy import inspect, text
 
 from database import db
-from models import User, UserInvite
+from models import Assessment, Question, Team, User, UserInvite
 
 
 
@@ -49,6 +49,46 @@ def _valid_email(email: str) -> bool:
 
 def _new_invite_code() -> str:
     return f"{uuid.uuid4().hex}_{secrets.token_urlsafe(12)}"
+
+
+_DEMO_TEAM_SCORE_PATTERN = (3, 3, 4, 3, 4, 3, 4, 3, 3, 4)
+_DEMO_RECOMMENDATIONS_HTML = (
+    "<p><strong>Демо / Demo</strong></p>"
+    "<p>Это пример результатов оценки зрелости — так выглядит отчёт после прохождения опроса. "
+    "Пройдите оценку заново для своей команды, чтобы заменить данные на реальные.</p>"
+    "<p><em>This is sample maturity data. Run the survey for your team to see real scores and recommendations.</em></p>"
+)
+
+
+def _seed_demo_team_with_maturity_assessment(user_id: int) -> None:
+    """Создаёт демо-команду с заполненным опросником зрелости (одна «сессия» оценки)."""
+    questions = Question.query.order_by(Question.id).all()
+    if not questions:
+        return
+    team_name = f"Команда-пример · {user_id}"
+    if Team.query.filter_by(name=team_name).first():
+        return
+    ts = datetime.utcnow()
+    team = Team(name=team_name, user_id=user_id, created_at=ts)
+    db.session.add(team)
+    db.session.flush()
+    first_row = None
+    for i, q in enumerate(questions):
+        score = _DEMO_TEAM_SCORE_PATTERN[i % len(_DEMO_TEAM_SCORE_PATTERN)]
+        row = Assessment(
+            user_id=user_id,
+            team_id=team.id,
+            question_id=q.id,
+            score=score,
+            created_at=ts,
+        )
+        db.session.add(row)
+        if i == 0:
+            first_row = row
+    db.session.flush()
+    if first_row is not None:
+        first_row.recommendations = _DEMO_RECOMMENDATIONS_HTML
+
 
 @bp_auth.route('/register', methods=['POST'])
 def register():
@@ -94,6 +134,13 @@ def register():
     invite.used_at = now
     if invite.use_count >= max_uses:
         invite.status = "used"
+
+    try:
+        with db.session.begin_nested():
+            _seed_demo_team_with_maturity_assessment(int(new_user.id))
+    except Exception as e:
+        current_app.logger.warning("Demo maturity team seed skipped: %s", e)
+
     db.session.commit()
 
     return jsonify({"message": "User registered successfully!"})

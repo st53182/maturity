@@ -705,7 +705,7 @@
     "success": "Регистрация успешна! Теперь вы можете войти в систему.",
     "error": "Ошибка регистрации",
     "unknownError": "Неизвестная ошибка",
-    "beforeRegisterInviteHint": "Нужен код приглашения? Напишите администратору: artjoms.grinakins@gmail.com.\n\nПродолжить регистрацию?"
+    "beforeRegisterInviteHint": "Нужен код приглашения? Напишите администратору: artjoms.grinakins{'@'}gmail.com.\n\nПродолжить регистрацию?"
   },
   "profile": {
     "title": "Мой профиль",

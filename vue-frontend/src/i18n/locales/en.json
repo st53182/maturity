@@ -972,7 +972,7 @@
     "success": "Registration successful! You can now log in.",
     "error": "Registration error",
     "unknownError": "Unknown error",
-    "beforeRegisterInviteHint": "Need an invite code? Email the administrator at artjoms.grinakins@gmail.com to request access.\n\nContinue with registration?"
+    "beforeRegisterInviteHint": "Need an invite code? Email the administrator at artjoms.grinakins{'@'}gmail.com to request access.\n\nContinue with registration?"
   },
   "profile": {
     "title": "My Profile",

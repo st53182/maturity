@@ -67,6 +67,13 @@ ALLOWED_TASK_COLUMNS = {
     TASK_COL_REVIEW, TASK_COL_DONE,
 }
 
+# Задача считается «готовой» как dep, когда её зависимые могут стартовать.
+# Review засчитываем, чтобы не блокировать выбор на день ожидания приёмки
+# (иначе после активной фазы «workable» схлопывается до 1 задачи).
+DEP_READY_COLUMNS = (TASK_COL_DONE, TASK_COL_REVIEW)
+
+RISKY_COMPLEXITY_THRESHOLD = 8
+
 DECISION_KEYS = {
     "continue",        # действовать как запланировали
     "swarm",           # сфокусировать всю команду на одной задаче (+50% к её прогрессу)
@@ -515,11 +522,12 @@ def _initial_state(locale: str = "ru") -> Dict[str, Any]:
     tasks = _tasks_ru() if locale != "en" else _tasks_en()
     task_map = {}
     for t in tasks:
+        complexity = int(t["complexity"])
         task_map[t["key"]] = {
             "key": t["key"],
             "title": t["title"],
             "desc": t["desc"],
-            "complexity": int(t["complexity"]),
+            "complexity": complexity,
             "core": bool(t.get("core", True)),
             "deps": list(t.get("deps", [])),
             "column": TASK_COL_PRODUCT,
@@ -528,6 +536,7 @@ def _initial_state(locale: str = "ru") -> Dict[str, Any]:
             "state": "ok",
             "state_reason": "",
             "origin": t.get("origin", "initial"),
+            "risky": complexity >= RISKY_COMPLEXITY_THRESHOLD,
         }
     return {
         "version": 1,
@@ -557,6 +566,21 @@ def _initial_state(locale: str = "ru") -> Dict[str, Any]:
     }
 
 
+def _ensure_task_invariants(data: Dict[str, Any]) -> None:
+    """Миграция старых state: проставить поля, появившиеся в новых версиях.
+
+    Важно для сессий, которые стартовали до введения `risky` — иначе на фронте
+    бейдж «объёмная» отображаться не будет, пока команда не зарезетит сим.
+    """
+    tasks = data.get("tasks", {}) or {}
+    for t in tasks.values():
+        if "risky" not in t:
+            try:
+                t["risky"] = int(t.get("complexity", 0)) >= RISKY_COMPLEXITY_THRESHOLD
+            except Exception:
+                t["risky"] = False
+
+
 def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingScrumSimState, Dict[str, Any]]:
     row = (
         AgileTrainingScrumSimState.query
@@ -579,6 +603,7 @@ def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingScrumSim
     data = _safe_json_load(row.data_json)
     if not data:
         data = _initial_state("ru")
+    _ensure_task_invariants(data)
     return row, data
 
 
@@ -608,11 +633,18 @@ def _touch_participant(data: Dict[str, Any], p: AgileTrainingParticipant) -> Non
 
 
 def _tasks_deps_done(tasks: Dict[str, Dict[str, Any]], t: Dict[str, Any]) -> bool:
+    """Все ли зависимости задачи готовы для старта.
+
+    Dep считается «готовым», если он в Done или в Review — в реальной стройке
+    смежные бригады часто начинают, пока приёмка идёт параллельно. Это
+    удерживает «что делаем сегодня» содержательным даже на днях, когда много
+    задач висит в Review.
+    """
     for dep in t.get("deps", []) or []:
         dep_task = tasks.get(dep)
         if not dep_task:
             continue
-        if dep_task.get("column") != TASK_COL_DONE:
+        if dep_task.get("column") not in DEP_READY_COLUMNS:
             return False
     return True
 
@@ -676,11 +708,12 @@ def _apply_event_effects(data: Dict[str, Any], event: Dict[str, Any]) -> List[st
             nt = eff.get("task") or {}
             key = nt.get("key")
             if key and key not in tasks:
+                complexity = int(nt.get("complexity", 3))
                 tasks[key] = {
                     "key": key,
                     "title": nt.get("title", key),
                     "desc": nt.get("desc", ""),
-                    "complexity": int(nt.get("complexity", 3)),
+                    "complexity": complexity,
                     "core": bool(nt.get("core", False)),
                     "deps": list(nt.get("deps", [])),
                     "column": TASK_COL_BACKLOG,
@@ -689,6 +722,7 @@ def _apply_event_effects(data: Dict[str, Any], event: Dict[str, Any]) -> List[st
                     "state": "risk",
                     "state_reason": "Добавлена заказчиком в процессе спринта",
                     "origin": nt.get("origin", "stakeholder"),
+                    "risky": complexity >= RISKY_COMPLEXITY_THRESHOLD,
                 }
                 notes.append(f"Новая задача: {tasks[key]['title']}")
     return notes
@@ -831,6 +865,8 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
             half1 = old_complex // 2
             half2 = old_complex - half1
             t["complexity"] = half1
+            t["risky"] = half1 >= RISKY_COMPLEXITY_THRESHOLD
+            t["origin"] = "split"
             new_key = sk + "__b"
             suffix = 2
             while new_key in tasks:
@@ -846,6 +882,7 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
                 "column": TASK_COL_BACKLOG,
                 "progress": 0, "extra": 0, "state": "ok", "state_reason": "",
                 "origin": "split",
+                "risky": half2 >= RISKY_COMPLEXITY_THRESHOLD,
             }
             notes.append(f"Разбили: {t['title']} → 2×")
     elif dkey == "descope":
@@ -897,6 +934,76 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
                 t["column"] = TASK_COL_REVIEW
                 t["state"] = "ok"
                 t["_new_in_review"] = True
+
+    return notes
+
+
+def _maybe_roll_risk(data: Dict[str, Any], group_id: int, day: int) -> List[str]:
+    """Дневной risk-roll на крупных задачах в работе.
+
+    Правила (см. план scrum-sim-choice-and-risk):
+      * кандидаты — в `in_progress`, state in {ok, risk}, complexity ≥ 6;
+      * p = clamp((complexity - 5) * 0.04, 0, 0.25);
+      * split-задача (origin == "split" или ключ содержит "__b") — p *= 0.5;
+      * если `data.quality_buffer > 0` — p *= 0.5 (и буфер расходуется на 1);
+      * первые 2 дня спринта сюрпризов нет (учимся, адаптируемся потом);
+      * максимум 1 сюрприз за день, приоритет — самая крупная задача;
+      * исход 50/50: rework (+2 extra) или короткий block.
+
+    RNG seed = f"{group_id}:{day}" — одинаковый результат для всех игроков команды.
+    """
+    notes: List[str] = []
+    if day <= 2:
+        return notes
+    tasks = data.get("tasks", {}) or {}
+    buffer_left = int(data.get("quality_buffer", 0))
+    rng = random.Random(f"scrum-risk:{group_id}:{day}")
+
+    candidates = []
+    for t in tasks.values():
+        if t.get("column") != TASK_COL_IN_PROGRESS:
+            continue
+        if t.get("state") not in ("ok", "risk"):
+            continue
+        complexity = int(t.get("complexity", 0))
+        if complexity < 6:
+            continue
+        candidates.append(t)
+
+    candidates.sort(key=lambda x: -int(x.get("complexity", 0)))
+
+    fired = False
+    for t in candidates:
+        if fired:
+            break
+        complexity = int(t.get("complexity", 0))
+        p = max(0.0, min(0.25, (complexity - 5) * 0.04))
+        origin = t.get("origin") or ""
+        key = t.get("key") or ""
+        if origin == "split" or "__b" in key:
+            p *= 0.5
+        if buffer_left > 0:
+            p *= 0.5
+        if rng.random() >= p:
+            continue
+
+        outcome = rng.random()
+        if outcome < 0.5:
+            extra = 2
+            t["extra"] = int(t.get("extra", 0)) + extra
+            t["state"] = "rework"
+            t["state_reason"] = "Скрытый дефект — нужна доработка"
+            notes.append(f"Скрытый дефект на «{t.get('title', key)}»: +{extra}п.")
+        else:
+            t["state"] = "blocked"
+            t["state_reason"] = "Непредвиденная мелочь — нужен внешний сигнал"
+            notes.append(f"Неожиданный блок: «{t.get('title', key)}»")
+
+        if buffer_left > 0:
+            buffer_left -= 1
+            data["quality_buffer"] = buffer_left
+            notes.append("Буфер качества смягчил риск и израсходован")
+        fired = True
 
     return notes
 
@@ -1268,6 +1375,10 @@ def day_end(slug: str):
     apply_notes = _apply_allocation_and_decision(data)
 
     day = int(data.get("current_day", 1))
+    risk_notes = _maybe_roll_risk(data, g.id, day)
+    if risk_notes:
+        apply_notes = list(apply_notes) + risk_notes
+
     history_entry = {
         "day": day,
         "event": pending.get("event"),
@@ -1275,6 +1386,7 @@ def day_end(slug: str):
         "decision": pending.get("decision") or {"key": "continue"},
         "capacity_today": _effective_capacity_today(data),
         "apply_notes": apply_notes,
+        "risk_notes": risk_notes,
         "snapshot": _snapshot_board(data),
         "finished_at": _now_iso(),
     }

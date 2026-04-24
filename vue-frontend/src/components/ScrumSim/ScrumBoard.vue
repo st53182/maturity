@@ -33,6 +33,11 @@
             <span v-else class="sb__badge sb__badge--opt">{{ $t('agileTraining.scrumSim.optional') }}</span>
             <span v-if="t.origin === 'stakeholder'" class="sb__badge sb__badge--new">{{ $t('agileTraining.scrumSim.fromStakeholder') }}</span>
             <span v-if="t.origin === 'split'" class="sb__badge sb__badge--split">{{ $t('agileTraining.scrumSim.split') }}</span>
+            <span
+              v-if="showRiskyBadge(t)"
+              class="sb__badge sb__badge--risky"
+              :title="$t('agileTraining.scrumSim.riskyHint')"
+            >⚠ {{ $t('agileTraining.scrumSim.badges.risky') }}</span>
           </div>
           <div v-if="showProgress(t)" class="sb__card-progress">
             <div class="sb__progress">
@@ -119,14 +124,18 @@ export default {
       if (t.column === "done" || t.column === "product") return false;
       return t.deps.some(d => {
         const dep = this.taskMap[d];
-        return dep && dep.column !== "done";
+        return dep && !["done", "review"].includes(dep.column);
       });
     },
     missingDeps(t) {
       return (t.deps || []).filter(d => {
         const dep = this.taskMap[d];
-        return dep && dep.column !== "done";
+        return dep && !["done", "review"].includes(dep.column);
       });
+    },
+    showRiskyBadge(t) {
+      if (!t || !t.risky) return false;
+      return !["done", "product"].includes(t.column || "");
     },
     titleOf(key) {
       const t = this.taskMap[key];
@@ -240,6 +249,12 @@ export default {
 .sb__badge--opt   { background: #f1f5f9; color: #475569; }
 .sb__badge--new   { background: #fce7f3; color: #be185d; }
 .sb__badge--split { background: #ecfccb; color: #4d7c0f; }
+.sb__badge--risky {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+  cursor: help;
+}
 
 .sb__card-progress { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
 .sb__progress { flex: 1; height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }

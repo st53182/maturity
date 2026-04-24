@@ -2934,6 +2934,11 @@
       "unused": "free: {n}",
       "eventEffects": "Effects on the board",
       "eventPopupCta": "Discuss at Daily",
+      "waitingHint": "{count} more tasks are waiting for Review to finish: {names}. Once accepted, they'll show up here.",
+      "badges": {
+        "risky": "large"
+      },
+      "riskyHint": "A big task carries a higher risk of a hidden defect or a block. Consider splitting it and investing in quality.",
       "askAi": "Ask the AI coach",
       "aiHelperTitle": "AI coach (Scrum)",
       "aiPh": "What to ask? Is the team stuck?",

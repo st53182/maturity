@@ -187,6 +187,15 @@
                 <span class="sp__cap-chip">⚡ {{ state.capacity_today }} {{ content.labels.points }}</span>
               </h4>
               <p class="sp__hint">{{ $t('agileTraining.scrumSim.allocHint') }}</p>
+              <div v-if="showWaitingHint" class="sp__waiting-hint">
+                <span class="sp__waiting-icon">⏳</span>
+                <span>
+                  {{ $t('agileTraining.scrumSim.waitingHint', {
+                    count: waitingTasks.length,
+                    names: waitingBlockerTitles.join(', '),
+                  }) }}
+                </span>
+              </div>
               <div v-if="workableTasks.length === 0" class="sp__empty-block">
                 {{ $t('agileTraining.scrumSim.noWorkable') }}
               </div>
@@ -621,9 +630,51 @@ export default {
       return allTasks.filter(t => {
         if (!['backlog', 'in_progress'].includes(t.column)) return false;
         if (t.state === 'blocked') return false;
-        const depsDone = (t.deps || []).every(d => (byKey[d] && byKey[d].column === 'done'));
-        return depsDone;
+        const depsReady = (t.deps || []).every(d => {
+          const dep = byKey[d];
+          if (!dep) return true;
+          return ['done', 'review'].includes(dep.column);
+        });
+        return depsReady;
       });
+    },
+    waitingTasks() {
+      if (!this.state) return [];
+      const allTasks = this.state.tasks || [];
+      const byKey = Object.fromEntries(allTasks.map(t => [t.key, t]));
+      return allTasks
+        .filter(t => {
+          if (!['backlog', 'in_progress'].includes(t.column)) return false;
+          if (t.state === 'blocked') return false;
+          return (t.deps || []).some(d => {
+            const dep = byKey[d];
+            return dep && !['done', 'review'].includes(dep.column);
+          });
+        })
+        .map(t => ({
+          key: t.key,
+          title: t.title,
+          blockers: (t.deps || [])
+            .map(d => byKey[d])
+            .filter(dep => dep && !['done', 'review'].includes(dep.column))
+            .map(dep => ({ key: dep.key, title: dep.title, column: dep.column })),
+        }));
+    },
+    waitingBlockerTitles() {
+      const seen = new Set();
+      const titles = [];
+      for (const w of this.waitingTasks) {
+        for (const b of w.blockers) {
+          if (seen.has(b.key)) continue;
+          seen.add(b.key);
+          titles.push(b.title);
+          if (titles.length >= 3) return titles;
+        }
+      }
+      return titles;
+    },
+    showWaitingHint() {
+      return this.waitingTasks.length > 0 && this.workableTasks.length < 3;
     },
     allocTotal() {
       return Object.values(this.allocDraft).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -1277,6 +1328,18 @@ export default {
   padding: 8px 12px; border-radius: 10px; font-size: 13px; margin-top: 10px;
 }
 .sp__empty-block { color: #94a3b8; font-size: 13px; padding: 16px; text-align: center; background: #f8fafc; border-radius: 8px; }
+.sp__waiting-hint {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: 6px 0 10px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sp__waiting-icon { font-size: 14px; flex-shrink: 0; }
 
 .sp__review-metrics {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

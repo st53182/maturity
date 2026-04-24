@@ -6,7 +6,7 @@ API под префиксом `/api/agile-training/scrum-sim`.
 одна запись `AgileTrainingScrumSimState` на группу (uniq по group_id),
 все действия участников её изменяют, клиенты поллят `/state`.
 
-Контекст — ремонт квартиры под сдачу (не-IT), 5 рабочих дней.
+Контекст — ремонт квартиры под сдачу (не-IT), 10 рабочих дней.
 Каждый день: событие → обновление доски → daily → решение → обновление → конец дня.
 """
 
@@ -39,9 +39,9 @@ bp_agile_scrum_sim = Blueprint(
 
 AI_CALLS_LIMIT_PER_PARTICIPANT = 10
 AI_PROMPT_LIMIT_CHARS = 1800
-SPRINT_DAYS = 5
+SPRINT_DAYS = 10
 BASE_DAILY_CAPACITY = 6
-MAX_ALLOCATION_TASKS = 4
+MAX_ALLOCATION_TASKS = 6
 
 PHASE_LOBBY = "lobby"
 PHASE_PLANNING = "planning"
@@ -51,7 +51,7 @@ PHASE_SUMMARY = "summary"
 
 ALLOWED_PHASES = {
     PHASE_LOBBY, PHASE_PLANNING, PHASE_REVIEW, PHASE_RETRO, PHASE_SUMMARY,
-    "day_1", "day_2", "day_3", "day_4", "day_5",
+    *{f"day_{i}" for i in range(1, SPRINT_DAYS + 1)},
 }
 
 ALLOWED_ROLES = {"product_owner", "scrum_master", "developer"}
@@ -81,42 +81,51 @@ DECISION_KEYS = {
 
 
 def _tasks_ru() -> List[Dict[str, Any]]:
-    """Пресет backlog для ремонта квартиры. Ключи стабильные, чтобы ссылаться в событиях."""
+    """Пресет backlog для ремонта квартиры. Ключи стабильные, чтобы ссылаться в событиях.
+
+    Задачи подобраны так, чтобы каждая занимала несколько дней работы команды
+    (complexity 3–12 пунктов при 6 капасити/день × 10 дней = 60). Суммарно core
+    задач больше мощности — команде придётся договариваться про descope.
+    """
     return [
-        {"key": "demo_tiles",      "title": "Демонтаж старой плитки",           "desc": "Снять плитку в ванной и коридоре", "complexity": 2, "core": True,  "deps": []},
-        {"key": "strobe_walls",    "title": "Штробление стен под проводку",     "desc": "Подготовить каналы под кабели",    "complexity": 3, "core": True,  "deps": []},
-        {"key": "electrical",      "title": "Прокладка электрики",              "desc": "Кабели, подрозетники, щит",        "complexity": 4, "core": True,  "deps": ["strobe_walls"]},
-        {"key": "plumbing_rough",  "title": "Черновая сантехника",              "desc": "Трубы и слив в стяжке",            "complexity": 3, "core": True,  "deps": ["demo_tiles"]},
-        {"key": "tiles_bathroom",  "title": "Укладка плитки в ванной",          "desc": "Пол и стены в санузле",            "complexity": 5, "core": True,  "deps": ["plumbing_rough", "electrical"]},
-        {"key": "drywall",         "title": "Шпаклёвка стен",                   "desc": "Выравнивание стен под покраску",   "complexity": 4, "core": True,  "deps": ["strobe_walls"]},
-        {"key": "paint",           "title": "Покраска стен",                    "desc": "Финишное покрытие",                "complexity": 3, "core": True,  "deps": ["drywall"]},
-        {"key": "ceiling_stretch", "title": "Натяжные потолки",                 "desc": "Монтаж полотна и светильников",    "complexity": 3, "core": True,  "deps": ["electrical"]},
-        {"key": "laminate",        "title": "Укладка ламината",                 "desc": "Пол во всех жилых комнатах",       "complexity": 3, "core": True,  "deps": ["drywall", "ceiling_stretch"]},
-        {"key": "plumbing_finish", "title": "Чистовая сантехника",              "desc": "Смесители, унитаз, раковина",      "complexity": 3, "core": True,  "deps": ["tiles_bathroom"]},
-        {"key": "kitchen_install", "title": "Сборка кухни",                     "desc": "Монтаж гарнитура и подключение",   "complexity": 5, "core": True,  "deps": ["electrical", "laminate"]},
-        {"key": "cleaning",        "title": "Финальная уборка",                 "desc": "Очистить квартиру от строй-пыли",  "complexity": 2, "core": True,  "deps": ["paint", "laminate", "plumbing_finish"]},
-        {"key": "curtains",        "title": "Карнизы и шторы",                  "desc": "Закрыть окна, придать уют",        "complexity": 1, "core": False, "deps": ["paint"]},
-        {"key": "photo_shoot",     "title": "Фотосессия для объявления",        "desc": "Снять квартиру для публикации",    "complexity": 2, "core": False, "deps": ["cleaning"]},
+        {"key": "demo_tiles",      "title": "Демонтаж старой плитки",           "desc": "Снять плитку в ванной, коридоре, вывезти мусор",     "complexity": 4,  "core": True,  "deps": []},
+        {"key": "strobe_walls",    "title": "Штробление стен под проводку",     "desc": "Подготовить каналы под кабели во всей квартире",     "complexity": 6,  "core": True,  "deps": []},
+        {"key": "electrical",      "title": "Прокладка электрики",              "desc": "Кабели, подрозетники, щит, розетки и выключатели",   "complexity": 10, "core": True,  "deps": ["strobe_walls"]},
+        {"key": "plumbing_rough",  "title": "Черновая сантехника",              "desc": "Трубы, слив, стяжка пола в мокрых зонах",            "complexity": 6,  "core": True,  "deps": ["demo_tiles"]},
+        {"key": "tiles_bathroom",  "title": "Укладка плитки в ванной",          "desc": "Пол и стены в санузле, подрезка, затирка",           "complexity": 12, "core": True,  "deps": ["plumbing_rough", "electrical"]},
+        {"key": "drywall",         "title": "Шпаклёвка стен",                   "desc": "Выравнивание стен и потолка под покраску",           "complexity": 9,  "core": True,  "deps": ["strobe_walls"]},
+        {"key": "paint",           "title": "Покраска стен",                    "desc": "Финишное покрытие — два слоя",                        "complexity": 7,  "core": True,  "deps": ["drywall"]},
+        {"key": "ceiling_stretch", "title": "Натяжные потолки",                 "desc": "Монтаж полотна и светильников",                       "complexity": 5,  "core": True,  "deps": ["electrical"]},
+        {"key": "laminate",        "title": "Укладка ламината",                 "desc": "Пол во всех жилых комнатах + плинтус",               "complexity": 8,  "core": True,  "deps": ["drywall", "ceiling_stretch"]},
+        {"key": "plumbing_finish", "title": "Чистовая сантехника",              "desc": "Смесители, унитаз, раковина, душевая стойка",        "complexity": 5,  "core": True,  "deps": ["tiles_bathroom"]},
+        {"key": "kitchen_install", "title": "Сборка кухни",                     "desc": "Монтаж гарнитура, подключение техники и мойки",      "complexity": 12, "core": True,  "deps": ["electrical", "laminate"]},
+        {"key": "cleaning",        "title": "Финальная уборка",                 "desc": "Очистить квартиру от строй-пыли, вывезти отходы",    "complexity": 3,  "core": True,  "deps": ["paint", "laminate", "plumbing_finish"]},
+        {"key": "curtains",        "title": "Карнизы и шторы",                  "desc": "Закрыть окна, придать уют, повесить шторы",          "complexity": 2,  "core": False, "deps": ["paint"]},
+        {"key": "photo_shoot",     "title": "Фотосессия для объявления",        "desc": "Снять квартиру для публикации объявления",           "complexity": 3,  "core": False, "deps": ["cleaning"]},
+        {"key": "smart_home",      "title": "Умный дом (базовый набор)",        "desc": "Умные розетки и датчик протечки — бонус для жильцов", "complexity": 5,  "core": False, "deps": ["electrical"]},
+        {"key": "balcony_glazing", "title": "Остекление балкона",               "desc": "Тёплое остекление и отделка балкона",                "complexity": 6,  "core": False, "deps": []},
     ]
 
 
 def _tasks_en() -> List[Dict[str, Any]]:
     base = _tasks_ru()
     t_en = {
-        "demo_tiles":      ("Demolish old tiles",           "Remove tiles in the bathroom and hallway"),
-        "strobe_walls":    ("Chase walls for wiring",       "Prepare channels for cables"),
-        "electrical":      ("Electrical wiring",            "Cables, outlets, distribution box"),
-        "plumbing_rough":  ("Rough plumbing",               "Pipes and drain embedded in screed"),
-        "tiles_bathroom":  ("Bathroom tiling",              "Floor and walls in the bathroom"),
-        "drywall":         ("Plastering walls",             "Level walls for painting"),
-        "paint":           ("Painting walls",               "Final coat"),
+        "demo_tiles":      ("Demolish old tiles",           "Remove tiles in bathroom and hallway, haul away debris"),
+        "strobe_walls":    ("Chase walls for wiring",       "Prepare channels for cables across the flat"),
+        "electrical":      ("Electrical wiring",            "Cables, outlets, distribution box, sockets and switches"),
+        "plumbing_rough":  ("Rough plumbing",               "Pipes, drain and floor screed in wet zones"),
+        "tiles_bathroom":  ("Bathroom tiling",              "Floor and walls in the bathroom, cuts, grouting"),
+        "drywall":         ("Plastering walls",             "Level walls and ceiling for painting"),
+        "paint":           ("Painting walls",               "Final coat — two layers"),
         "ceiling_stretch": ("Stretch ceiling install",      "Mount the canvas and lights"),
-        "laminate":        ("Laminate flooring",            "Floor for all living rooms"),
-        "plumbing_finish": ("Finish plumbing",              "Faucets, toilet, sink"),
-        "kitchen_install": ("Kitchen installation",         "Assemble kitchen units and connect"),
-        "cleaning":        ("Final cleanup",                "Clean the flat after construction dust"),
-        "curtains":        ("Cornices and curtains",        "Close windows, add coziness"),
-        "photo_shoot":     ("Photo shoot for the listing",  "Photograph the flat for publication"),
+        "laminate":        ("Laminate flooring",            "Floor in all rooms + skirting"),
+        "plumbing_finish": ("Finish plumbing",              "Faucets, toilet, sink, shower column"),
+        "kitchen_install": ("Kitchen installation",         "Assemble the kitchen, hook up appliances and sink"),
+        "cleaning":        ("Final cleanup",                "Clean the flat of construction dust and waste"),
+        "curtains":        ("Cornices and curtains",        "Close windows, add coziness, hang curtains"),
+        "photo_shoot":     ("Photo shoot for the listing",  "Photograph the flat for the listing"),
+        "smart_home":      ("Smart home (starter kit)",     "Smart sockets and a leak sensor — a tenant bonus"),
+        "balcony_glazing": ("Balcony glazing",              "Warm glazing and balcony finish"),
     }
     out: List[Dict[str, Any]] = []
     for t in base:
@@ -126,19 +135,32 @@ def _tasks_en() -> List[Dict[str, Any]]:
 
 
 def _events_ru() -> List[Dict[str, Any]]:
+    """8 событий на 10 дней (дни 3 и 8 — спокойные).
+
+    Формат: {key, day, title, description, effects[]}. Эффекты — см. `_apply_event_effects`.
+    """
     return [
         {
             "key": "material_delay",
             "day": 1,
             "title": "Поставка плитки задерживается",
-            "description": "Поставщик сообщил: плитка приедет на 2 дня позже. Задачи, связанные с плиткой, замораживаются до разблокировки.",
+            "description": "Поставщик сообщил: плитка приедет позже обещанного. Задачи, связанные с плиткой, замораживаются до разблокировки.",
             "effects": [
                 {"type": "block", "task": "tiles_bathroom", "reason": "Нет плитки на складе"}
             ],
         },
         {
-            "key": "worker_sick",
+            "key": "weather_rain",
             "day": 2,
+            "title": "Ливень, квартира промокла",
+            "description": "Дождь зашёл через вентиляцию — пол мокрый, маляры не могут работать. Сегодня мощность команды ниже.",
+            "effects": [
+                {"type": "capacity_delta", "delta": -2, "day_only": True}
+            ],
+        },
+        {
+            "key": "worker_sick",
+            "day": 4,
             "title": "Один из мастеров заболел",
             "description": "Команда сегодня меньше. Дневная мощность снижена на 2 пункта.",
             "effects": [
@@ -147,18 +169,46 @@ def _events_ru() -> List[Dict[str, Any]]:
         },
         {
             "key": "hidden_defect",
-            "day": 3,
+            "day": 5,
             "title": "Скрытый дефект стены",
-            "description": "За шпаклёвкой обнаружены трещины. Задачу «Шпаклёвка стен» нужно переделать частично.",
+            "description": "За шпаклёвкой обнаружены трещины. Задачу «Шпаклёвка стен» нужно переделать частично — появился дополнительный объём работы.",
             "effects": [
                 {"type": "rework", "task": "drywall", "extra": 3}
             ],
         },
         {
+            "key": "supplier_ahead",
+            "day": 6,
+            "title": "Поставщик нагоняет срыв",
+            "description": "Плитка приехала раньше, чем обещали, а бригада на соседнем объекте закончила пораньше и готова помочь. Мощность сегодня выше, и блок по плитке снят.",
+            "effects": [
+                {"type": "unblock", "task": "tiles_bathroom"},
+                {"type": "capacity_delta", "delta": 2, "day_only": True},
+            ],
+        },
+        {
+            "key": "inspector_visit",
+            "day": 7,
+            "title": "Визит инспектора",
+            "description": "Инспектор нашёл недочёты в монтажной схеме кухни. Задачу по сборке кухни нужно будет частично переделать — объём работ вырос.",
+            "effects": [
+                {"type": "rework", "task": "kitchen_install", "extra": 2}
+            ],
+        },
+        {
+            "key": "subcontractor_noshow",
+            "day": 9,
+            "title": "Субподрядчик не вышел",
+            "description": "Сантехники-чистовики не приехали — у них форс-мажор на другом объекте. «Чистовая сантехника» заблокирована, пока SM не решит вопрос через эскалацию.",
+            "effects": [
+                {"type": "block", "task": "plumbing_finish", "reason": "Субподрядчик не вышел"},
+            ],
+        },
+        {
             "key": "urgent_change",
-            "day": 4,
+            "day": 10,
             "title": "Срочный запрос от заказчика",
-            "description": "Заказчик хочет добавить тёплый пол в ванную. Появилась новая задача. Решите — брать или отказать.",
+            "description": "Заказчик хочет добавить тёплый пол в ванную. Появилась новая задача — PO должен решить, брать её в спринт или отказаться.",
             "effects": [
                 {"type": "add_task", "task": {
                     "key": "warm_floor",
@@ -169,26 +219,20 @@ def _events_ru() -> List[Dict[str, Any]]:
                 }},
             ],
         },
-        {
-            "key": "good_news",
-            "day": 5,
-            "title": "Поставщик нагоняет срыв",
-            "description": "Плитка приехала раньше, чем обещали. Блок снят с задачи плиточника.",
-            "effects": [
-                {"type": "unblock", "task": "tiles_bathroom"},
-            ],
-        },
     ]
 
 
 def _events_en() -> List[Dict[str, Any]]:
     base = _events_ru()
     tr = {
-        "material_delay":  ("Tile delivery delayed",           "The supplier said tiles will arrive 2 days late. Tile-related tasks are frozen until unblocked."),
-        "worker_sick":     ("One of the workers is sick",      "The team is smaller today. Daily capacity is reduced by 2 points."),
-        "hidden_defect":   ("Hidden wall defect",              "Behind the plaster there are cracks. Plastering has to be partly redone."),
-        "urgent_change":   ("Urgent change request",           "The client wants to add underfloor heating in the bathroom. A new task appeared. Decide whether to take it on."),
-        "good_news":       ("Supplier recovers the delay",     "Tiles arrived earlier than promised. The block on the tiler's task is lifted."),
+        "material_delay":       ("Tile delivery delayed",            "The supplier said tiles will arrive late. Tile-related tasks are frozen until unblocked."),
+        "weather_rain":         ("Heavy rain — flat is wet",         "Rain came through the vent — the floor is wet, painters can't work. Capacity is lower today."),
+        "worker_sick":          ("One of the workers is sick",       "The team is smaller today. Daily capacity is reduced by 2 points."),
+        "hidden_defect":        ("Hidden wall defect",               "Behind the plaster there are cracks. Plastering has to be partly redone — extra work has appeared."),
+        "supplier_ahead":       ("Supplier recovers the delay",      "Tiles arrived earlier than promised and a crew from a neighbouring site is free to help. Capacity is up today, and the tile block is lifted."),
+        "inspector_visit":      ("Inspector visit",                  "The inspector found issues in the kitchen installation. The kitchen task has extra work now."),
+        "subcontractor_noshow": ("Subcontractor didn't show up",     "The finish-plumbing crew didn't arrive — emergency on another site. \"Finish plumbing\" is blocked until the SM escalates it."),
+        "urgent_change":        ("Urgent change request",            "The client wants underfloor heating in the bathroom. A new task appeared — the PO must decide whether to take it on."),
     }
     out: List[Dict[str, Any]] = []
     for e in base:
@@ -211,23 +255,34 @@ def _events_en() -> List[Dict[str, Any]]:
 
 
 def _decisions_ru() -> List[Dict[str, Any]]:
+    """Решения дня. `allowed_roles` определяет, кто из команды вправе его утвердить.
+
+    Если в команде никто не взял ни одну из `allowed_roles`, решение разрешается
+    любому участнику (graceful fallback, чтобы команда без выбранных ролей не застряла).
+    """
     return [
         {"key": "continue",        "title": "Работаем как договорились",
-         "desc": "Не меняем план на сегодня — просто распределим капасити по выбранным задачам."},
+         "desc": "Не меняем план на сегодня — просто распределим капасити по выбранным задачам.",
+         "allowed_roles": ["developer", "scrum_master", "product_owner"]},
         {"key": "swarm",           "title": "Сварм (все на одну задачу)",
          "desc": "Сегодня вся команда фокусируется на одной задаче — её прогресс +50%. Другие задачи сегодня не двигаются.",
-         "needs_task": True},
+         "needs_task": True,
+         "allowed_roles": ["scrum_master"]},
         {"key": "split_task",      "title": "Разбить большую задачу",
          "desc": "Большую задачу делим на две меньшие — легче вмешиваться и выкатывать кусками.",
-         "needs_task": True},
+         "needs_task": True,
+         "allowed_roles": ["developer"]},
         {"key": "descope",         "title": "Убрать задачу из спринта",
          "desc": "Если не успеваем — возвращаем задачу в Product Backlog. Честнее, чем тянуть до последнего.",
-         "needs_task": True},
+         "needs_task": True,
+         "allowed_roles": ["product_owner"]},
         {"key": "buffer_quality",  "title": "Вложиться в качество",
-         "desc": "Сегодня тратим 1 капасити на контроль качества. Снижает вероятность «скрытых дефектов» в следующие дни."},
+         "desc": "Сегодня тратим 1 капасити на контроль качества. Снижает вероятность «скрытых дефектов» в следующие дни.",
+         "allowed_roles": ["developer"]},
         {"key": "escalate",        "title": "Эскалация / внешний ресурс",
          "desc": "Привлекаем снаружи (PO идёт к заказчику / SM пробивает поставщика). Разблокируем одну заблокированную задачу ценой −1 капасити завтра.",
-         "needs_task": True},
+         "needs_task": True,
+         "allowed_roles": ["scrum_master"]},
     ]
 
 
@@ -283,13 +338,14 @@ def _improvements_en() -> List[Dict[str, Any]]:
 CONTENT = {
     "ru": {
         "context": {
-            "title": "Ремонт квартиры под сдачу, 5 дней",
+            "title": "Ремонт квартиры под сдачу, 10 дней",
             "story": [
-                "Вы — команда, которая взялась сделать ремонт в квартире за 5 рабочих дней. Квартиру потом будут сдавать в аренду.",
+                "Вы — команда, которая взялась сделать ремонт в квартире за 10 рабочих дней (2 календарные недели). Квартиру потом будут сдавать в аренду.",
                 "В команде несколько мастеров, PO (общается с заказчиком) и SM (убирает препятствия). Задачи зависят друг от друга: нельзя класть плитку, пока не сделана черновая сантехника.",
-                "Каждый день происходит что-то неожиданное — болезни, задержки поставок, запросы заказчика. Вам нужно адаптироваться, не теряя цель спринта.",
+                "Каждый день может случиться что-то неожиданное — болезни, задержки поставок, запросы заказчика. Вам нужно адаптироваться, не теряя цель спринта.",
+                "Распределение ролей важно: только PO может убрать задачу из спринта, только SM — сделать сварм или эскалировать блок, разработчики сами разбивают задачи и решают, заложить ли буфер на качество.",
             ],
-            "sprint_goal_hint": "Сформулируйте короткую цель спринта: что заказчик должен увидеть в пятницу вечером, чтобы сказать «отлично»?",
+            "sprint_goal_hint": "Сформулируйте короткую цель спринта: что заказчик должен увидеть через 2 недели, чтобы сказать «отлично»?",
             "columns": [
                 {"key": "product",     "label": "Product Backlog"},
                 {"key": "backlog",     "label": "Sprint Backlog"},
@@ -338,13 +394,14 @@ CONTENT = {
     },
     "en": {
         "context": {
-            "title": "Renovating a flat for rent, 5 days",
+            "title": "Renovating a flat for rent, 10 days",
             "story": [
-                "You are a team taking on the renovation of a flat in 5 working days. After that, the flat will be rented out.",
+                "You are a team taking on the renovation of a flat in 10 working days (two calendar weeks). After that, the flat will be rented out.",
                 "The team has several craftspeople, a PO (talks to the client) and an SM (removes obstacles). Tasks depend on each other: you can't tile until rough plumbing is done.",
-                "Every day something unexpected happens — sick days, delivery delays, client requests. You have to adapt without losing the sprint goal.",
+                "Every day something unexpected can happen — sick days, delivery delays, client requests. You have to adapt without losing the sprint goal.",
+                "Roles matter: only the PO can drop a task from the sprint, only the SM can swarm or escalate a block, developers split tasks and decide whether to buffer quality.",
             ],
-            "sprint_goal_hint": "Write a short Sprint Goal: what should the client see on Friday evening to say \"great\"?",
+            "sprint_goal_hint": "Write a short Sprint Goal: what should the client see in 2 weeks to say \"great\"?",
             "columns": [
                 {"key": "product",     "label": "Product Backlog"},
                 {"key": "backlog",     "label": "Sprint Backlog"},
@@ -603,8 +660,9 @@ def _apply_event_effects(data: Dict[str, Any], event: Dict[str, Any]) -> List[st
                 t["extra"] = int(t.get("extra", 0)) + extra
                 t["state"] = "rework"
                 t["state_reason"] = "Требуется переделать часть работы"
-                if t.get("column") == TASK_COL_REVIEW:
+                if t.get("column") in (TASK_COL_REVIEW, TASK_COL_DONE):
                     t["column"] = TASK_COL_IN_PROGRESS
+                    t.pop("_new_in_review", None)
                 notes.append(f"Переделка: {t['title']} +{extra}п.")
         elif etype == "capacity_delta":
             delta = int(eff.get("delta", 0))
@@ -694,8 +752,36 @@ def _compute_review(data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _task_need(t: Dict[str, Any]) -> int:
+    """Сколько всего пунктов нужно для задачи (complexity + extra от reworks)."""
+    return max(0, int(t.get("complexity", 0)) + int(t.get("extra", 0)))
+
+
+def _add_progress_capped(t: Dict[str, Any], delta: int) -> int:
+    """Добавить прогресс задаче с кэпом по `need`. Возвращает фактически добавленный дельта.
+
+    Это решает визуальный баг «need = −2»: прогресс никогда не превышает `need`.
+    Лишние пункты капасити считаются потерянными (переходят в notes вызывающим кодом).
+    """
+    if delta <= 0:
+        return 0
+    need = _task_need(t)
+    cur = int(t.get("progress", 0))
+    nxt = min(need, cur + int(delta))
+    t["progress"] = nxt
+    return max(0, nxt - cur)
+
+
 def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
-    """Применить сегодняшние allocation + decision к задачам. Вернуть заметки."""
+    """Применить сегодняшние allocation + decision к задачам. Вернуть заметки.
+
+    Важные инварианты:
+      * прогресс задачи никогда не превышает `need` (complexity + extra);
+      * задача, переехавшая в Review сегодня, помечается `_new_in_review=True`
+        и сдвигается в Done только на СЛЕДУЮЩЕМ вызове (т.е. через 1 день);
+      * при swarm допускается исчерпание капасити + 50% бонус, но также кэпируется
+        по потребности задачи.
+    """
     notes: List[str] = []
     tasks = data["tasks"]
     pending = data.get("pending_day", {}) or {}
@@ -728,9 +814,12 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
         sk = decision.get("task") or pending.get("swarm_task")
         t = tasks.get(sk) if sk else None
         if t and _is_workable(tasks, t):
-            allocation = {sk: cap_today}
-            t["progress"] = int(t.get("progress", 0)) + int(cap_today * 1.5)
-            notes.append(f"Сварм: {t['title']} (+{int(cap_today * 1.5)}п.)")
+            swarm_delta = int(cap_today * 1.5)
+            actually = _add_progress_capped(t, swarm_delta)
+            allocation = {sk: min(cap_today, actually)}
+            if t.get("column") == TASK_COL_BACKLOG:
+                t["column"] = TASK_COL_IN_PROGRESS
+            notes.append(f"Сварм: {t['title']} (+{actually}п.)")
             used = cap_today
         else:
             dkey = "continue"
@@ -792,23 +881,22 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
                 continue
             if not _is_workable(tasks, t):
                 continue
-            t["progress"] = int(t.get("progress", 0)) + int(pts)
+            _add_progress_capped(t, int(pts))
             if t.get("column") == TASK_COL_BACKLOG:
                 t["column"] = TASK_COL_IN_PROGRESS
 
     for t in tasks.values():
-        if t.get("column") in (TASK_COL_IN_PROGRESS,) and t.get("state") != "blocked":
-            need = int(t.get("complexity", 0)) + int(t.get("extra", 0))
-            if int(t.get("progress", 0)) >= need:
-                t["column"] = TASK_COL_REVIEW
-                t["state"] = "ok"
-
-    for t in tasks.values():
-        if t.get("column") == TASK_COL_REVIEW and not t.get("_new_in_review"):
+        if t.get("column") == TASK_COL_REVIEW and t.get("_new_in_review"):
             t["column"] = TASK_COL_DONE
             t["state"] = "done"
+            t.pop("_new_in_review", None)
+
     for t in tasks.values():
-        t.pop("_new_in_review", None)
+        if t.get("column") == TASK_COL_IN_PROGRESS and t.get("state") != "blocked":
+            if int(t.get("progress", 0)) >= _task_need(t):
+                t["column"] = TASK_COL_REVIEW
+                t["state"] = "ok"
+                t["_new_in_review"] = True
 
     return notes
 
@@ -821,6 +909,7 @@ def _serialize_state(row: AgileTrainingScrumSimState, data: Dict[str, Any], loca
         "version": int(data.get("version", 0)),
         "phase": data.get("phase", PHASE_LOBBY),
         "current_day": int(data.get("current_day", 0)),
+        "sprint_days": SPRINT_DAYS,
         "paused": bool(data.get("paused", False)),
         "sprint_goal": data.get("sprint_goal", ""),
         "team_capacity_per_day": int(data.get("team_capacity_per_day", BASE_DAILY_CAPACITY)),
@@ -831,6 +920,7 @@ def _serialize_state(row: AgileTrainingScrumSimState, data: Dict[str, Any], loca
         "roles": data.get("roles", {}),
         "days": data.get("days", []),
         "pending_day": data.get("pending_day", {}),
+        "priority_order": data.get("priority_order", []),
         "retro_picks": data.get("retro_picks", []),
         "review_metrics": data.get("review_metrics"),
         "notes": data.get("notes", {}),
@@ -1062,6 +1152,9 @@ def day_allocate(slug: str):
             p_ = 0
         if not _is_workable(tasks, t):
             p_ = 0
+        need_left = max(0, _task_need(t) - int(t.get("progress", 0)))
+        if p_ > need_left:
+            p_ = need_left
         if p_ > 0:
             clean[k] = p_
             total += p_
@@ -1070,10 +1163,52 @@ def day_allocate(slug: str):
         for k in list(clean.keys()):
             clean[k] = int(clean[k] * factor)
     pending["allocation"] = clean
+
+    priority_raw = body.get("priority_order")
+    if isinstance(priority_raw, list):
+        cleaned_order = [k for k in priority_raw if isinstance(k, str) and k in tasks]
+        seen = set()
+        dedup: List[str] = []
+        for k in cleaned_order:
+            if k in seen:
+                continue
+            seen.add(k)
+            dedup.append(k)
+        data["priority_order"] = dedup
+
     if p:
         _touch_participant(data, p)
     _save_state(row, data)
     return jsonify({"ok": True, "state": _serialize_state(row, data, "ru", token)})
+
+
+def _decision_allowed_roles(dkey: str) -> List[str]:
+    """Достать allowed_roles из определения решения (на русском, т.к. ключи общие)."""
+    for d in _decisions_ru():
+        if d.get("key") == dkey:
+            return list(d.get("allowed_roles") or [])
+    return []
+
+
+def _check_role_for_decision(data: Dict[str, Any], token: str, dkey: str) -> Tuple[bool, List[str]]:
+    """Проверить, может ли токен утвердить решение `dkey`.
+
+    Возвращает (ok, required_roles). Правила:
+      * если у решения нет `allowed_roles` или оно не указано — ok=True
+      * если у участника роль входит в allowed_roles — ok=True
+      * если НИКТО в команде не взял ни одну из allowed_roles — ok=True (fallback)
+      * иначе — ok=False и список required_roles
+    """
+    required = _decision_allowed_roles(dkey)
+    if not required:
+        return True, []
+    my_role = (data.get("roles", {}) or {}).get(token or "")
+    if my_role and my_role in required:
+        return True, required
+    team_roles = set((data.get("roles", {}) or {}).values())
+    if not (team_roles & set(required)):
+        return True, required
+    return False, required
 
 
 @bp_agile_scrum_sim.post("/g/<slug>/day/decision")
@@ -1095,8 +1230,17 @@ def day_decision(slug: str):
         return jsonify({"error": "invalid decision_key"}), 400
     task_key = (body.get("task_key") or "").strip() or None
 
+    effective_key = dkey or "continue"
+    ok, required = _check_role_for_decision(data, token, effective_key)
+    if not ok:
+        return jsonify({
+            "error": "role_required",
+            "message": "decision_requires_role",
+            "required_roles": required,
+        }), 403
+
     pending = data.setdefault("pending_day", {})
-    pending["decision"] = {"key": dkey or "continue", "task": task_key}
+    pending["decision"] = {"key": effective_key, "task": task_key}
     if p:
         _touch_participant(data, p)
     _save_state(row, data)

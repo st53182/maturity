@@ -121,13 +121,13 @@
               <strong>{{ plannedPts }}</strong>
             </div>
             <div class="sp__meter-row">
-              <span>{{ $t('agileTraining.scrumSim.teamCapacity5d') }}:</span>
-              <strong>{{ state.team_capacity_per_day * 5 }}</strong>
+              <span>{{ $t('agileTraining.scrumSim.teamCapacityTotal', { n: sprintDaysTotal }) }}:</span>
+              <strong>{{ sprintCapacityTotal }}</strong>
             </div>
             <div class="sp__meter-bar">
-              <div class="sp__meter-bar-fill" :style="{ width: plannedPct + '%' }" :class="{ over: plannedPts > state.team_capacity_per_day * 5 }"></div>
+              <div class="sp__meter-bar-fill" :style="{ width: plannedPct + '%' }" :class="{ over: plannedPts > sprintCapacityTotal }"></div>
             </div>
-            <p class="sp__meter-note" v-if="plannedPts > state.team_capacity_per_day * 5">
+            <p class="sp__meter-note" v-if="plannedPts > sprintCapacityTotal">
               ⚠️ {{ $t('agileTraining.scrumSim.overCapacityWarn') }}
             </p>
           </div>
@@ -148,7 +148,7 @@
 
       <!-- PHASE: day N -->
       <section v-if="isDayPhase" class="sp__card">
-        <h3>{{ $t('agileTraining.scrumSim.dayHeading', { n: state.current_day, total: 5 }) }}</h3>
+        <h3>{{ $t('agileTraining.scrumSim.dayHeading', { n: state.current_day, total: sprintDaysTotal }) }}</h3>
 
         <!-- Step 1: Reveal event -->
         <div v-if="!pendingDay.event_applied" class="sp__day-step">
@@ -191,14 +191,25 @@
                 {{ $t('agileTraining.scrumSim.noWorkable') }}
               </div>
               <div v-else class="sp__alloc">
+                <div class="sp__alloc-head">
+                  <span>{{ $t('agileTraining.scrumSim.priorityOrder') }}</span>
+                  <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="autoAllocate" :title="$t('agileTraining.scrumSim.autoAllocateHint')">
+                    ⚡ {{ $t('agileTraining.scrumSim.autoAllocate') }}
+                  </button>
+                </div>
                 <div
-                  v-for="t in workableTasks"
+                  v-for="(t, idx) in orderedWorkableTasks"
                   :key="t.key"
                   class="sp__alloc-row"
                 >
+                  <span class="sp__alloc-rank">{{ idx + 1 }}</span>
+                  <div class="sp__alloc-reorder">
+                    <button class="sp__btn sp__btn--tiny sp__btn--ghost" :disabled="idx === 0" @click="movePriority(t.key, -1)" :title="$t('agileTraining.scrumSim.moveUp')">▲</button>
+                    <button class="sp__btn sp__btn--tiny sp__btn--ghost" :disabled="idx === orderedWorkableTasks.length - 1" @click="movePriority(t.key, +1)" :title="$t('agileTraining.scrumSim.moveDown')">▼</button>
+                  </div>
                   <div class="sp__alloc-name">
                     <span>{{ t.title }}</span>
-                    <small>{{ $t('agileTraining.scrumSim.need') }}: {{ (t.complexity + (t.extra||0)) - (t.progress||0) }}</small>
+                    <small>{{ $t('agileTraining.scrumSim.need') }}: {{ taskNeedLeft(t) }}</small>
                   </div>
                   <div class="sp__alloc-controls">
                     <button class="sp__btn sp__btn--tiny" @click="addAlloc(t.key, -1)">−</button>
@@ -209,6 +220,9 @@
               </div>
               <div class="sp__alloc-sum" :class="{ over: allocTotal > state.capacity_today }">
                 {{ $t('agileTraining.scrumSim.allocTotal') }}: {{ allocTotal }} / {{ state.capacity_today }}
+                <span v-if="allocTotal < state.capacity_today" class="sp__alloc-slack">
+                  ({{ $t('agileTraining.scrumSim.unused', { n: state.capacity_today - allocTotal }) }})
+                </span>
               </div>
               <div class="sp__actions">
                 <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="commitAllocation">
@@ -222,21 +236,61 @@
           <div class="sp__decision">
             <h4>{{ content.labels.choose_decision }}</h4>
             <p class="sp__hint">{{ $t('agileTraining.scrumSim.decisionHint') }}</p>
+
+            <!-- Banner while selecting a task on the board -->
+            <div v-if="pendingDecisionChoosing" class="sp__decision-banner">
+              <span class="sp__decision-banner-icon">🎯</span>
+              <div class="sp__decision-banner-body">
+                <strong>{{ $t('agileTraining.scrumSim.selectTaskForDecision', { title: pendingDecisionMeta ? pendingDecisionMeta.title : '' }) }}</strong>
+                <span>{{ $t('agileTraining.scrumSim.selectTaskOnBoard') }}</span>
+              </div>
+              <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="cancelDecision">
+                {{ $t('agileTraining.scrumSim.cancelDecision') }}
+              </button>
+            </div>
+
+            <!-- Chosen task pill -->
+            <div v-else-if="pendingDecisionTaskObj" class="sp__decision-chosen">
+              <span class="sp__decision-chosen-tag">{{ pendingDecisionMeta ? pendingDecisionMeta.title : pendingDecisionKey }}</span>
+              <span class="sp__decision-chosen-arrow">→</span>
+              <span class="sp__decision-chosen-task">{{ pendingDecisionTaskObj.title }}</span>
+              <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="changeDecisionTask">
+                {{ $t('agileTraining.scrumSim.changeSelection') }}
+              </button>
+              <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="cancelDecision">
+                {{ $t('agileTraining.scrumSim.cancelDecision') }}
+              </button>
+            </div>
+
             <div class="sp__decision-grid">
               <button
                 v-for="d in content.decisions || []"
                 :key="d.key"
                 class="sp__decision-card"
-                :class="{ 'sp__decision-card--active': (pendingDay.decision && pendingDay.decision.key) === d.key }"
+                :class="{
+                  'sp__decision-card--active': pendingDecisionKey === d.key,
+                  'sp__decision-card--locked': !canUseDecision(d) && pendingDecisionKey !== d.key,
+                }"
+                :disabled="!canUseDecision(d) && pendingDecisionKey !== d.key"
                 @click="pickDecision(d)"
+                :title="!canUseDecision(d) ? $t('agileTraining.scrumSim.roleRequiredHint', { roles: rolesLabelOf(d.allowed_roles) }) : ''"
               >
-                <strong>{{ d.title }}</strong>
+                <strong>
+                  {{ d.title }}
+                  <span v-if="(d.allowed_roles || []).length" class="sp__role-badge" :class="rolesBadgeClass(d.allowed_roles)">
+                    {{ rolesShortLabel(d.allowed_roles) }}
+                  </span>
+                </strong>
                 <span>{{ d.desc }}</span>
-                <em v-if="d.needs_task && (pendingDay.decision && pendingDay.decision.key) === d.key">
-                  {{ decisionTaskLabel(d) }}
+                <em v-if="!canUseDecision(d) && pendingDecisionKey !== d.key" class="sp__decision-locked">
+                  🔒 {{ $t('agileTraining.scrumSim.roleRequiredHint', { roles: rolesLabelOf(d.allowed_roles) }) }}
+                </em>
+                <em v-else-if="d.needs_task && pendingDecisionKey === d.key">
+                  {{ decisionTaskLabel() }}
                 </em>
               </button>
             </div>
+            <div v-if="roleToast" class="sp__role-toast">⚠️ {{ roleToast }}</div>
           </div>
 
           <!-- Step 4: Finish -->
@@ -355,6 +409,30 @@
         </div>
       </section>
 
+      <!-- Event popup -->
+      <div v-if="eventPopupOpen" class="sp__modal-backdrop" @click.self="dismissEventPopup">
+        <div class="sp__modal" role="dialog">
+          <div class="sp__modal-head">
+            <span class="sp__modal-badge">📣 {{ $t('agileTraining.scrumSim.eventOfTheDay') }}</span>
+            <span class="sp__modal-day">{{ $t('agileTraining.scrumSim.dayLabel', { n: state.current_day }) }}</span>
+            <button class="sp__btn sp__btn--tiny sp__btn--ghost" @click="dismissEventPopup">✕</button>
+          </div>
+          <h3 class="sp__modal-title">{{ eventPopupData.title }}</h3>
+          <p class="sp__modal-desc">{{ eventPopupData.description }}</p>
+          <div v-if="eventPopupData.notes && eventPopupData.notes.length" class="sp__modal-notes">
+            <div class="sp__modal-notes-head">{{ $t('agileTraining.scrumSim.eventEffects') }}</div>
+            <ul>
+              <li v-for="(n, i) in eventPopupData.notes" :key="i">{{ n }}</li>
+            </ul>
+          </div>
+          <div class="sp__actions">
+            <button class="sp__btn sp__btn--primary" @click="dismissEventPopup">
+              {{ $t('agileTraining.scrumSim.eventPopupCta') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Floating AI helper -->
       <div v-if="aiOpen" class="sp__ai-pop">
         <div class="sp__ai-head">
@@ -417,10 +495,10 @@ export default {
 
       sprintGoalDraft: '',
       allocDraft: {},
+      priorityOrder: [],
       pendingDecisionDraft: null,
-      selectedTaskKeys: [],
       pulseKeys: [],
-      highlightColumn: '',
+      roleToast: '',
 
       showRoleDesc: false,
 
@@ -433,6 +511,9 @@ export default {
 
       pollTimer: null,
       lastVersion: 0,
+
+      eventPopupOpen: false,
+      eventPopupSeenKey: '',
     };
   },
   computed: {
@@ -473,12 +554,50 @@ export default {
     },
     boardSelectable() {
       if (this.phase === 'planning') return true;
-      if (this.isDayPhase && this.pendingDecisionNeedsTask) return true;
+      if (this.isDayPhase && this.pendingDecisionChoosing) return true;
       return false;
     },
+    pendingDecisionKey() {
+      return (this.pendingDay && this.pendingDay.decision && this.pendingDay.decision.key) || '';
+    },
+    pendingDecisionTask() {
+      return (this.pendingDay && this.pendingDay.decision && this.pendingDay.decision.task) || '';
+    },
     pendingDecisionNeedsTask() {
-      const k = this.pendingDay.decision && this.pendingDay.decision.key;
-      return ['swarm', 'split_task', 'descope', 'escalate'].includes(k) && !this.pendingDay.decision.task;
+      return ['swarm', 'split_task', 'descope', 'escalate'].includes(this.pendingDecisionKey);
+    },
+    pendingDecisionChoosing() {
+      return this.pendingDecisionNeedsTask && !this.pendingDecisionTask;
+    },
+    pendingDecisionColumnHint() {
+      const k = this.pendingDecisionKey;
+      if (k === 'split_task') return 'backlog';
+      if (k === 'descope') return 'in_progress';
+      if (k === 'escalate') return 'in_progress';
+      if (k === 'swarm') return 'in_progress';
+      return '';
+    },
+    pendingDecisionMeta() {
+      const k = this.pendingDecisionKey;
+      if (!k) return null;
+      return (this.content.decisions || []).find(d => d.key === k) || null;
+    },
+    pendingDecisionTaskObj() {
+      const tk = this.pendingDecisionTask;
+      if (!tk || !this.state || !this.state.tasks) return null;
+      return this.state.tasks.find(t => t.key === tk) || null;
+    },
+    selectedTaskKeys() {
+      if (this.isDayPhase && this.pendingDecisionTask) {
+        return [this.pendingDecisionTask];
+      }
+      return [];
+    },
+    highlightColumn() {
+      if (this.isDayPhase && this.pendingDecisionChoosing) {
+        return this.pendingDecisionColumnHint;
+      }
+      return '';
     },
     compactBoard() {
       return this.isDayPhase || this.phase === 'review' || this.phase === 'retro';
@@ -516,10 +635,41 @@ export default {
       const o = this.state && this.state.review_metrics && this.state.review_metrics.outcome;
       return this.$t('agileTraining.scrumSim.stakeholderOutcome.' + (o || 'fail'));
     },
+    sprintDaysTotal() {
+      return (this.state && this.state.sprint_days) || 10;
+    },
+    sprintCapacityTotal() {
+      if (!this.state) return 0;
+      return (this.state.team_capacity_per_day || 6) * this.sprintDaysTotal;
+    },
+    orderedWorkableTasks() {
+      const saved = (this.state && this.state.priority_order) || [];
+      const local = this.priorityOrder || [];
+      const priority = local.length ? local : saved;
+      const byKey = Object.fromEntries(this.workableTasks.map(t => [t.key, t]));
+      const seen = new Set();
+      const out = [];
+      for (const k of priority) {
+        if (byKey[k] && !seen.has(k)) { out.push(byKey[k]); seen.add(k); }
+      }
+      for (const t of this.workableTasks) {
+        if (!seen.has(t.key)) { out.push(t); seen.add(t.key); }
+      }
+      return out;
+    },
+    eventPopupData() {
+      return (this.pendingDay && this.pendingDay.event) || { title: '', description: '', notes: [] };
+    },
   },
   watch: {
     '$i18n.locale'(val) {
       if (val !== this.locale) { this.locale = val; this.reloadContent(); }
+    },
+    'pendingDay.event_applied'(val) {
+      if (val) this.maybeOpenEventPopup();
+    },
+    'state.current_day'() {
+      this.maybeOpenEventPopup();
     },
   },
   async mounted() {
@@ -655,49 +805,173 @@ export default {
         alert((e.response && e.response.data && e.response.data.error) || 'Error');
       }
     },
+    taskNeedLeft(t) {
+      return Math.max(0, Number(t.complexity || 0) + Number(t.extra || 0) - Number(t.progress || 0));
+    },
     addAlloc(key, d) {
       const cur = Number(this.allocDraft[key] || 0);
       const cap = (this.state && this.state.capacity_today) || 6;
-      const next = Math.max(0, Math.min(cap, cur + d));
+      const taskObj = (this.state && this.state.tasks || []).find(t => t.key === key);
+      const taskMax = taskObj ? this.taskNeedLeft(taskObj) : cap;
+      const next = Math.max(0, Math.min(cap, Math.min(taskMax, cur + d)));
       this.allocDraft = { ...this.allocDraft, [key]: next };
+    },
+    movePriority(key, delta) {
+      const list = this.orderedWorkableTasks.map(t => t.key);
+      const idx = list.indexOf(key);
+      if (idx < 0) return;
+      const newIdx = idx + delta;
+      if (newIdx < 0 || newIdx >= list.length) return;
+      list.splice(newIdx, 0, list.splice(idx, 1)[0]);
+      this.priorityOrder = list;
+    },
+    autoAllocate() {
+      const cap = (this.state && this.state.capacity_today) || 6;
+      let left = cap;
+      const next = {};
+      for (const t of this.orderedWorkableTasks) {
+        if (left <= 0) break;
+        const need = this.taskNeedLeft(t);
+        const take = Math.min(need, left);
+        if (take > 0) next[t.key] = take;
+        left -= take;
+      }
+      this.allocDraft = next;
     },
     async commitAllocation() {
       const clean = {};
       for (const [k, v] of Object.entries(this.allocDraft)) {
         if (Number(v) > 0) clean[k] = Number(v);
       }
+      const order = (this.priorityOrder && this.priorityOrder.length)
+        ? this.priorityOrder
+        : ((this.state && this.state.priority_order) || []);
       await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/allocate`, {
         participant_token: this.participantToken,
         allocation: clean,
+        priority_order: order,
       });
       await this.loadState(true);
     },
-    pickDecision(d) {
-      if (d.needs_task) {
-        this.pendingDecisionDraft = d.key;
-        axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
-          participant_token: this.participantToken,
-          decision_key: d.key, task_key: null,
-        }).then(() => this.loadState(true));
-      } else {
-        axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
-          participant_token: this.participantToken,
-          decision_key: d.key,
-        }).then(() => this.loadState(true));
+    maybeOpenEventPopup() {
+      if (!this.state || !this.isDayPhase) return;
+      const pd = this.pendingDay || {};
+      if (!pd.event_applied || !pd.event) return;
+      const key = `sp_evt_seen_${this.slug}_${this.state.current_day}`;
+      try {
+        if (localStorage.getItem(key) === '1') return;
+      } catch (_) { /* noop */ }
+      this.eventPopupOpen = true;
+      this.eventPopupSeenKey = key;
+    },
+    dismissEventPopup() {
+      this.eventPopupOpen = false;
+      try { if (this.eventPopupSeenKey) localStorage.setItem(this.eventPopupSeenKey, '1'); } catch (_) { /* noop */ }
+    },
+    canUseDecision(d) {
+      if (!d) return false;
+      const allowed = d.allowed_roles || [];
+      if (!allowed.length) return true;
+      if (this.myRole && allowed.includes(this.myRole)) return true;
+      const teamRoles = new Set((this.participantList || []).map(p => p.role).filter(Boolean));
+      let fallback = true;
+      for (const r of allowed) { if (teamRoles.has(r)) { fallback = false; break; } }
+      return fallback;
+    },
+    rolesShortLabel(roles) {
+      const r = (roles && roles[0]) || '';
+      const short = {
+        product_owner: 'PO', scrum_master: 'SM', developer: this.$t('agileTraining.scrumSim.roleShort.dev'),
+      };
+      if (roles && roles.length > 1 && (roles.length === 3)) return this.$t('agileTraining.scrumSim.roleShort.any');
+      return short[r] || r || '';
+    },
+    rolesBadgeClass(roles) {
+      const r = (roles && roles[0]) || '';
+      if (roles && roles.length > 1) return 'sp__role-badge--any';
+      return 'sp__role-badge--' + (r || '');
+    },
+    rolesLabelOf(roles) {
+      if (!roles || !roles.length) return '';
+      return roles.map(r => this.roleLabel(r)).join(' / ');
+    },
+    async pickDecision(d) {
+      if (!this.canUseDecision(d)) {
+        this.showRoleToast(this.$t('agileTraining.scrumSim.roleRequiredHint', { roles: this.rolesLabelOf(d.allowed_roles) }));
+        return;
+      }
+      this.roleToast = '';
+      try {
+        if (d.needs_task) {
+          this.pendingDecisionDraft = d.key;
+          await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
+            participant_token: this.participantToken,
+            decision_key: d.key, task_key: null,
+          });
+        } else {
+          await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
+            participant_token: this.participantToken,
+            decision_key: d.key,
+          });
+        }
+        await this.loadState(true);
+      } catch (e) {
+        this.handleDecisionError(e);
       }
     },
-    commitDecisionWithTask(taskKey) {
-      const k = this.pendingDay.decision && this.pendingDay.decision.key;
+    async commitDecisionWithTask(taskKey) {
+      const k = this.pendingDecisionKey;
       if (!k) return;
-      axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
-        participant_token: this.participantToken,
-        decision_key: k, task_key: taskKey,
-      }).then(() => this.loadState(true));
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
+          participant_token: this.participantToken,
+          decision_key: k, task_key: taskKey,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        this.handleDecisionError(e);
+      }
+    },
+    async cancelDecision() {
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
+          participant_token: this.participantToken,
+          decision_key: 'continue', task_key: null,
+        });
+        await this.loadState(true);
+      } catch (_) { /* noop */ }
+    },
+    async changeDecisionTask() {
+      const k = this.pendingDecisionKey;
+      if (!k) return;
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/decision`, {
+          participant_token: this.participantToken,
+          decision_key: k, task_key: null,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        this.handleDecisionError(e);
+      }
+    },
+    handleDecisionError(e) {
+      const data = (e && e.response && e.response.data) || {};
+      if ((data.message || '').includes('role_requires') || data.error === 'role_required') {
+        const roles = data.required_roles || [];
+        this.showRoleToast(this.$t('agileTraining.scrumSim.roleRequiredHint', { roles: this.rolesLabelOf(roles) }));
+      } else {
+        this.showRoleToast(data.error || this.$t('agileTraining.scrumSim.genericError'));
+      }
+    },
+    showRoleToast(msg) {
+      this.roleToast = msg;
+      clearTimeout(this._roleToastTimer);
+      this._roleToastTimer = setTimeout(() => { this.roleToast = ''; }, 5000);
     },
     decisionTaskLabel() {
-      const tk = (this.pendingDay.decision && this.pendingDay.decision.task) || '';
+      const tk = this.pendingDecisionTask;
       if (tk) {
-        const t = (this.state.tasks || []).find(x => x.key === tk);
+        const t = (this.state && this.state.tasks || []).find(x => x.key === tk);
         return t ? this.$t('agileTraining.scrumSim.selectedTask', { title: t.title }) : '';
       }
       return this.$t('agileTraining.scrumSim.selectTaskOnBoard');
@@ -921,17 +1195,30 @@ export default {
 .sp__cap-chip { font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
 
 .sp__alloc { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.sp__alloc-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;
+  letter-spacing: 0.04em; padding: 4px 2px;
+}
 .sp__alloc-row {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
   background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
   padding: 6px 10px;
 }
-.sp__alloc-name { flex: 1; font-size: 13px; display: flex; flex-direction: column; }
+.sp__alloc-rank {
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  background: #e0f2fe; color: #0369a1; border-radius: 50%; font-size: 11px; font-weight: 700;
+}
+.sp__alloc-reorder { display: flex; flex-direction: column; gap: 2px; }
+.sp__alloc-reorder .sp__btn { padding: 0 6px; font-size: 9px; line-height: 1; min-height: 14px; }
+.sp__alloc-name { flex: 1; font-size: 13px; display: flex; flex-direction: column; min-width: 0; }
+.sp__alloc-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp__alloc-name small { color: #94a3b8; font-size: 11px; margin-top: 1px; }
 .sp__alloc-controls { display: flex; align-items: center; gap: 6px; }
 .sp__alloc-val { min-width: 22px; text-align: center; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; }
 .sp__alloc-sum { font-size: 13px; font-weight: 600; color: #334155; margin-top: 8px; text-align: right; }
 .sp__alloc-sum.over { color: #b91c1c; }
+.sp__alloc-slack { color: #94a3b8; font-weight: 500; font-size: 12px; margin-left: 6px; }
 
 .sp__decision { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
 .sp__decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
@@ -946,6 +1233,49 @@ export default {
 .sp__decision-card em { font-size: 11px; color: #0369a1; font-style: normal; font-weight: 600; }
 .sp__decision-card:hover { border-color: #0ea5e9; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06); }
 .sp__decision-card--active { border-color: #0ea5e9; background: #e0f2fe; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
+.sp__decision-card--locked { opacity: 0.55; cursor: not-allowed; background: #f8fafc; }
+.sp__decision-card--locked:hover { border-color: #e2e8f0; transform: none; box-shadow: none; }
+.sp__decision-card strong { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sp__decision-locked { color: #b91c1c !important; font-weight: 600; }
+
+.sp__role-badge {
+  font-size: 10px; padding: 1px 7px; border-radius: 999px; font-weight: 700;
+  letter-spacing: 0.03em; text-transform: uppercase; border: 1px solid transparent;
+}
+.sp__role-badge--product_owner { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.sp__role-badge--scrum_master  { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+.sp__role-badge--developer     { background: #dcfce7; color: #166534; border-color: #86efac; }
+.sp__role-badge--any           { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+
+.sp__decision-banner {
+  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(135deg, #fff7ed, #fde68a);
+  border: 1px solid #f59e0b; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 10px;
+  animation: sp-banner-pulse 2s ease-in-out infinite;
+}
+@keyframes sp-banner-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.15); }
+  50%     { box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.00); }
+}
+.sp__decision-banner-icon { font-size: 22px; }
+.sp__decision-banner-body { flex: 1; display: flex; flex-direction: column; }
+.sp__decision-banner-body strong { font-size: 13px; color: #7c2d12; }
+.sp__decision-banner-body span { font-size: 12px; color: #92400e; }
+
+.sp__decision-chosen {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px;
+  padding: 8px 12px; margin-bottom: 10px; font-size: 13px;
+}
+.sp__decision-chosen-tag { background: #059669; color: #fff; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+.sp__decision-chosen-arrow { color: #64748b; font-weight: 700; }
+.sp__decision-chosen-task { font-weight: 600; color: #064e3b; flex: 1; }
+
+.sp__role-toast {
+  background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
+  padding: 8px 12px; border-radius: 10px; font-size: 13px; margin-top: 10px;
+}
 .sp__empty-block { color: #94a3b8; font-size: 13px; padding: 16px; text-align: center; background: #f8fafc; border-radius: 8px; }
 
 .sp__review-metrics {
@@ -1000,6 +1330,35 @@ export default {
   background: #f1f5f9; padding: 10px 12px; border-radius: 8px; font-size: 13px;
   line-height: 1.5; color: #334155; margin-top: 10px; white-space: pre-wrap;
 }
+
+.sp__modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px; backdrop-filter: blur(2px);
+  animation: sp-modal-fade 0.2s ease-out;
+}
+@keyframes sp-modal-fade { from { opacity: 0; } to { opacity: 1; } }
+.sp__modal {
+  background: #fff; border-radius: 16px; max-width: 520px; width: 100%;
+  padding: 18px 22px; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
+  border: 2px solid #f59e0b;
+  animation: sp-modal-pop 0.25s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes sp-modal-pop { from { transform: translateY(20px) scale(0.95); } to { transform: translateY(0) scale(1); } }
+.sp__modal-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.sp__modal-badge {
+  background: #ea580c; color: #fff; padding: 3px 12px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.sp__modal-day { font-size: 12px; color: #64748b; font-weight: 600; flex: 1; }
+.sp__modal-title { margin: 6px 0 4px; font-size: 19px; color: #7c2d12; }
+.sp__modal-desc { color: #78350f; font-size: 14px; line-height: 1.5; margin: 6px 0 10px; }
+.sp__modal-notes {
+  background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
+  padding: 8px 12px; margin: 8px 0 12px;
+}
+.sp__modal-notes-head { font-size: 11px; color: #9a3412; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.sp__modal-notes ul { padding-left: 18px; margin: 2px 0; font-size: 13px; color: #78350f; line-height: 1.5; }
 
 @media (max-width: 768px) {
   .sp__day-grid { grid-template-columns: 1fr; }

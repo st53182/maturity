@@ -163,6 +163,11 @@ export default {
 .sb__col--highlight {
   border-color: #0ea5e9;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  animation: sb-col-pulse 1.8s ease-in-out infinite;
+}
+@keyframes sb-col-pulse {
+  0%,100% { box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
+  50%     { box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.30); }
 }
 .sb__col--product   { background: #f1f5f9; }
 .sb__col--backlog   { background: #fef3c7; }
@@ -190,7 +195,23 @@ export default {
 }
 .sb__card--selectable { cursor: pointer; }
 .sb__card--selectable:hover { border-color: #0ea5e9; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); }
-.sb__card--selected { border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3); }
+.sb__card--selected {
+  border-color: #f97316;
+  background: #fff7ed;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.45), 0 4px 14px rgba(249, 115, 22, 0.2);
+  transform: translateY(-1px);
+}
+.sb__card--selected::before {
+  content: "✓";
+  position: absolute;
+  top: -8px; right: -8px;
+  background: #f97316; color: #fff;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.45);
+}
+.sb__card { position: relative; }
 .sb__card--blocked { background: #fef2f2; border-color: #fca5a5; }
 .sb__card--rework  { background: #fff7ed; border-color: #fdba74; }
 .sb__card--risk    { background: #fffbeb; border-color: #fcd34d; }

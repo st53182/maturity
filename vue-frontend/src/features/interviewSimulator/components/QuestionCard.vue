@@ -2,9 +2,9 @@
   <section class="is-card" aria-live="polite">
     <div class="is-card__head">
       <div>
-        <div class="is-card__kicker">{{ $t('interviewSimulator.currentQuestion') }}</div>
+        <div class="is-card__kicker">{{ kickerLabel }}</div>
         <h2 class="is-card__title">{{ question || '—' }}</h2>
-        <div v-if="isFollowUp" class="is-badge">{{ $t('interviewSimulator.followUpBadge') }}</div>
+        <div v-if="isFollowUp && !hideFollowUpBadge" class="is-badge">{{ $t('interviewSimulator.followUpBadge') }}</div>
         <label v-if="readAloudSupported" class="is-card__auto">
           <input v-model="autoSpeakLocal" type="checkbox" @change="onAutoSpeakChange" />
           <span>{{ $t('interviewSimulator.readQuestionAuto') }}</span>
@@ -81,6 +81,9 @@ export default {
     isFollowUp: { type: Boolean, default: false },
     /** Parent can disable auto TTS (e.g. future setting page) */
     autoSpeak: { type: Boolean, default: true },
+    /** If set, used as i18n key for the kicker instead of interviewSimulator.currentQuestion */
+    kickerKey: { type: String, default: '' },
+    hideFollowUpBadge: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -91,6 +94,10 @@ export default {
     };
   },
   computed: {
+    kickerLabel() {
+      if (this.kickerKey) return this.$t(this.kickerKey);
+      return this.$t('interviewSimulator.currentQuestion');
+    },
     readAloudSupported() {
       return typeof window !== 'undefined' && !!window.speechSynthesis;
     },

@@ -8,7 +8,7 @@
         class="is-msg"
         :class="m.role === 'assistant' ? 'is-msg--ai' : 'is-msg--user'"
       >
-        <span class="is-msg__who">{{ m.role === 'assistant' ? 'Interviewer' : 'You' }}</span>
+        <span class="is-msg__who">{{ m.role === 'assistant' ? assistantLabel : userLabel }}</span>
         <p class="is-msg__text">{{ m.content }}</p>
       </div>
       <p v-if="!messages.length" class="is-empty">{{ $t('interviewSimulator.transcriptEmpty') }}</p>
@@ -21,6 +21,8 @@ export default {
   name: 'TranscriptPanel',
   props: {
     messages: { type: Array, default: () => [] },
+    userLabel: { type: String, default: 'You' },
+    assistantLabel: { type: String, default: 'Interviewer' },
   },
   watch: {
     messages: {

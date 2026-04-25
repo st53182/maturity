@@ -1183,6 +1183,7 @@
       "agileKata": "Agile Kata canvas",
       "agileTools": "Agile tools library",
       "agileTraining": "Agile Training — group exercises",
+      "problemDiscovery": "Problem discovery with an AI user",
       "interviewSimulator": "AI Interview Simulator",
       "businessValue": "Business value scoring (stories / epics)"
     },
@@ -1574,7 +1575,36 @@
         "bullet1": "Team joins by one link and acts on the shared board",
         "bullet2": "Each day: event → daily → decision → board update",
         "bullet3": "Sprint Review, Retrospective and picking next-sprint improvements"
+      },
+      "problemDiscovery": {
+        "title": "Problem interview: AI user",
+        "desc": "Dialog with a neural net playing the respondent: you ask questions (including by voice), get text replies and optional read-aloud. Context is pain around workplace messengers and import substitution. You can synthesize insights from the transcript.",
+        "bullet1": "Real back-and-forth via OpenAI on the server (API key required)",
+        "bullet2": "Voice input and browser speech for answers",
+        "bullet3": "“Synthesize insights” — facts, pains, constraints, open questions"
       }
+    },
+    "problemDiscovery": {
+      "title": "Problem discovery with an AI user",
+      "lead": "You are the product interviewer; the model plays a messenger user. Ask open questions about situations, habits and constraints. Replies are for practice — they do not replace real field research.",
+      "startHint": "Press Start — the AI user will introduce themselves. Then type or dictate your questions.",
+      "start": "Start interview",
+      "mockHint": "Server mock mode: no OPENAI_API_KEY or PROBLEM_DISCOVERY_MOCK=1. The flow still works, but replies are templated.",
+      "currentReplyKicker": "Respondent reply (AI)",
+      "sendQuestion": "Send question",
+      "thinking": "Thinking…",
+      "dialogueComplete": "The dialogue ended (model signal or turn limit). You can synthesize insights or start over.",
+      "reset": "Start over",
+      "synthesize": "Synthesize insights from dialogue",
+      "synthesizing": "Synthesizing…",
+      "synthesisTitle": "Insights for the product team",
+      "facts": "Facts and observations",
+      "pains": "Pains and needs",
+      "constraints": "Constraints",
+      "openQuestions": "Open questions for real interviews",
+      "confirmReset": "Reset dialogue and insights?",
+      "labelYou": "You (interviewer)",
+      "labelUser": "Respondent (AI)"
     },
     "facilitator": {
       "title": "Agile principles — facilitator panel",

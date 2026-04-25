@@ -115,6 +115,7 @@ from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
 from interview_simulator import bp_interview_simulator
+from problem_discovery_dialog import bp_problem_discovery
 from business_value import bp_business_value
 from project_card_ai import bp_project_card_ai
 from report_insights import bp_report_insights
@@ -267,6 +268,7 @@ app.register_blueprint(bp_agile_scrum_sim)
 app.register_blueprint(bp_ai_limits)
 app.register_blueprint(bp_tests)
 app.register_blueprint(bp_interview_simulator)
+app.register_blueprint(bp_problem_discovery)
 app.register_blueprint(bp_business_value)
 app.register_blueprint(bp_project_card_ai)
 app.register_blueprint(bp_report_insights)

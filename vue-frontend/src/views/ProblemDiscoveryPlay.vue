@@ -30,21 +30,10 @@
             :is-follow-up="false"
             :hide-follow-up-badge="true"
             :kicker-key="'agileTraining.problemDiscovery.currentReplyKicker'"
-            speech-preset="conversational"
+            :hide-browser-speech="true"
           />
-          <p class="pd-play__tts-hint">{{ $t('agileTraining.problemDiscovery.ttsHint') }}</p>
-          <div class="pd-play__cloud-tts">
-            <button
-              type="button"
-              class="pd-play__btn pd-play__btn--secondary"
-              :disabled="openaiTtsDisabled || openaiTtsLoading || !lastAssistantText.trim()"
-              @click="playOpenaiTts"
-            >
-              {{ openaiTtsLoading ? $t('agileTraining.problemDiscovery.openaiTtsPlaying') : $t('agileTraining.problemDiscovery.openaiTts') }}
-            </button>
-            <p v-if="!openaiTts && started" class="pd-play__cloud-tts-note">{{ $t('agileTraining.problemDiscovery.openaiTtsUnavailable') }}</p>
-            <audio v-if="openaiAudioUrl" ref="openaiAudio" class="pd-play__cloud-audio" controls :src="openaiAudioUrl" />
-          </div>
+          <p v-if="started" class="pd-play__tts-hint">{{ openaiTtsHintLine }}</p>
+          <audio v-show="openaiAudioUrl" ref="openaiAudio" class="pd-play__cloud-audio" controls :src="openaiAudioUrl || undefined" />
           <InterviewControls
             :disabled="loading || dialogueComplete"
             :submit-label="$t('agileTraining.problemDiscovery.sendQuestion')"
@@ -130,6 +119,7 @@ export default {
       openaiTts: false,
       openaiTtsLoading: false,
       openaiAudioUrl: null,
+      lastTtsError: null,
     };
   },
   computed: {
@@ -139,13 +129,18 @@ export default {
       }
       return '';
     },
-    openaiTtsDisabled() {
-      return !this.openaiTts;
+    openaiTtsHintLine() {
+      if (!this.openaiTts) return this.$t('agileTraining.problemDiscovery.openaiTtsAutoUnavailable');
+      if (this.openaiTtsLoading) return this.$t('agileTraining.problemDiscovery.openaiTtsPlaying');
+      if (this.lastTtsError) return this.lastTtsError;
+      return this.$t('agileTraining.problemDiscovery.openaiTtsAutoHint');
     },
   },
   watch: {
-    lastAssistantText() {
-      this.revokeOpenaiAudio();
+    lastAssistantText(newVal, oldVal) {
+      if (!this.started || !newVal || !newVal.trim()) return;
+      if (newVal === oldVal) return;
+      this.autoPlayOpenaiTts();
     },
   },
   mounted() {
@@ -193,12 +188,12 @@ export default {
         this.openaiTts = false;
       }
     },
-    async playOpenaiTts() {
+    async autoPlayOpenaiTts() {
       const text = (this.lastAssistantText || '').trim();
+      this.lastTtsError = null;
       if (!text || !this.openaiTts) return;
       this.revokeOpenaiAudio();
       this.openaiTtsLoading = true;
-      this.error = null;
       try {
         const res = await axios.post(
           '/api/problem-discovery/tts',
@@ -215,7 +210,8 @@ export default {
           } catch (_e) {
             /* keep default */
           }
-          throw new Error(errMsg);
+          this.lastTtsError = errMsg;
+          return;
         }
         const blob = new Blob([res.data], { type: 'audio/mpeg' });
         this.openaiAudioUrl = URL.createObjectURL(blob);
@@ -225,12 +221,14 @@ export default {
           try {
             await el.play();
           } catch (_e) {
-            /* autoplay blocked — user can press play on controls */
+            this.lastTtsError = this.$t('agileTraining.problemDiscovery.openaiTtsAutoplayBlocked');
           }
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        this.error = /network|ERR_/i.test(msg) ? this.$t('agileTraining.problemDiscovery.openaiTtsError') : msg;
+        this.lastTtsError = /network|ERR_/i.test(msg)
+          ? this.$t('agileTraining.problemDiscovery.openaiTtsError')
+          : msg;
       } finally {
         this.openaiTtsLoading = false;
       }
@@ -249,6 +247,7 @@ export default {
         this.messages = [{ role: 'assistant', content: data.reply }];
         this.dialogueComplete = !!data.dialogue_complete;
         this.started = true;
+        this.lastTtsError = null;
       } catch (e) {
         this.error = e instanceof Error ? e.message : String(e);
       } finally {
@@ -269,6 +268,7 @@ export default {
         if (!data.success) throw new Error(data.error || 'reply failed');
         this.messages = [...this.messages, { role: 'assistant', content: data.reply }];
         this.dialogueComplete = !!data.dialogue_complete;
+        this.lastTtsError = null;
       } catch (e) {
         this.error = e instanceof Error ? e.message : String(e);
         if (this.messages.length && this.messages[this.messages.length - 1].role === 'user') {
@@ -302,6 +302,7 @@ export default {
       this.dialogueComplete = false;
       this.synthesis = null;
       this.error = null;
+      this.lastTtsError = null;
     },
   },
 };

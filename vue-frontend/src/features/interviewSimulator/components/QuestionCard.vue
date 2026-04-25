@@ -5,14 +5,14 @@
         <div class="is-card__kicker">{{ kickerLabel }}</div>
         <h2 class="is-card__title">{{ question || '—' }}</h2>
         <div v-if="isFollowUp && !hideFollowUpBadge" class="is-badge">{{ $t('interviewSimulator.followUpBadge') }}</div>
-        <label v-if="readAloudSupported" class="is-card__auto">
+        <label v-if="showBrowserSpeechUi" class="is-card__auto">
           <input v-model="autoSpeakLocal" type="checkbox" @change="onAutoSpeakChange" />
           <span>{{ $t('interviewSimulator.readQuestionAuto') }}</span>
         </label>
-        <p v-if="readAloudSupported" class="is-card__auto-hint">{{ $t('interviewSimulator.readQuestionAutoHint') }}</p>
+        <p v-if="showBrowserSpeechUi" class="is-card__auto-hint">{{ $t('interviewSimulator.readQuestionAutoHint') }}</p>
       </div>
       <button
-        v-if="readAloudSupported && question"
+        v-if="showBrowserSpeechUi && question"
         type="button"
         class="is-card__speak"
         :class="{ 'is-card__speak--active': speaking }"
@@ -130,6 +130,8 @@ export default {
       default: 'default',
       validator: (v) => v === 'default' || v === 'conversational',
     },
+    /** When true, no Web Speech UI or auto-read (e.g. parent uses OpenAI TTS only). */
+    hideBrowserSpeech: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -148,6 +150,9 @@ export default {
     readAloudSupported() {
       return typeof window !== 'undefined' && !!window.speechSynthesis;
     },
+    showBrowserSpeechUi() {
+      return !this.hideBrowserSpeech && this.readAloudSupported;
+    },
     utteranceLang() {
       const raw = this.$i18n?.locale;
       const loc = typeof raw === 'string' ? raw : raw?.value;
@@ -159,12 +164,16 @@ export default {
     },
   },
   mounted() {
-    if (!this.readAloudSupported) return;
+    if (this.hideBrowserSpeech || !this.readAloudSupported) return;
     this.refreshVoices();
     window.speechSynthesis.addEventListener('voiceschanged', this.refreshVoices);
     window.speechSynthesis.getVoices();
   },
   beforeUnmount() {
+    if (this.hideBrowserSpeech) {
+      if (this.autoSpeakTimerId) clearTimeout(this.autoSpeakTimerId);
+      return;
+    }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.removeEventListener('voiceschanged', this.refreshVoices);
       window.speechSynthesis.cancel();
@@ -175,6 +184,7 @@ export default {
     question: {
       immediate: true,
       handler(newQ, oldQ) {
+        if (this.hideBrowserSpeech) return;
         this.stopSpeak();
         if (!newQ || !String(newQ).trim()) return;
         if (!this.autoSpeakEffective) return;

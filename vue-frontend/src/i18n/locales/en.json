@@ -1578,9 +1578,9 @@
       },
       "problemDiscovery": {
         "title": "Problem interview: AI user",
-        "desc": "Dialog with a neural net playing the respondent: you ask questions (including by voice), get text replies and optional read-aloud. Context is pain around workplace messengers and import substitution. You can synthesize insights from the transcript.",
+        "desc": "Dialog with a neural net playing the respondent: you ask questions (including by voice), get text replies; answers are read aloud via OpenAI TTS. Context is pain around workplace messengers and import substitution. You can synthesize insights from the transcript.",
         "bullet1": "Real back-and-forth via OpenAI on the server (API key required)",
-        "bullet2": "Voice input and browser speech for answers",
+        "bullet2": "Voice input in the browser; answers — automatic OpenAI read-aloud",
         "bullet3": "“Synthesize insights” — facts, pains, constraints, open questions"
       }
     },
@@ -1605,10 +1605,10 @@
       "confirmReset": "Reset dialogue and insights?",
       "labelYou": "You (interviewer)",
       "labelUser": "Respondent (AI)",
-      "ttsHint": "Above: browser read-aloud (free). The button below uses OpenAI Text-to-Speech (same OPENAI_API_KEY as the dialogue).",
-      "openaiTts": "Play audio (OpenAI)",
+      "openaiTtsAutoHint": "Replies are read aloud automatically via OpenAI (same key as the chat). Use the player below to replay or pause.",
+      "openaiTtsAutoUnavailable": "Auto read-aloud is off: no OPENAI_API_KEY on the server, or OPENAI_TTS_DISABLE is set.",
+      "openaiTtsAutoplayBlocked": "Autoplay was blocked — press play on the player below.",
       "openaiTtsPlaying": "Preparing audio…",
-      "openaiTtsUnavailable": "OpenAI TTS is unavailable: no OPENAI_API_KEY on the server, or OPENAI_TTS_DISABLE is set.",
       "openaiTtsError": "Could not fetch audio. Check your OpenAI key and API limits."
     },
     "facilitator": {

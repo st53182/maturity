@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 _MAX_CHARS = 4096  # OpenAI TTS input limit
 
-_DEFAULT_MODEL = "tts-1"
+_DEFAULT_MODEL = "tts-1-hd"
 _DEFAULT_VOICE = "nova"
 _DEFAULT_SPEED = 0.95
 

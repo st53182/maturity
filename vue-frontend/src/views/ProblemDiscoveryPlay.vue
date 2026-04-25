@@ -30,7 +30,9 @@
             :is-follow-up="false"
             :hide-follow-up-badge="true"
             :kicker-key="'agileTraining.problemDiscovery.currentReplyKicker'"
+            speech-preset="conversational"
           />
+          <p class="pd-play__tts-hint">{{ $t('agileTraining.problemDiscovery.ttsHint') }}</p>
           <InterviewControls
             :disabled="loading || dialogueComplete"
             :submit-label="$t('agileTraining.problemDiscovery.sendQuestion')"
@@ -269,6 +271,13 @@ export default {
   color: #5d6b8a;
   line-height: 1.5;
   max-width: 52rem;
+}
+.pd-play__tts-hint {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #5d6b8a;
+  max-width: 40rem;
 }
 .pd-play__mock {
   margin-top: 12px;

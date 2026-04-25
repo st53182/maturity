@@ -74,6 +74,43 @@ function pickPreferredVoice(voices, langTag) {
   return list[0];
 }
 
+/**
+ * Split long replies into sentence-sized chunks so the browser TTS pauses between
+ * them — one giant utterance sounds flat and "robotic" on many engines.
+ */
+function splitTextForNaturalTts(raw) {
+  const text = String(raw || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return [];
+  const pieces = text.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g);
+  let chunks = (pieces || []).map((s) => s.trim()).filter(Boolean);
+  if (!chunks.length) chunks = [text];
+  const merged = [];
+  for (const c of chunks) {
+    if (!c) continue;
+    const prev = merged.length ? merged[merged.length - 1] : '';
+    if (merged.length && (prev.length < 24 || c.length < 16)) {
+      merged[merged.length - 1] = `${prev} ${c}`.trim();
+    } else {
+      merged.push(c);
+    }
+  }
+  if (merged.length === 1 && merged[0].length > 220) {
+    const halves = merged[0].split(/,\s+/);
+    if (halves.length > 2) {
+      const mid = Math.ceil(halves.length / 2);
+      return [
+        halves.slice(0, mid).join(', ').trim(),
+        halves.slice(mid).join(', ').trim(),
+      ].filter(Boolean);
+    }
+  }
+  return merged;
+}
+
 export default {
   name: 'QuestionCard',
   props: {
@@ -84,6 +121,15 @@ export default {
     /** If set, used as i18n key for the kicker instead of interviewSimulator.currentQuestion */
     kickerKey: { type: String, default: '' },
     hideFollowUpBadge: { type: Boolean, default: false },
+    /**
+     * default — one utterance, existing rate/pitch (technical interview).
+     * conversational — slower rate, slightly softer pitch, sentence chunks with pauses (problem discovery).
+     */
+    speechPreset: {
+      type: String,
+      default: 'default',
+      validator: (v) => v === 'default' || v === 'conversational',
+    },
   },
   data() {
     return {
@@ -91,6 +137,7 @@ export default {
       autoSpeakLocal: loadAutoSpeakPreference(),
       voices: [],
       autoSpeakTimerId: null,
+      ttsRunId: 0,
     };
   },
   computed: {
@@ -156,6 +203,7 @@ export default {
       }
     },
     stopSpeak() {
+      this.ttsRunId = (this.ttsRunId || 0) + 1;
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -178,6 +226,9 @@ export default {
 
       const lang = this.utteranceLang;
       const short = lang.split('-')[0].toLowerCase();
+      const conv = this.speechPreset === 'conversational';
+      const rate = conv ? (short === 'ru' ? 0.88 : 0.9) : short === 'ru' ? 0.93 : 0.96;
+      const pitch = conv ? 0.97 : 1;
 
       const run = () => {
         const text = (this.question || '').trim();
@@ -185,23 +236,43 @@ export default {
         synth.cancel();
         this.refreshVoices();
         const voiceList = this.voices.length ? this.voices : synth.getVoices() || [];
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = lang;
-        u.volume = 1;
-        u.pitch = 1;
-        u.rate = short === 'ru' ? 0.93 : 0.96;
-
         const voice = pickPreferredVoice(voiceList, lang);
-        if (voice) u.voice = voice;
 
-        u.onend = () => {
-          this.speaking = false;
-        };
-        u.onerror = () => {
-          this.speaking = false;
-        };
+        const chunks = conv ? splitTextForNaturalTts(text) : [text];
+        const runId = (this.ttsRunId || 0) + 1;
+        this.ttsRunId = runId;
         this.speaking = true;
-        synth.speak(u);
+
+        let idx = 0;
+        const speakNext = () => {
+          if (runId !== this.ttsRunId) return;
+          if (idx >= chunks.length) {
+            this.speaking = false;
+            return;
+          }
+          const segment = chunks[idx];
+          idx += 1;
+          if (!segment || !segment.trim()) {
+            speakNext();
+            return;
+          }
+          const u = new SpeechSynthesisUtterance(segment.trim());
+          u.lang = lang;
+          u.volume = 1;
+          u.pitch = pitch;
+          u.rate = rate;
+          if (voice) u.voice = voice;
+          u.onend = () => {
+            if (runId !== this.ttsRunId) return;
+            speakNext();
+          };
+          u.onerror = () => {
+            if (runId !== this.ttsRunId) return;
+            this.speaking = false;
+          };
+          synth.speak(u);
+        };
+        speakNext();
       };
 
       const voiceList = this.voices.length ? this.voices : synth.getVoices() || [];

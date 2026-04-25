@@ -1604,7 +1604,8 @@
       "openQuestions": "Open questions for real interviews",
       "confirmReset": "Reset dialogue and insights?",
       "labelYou": "You (interviewer)",
-      "labelUser": "Respondent (AI)"
+      "labelUser": "Respondent (AI)",
+      "ttsHint": "Read-aloud uses your browser voice: Chrome/Edge often have clearer neural voices. We read by sentence with short pauses; for studio-quality speech a cloud TTS could be wired later."
     },
     "facilitator": {
       "title": "Agile principles — facilitator panel",

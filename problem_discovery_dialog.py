@@ -126,15 +126,15 @@ def _mock_reply(locale: str, messages: List[dict[str, Any]]) -> dict:
             break
     if locale == "ru":
         reply = (
-            "Да, понимаю вопрос. У нас в работе два мессенджера: один корпоративный, второй — с подрядчиками. "
-            "Часто теряются вложения при слабом канале, а поиск по истории почти не работает — приходится скроллить. "
-            f"Про ваш контекст: «{last_user or '…'}» — могу рассказать подробнее, если уточните ситуацию."
+            "Ну да, у нас тут вообще зоопарк — корпоративный чат и ещё что-то с подрядчиками, не всегда понятно куда писать. "
+            "Вложения на мобильном иногда просто висят, а если искать что-то в переписке недельной давности… честно, проще спросить коллегу ещё раз. "
+            f"Про «{last_user or 'это'}» — если уточните контекст, накидаю пример."
         )
     else:
         reply = (
-            "Sure — we juggle two messengers: one internal, one for vendors. "
-            "Attachments often fail on bad networks, and search across history is weak so we scroll manually. "
-            f"On your last point (\"{last_user or '…'}\"), I can go deeper if you narrow the scenario."
+            "Yeah, it's a bit messy — we've got internal chat plus something else for vendors, and half the time I'm not sure which thread is \"official\". "
+            "Files on LTE are hit-or-miss, and search? Basically scroll until your thumb hurts. "
+            f"On \"{last_user or 'that'}\" — give me a bit more scene and I'll ramble properly."
         )
     return {
         "reply": reply[:MAX_REPLY_CHARS],
@@ -198,10 +198,11 @@ def post_reply():
         if not messages:
             if _mock_mode():
                 opening = (
-                    "Здравствуйте, я готов ответить на вопросы про то, как мы пользуемся мессенджерами на работе — "
-                    "про удобство, сбои и ограничения. С чего начнём?"
+                    "Привет. Могу рассказать как у нас на самом деле с мессенджерами — что бесит, где ломается, что приходится обходить. "
+                    "Только сразу скажу: я не из продуктов, просто пользуюсь. Спрашивайте как удобно."
                     if locale == "ru"
-                    else "Hi — I'm happy to answer questions about how we use messengers at work: friction, outages, constraints. What would you like to know first?"
+                    else "Hey — I can talk about how messengers actually work for us day to day: what breaks, what's annoying, what we hack around. "
+                    "I'm not on the product side, just a user. Ask whatever."
                 )
                 return jsonify(
                     {
@@ -222,9 +223,9 @@ def post_reply():
             )
             system = system_persona_messenger(locale)
             try:
-                temp = float(os.getenv("PROBLEM_DISCOVERY_TEMP", "0.55"))
+                temp = float(os.getenv("PROBLEM_DISCOVERY_TEMP", "0.82"))
             except ValueError:
-                temp = 0.55
+                temp = 0.82
             raw = _call_openai(system, open_prompt, temperature=temp, max_out_tokens=800)
             data = _extract_json_object(raw)
             if not data or "reply" not in data:
@@ -266,9 +267,9 @@ def post_reply():
         system = system_persona_messenger(locale) + "\n" + REPLY_JSON_INSTRUCTION
         user_prompt = build_reply_user_prompt(messages, locale, max_turns, user_turns)
         try:
-            temp = float(os.getenv("PROBLEM_DISCOVERY_TEMP", "0.55"))
+            temp = float(os.getenv("PROBLEM_DISCOVERY_TEMP", "0.82"))
         except ValueError:
-            temp = 0.55
+            temp = 0.82
         raw = _call_openai(system, user_prompt, temperature=temp, max_out_tokens=1800)
         data = _extract_json_object(raw)
         if not data or "reply" not in data:

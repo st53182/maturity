@@ -1605,7 +1605,11 @@
       "confirmReset": "Reset dialogue and insights?",
       "labelYou": "You (interviewer)",
       "labelUser": "Respondent (AI)",
-      "ttsHint": "Read-aloud uses your browser voice: Chrome/Edge often have clearer neural voices. We read by sentence with short pauses; for studio-quality speech a cloud TTS could be wired later."
+      "ttsHint": "Above: browser read-aloud (free). The button below uses Google Cloud Neural2 (server credentials); usually sounds more natural.",
+      "googleTts": "Play audio (Google Neural2)",
+      "googleTtsPlaying": "Preparing audio…",
+      "googleTtsUnavailable": "Google TTS is not configured on the server (GOOGLE_APPLICATION_CREDENTIALS).",
+      "googleTtsError": "Could not fetch audio. Check GCP billing and the service account permissions."
     },
     "facilitator": {
       "title": "Agile principles — facilitator panel",

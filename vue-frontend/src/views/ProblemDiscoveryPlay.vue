@@ -33,6 +33,18 @@
             speech-preset="conversational"
           />
           <p class="pd-play__tts-hint">{{ $t('agileTraining.problemDiscovery.ttsHint') }}</p>
+          <div class="pd-play__google-tts">
+            <button
+              type="button"
+              class="pd-play__btn pd-play__btn--secondary"
+              :disabled="googleTtsDisabled || googleTtsLoading || !lastAssistantText.trim()"
+              @click="playGoogleTts"
+            >
+              {{ googleTtsLoading ? $t('agileTraining.problemDiscovery.googleTtsPlaying') : $t('agileTraining.problemDiscovery.googleTts') }}
+            </button>
+            <p v-if="!gcpTts && started" class="pd-play__google-tts-note">{{ $t('agileTraining.problemDiscovery.googleTtsUnavailable') }}</p>
+            <audio v-if="googleAudioUrl" ref="googleAudio" class="pd-play__google-audio" controls :src="googleAudioUrl" />
+          </div>
           <InterviewControls
             :disabled="loading || dialogueComplete"
             :submit-label="$t('agileTraining.problemDiscovery.sendQuestion')"
@@ -115,6 +127,9 @@ export default {
       messages: [],
       dialogueComplete: false,
       synthesis: null,
+      gcpTts: false,
+      googleTtsLoading: false,
+      googleAudioUrl: null,
     };
   },
   computed: {
@@ -124,12 +139,33 @@ export default {
       }
       return '';
     },
+    googleTtsDisabled() {
+      return !this.gcpTts;
+    },
+  },
+  watch: {
+    lastAssistantText() {
+      this.revokeGoogleAudio();
+    },
   },
   mounted() {
     this.initLocale();
     this.checkHealth();
   },
+  beforeUnmount() {
+    this.revokeGoogleAudio();
+  },
   methods: {
+    revokeGoogleAudio() {
+      if (this.googleAudioUrl) {
+        try {
+          URL.revokeObjectURL(this.googleAudioUrl);
+        } catch (_e) {
+          /* ignore */
+        }
+        this.googleAudioUrl = null;
+      }
+    },
     initLocale() {
       try {
         const s = localStorage.getItem('language');
@@ -151,8 +187,52 @@ export default {
       try {
         const { data } = await axios.get('/api/problem-discovery/health');
         this.serverMock = !!data.mock;
+        this.gcpTts = !!data.gcp_tts;
       } catch {
         this.serverMock = false;
+        this.gcpTts = false;
+      }
+    },
+    async playGoogleTts() {
+      const text = (this.lastAssistantText || '').trim();
+      if (!text || !this.gcpTts) return;
+      this.revokeGoogleAudio();
+      this.googleTtsLoading = true;
+      this.error = null;
+      try {
+        const res = await axios.post(
+          '/api/problem-discovery/tts',
+          { text, locale: this.locale },
+          { responseType: 'arraybuffer', validateStatus: () => true },
+        );
+        const ctype = String((res.headers && res.headers['content-type']) || '');
+        if (res.status >= 400 || ctype.includes('application/json')) {
+          const dec = new TextDecoder('utf-8');
+          let errMsg = this.$t('agileTraining.problemDiscovery.googleTtsError');
+          try {
+            const j = JSON.parse(dec.decode(new Uint8Array(res.data)));
+            if (j && j.error) errMsg = j.error;
+          } catch (_e) {
+            /* keep default */
+          }
+          throw new Error(errMsg);
+        }
+        const blob = new Blob([res.data], { type: 'audio/mpeg' });
+        this.googleAudioUrl = URL.createObjectURL(blob);
+        await this.$nextTick();
+        const el = this.$refs.googleAudio;
+        if (el && typeof el.play === 'function') {
+          try {
+            await el.play();
+          } catch (_e) {
+            /* autoplay blocked — user can press play on controls */
+          }
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        this.error = /network|ERR_/i.test(msg) ? this.$t('agileTraining.problemDiscovery.googleTtsError') : msg;
+      } finally {
+        this.googleTtsLoading = false;
       }
     },
     async beginInterview() {
@@ -216,6 +296,7 @@ export default {
     },
     resetAll() {
       if (this.messages.length && !window.confirm(this.$t('agileTraining.problemDiscovery.confirmReset'))) return;
+      this.revokeGoogleAudio();
       this.started = false;
       this.messages = [];
       this.dialogueComplete = false;
@@ -314,6 +395,33 @@ export default {
 .pd-play__btn--primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+.pd-play__btn--secondary {
+  background: #fff;
+  color: #2754c7;
+  border: 1px solid rgba(39, 84, 199, 0.45);
+}
+.pd-play__btn--secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.pd-play__google-tts {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.pd-play__google-tts-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #8a7a40;
+  max-width: 36rem;
+}
+.pd-play__google-audio {
+  width: 100%;
+  max-width: 28rem;
+  height: 40px;
 }
 .pd-play__btn--ghost {
   background: #eff3fb;

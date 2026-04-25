@@ -3,6 +3,7 @@ Problem discovery dialog API — human interviewer vs simulated user (OpenAI).
 
 POST /api/problem-discovery/reply
 POST /api/problem-discovery/synthesize
+POST /api/problem-discovery/tts  (Google Neural2 MP3; requires GCP credentials)
 GET  /api/problem-discovery/health
 
 Mock when OPENAI_API_KEY is missing or PROBLEM_DISCOVERY_MOCK=1.
@@ -17,7 +18,7 @@ import re
 import uuid
 from typing import Any, List, Optional
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from problem_discovery_prompts import (
     REPLY_JSON_INSTRUCTION,
@@ -26,6 +27,7 @@ from problem_discovery_prompts import (
     build_synthesis_user_prompt,
     system_persona_messenger,
 )
+from problem_discovery_tts import gcp_tts_configured, synthesize_neural2_mp3
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +174,41 @@ def _mock_synthesis(locale: str) -> dict:
 
 @bp_problem_discovery.route("/health", methods=["GET"])
 def health():
-    return jsonify({"ok": True, "mock": _mock_mode()}), 200
+    return jsonify({"ok": True, "mock": _mock_mode(), "gcp_tts": gcp_tts_configured()}), 200
+
+
+@bp_problem_discovery.route("/tts", methods=["POST"])
+def post_tts():
+    """Synthesize assistant reply text to MP3 (Google Cloud Neural2)."""
+    try:
+        if not gcp_tts_configured():
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Google Cloud TTS is not configured. Set GOOGLE_APPLICATION_CREDENTIALS to a service account JSON path, or GCP_TTS_USE_ADC=1 on GCP with a service identity.",
+                }
+            ), 503
+
+        body = request.get_json(force=True, silent=True) or {}
+        text = (body.get("text") or "").strip()
+        if not text:
+            return jsonify({"success": False, "error": "text required"}), 400
+        locale = _normalize_locale(body.get("locale"))
+
+        audio = synthesize_neural2_mp3(text, locale)
+        return Response(
+            audio,
+            mimetype="audio/mpeg",
+            headers={
+                "Content-Disposition": "inline; filename=reply.mp3",
+                "Cache-Control": "no-store",
+            },
+        )
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        logger.exception("post_tts: %s", e)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp_problem_discovery.route("/reply", methods=["POST"])

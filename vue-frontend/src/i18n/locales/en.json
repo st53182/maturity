@@ -1605,11 +1605,11 @@
       "confirmReset": "Reset dialogue and insights?",
       "labelYou": "You (interviewer)",
       "labelUser": "Respondent (AI)",
-      "ttsHint": "Above: browser read-aloud (free). The button below uses Google Cloud Neural2 (server credentials); usually sounds more natural.",
-      "googleTts": "Play audio (Google Neural2)",
-      "googleTtsPlaying": "Preparing audio…",
-      "googleTtsUnavailable": "Google TTS is not configured on the server (GOOGLE_APPLICATION_CREDENTIALS).",
-      "googleTtsError": "Could not fetch audio. Check GCP billing and the service account permissions."
+      "ttsHint": "Above: browser read-aloud (free). The button below uses OpenAI Text-to-Speech (same OPENAI_API_KEY as the dialogue).",
+      "openaiTts": "Play audio (OpenAI)",
+      "openaiTtsPlaying": "Preparing audio…",
+      "openaiTtsUnavailable": "OpenAI TTS is unavailable: no OPENAI_API_KEY on the server, or OPENAI_TTS_DISABLE is set.",
+      "openaiTtsError": "Could not fetch audio. Check your OpenAI key and API limits."
     },
     "facilitator": {
       "title": "Agile principles — facilitator panel",

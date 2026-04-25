@@ -1,75 +1,62 @@
-"""Google Cloud Text-to-Speech (Neural2) for problem-discovery replies."""
+"""OpenAI Text-to-Speech for problem-discovery replies (same API key as chat)."""
 
 from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Neural2 voices — see https://cloud.google.com/text-to-speech/docs/voices
-_DEFAULT_RU = "ru-RU-Neural2-A"
-_DEFAULT_EN = "en-US-Neural2-J"
+_MAX_CHARS = 4096  # OpenAI TTS input limit
 
-_MAX_CHARS = 4500
+_DEFAULT_MODEL = "tts-1"
+_DEFAULT_VOICE = "nova"
+_DEFAULT_SPEED = 0.95
 
 
-def gcp_tts_configured() -> bool:
-    if os.getenv("GCP_TTS_DISABLE", "").strip().lower() in ("1", "true", "yes"):
+def _voice_for_locale(locale: str) -> str:
+    loc = (locale or "en").strip().lower().split("-", 1)[0]
+    if loc == "ru":
+        return (os.getenv("OPENAI_TTS_VOICE_RU") or os.getenv("OPENAI_TTS_VOICE") or _DEFAULT_VOICE).strip().lower()
+    return (os.getenv("OPENAI_TTS_VOICE_EN") or os.getenv("OPENAI_TTS_VOICE") or _DEFAULT_VOICE).strip().lower()
+
+
+def openai_tts_available() -> bool:
+    if os.getenv("OPENAI_TTS_DISABLE", "").strip().lower() in ("1", "true", "yes"):
         return False
-    cred = (os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
-    if cred:
-        p = Path(cred).expanduser()
-        return p.is_file()
-    # On GCP (Cloud Run, GCE) ADC may work without a file; allow explicit opt-in.
-    return os.getenv("GCP_TTS_USE_ADC", "").strip().lower() in ("1", "true", "yes")
+    return bool((os.getenv("OPENAI_API_KEY") or "").strip())
 
 
-def synthesize_neural2_mp3(text: str, locale: str) -> bytes:
-    """Return MP3 bytes. Raises on API/auth errors."""
+def synthesize_openai_mp3(text: str, locale: str) -> bytes:
+    """Return MP3 bytes via OpenAI audio.speech. Raises on API errors."""
     raw = (text or "").strip()
     if not raw:
         raise ValueError("empty text")
     if len(raw) > _MAX_CHARS:
         raw = raw[:_MAX_CHARS]
 
-    try:
-        from google.cloud import texttospeech
-    except ImportError as e:
-        raise RuntimeError("google-cloud-texttospeech is not installed") from e
+    from openai import OpenAI
 
-    loc = (locale or "en").strip().lower().split("-", 1)[0]
-    if loc == "ru":
-        lang = "ru-RU"
-        name = (os.getenv("GCP_TTS_VOICE_RU") or _DEFAULT_RU).strip()
-    else:
-        lang = "en-US"
-        name = (os.getenv("GCP_TTS_VOICE_EN") or _DEFAULT_EN).strip()
-
+    timeout = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "120"))
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=timeout)
+    model = (os.getenv("OPENAI_TTS_MODEL") or _DEFAULT_MODEL).strip()
+    voice = _voice_for_locale(locale)
     try:
-        speaking_rate = float(os.getenv("GCP_TTS_SPEAKING_RATE", "0.95"))
+        speed = float(os.getenv("OPENAI_TTS_SPEED", str(_DEFAULT_SPEED)))
     except ValueError:
-        speaking_rate = 0.95
-    speaking_rate = max(0.25, min(4.0, speaking_rate))
+        speed = _DEFAULT_SPEED
+    speed = max(0.25, min(4.0, speed))
 
-    client = texttospeech.TextToSpeechClient()
-    synthesis_input = texttospeech.SynthesisInput(text=raw)
-    voice = texttospeech.VoiceSelectionParams(
-        language_code=lang,
-        name=name,
-    )
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3,
-        speaking_rate=speaking_rate,
-    )
-    response = client.synthesize_speech(
-        input=synthesis_input,
-        voice=voice,
-        audio_config=audio_config,
-    )
-    content = response.audio_content
-    if not content:
-        raise RuntimeError("empty audio from TTS")
-    return content
+    # instructions: supported on newer models; omit if API rejects
+    kwargs = {
+        "model": model,
+        "voice": voice,
+        "input": raw,
+        "response_format": "mp3",
+        "speed": speed,
+    }
+    resp = client.audio.speech.create(**kwargs)
+    data = resp.read() if hasattr(resp, "read") else resp.content
+    if not data:
+        raise RuntimeError("empty audio from OpenAI TTS")
+    return data

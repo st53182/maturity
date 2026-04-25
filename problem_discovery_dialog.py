@@ -3,7 +3,7 @@ Problem discovery dialog API — human interviewer vs simulated user (OpenAI).
 
 POST /api/problem-discovery/reply
 POST /api/problem-discovery/synthesize
-POST /api/problem-discovery/tts  (Google Neural2 MP3; requires GCP credentials)
+POST /api/problem-discovery/tts  (OpenAI Speech API → MP3; uses OPENAI_API_KEY)
 GET  /api/problem-discovery/health
 
 Mock when OPENAI_API_KEY is missing or PROBLEM_DISCOVERY_MOCK=1.
@@ -27,7 +27,7 @@ from problem_discovery_prompts import (
     build_synthesis_user_prompt,
     system_persona_messenger,
 )
-from problem_discovery_tts import gcp_tts_configured, synthesize_neural2_mp3
+from problem_discovery_tts import openai_tts_available, synthesize_openai_mp3
 
 logger = logging.getLogger(__name__)
 
@@ -174,18 +174,26 @@ def _mock_synthesis(locale: str) -> dict:
 
 @bp_problem_discovery.route("/health", methods=["GET"])
 def health():
-    return jsonify({"ok": True, "mock": _mock_mode(), "gcp_tts": gcp_tts_configured()}), 200
+    return jsonify(
+        {
+            "ok": True,
+            "mock": _mock_mode(),
+            "openai_tts": openai_tts_available(),
+            # deprecated: frontends may still read gcp_tts; always false
+            "gcp_tts": False,
+        }
+    ), 200
 
 
 @bp_problem_discovery.route("/tts", methods=["POST"])
 def post_tts():
-    """Synthesize assistant reply text to MP3 (Google Cloud Neural2)."""
+    """Synthesize assistant reply text to MP3 (OpenAI Text-to-Speech)."""
     try:
-        if not gcp_tts_configured():
+        if not openai_tts_available():
             return jsonify(
                 {
                     "success": False,
-                    "error": "Google Cloud TTS is not configured. Set GOOGLE_APPLICATION_CREDENTIALS to a service account JSON path, or GCP_TTS_USE_ADC=1 on GCP with a service identity.",
+                    "error": "OpenAI TTS unavailable: set OPENAI_API_KEY on the server (or unset OPENAI_TTS_DISABLE).",
                 }
             ), 503
 
@@ -195,7 +203,7 @@ def post_tts():
             return jsonify({"success": False, "error": "text required"}), 400
         locale = _normalize_locale(body.get("locale"))
 
-        audio = synthesize_neural2_mp3(text, locale)
+        audio = synthesize_openai_mp3(text, locale)
         return Response(
             audio,
             mimetype="audio/mpeg",

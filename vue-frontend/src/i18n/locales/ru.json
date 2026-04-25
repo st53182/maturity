@@ -1535,11 +1535,11 @@
       "confirmReset": "Сбросить диалог и инсайты?",
       "labelYou": "Вы (интервьюер)",
       "labelUser": "Респондент (AI)",
-      "ttsHint": "Сверху — озвучка голосом браузера (бесплатно). Кнопка ниже — Google Cloud Neural2 (нужны ключи на сервере); звучит естественнее.",
-      "googleTts": "Озвучить (Google Neural2)",
-      "googleTtsPlaying": "Готовим озвучку…",
-      "googleTtsUnavailable": "Google TTS не настроен на сервере (GOOGLE_APPLICATION_CREDENTIALS).",
-      "googleTtsError": "Не удалось получить озвучку. Проверьте биллинг GCP и права сервисного аккаунта."
+      "ttsHint": "Сверху — озвучка голосом браузера (бесплатно). Кнопка ниже — OpenAI TTS (тот же OPENAI_API_KEY, что и для диалога).",
+      "openaiTts": "Озвучить (OpenAI)",
+      "openaiTtsPlaying": "Готовим озвучку…",
+      "openaiTtsUnavailable": "OpenAI TTS недоступен: на сервере нет OPENAI_API_KEY или включён OPENAI_TTS_DISABLE.",
+      "openaiTtsError": "Не удалось получить озвучку. Проверьте ключ OpenAI и лимиты API."
     },
     "facilitator": {
       "title": "Принципы Agile — панель фасилитатора",

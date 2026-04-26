@@ -302,10 +302,10 @@
                   ({{ $t('agileTraining.scrumSim.unused', { n: state.capacity_today - allocTotal }) }})
                 </span>
               </div>
-              <div class="sp__actions">
-                <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="commitAllocation">
-                  {{ $t('agileTraining.scrumSim.saveAlloc') }}
-                </button>
+              <div class="sp__alloc-autosave" :class="'sp__alloc-autosave--' + allocSavingState">
+                <span v-if="allocSavingState === 'saving' || allocSavingState === 'pending'">⏳ {{ $t('agileTraining.scrumSim.allocSaving') }}</span>
+                <span v-else-if="allocSavingState === 'error'">⚠️ {{ $t('agileTraining.scrumSim.allocSaveError') }}</span>
+                <span v-else>✓ {{ $t('agileTraining.scrumSim.allocSaved') }}</span>
               </div>
             </div>
           </div>
@@ -657,6 +657,10 @@ export default {
 
       startBusy: '',
       returnBusy: '',
+
+      allocSaveTimer: null,
+      allocSavingState: 'idle',
+      lastSavedAllocSig: '',
     };
   },
   computed: {
@@ -932,6 +936,22 @@ export default {
     'state.current_day'() {
       this.maybeOpenEventPopup();
     },
+    allocDraft: {
+      deep: true,
+      handler() {
+        if (this._allocSignature() === this.lastSavedAllocSig) return;
+        this.allocSavingState = 'pending';
+        this.scheduleAllocSave();
+      },
+    },
+    priorityOrder: {
+      deep: true,
+      handler() {
+        if (this._allocSignature() === this.lastSavedAllocSig) return;
+        this.allocSavingState = 'pending';
+        this.scheduleAllocSave();
+      },
+    },
   },
   async mounted() {
     this.participantToken = read(TOKEN_KEY_PREFIX, this.slug);
@@ -977,11 +997,15 @@ export default {
         if (updateLocal || !prev) {
           this.sprintGoalDraft = s.sprint_goal || '';
           this.allocDraft = { ...(s.pending_day && s.pending_day.allocation || {}) };
+          this.priorityOrder = [...(s.priority_order || [])];
+          this.lastSavedAllocSig = this._allocSignature();
           this.aiCalls = (s.my && s.my.ai_calls) || 0;
           this.aiLimit = (s.my && s.my.ai_calls_limit) || 10;
         } else {
           if (prev.pending_day && prev.pending_day.day !== s.pending_day.day) {
             this.allocDraft = { ...(s.pending_day.allocation || {}) };
+            this.priorityOrder = [...(s.priority_order || [])];
+            this.lastSavedAllocSig = this._allocSignature();
           }
         }
       }
@@ -1214,7 +1238,28 @@ export default {
       }
       this.allocDraft = next;
     },
+    _allocSignature() {
+      const clean = {};
+      for (const [k, v] of Object.entries(this.allocDraft || {})) {
+        if (Number(v) > 0) clean[k] = Number(v);
+      }
+      const order = (this.priorityOrder && this.priorityOrder.length)
+        ? this.priorityOrder
+        : ((this.state && this.state.priority_order) || []);
+      return JSON.stringify({ a: clean, o: order });
+    },
+    scheduleAllocSave() {
+      if (!this.isDayPhase) return;
+      if (!this.pendingDay || !this.pendingDay.event_applied) return;
+      if (this.allocSaveTimer) clearTimeout(this.allocSaveTimer);
+      this.allocSaveTimer = setTimeout(() => {
+        this.allocSaveTimer = null;
+        this.commitAllocation();
+      }, 500);
+    },
     async commitAllocation() {
+      const sig = this._allocSignature();
+      if (sig === this.lastSavedAllocSig) return;
       const clean = {};
       for (const [k, v] of Object.entries(this.allocDraft)) {
         if (Number(v) > 0) clean[k] = Number(v);
@@ -1222,12 +1267,21 @@ export default {
       const order = (this.priorityOrder && this.priorityOrder.length)
         ? this.priorityOrder
         : ((this.state && this.state.priority_order) || []);
-      await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/allocate`, {
-        participant_token: this.participantToken,
-        allocation: clean,
-        priority_order: order,
-      });
-      await this.loadState(true);
+      this.allocSavingState = 'saving';
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/day/allocate`, {
+          participant_token: this.participantToken,
+          allocation: clean,
+          priority_order: order,
+        });
+        this.lastSavedAllocSig = sig;
+        this.allocSavingState = 'saved';
+        if (!this.allocSaveTimer && this._allocSignature() === sig) {
+          await this.loadState(false);
+        }
+      } catch (e) {
+        this.allocSavingState = 'error';
+      }
     },
     canReturnTask(t) {
       if (!t) return false;
@@ -1690,6 +1744,13 @@ export default {
 .sp__alloc-sum { font-size: 13px; font-weight: 600; color: #334155; margin-top: 8px; text-align: right; }
 .sp__alloc-sum.over { color: #b91c1c; }
 .sp__alloc-slack { color: #94a3b8; font-weight: 500; font-size: 12px; margin-left: 6px; }
+.sp__alloc-autosave {
+  margin-top: 4px; text-align: right; font-size: 11px; color: #94a3b8;
+  font-weight: 500; transition: color 0.2s;
+}
+.sp__alloc-autosave--saving, .sp__alloc-autosave--pending { color: #0369a1; }
+.sp__alloc-autosave--saved { color: #059669; }
+.sp__alloc-autosave--error { color: #b91c1c; font-weight: 600; }
 
 .sp__decision { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
 .sp__decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }

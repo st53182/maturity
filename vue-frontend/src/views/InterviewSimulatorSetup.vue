@@ -5,15 +5,31 @@
       <h1>{{ $t('interviewSimulator.setupTitle') }}</h1>
     </header>
 
-    <RoleSelector v-model="role" :label="$t('interviewSimulator.labelRole')" />
-    <LevelSelector v-model="level" :label="$t('interviewSimulator.labelLevel')" class="is-spaced" />
+    <fieldset class="is-mode is-spaced">
+      <legend class="is-mode__legend">{{ $t('interviewSimulator.modeLabel') }}</legend>
+      <label class="is-mode__opt">
+        <input v-model="interviewMode" type="radio" value="technical" />
+        <span>{{ $t('interviewSimulator.modeTechnical') }}</span>
+      </label>
+      <label class="is-mode__opt">
+        <input v-model="interviewMode" type="radio" value="problem_user" />
+        <span>{{ $t('interviewSimulator.modeProblem') }}</span>
+      </label>
+    </fieldset>
+
+    <template v-if="isTechnical">
+      <RoleSelector v-model="role" :label="$t('interviewSimulator.labelRole')" />
+      <LevelSelector v-model="level" :label="$t('interviewSimulator.labelLevel')" class="is-spaced" />
+    </template>
+
+    <PersonaSelector v-else v-model="persona" class="is-spaced" :label="$t('interviewSimulator.labelPersona')" />
 
     <JobDescriptionInput
       v-model="jobDescription"
       class="is-spaced"
-      :label="$t('interviewSimulator.jdLabel')"
-      :hint="$t('interviewSimulator.jdHint')"
-      :placeholder="$t('interviewSimulator.jdPlaceholder')"
+      :label="jdBlock.label"
+      :hint="jdBlock.hint"
+      :placeholder="jdBlock.placeholder"
     />
 
     <p v-if="serverHint" class="is-hint">{{ serverHint }}</p>
@@ -30,23 +46,43 @@
 <script>
 import RoleSelector from '@/features/interviewSimulator/components/RoleSelector.vue';
 import LevelSelector from '@/features/interviewSimulator/components/LevelSelector.vue';
+import PersonaSelector from '@/features/interviewSimulator/components/PersonaSelector.vue';
 import JobDescriptionInput from '@/features/interviewSimulator/components/JobDescriptionInput.vue';
 import { useInterviewSimulatorStore } from '@/stores/interviewSimulator';
 import { canStartSession } from '@/features/interviewSimulator/services/interviewEngine';
 
 export default {
   name: 'InterviewSimulatorSetup',
-  components: { RoleSelector, LevelSelector, JobDescriptionInput },
+  components: { RoleSelector, LevelSelector, PersonaSelector, JobDescriptionInput },
   data() {
     return {
       role: 'frontend',
       level: 'middle',
+      interviewMode: 'technical',
+      persona: 'tech_employee',
       jobDescription: '',
       starting: false,
       error: null,
     };
   },
   computed: {
+    isTechnical() {
+      return this.interviewMode === 'technical';
+    },
+    jdBlock() {
+      if (this.isTechnical) {
+        return {
+          label: this.$t('interviewSimulator.jdLabel'),
+          hint: this.$t('interviewSimulator.jdHint'),
+          placeholder: this.$t('interviewSimulator.jdPlaceholder'),
+        };
+      }
+      return {
+        label: this.$t('interviewSimulator.topicLabel'),
+        hint: this.$t('interviewSimulator.topicHint'),
+        placeholder: this.$t('interviewSimulator.topicPlaceholder'),
+      };
+    },
     serverHint() {
       const s = useInterviewSimulatorStore();
       return s.serverMock ? this.$t('interviewSimulator.serverMockHint') : '';
@@ -64,17 +100,28 @@ export default {
       const state = {
         role: this.role,
         level: this.level,
+        interviewMode: this.interviewMode,
+        persona: this.interviewMode === 'problem_user' ? this.persona : undefined,
         jobDescription: this.jobDescription,
         locale: loc,
       };
       if (!canStartSession(state)) {
-        this.error = this.$t('interviewSimulator.errSelectRoleLevel');
+        this.error = this.isTechnical
+          ? this.$t('interviewSimulator.errSelectRoleLevel')
+          : this.$t('interviewSimulator.errSelectPersona');
         return;
       }
       this.starting = true;
       const store = useInterviewSimulatorStore();
       store.reset();
-      store.setConfig(state);
+      store.setConfig({
+        role: this.role,
+        level: this.level,
+        jobDescription: this.jobDescription,
+        locale: loc,
+        interviewMode: this.interviewMode,
+        persona: this.interviewMode === 'problem_user' ? this.persona : undefined,
+      });
       await store.bootstrapFirstQuestion();
       this.starting = false;
       if (store.error) {
@@ -105,6 +152,30 @@ export default {
 }
 .is-spaced {
   margin-top: 22px;
+}
+.is-mode {
+  border: 1px solid var(--vl-border, #d8e0f0);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  margin: 0;
+}
+.is-mode__legend {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0 6px;
+  color: var(--vl-text, #0d1733);
+}
+.is-mode__opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--vl-text, #0d1733);
+}
+.is-mode__opt input {
+  accent-color: #2754c7;
 }
 .is-hint {
   margin-top: 16px;

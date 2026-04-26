@@ -1,13 +1,13 @@
 <template>
   <div class="is-controls">
-    <label class="is-sr-only" for="answer-box">{{ $t('interviewSimulator.placeholderAnswer') }}</label>
+    <label class="is-sr-only" for="answer-box">{{ effectivePlaceholder }}</label>
     <textarea
       id="answer-box"
       v-model="local"
       class="is-controls__input"
       rows="4"
       :disabled="disabled"
-      :placeholder="$t('interviewSimulator.placeholderAnswer')"
+      :placeholder="effectivePlaceholder"
       @keydown.ctrl.enter="submit"
       @keydown.meta.enter="submit"
     />
@@ -54,6 +54,8 @@ export default {
     modelValue: { type: String, default: '' },
     disabled: { type: Boolean, default: false },
     submitLabel: { type: String, default: 'Send answer' },
+    /** When empty, default candidate placeholder (i18n) is used */
+    inputPlaceholder: { type: String, default: '' },
   },
   emits: ['update:modelValue', 'submit'],
   data() {
@@ -65,6 +67,10 @@ export default {
     };
   },
   computed: {
+    effectivePlaceholder() {
+      if (this.inputPlaceholder && this.inputPlaceholder.trim()) return this.inputPlaceholder;
+      return this.$t('interviewSimulator.placeholderAnswer');
+    },
     voiceSupported() {
       if (typeof window === 'undefined') return false;
       return !!(window.SpeechRecognition || window.webkitSpeechRecognition);

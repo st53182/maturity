@@ -22,10 +22,16 @@ from flask import Blueprint, jsonify, request
 
 from interview_simulator_prompts import (
     JSON_INSTRUCTION,
+    PERSONA_KEYS,
     SYSTEM_BASE,
+    SYSTEM_PERSONA,
     build_evaluate_prompt,
+    build_persona_line_prompt,
+    build_problem_discovery_report_prompt,
     build_question_prompt,
+    build_researcher_question_eval_prompt,
     build_report_prompt,
+    get_persona_spec,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,6 +55,21 @@ def _closing_line(locale: str) -> str:
 
 MIN_QUESTIONS_DEFAULT = 7
 MAX_QUESTIONS_DEFAULT = 13
+
+
+def _interview_mode(body: dict) -> str:
+    raw = body.get("interviewMode") or body.get("interview_mode") or "technical"
+    s = str(raw).strip().lower()
+    if s in ("problem_user", "problem", "user_research", "discovery", "persona"):
+        return "problem_user"
+    return "technical"
+
+
+def _persona_key(body: dict) -> str:
+    p = str(body.get("persona") or "tech_employee").strip()
+    if p in PERSONA_KEYS:
+        return p
+    return "tech_employee"
 
 
 def _mock_mode() -> bool:
@@ -80,14 +101,21 @@ def _is_gpt5_model(model: str) -> bool:
     return "gpt-5" in (model or "").strip().lower().split("/")[-1]
 
 
-def _call_openai(user_prompt: str, *, temperature: float = 0.4, max_out_tokens: int = 2000) -> str:
+def _call_openai(
+    user_prompt: str,
+    *,
+    temperature: float = 0.4,
+    max_out_tokens: int = 2000,
+    system_content: Optional[str] = None,
+) -> str:
     from openai import OpenAI
 
     timeout = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "120"))
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=timeout)
     model = (os.getenv("INTERVIEW_SIMULATOR_MODEL", "gpt-4.1-mini") or "gpt-4.1-mini").strip()
+    sys_msg = system_content if system_content is not None else (SYSTEM_BASE + "\n" + JSON_INSTRUCTION)
     messages = [
-        {"role": "system", "content": SYSTEM_BASE + "\n" + JSON_INSTRUCTION},
+        {"role": "system", "content": sys_msg},
         {"role": "user", "content": user_prompt},
     ]
     kwargs: dict = {"model": model, "messages": messages}
@@ -158,6 +186,56 @@ def _mock_question_payload(body: dict) -> dict:
     }
 
 
+def _mock_persona_question_payload(body: dict) -> dict:
+    """Problem-interview mode: AI plays the user; field 'question' = persona's spoken line."""
+    idx = int(body.get("questionIndex") or 0)
+    max_q = int(body.get("maxQuestions") or MAX_QUESTIONS_DEFAULT)
+    loc = _normalize_locale(body.get("locale"))
+    persona = _persona_key(body)
+    spec = get_persona_spec(persona, loc)
+    topic = (body.get("jobDescription") or "").strip()
+    topic_bit = f" ({topic[:100]}…)" if len(topic) > 100 else (f" ({topic})" if topic else "")
+    if idx >= max_q:
+        done = (
+            "На этом у меня всё, спасибо за разговор."
+            if loc == "ru"
+            else "That's all from me today — thanks for the chat."
+        )
+        return {
+            "question": done,
+            "is_follow_up": False,
+            "interview_complete": True,
+            "question_id": str(uuid.uuid4()),
+            "mock": True,
+        }
+    is_ru = loc == "ru"
+    if is_ru:
+        tword = topic.split()[0] if topic else "это"
+        seq = [
+            f"[Мок-реплика {idx + 1}] Добрый день. Немного о себе как о {spec['label']}{topic_bit}. "
+            f"Вчера снова пришлось обходить косяк в сервисе — короче, бесит, когда не с первого клика.",
+            f"Если копнёте — мне важно, чтобы {tword} не съедало вечер мелкими кусками, когда уже устал.",
+            f"Сравнивал с тем, что подсказала сестра в чате: у неё тоже не всё гладко, зато она в любом случае добьётся, если сбой.",
+            f"Заплатил бы больше, если бы сразу было прозрачно и без сюрпризов — а так я ищу обходы.",
+        ]
+    else:
+        seq = [
+            f"[Mock line {idx + 1}] Hi — I’m the {spec['label']}{topic_bit}. Yesterday I had to work around a glitch again; "
+            f"I get annoyed when it’s not one-tap easy.",
+            f"I’m not looking for ‘perfect’ — I need this not to eat my evening in tiny chunks when I’m already tired.",
+            f"My friend in chat had a different workaround — not smoother, but at least predictable.",
+            f"I’d pay more for clarity and no surprise fees, but for now I keep juggling apps.",
+        ]
+    q = seq[idx % len(seq)]
+    return {
+        "question": q,
+        "is_follow_up": idx > 0 and idx % 4 == 2,
+        "interview_complete": False,
+        "question_id": str(uuid.uuid4()),
+        "mock": True,
+    }
+
+
 def _mock_evaluate_payload(locale: str = "en") -> dict:
     if locale == "ru":
         return {
@@ -188,7 +266,67 @@ def _mock_evaluate_payload(locale: str = "en") -> dict:
     }
 
 
+def _mock_problem_report_payload(body: dict) -> dict:
+    loc = _normalize_locale(body.get("locale"))
+    persona = _persona_key(body)
+    spec = get_persona_spec(persona, loc)
+    topic = (body.get("jobDescription") or "").strip()
+    if loc == "ru":
+        return {
+            "overall_score": 74,
+            "category_scores": {
+                "technical_depth": 72,
+                "communication": 78,
+                "job_fit": 70,
+                "problem_solving": 73,
+            },
+            "summary": f"Мок-отчёт: выявлены реальные сценарии и боли; для {spec['label']} — проверьте доверие и простоту. Тема: {topic or 'без уточнения'}.",
+            "strengths": ["Сцены и эмоции", "Сравнения с обходами"],
+            "weaknesses": ["Мало количественных деталей", "Почти нет валидации гипотез"],
+            "recommendations": [
+                "Следующий шаг: проверка с 3–5 респондентами в той же нише.",
+                "Зафиксировать топ-3 боли и критерии «готовы платить / уйдём к конкуренту».",
+            ],
+            "vacancy_fit": {
+                "match_percent": 70,
+                "summary": f"Сила инсайтов относительно темы; мок-данные, персона: {spec['label']}.",
+                "requirements_covered_well": ["Сценарии", "триггеры раздражения", "workaround"],
+                "requirements_gaps": ["Сегменты, метрики, частоты", "A/B-намерение"],
+                "topics_to_study": ["Повторяемые триггеры", "критерии доверия", "сравнение с альтернативами"],
+            },
+            "example_strong_answer": "Расскажите про последний раз, когда вы отказались пройти сценарий: что нажимали, что ожидали, сколько ушло времени?",
+            "mock": True,
+        }
+    return {
+        "overall_score": 74,
+        "category_scores": {
+            "technical_depth": 72,
+            "communication": 78,
+            "job_fit": 70,
+            "problem_solving": 73,
+        },
+        "summary": f"Mock: scenarios and pains surfaced; for {spec['label']}, test trust and simplicity. Topic: {topic or 'n/a'}.",
+        "strengths": ["Concrete scenes", "workarounds"],
+        "weaknesses": ["Few numeric anchors", "little hypothesis testing"],
+        "recommendations": [
+            f"Next: validate with 3–5 more people who match the {spec['key']} pattern.",
+            "Capture top pains and 'would pay / would churn' criteria.",
+        ],
+        "vacancy_fit": {
+            "match_percent": 70,
+            "summary": f"Mock insight value vs. topic; persona: {spec['label']}.",
+            "requirements_covered_well": ["Scenes", "frustration", "workarounds"],
+            "requirements_gaps": ["Frequency", "willingness to pay", "alternatives used"],
+            "topics_to_study": ["Trust cues", "comparison shopping", "repeat triggers"],
+        },
+        "example_strong_answer": "Walk me through the last time you gave up: what you tapped, what you expected, and how long it took.",
+        "mock": True,
+    }
+
+
 def _mock_report_payload(body: dict) -> dict:
+    if _interview_mode(body) == "problem_user":
+        return _mock_problem_report_payload(body)
     jd = (body.get("jobDescription") or "").strip()
     loc = _normalize_locale(body.get("locale"))
     if loc == "ru":
@@ -260,6 +398,7 @@ def _mock_report_payload(body: dict) -> dict:
 def post_question():
     try:
         body = request.get_json(force=True, silent=True) or {}
+        mode = _interview_mode(body)
         role = (body.get("role") or "software_engineer").strip()
         level = (body.get("level") or "middle").strip()
         job_description = body.get("jobDescription")
@@ -283,29 +422,47 @@ def post_question():
             ), 200
 
         if _mock_mode():
-            out = _mock_question_payload(body)
+            out = _mock_persona_question_payload(body) if mode == "problem_user" else _mock_question_payload(body)
             return jsonify({"success": True, **out}), 200
 
         transcript_json = json.dumps(transcript, ensure_ascii=False)
         last_eval_json = json.dumps(last_eval, ensure_ascii=False) if last_eval is not None else None
-        user_prompt = build_question_prompt(
-            role=role,
-            level=level,
-            job_description=job_description if isinstance(job_description, str) else None,
-            transcript_json=transcript_json,
-            question_index=question_index,
-            min_questions=min_q,
-            max_questions=max_q,
-            last_evaluation_json=last_eval_json,
-            locale=locale,
-        )
-        # Slightly higher temperature + richer prompt reduces back-to-back near-duplicate questions.
         try:
             q_temp = float(os.getenv("INTERVIEW_SIMULATOR_QUESTION_TEMP", "0.68"))
         except ValueError:
             q_temp = 0.68
         q_temp = max(0.0, min(1.5, q_temp))
-        raw = _call_openai(user_prompt, temperature=q_temp)
+
+        if mode == "problem_user":
+            persona = _persona_key(body)
+            user_prompt = build_persona_line_prompt(
+                persona=persona,
+                topic_or_product=job_description if isinstance(job_description, str) else None,
+                transcript_json=transcript_json,
+                question_index=question_index,
+                min_questions=min_q,
+                max_questions=max_q,
+                last_evaluation_json=last_eval_json,
+                locale=locale,
+            )
+            raw = _call_openai(
+                user_prompt,
+                temperature=q_temp,
+                system_content=SYSTEM_PERSONA + "\n" + JSON_INSTRUCTION,
+            )
+        else:
+            user_prompt = build_question_prompt(
+                role=role,
+                level=level,
+                job_description=job_description if isinstance(job_description, str) else None,
+                transcript_json=transcript_json,
+                question_index=question_index,
+                min_questions=min_q,
+                max_questions=max_q,
+                last_evaluation_json=last_eval_json,
+                locale=locale,
+            )
+            raw = _call_openai(user_prompt, temperature=q_temp)
         data = _extract_json_object(raw)
         if not data or "question" not in data:
             logger.warning("Bad question JSON: %s", raw[:500])
@@ -324,6 +481,7 @@ def post_question():
 def post_evaluate():
     try:
         body = request.get_json(force=True, silent=True) or {}
+        mode = _interview_mode(body)
         role = (body.get("role") or "software_engineer").strip()
         level = (body.get("level") or "middle").strip()
         job_description = body.get("jobDescription")
@@ -337,14 +495,24 @@ def post_evaluate():
         if _mock_mode():
             return jsonify({"success": True, "evaluation": _mock_evaluate_payload(locale)}), 200
 
-        user_prompt = build_evaluate_prompt(
-            role=role,
-            level=level,
-            job_description=job_description if isinstance(job_description, str) else None,
-            question=question,
-            answer=answer,
-            locale=locale,
-        )
+        if mode == "problem_user":
+            persona = _persona_key(body)
+            user_prompt = build_researcher_question_eval_prompt(
+                persona=persona,
+                topic_or_product=job_description if isinstance(job_description, str) else None,
+                question=question,
+                answer=answer,
+                locale=locale,
+            )
+        else:
+            user_prompt = build_evaluate_prompt(
+                role=role,
+                level=level,
+                job_description=job_description if isinstance(job_description, str) else None,
+                question=question,
+                answer=answer,
+                locale=locale,
+            )
         raw = _call_openai(user_prompt)
         data = _extract_json_object(raw)
         if not data or "relevance" not in data:
@@ -361,6 +529,7 @@ def post_evaluate():
 def post_report():
     try:
         body = request.get_json(force=True, silent=True) or {}
+        mode = _interview_mode(body)
         role = (body.get("role") or "software_engineer").strip()
         level = (body.get("level") or "middle").strip()
         job_description = body.get("jobDescription")
@@ -374,13 +543,22 @@ def post_report():
             return jsonify({"success": True, "report": _mock_report_payload(body)}), 200
 
         qa_block = json.dumps(rounds, ensure_ascii=False)
-        user_prompt = build_report_prompt(
-            role=role,
-            level=level,
-            job_description=job_description if isinstance(job_description, str) else None,
-            qa_block=qa_block,
-            locale=locale,
-        )
+        if mode == "problem_user":
+            persona = _persona_key(body)
+            user_prompt = build_problem_discovery_report_prompt(
+                persona=persona,
+                topic_or_product=job_description if isinstance(job_description, str) else None,
+                qa_block=qa_block,
+                locale=locale,
+            )
+        else:
+            user_prompt = build_report_prompt(
+                role=role,
+                level=level,
+                job_description=job_description if isinstance(job_description, str) else None,
+                qa_block=qa_block,
+                locale=locale,
+            )
         raw = _call_openai(user_prompt)
         data = _extract_json_object(raw)
         if not data or "overall_score" not in data:

@@ -1,12 +1,14 @@
 <template>
   <article v-if="report" class="is-fb">
-    <h2 class="is-fb__title">{{ $t('interviewSimulator.feedbackTitle') }}</h2>
+    <h2 class="is-fb__title">
+      {{ $t(isProblemMode ? 'interviewSimulator.feedbackTitleProblem' : 'interviewSimulator.feedbackTitle') }}
+    </h2>
     <p class="is-fb__score">
       {{ $t('interviewSimulator.overallScore') }} <strong>{{ report.overall_score }}</strong> {{ $t('interviewSimulator.outOf100') }}
     </p>
     <p class="is-fb__summary">{{ report.summary }}</p>
     <div v-if="report.vacancy_fit" class="is-fb__fit">
-      <h3>{{ $t('interviewSimulator.vacancyFit') }}</h3>
+      <h3>{{ $t(isProblemMode ? 'interviewSimulator.discoveryFit' : 'interviewSimulator.vacancyFit') }}</h3>
       <p>
         <strong>{{ report.vacancy_fit.match_percent }}%</strong> —
         {{ report.vacancy_fit.summary }}
@@ -42,7 +44,9 @@
     <ul>
       <li v-for="(r, i) in report.recommendations" :key="'r' + i">{{ r }}</li>
     </ul>
-    <h3>{{ $t('interviewSimulator.exampleStrongAnswer') }}</h3>
+    <h3>
+      {{ $t(isProblemMode ? 'interviewSimulator.exampleStrongQuestion' : 'interviewSimulator.exampleStrongAnswer') }}
+    </h3>
     <blockquote class="is-fb__quote">{{ report.example_strong_answer }}</blockquote>
   </article>
 </template>
@@ -52,6 +56,7 @@ export default {
   name: 'FeedbackCard',
   props: {
     report: { type: Object, default: null },
+    isProblemMode: { type: Boolean, default: false },
   },
 };
 </script>

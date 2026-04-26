@@ -17,7 +17,12 @@ export function progressRatio(completedRounds, maxQ = DEFAULT_MAX_QUESTIONS) {
  * @param {import('../types').InterviewSessionState} state
  */
 export function canStartSession(state) {
-  return !!(state && state.role && state.level);
+  if (!state) return false;
+  const mode = state.interviewMode || 'technical';
+  if (mode === 'problem_user') {
+    return !!state.persona;
+  }
+  return !!(state.role && state.level);
 }
 
 export function defaultMinMax() {

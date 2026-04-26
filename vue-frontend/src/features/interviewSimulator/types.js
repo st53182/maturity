@@ -68,9 +68,15 @@
  */
 
 /**
+ * @typedef {'tech_employee'|'retiree'|'middle_class_messenger'|'regional_smb'} PersonaId
+ */
+
+/**
  * @typedef {Object} InterviewSessionState
  * @property {InterviewRole} role
  * @property {InterviewLevel} level
+ * @property {'technical'|'problem_user'} [interviewMode]
+ * @property {PersonaId} [persona]
  * @property {string} jobDescription
  * @property {InterviewRound[]} rounds
  * @property {{role: 'assistant'|'user', content: string}[]} transcript

@@ -16,9 +16,15 @@ export default {
   name: 'ScoreBreakdown',
   props: {
     scores: { type: Object, default: null },
+    isProblemMode: { type: Boolean, default: false },
   },
   methods: {
     formatKey(k) {
+      if (this.isProblemMode) {
+        const pk = `interviewSimulator.scoreCategoryProblem.${k}`;
+        const pr = this.$t(pk);
+        if (pr !== pk) return pr;
+      }
       const tkey = `interviewSimulator.scoreCategory.${k}`;
       const tr = this.$t(tkey);
       if (tr !== tkey) return tr;

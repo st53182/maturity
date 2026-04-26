@@ -7,9 +7,11 @@
         <div v-if="isFollowUp && !hideFollowUpBadge" class="is-badge">{{ $t('interviewSimulator.followUpBadge') }}</div>
         <label v-if="showBrowserSpeechUi" class="is-card__auto">
           <input v-model="autoSpeakLocal" type="checkbox" @change="onAutoSpeakChange" />
-          <span>{{ $t('interviewSimulator.readQuestionAuto') }}</span>
+          <span>{{ $t(problemMode ? 'interviewSimulator.readPersonaAuto' : 'interviewSimulator.readQuestionAuto') }}</span>
         </label>
-        <p v-if="showBrowserSpeechUi" class="is-card__auto-hint">{{ $t('interviewSimulator.readQuestionAutoHint') }}</p>
+        <p v-if="showBrowserSpeechUi" class="is-card__auto-hint">
+          {{ $t(problemMode ? 'interviewSimulator.readPersonaAutoHint' : 'interviewSimulator.readQuestionAutoHint') }}
+        </p>
       </div>
       <button
         v-if="showBrowserSpeechUi && question"
@@ -20,7 +22,7 @@
         :disabled="!question.trim()"
         @click="toggleSpeak"
       >
-        {{ speaking ? $t('interviewSimulator.readQuestionStop') : $t('interviewSimulator.readQuestion') }}
+        {{ speaking ? readStopLabel : readStartLabel }}
       </button>
     </div>
   </section>
@@ -132,6 +134,8 @@ export default {
     },
     /** When true, no Web Speech UI or auto-read (e.g. parent uses OpenAI TTS only). */
     hideBrowserSpeech: { type: Boolean, default: false },
+    /** True when AI plays a user persona (problem interview), not a technical interviewer */
+    problemMode: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -144,8 +148,19 @@ export default {
   },
   computed: {
     kickerLabel() {
+      if (this.problemMode) return this.$t('interviewSimulator.currentPersonaLine');
       if (this.kickerKey) return this.$t(this.kickerKey);
       return this.$t('interviewSimulator.currentQuestion');
+    },
+    readStartLabel() {
+      return this.$t(
+        this.problemMode ? 'interviewSimulator.readPersonaAloud' : 'interviewSimulator.readQuestion',
+      );
+    },
+    readStopLabel() {
+      return this.$t(
+        this.problemMode ? 'interviewSimulator.readPersonaStop' : 'interviewSimulator.readQuestionStop',
+      );
     },
     readAloudSupported() {
       return typeof window !== 'undefined' && !!window.speechSynthesis;

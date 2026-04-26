@@ -11,6 +11,10 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
   state: () => ({
     role: 'frontend',
     level: 'middle',
+    /** @type {'technical'|'problem_user'} */
+    interviewMode: 'technical',
+    /** @type {import('@/features/interviewSimulator/types').PersonaId} */
+    persona: 'tech_employee',
     jobDescription: '',
     minQuestions: DEFAULT_MIN_QUESTIONS,
     maxQuestions: DEFAULT_MAX_QUESTIONS,
@@ -40,15 +44,19 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
       this.error = null;
       this.loading = false;
       this.locale = 'en';
+      this.interviewMode = 'technical';
+      this.persona = 'tech_employee';
     },
 
     /**
-     * @param {{ role: string, level: string, jobDescription?: string, locale?: string }} cfg
+     * @param {{ role: string, level: string, jobDescription?: string, locale?: string, interviewMode?: 'technical'|'problem_user', persona?: import('@/features/interviewSimulator/types').PersonaId }} cfg
      */
     setConfig(cfg) {
       this.role = cfg.role;
       this.level = cfg.level;
       this.jobDescription = cfg.jobDescription || '';
+      this.interviewMode = cfg.interviewMode || 'technical';
+      this.persona = cfg.persona || 'tech_employee';
       const raw = (cfg.locale || 'en').toString().toLowerCase();
       this.locale = raw.startsWith('ru') ? 'ru' : 'en';
     },
@@ -66,6 +74,8 @@ export const useInterviewSimulatorStore = defineStore('interviewSimulator', {
       return {
         role: this.role,
         level: this.level,
+        interviewMode: this.interviewMode,
+        persona: this.interviewMode === 'problem_user' ? this.persona : undefined,
         jobDescription: this.jobDescription.trim() || undefined,
         minQuestions: this.minQuestions,
         maxQuestions: this.maxQuestions,

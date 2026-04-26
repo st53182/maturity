@@ -16,23 +16,33 @@
     <template v-else>
       <header class="is-session__bar">
         <router-link to="/new/interview-simulator/setup" class="is-a" @click.prevent="confirmLeave">{{ $t('interviewSimulator.exit') }}</router-link>
-        <span class="is-session__meta">{{ roleLabel }} · {{ levelLabel }}</span>
+        <span v-if="!isProblem" class="is-session__meta">{{ roleLabel }} · {{ levelLabel }}</span>
+        <span v-else class="is-session__meta">{{ personaLabel }}<span v-if="topicSnippet"> — {{ topicSnippet }}</span></span>
       </header>
 
       <ProgressIndicator :completed="store.interviewerTurnsCount" :max="store.maxQuestions" />
 
       <div class="is-session__layout">
         <div class="is-session__main">
-          <QuestionCard :question="store.currentQuestion" :isFollowUp="store.lastQuestionIsFollowUp" />
+          <QuestionCard
+            :question="store.currentQuestion"
+            :isFollowUp="store.lastQuestionIsFollowUp"
+            :problemMode="isProblem"
+          />
           <InterviewControls
             :disabled="store.loading || store.interviewComplete"
-            :submit-label="$t('interviewSimulator.submitAnswer')"
+            :submit-label="submitActionLabel"
+            :input-placeholder="isProblem ? $t('interviewSimulator.placeholderResearcher') : ''"
             @submit="onSubmit"
           />
           <p v-if="store.error" class="is-err">{{ store.error }}</p>
           <p v-if="store.loading" class="is-loading">{{ $t('interviewSimulator.working') }}</p>
         </div>
-        <TranscriptPanel :messages="store.transcript" />
+        <TranscriptPanel
+          :messages="store.transcript"
+          :assistant-label="isProblem ? $t('interviewSimulator.transcriptPersona') : $t('interviewSimulator.roleInterviewer')"
+          :user-label="isProblem ? $t('interviewSimulator.transcriptResearcher') : $t('interviewSimulator.roleYou')"
+        />
       </div>
     </template>
   </div>
@@ -65,6 +75,24 @@ export default {
     hasQuestion() {
       if (this.reportFailed) return false;
       return !!(this.store.currentQuestion || this.store.loading);
+    },
+    isProblem() {
+      return this.store.interviewMode === 'problem_user';
+    },
+    submitActionLabel() {
+      return this.isProblem
+        ? this.$t('interviewSimulator.submitResearcherMessage')
+        : this.$t('interviewSimulator.submitAnswer');
+    },
+    personaLabel() {
+      const k = `interviewSimulator.personas.${this.store.persona}`;
+      const t = this.$t(k);
+      return t !== k ? t : this.store.persona;
+    },
+    topicSnippet() {
+      const j = (this.store.jobDescription || '').trim();
+      if (!j) return '';
+      return j.length > 72 ? `${j.slice(0, 72)}…` : j;
     },
     roleLabel() {
       const k = `interviewSimulator.roles.${this.store.role}`;

@@ -172,6 +172,18 @@
         <p class="pmsim__capacity-line">
           {{ $t('agileTraining.pmSim.metric.capacity') }}: <strong>{{ state.capacity_left }}</strong>
           <span v-if="featureCapacityUsed > 0"> · {{ $t('agileTraining.pmSim.using') }}: {{ featureCapacityUsed }}</span>
+          <span v-if="featureCapacityUsed > 0"
+                class="pmsim__risk-pill"
+                :class="deliveryRiskClass"
+                :title="$t('agileTraining.pmSim.riskHelp')">
+            ⏱ {{ $t('agileTraining.pmSim.slipRisk') }}: {{ Math.round(deliveryRiskPct) }}%
+          </span>
+        </p>
+        <p v-if="(pendingReleases || []).length" class="pmsim__pending-line">
+          ⌛ {{ $t('agileTraining.pmSim.carryFromPrev') }}:
+          <span v-for="(p, i) in pendingReleases" :key="p.key + p.started_week">
+            <strong>{{ p.title }}</strong> ({{ p.capacity }} cap, {{ $t('agileTraining.pmSim.dueCycle', { c: p.delivery_cycle }) }}){{ i < pendingReleases.length - 1 ? ', ' : '' }}
+          </span>
         </p>
         <div class="pmsim__feature-grid">
           <article
@@ -215,8 +227,11 @@
       <section v-if="(state.feature_releases || []).length" class="pmsim__released">
         <h3>{{ $t('agileTraining.pmSim.released') }}</h3>
         <div class="pmsim__released-list">
-          <span v-for="r in state.feature_releases" :key="r.key + r.week" class="pmsim__released-pill">
+          <span v-for="r in state.feature_releases" :key="r.key + r.week"
+                class="pmsim__released-pill"
+                :class="{ 'pmsim__released-pill--late': r.slipped }">
             <strong>w{{ r.week }}:</strong> {{ r.title }}
+            <em v-if="r.slipped" class="pmsim__late-tag">⏱ {{ $t('agileTraining.pmSim.deliveredLate') }}</em>
           </span>
         </div>
       </section>
@@ -250,7 +265,15 @@
               <span class="pmsim__history-effects" v-if="h.consequences && h.consequences.length">— {{ h.consequences.join(', ') }}</span>
             </template>
             <template v-else-if="h.kind === 'feature'">
-              · 🚀 {{ (h.released || []).map(r => r.title).join(', ') || $t('agileTraining.pmSim.skipped') }}
+              · 🚀
+              <span v-for="(rel, ri) in (h.released || [])" :key="rel.key + ri">
+                {{ rel.title }}<em v-if="rel.slipped" class="pmsim__late-tag pmsim__late-tag--mini">⏱ {{ $t('agileTraining.pmSim.slipped') }}</em>{{ ri < (h.released || []).length - 1 ? ', ' : '' }}
+              </span>
+              <span v-if="!(h.released || []).length">{{ $t('agileTraining.pmSim.skipped') }}</span>
+            </template>
+            <template v-else-if="h.kind === 'delivery'">
+              · 📦 {{ $t('agileTraining.pmSim.lateDeliveryHistory') }}:
+              {{ (h.delivered || []).map(r => r.title).join(', ') }}
             </template>
           </li>
         </ol>
@@ -295,7 +318,13 @@
           <li v-for="(h,i) in state.history" :key="i">
             <strong>w{{ h.week }}</strong>
             <template v-if="h.kind === 'event'"> · {{ h.event.title }} → <em>{{ h.option.title }}</em></template>
-            <template v-else-if="h.kind === 'feature'"> · 🚀 {{ (h.released || []).map(r => r.title).join(', ') || $t('agileTraining.pmSim.skipped') }}</template>
+            <template v-else-if="h.kind === 'feature'"> · 🚀
+              <span v-for="(rel, ri) in (h.released || [])" :key="rel.key + ri">
+                {{ rel.title }}<em v-if="rel.slipped" class="pmsim__late-tag pmsim__late-tag--mini">⏱ {{ $t('agileTraining.pmSim.slipped') }}</em>{{ ri < (h.released || []).length - 1 ? ', ' : '' }}
+              </span>
+              <span v-if="!(h.released || []).length">{{ $t('agileTraining.pmSim.skipped') }}</span>
+            </template>
+            <template v-else-if="h.kind === 'delivery'"> · 📦 {{ $t('agileTraining.pmSim.lateDeliveryHistory') }}: {{ (h.delivered || []).map(r => r.title).join(', ') }}</template>
           </li>
         </ol>
       </div>
@@ -410,14 +439,51 @@ export default {
       (this.state.feature_options || []).forEach((f) => { map[f.key] = f.capacity; });
       return this.featurePicks.reduce((sum, k) => sum + (Number(map[k]) || 0), 0);
     },
-    canConfirmFeatures() {
-      if (!this.featurePicks.length) return false;
-      if (this.featureCapacityUsed > this.state.capacity_left) return false;
-      const big = this.featurePicks.filter((k) => {
+    pickedHasStabilize() {
+      return (this.featurePicks || []).some((k) => k === 'stabilize');
+    },
+    pickedBigCount() {
+      return (this.featurePicks || []).filter((k) => {
         const f = (this.state.feature_options || []).find((x) => x.key === k);
         return f && (f.capacity || 0) >= 40;
       }).length;
-      return big <= 1 && this.featurePicks.length <= 2;
+    },
+    canConfirmFeatures() {
+      if (!this.featurePicks.length) return false;
+      if (this.featureCapacityUsed > this.state.capacity_left) return false;
+      if (this.featurePicks.length > 2) return false;
+      if (this.pickedBigCount > 1) return false;
+      if (this.pickedBigCount === 1 && this.featurePicks.length > 1) return false;
+      if (this.pickedHasStabilize && this.featurePicks.length > 1) return false;
+      return true;
+    },
+    pendingReleases() {
+      return this.state.pending_releases || [];
+    },
+    deliveryRiskPct() {
+      // Зеркалит формулу с бэкенда: учитываем capacity-утилизацию,
+      // tech_debt и stability. Возвращаем 0..max_pct.
+      const factors = this.state.risk_factors;
+      if (!factors) return 0;
+      const total = this.featureCapacityUsed;
+      if (total <= 0) return 0;
+      const cap = Math.max(1, factors.capacity_per_cycle || 100);
+      const util = (total / cap) * 100;
+      const base = Math.max(0, util - (factors.threshold_pct || 60)) * (factors.slope || 1.5);
+      const m = this.state.metrics || {};
+      const debt = Number(m.tech_debt) || 0;
+      const stab = Number(m.stability) || 0;
+      const debtAdj = Math.max(0, debt - (factors.debt_neutral || 40)) * (factors.debt_slope || 0.4);
+      const stabAdj = Math.max(0, (factors.stab_neutral || 70) - stab) * (factors.stab_slope || 0.3);
+      const max = factors.max_pct || 60;
+      return Math.max(0, Math.min(max, base + debtAdj + stabAdj));
+    },
+    deliveryRiskClass() {
+      const r = this.deliveryRiskPct;
+      if (r <= 0) return 'pmsim__risk-pill--ok';
+      if (r < 15) return 'pmsim__risk-pill--low';
+      if (r < 35) return 'pmsim__risk-pill--med';
+      return 'pmsim__risk-pill--high';
     },
   },
   watch: {
@@ -716,6 +782,33 @@ export default {
 .pmsim__released { margin: 10px 0; }
 .pmsim__released-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .pmsim__released-pill { background: #ecfdf5; border: 1px solid #34d399; color: #065f46; padding: 3px 8px; border-radius: 999px; font-size: 12px; }
+.pmsim__released-pill--late { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+.pmsim__late-tag { color: #92400e; font-style: normal; margin-left: 4px; font-weight: 600; }
+.pmsim__late-tag--mini { font-size: 11px; padding: 0 4px; background: #fef3c7; border-radius: 6px; }
+
+.pmsim__pending-line {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+.pmsim__risk-pill {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.pmsim__risk-pill--ok   { background: #ecfdf5; color: #065f46; border-color: #34d399; }
+.pmsim__risk-pill--low  { background: #ecfdf5; color: #065f46; border-color: #34d399; }
+.pmsim__risk-pill--med  { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+.pmsim__risk-pill--high { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
 
 .pmsim__consequences { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; font-size: 14px; }
 

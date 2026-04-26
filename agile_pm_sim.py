@@ -45,6 +45,25 @@ CYCLE_LEN = 2  # каждые 2 недели — окно выбора фичи
 CAPACITY_PER_CYCLE = 100
 START_BUDGET = 100_000
 
+# --- delivery risk ---
+# Если команда забивает capacity «под завязку», возрастает шанс, что фича
+# опоздает на цикл (slip). Это моделирует «overcommit» в продуктовой команде:
+# планируем агрессивно — рискуем не доехать к концу 2-х недель.
+#
+# Формула риска (в процентах, 0..RISK_MAX_PCT):
+#   util_pct  = total_committed / CAPACITY_PER_CYCLE * 100   # 0..100
+#   base      = max(0, util_pct - RISK_THRESHOLD_PCT) * RISK_SLOPE
+#   debt_adj  = max(0, tech_debt - RISK_DEBT_NEUTRAL) * RISK_DEBT_SLOPE
+#   stab_adj  = max(0, RISK_STAB_NEUTRAL - stability) * RISK_STAB_SLOPE
+#   risk_pct  = clamp(base + debt_adj + stab_adj, 0, RISK_MAX_PCT)
+RISK_THRESHOLD_PCT = 60     # ниже 60% утилизации — рисков нет
+RISK_SLOPE = 1.5            # +1.5pp к риску за каждый +1pp утилизации сверх порога
+RISK_DEBT_NEUTRAL = 40      # нейтральный tech_debt
+RISK_DEBT_SLOPE = 0.4       # +0.4pp за каждый пункт долга сверх нейтрала
+RISK_STAB_NEUTRAL = 70      # нейтральная stability
+RISK_STAB_SLOPE = 0.3       # +0.3pp за каждый пункт стабильности ниже нейтрала
+RISK_MAX_PCT = 60           # потолок на риск
+
 PHASE_LOBBY = "lobby"
 PHASE_INTRO = "intro"
 PHASE_PLAYING = "playing"      # ждём resolve события или выбора фичи
@@ -651,7 +670,9 @@ def _initial_state() -> Dict[str, Any]:
         "feature_choice_open": False,
         "feature_options": [],
         "feature_releases": [],
+        "pending_releases": [],   # фичи, которые не доехали и поедут в след. цикл
         "unlocked_feature_keys": [],
+        "last_event_id": None,    # id события прошлой недели — для антиповтора
         "current_event": None,
         "event_resolved": True,
         "votes": {"event": {}, "feature": {}},
@@ -853,9 +874,16 @@ def _strip_callables(obj: Any) -> Any:
 def _pick_event(data: Dict[str, Any], week: int, group_id: int) -> Dict[str, Any]:
     rnd = _seeded_random(group_id, week, salt="event")
     candidates = _eligible_events(data, week)
+    last_id = data.get("last_event_id")
+    # Антиповтор: если есть альтернативы, не повторяем событие сразу же.
+    if last_id and len(candidates) > 1:
+        filtered = [c for c in candidates if c["id"] != last_id]
+        if filtered:
+            candidates = filtered
     if not candidates:
-        # fallback — generic user event
-        chosen = _EVENTS_RU[0]
+        # fallback — берём первое событие, которое не повторяет прошлую неделю.
+        pool = [e for e in _EVENTS_RU if e["id"] != last_id]
+        chosen = pool[0] if pool else _EVENTS_RU[0]
     else:
         weights = [int(c.get("weight", 5)) for c in candidates]
         chosen = rnd.choices(candidates, weights=weights, k=1)[0]
@@ -911,7 +939,48 @@ def _select_feature_options(data: Dict[str, Any], group_id: int, week: int, loca
     return (must + rest)[:5]
 
 
-def _release_feature(data: Dict[str, Any], fkey: str, week: int, locale: str) -> Optional[Dict[str, Any]]:
+def _delivery_risk_pct(data: Dict[str, Any], total_committed_cap: int) -> float:
+    """Сколько процентов риска того, что фича опоздает на цикл.
+
+    Чем плотнее забили capacity — тем выше риск; ещё подбавляют tech_debt и
+    низкая stability. Возвращаем число 0..RISK_MAX_PCT.
+    """
+    if total_committed_cap <= 0:
+        return 0.0
+    util_pct = (float(total_committed_cap) / max(1, CAPACITY_PER_CYCLE)) * 100.0
+    base = max(0.0, util_pct - RISK_THRESHOLD_PCT) * RISK_SLOPE
+    m = data.get("metrics") or {}
+    debt = float(m.get("tech_debt", RISK_DEBT_NEUTRAL))
+    stab = float(m.get("stability", RISK_STAB_NEUTRAL))
+    debt_adj = max(0.0, debt - RISK_DEBT_NEUTRAL) * RISK_DEBT_SLOPE
+    stab_adj = max(0.0, RISK_STAB_NEUTRAL - stab) * RISK_STAB_SLOPE
+    return max(0.0, min(float(RISK_MAX_PCT), base + debt_adj + stab_adj))
+
+
+def _bump_recent_feature_count(data: Dict[str, Any], fkey: str) -> None:
+    if fkey == "stabilize":
+        data["recent_feature_count"] = max(0, int(data.get("recent_feature_count", 0)) - 1)
+    else:
+        data["recent_feature_count"] = int(data.get("recent_feature_count", 0)) + 1
+
+
+def _release_feature(
+    data: Dict[str, Any],
+    fkey: str,
+    week: int,
+    locale: str,
+    *,
+    total_committed_cap: int = 0,
+    rnd: Optional[random.Random] = None,
+) -> Optional[Dict[str, Any]]:
+    """Списать capacity и попытаться отгрузить фичу.
+
+    Если рисковый бросок (по `_delivery_risk_pct`) попадает — фича опаздывает
+    на цикл: попадает в `pending_releases`, эффекты не применяются. Capacity
+    при этом всё равно списывается (команда работала, но не доехала).
+    Когда начнётся следующий цикл — `_process_due_pending_releases` применит
+    эффекты и допишет запись в `feature_releases`.
+    """
     f = next((x for x in _FEATURES_RU if x["key"] == fkey), None)
     if not f:
         return None
@@ -919,32 +988,104 @@ def _release_feature(data: Dict[str, Any], fkey: str, week: int, locale: str) ->
     if data.get("capacity_left", 0) < cap:
         return None
     data["capacity_left"] = int(data["capacity_left"]) - cap
-    notes = _apply_metric_delta(data, f.get("effects", {}))
-    # учёт частоты фичи без стабилизации (для team_burnout триггера)
-    if fkey != "stabilize":
-        data["recent_feature_count"] = int(data.get("recent_feature_count", 0)) + 1
-    else:
-        data["recent_feature_count"] = max(0, int(data.get("recent_feature_count", 0)) - 1)
-    rec = {
+
+    risk_pct = _delivery_risk_pct(data, total_committed_cap or cap)
+    slipped = False
+    if risk_pct > 0 and rnd is not None:
+        slipped = (rnd.random() * 100.0) < risk_pct
+
+    cur_cycle = int(data.get("cycle_index", 1))
+    base_rec = {
         "key": fkey,
         "title": _localize_feature(f, locale)["title"],
-        "week": week,
-        "cycle": int(data.get("cycle_index", 1)),
-        "notes": notes,
+        "capacity": cap,
+        "started_week": week,
+        "started_cycle": cur_cycle,
+        "delivery_cycle": cur_cycle,
+        "risk_pct": round(risk_pct, 1),
+        "slipped": False,
     }
+
+    if slipped:
+        # Фича уехала в следующий цикл: эффектов пока нет, висит в pending.
+        base_rec["slipped"] = True
+        base_rec["delivery_cycle"] = cur_cycle + 1
+        data.setdefault("pending_releases", []).append(base_rec)
+        return base_rec
+
+    notes = _apply_metric_delta(data, f.get("effects", {}))
+    _bump_recent_feature_count(data, fkey)
+    rec = dict(base_rec)
+    rec["week"] = week
+    rec["cycle"] = cur_cycle
+    rec["delivered_at_week"] = week
+    rec["notes"] = notes
     data.setdefault("feature_releases", []).append(rec)
     return rec
 
 
+def _process_due_pending_releases(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """В начале нового цикла — отгрузить фичи, которые опоздали в прошлый.
+
+    Эффекты применяются только сейчас, а в `feature_releases` появляется
+    запись с пометкой «доехало с опозданием».
+    """
+    cur_cycle = int(data.get("cycle_index", 1))
+    cur_week = int(data.get("current_week", 0))
+    pending = data.get("pending_releases") or []
+    if not pending:
+        return []
+    delivered: List[Dict[str, Any]] = []
+    keep: List[Dict[str, Any]] = []
+    for rec in pending:
+        if int(rec.get("delivery_cycle", 0)) != cur_cycle:
+            keep.append(rec)
+            continue
+        f = next((x for x in _FEATURES_RU if x["key"] == rec.get("key")), None)
+        if not f:
+            continue
+        notes = _apply_metric_delta(data, f.get("effects", {}))
+        _bump_recent_feature_count(data, rec.get("key", ""))
+        out = dict(rec)
+        out["week"] = cur_week
+        out["cycle"] = cur_cycle
+        out["delivered_at_week"] = cur_week
+        out["notes"] = notes
+        data.setdefault("feature_releases", []).append(out)
+        delivered.append(out)
+    data["pending_releases"] = keep
+    return delivered
+
+
 def _start_new_cycle_if_needed(data: Dict[str, Any]) -> None:
-    """В начале цикла (нечётная неделя) — открываем выбор фичи и пополняем capacity."""
+    """В начале цикла (нечётная неделя) — открываем выбор фичи и пополняем capacity.
+
+    Если из прошлого цикла остались pending фичи — они «доедут» сейчас:
+    их cap съедает часть capacity нового цикла (команда всё ещё их доделывает),
+    а эффекты применяются ровно в этот момент.
+    """
     w = int(data.get("current_week", 0))
     if w == 0 or w > TOTAL_WEEKS:
         return
     if w % CYCLE_LEN == 1:  # неделя 1, 3, 5, ... — старт цикла
-        data["capacity_left"] = CAPACITY_PER_CYCLE
-        data["cycle_index"] = (w + 1) // CYCLE_LEN  # 1..10
+        new_cycle = (w + 1) // CYCLE_LEN  # 1..10
+        data["cycle_index"] = new_cycle
+        # Pending releases, которые «дозреют» именно в этом цикле
+        carry_cap = sum(
+            int(r.get("capacity", 0))
+            for r in (data.get("pending_releases") or [])
+            if int(r.get("delivery_cycle", 0)) == new_cycle
+        )
+        data["capacity_left"] = max(0, CAPACITY_PER_CYCLE - carry_cap)
         data["feature_choice_open"] = True
+        delivered = _process_due_pending_releases(data)
+        if delivered:
+            data.setdefault("history", []).append({
+                "week": w,
+                "kind": "delivery",
+                "delivered": delivered,
+                "ts": _now_iso(),
+            })
         # сами опции пополняются ленивым вызовом, см. /state
 
 
@@ -985,6 +1126,17 @@ def _serialize_state(
         "feature_choice_open": bool(data.get("feature_choice_open", False)),
         "feature_options": [_localize_feature(f, locale) for f in feature_opts],
         "feature_releases": data.get("feature_releases", []),
+        "pending_releases": data.get("pending_releases", []),
+        "risk_factors": {
+            "capacity_per_cycle": CAPACITY_PER_CYCLE,
+            "threshold_pct": RISK_THRESHOLD_PCT,
+            "slope": RISK_SLOPE,
+            "debt_neutral": RISK_DEBT_NEUTRAL,
+            "debt_slope": RISK_DEBT_SLOPE,
+            "stab_neutral": RISK_STAB_NEUTRAL,
+            "stab_slope": RISK_STAB_SLOPE,
+            "max_pct": RISK_MAX_PCT,
+        },
         "unlocked_feature_keys": data.get("unlocked_feature_keys", []),
         "current_event": public_event,
         "event_resolved": bool(data.get("event_resolved", True)),
@@ -1057,7 +1209,13 @@ def _touch_participant(data: Dict[str, Any], p: AgileTrainingParticipant) -> Non
 
 
 def _ensure_event_for_week(data: Dict[str, Any], group_id: int, locale: str) -> None:
-    if data.get("current_event") and not data.get("event_resolved", True):
+    # На неделю нужно одно событие, ни больше, ни меньше. После решения мы
+    # НЕ обнуляем `current_event` — это делает только `_close_week_and_advance`
+    # при тике следующей недели. Так что наличие любого `current_event` —
+    # сигнал «событие на этой неделе уже выдано» и второй раз его создавать
+    # не нужно (раньше тут была дыра: на старте цикла, где неделя не тикает
+    # до релиза фич, /state повторно выдавал новые события на ту же неделю).
+    if data.get("current_event"):
         return
     week = int(data["current_week"])
     if week < 1 or week > TOTAL_WEEKS:
@@ -1349,6 +1507,7 @@ def participant_event_decide(slug: str):
     })
 
     data["event_resolved"] = True
+    data["last_event_id"] = ev.get("id")
     _touch_participant(data, p)
 
     # если это была неделя с открытым выбором фич, ждём фич; иначе — закрываем неделю
@@ -1383,19 +1542,39 @@ def participant_feature_release(slug: str):
     if not data.get("feature_choice_open"):
         return jsonify({"error": "feature window closed"}), 400
 
-    # capacity guard: 1 большая (>=40) или 2 маленькие или 1 stabilize
+    # capacity / pick rule guard:
+    #   - максимум 2 фичи в цикле
+    #   - если есть «большая» (>=40 cap) — она должна быть единственной
+    #   - если выбрана «Стабилизация» — она тоже должна быть единственной
+    #   - суммарный cap не больше текущего capacity_left
+    # Структурные правила проверяем РАНЬШЕ capacity, чтобы пользователь видел
+    # «настоящую» ошибку выбора, а не просто «не хватает capacity».
     by_key = {f["key"]: f for f in _FEATURES_RU}
     chosen = [by_key[k] for k in feature_keys if k in by_key]
+    if len(chosen) > 2:
+        return jsonify({"error": "max_two_features"}), 400
+    big_count = sum(1 for f in chosen if int(f.get("capacity", 0)) >= 40)
+    if big_count > 1:
+        return jsonify({"error": "max_one_big"}), 400
+    if big_count == 1 and len(chosen) > 1:
+        return jsonify({"error": "big_must_be_alone"}), 400
+    if any(f.get("key") == "stabilize" for f in chosen) and len(chosen) > 1:
+        return jsonify({"error": "stabilize_must_be_alone"}), 400
     total_cap = sum(int(f.get("capacity", 0)) for f in chosen)
     if total_cap > int(data.get("capacity_left", 0)):
         return jsonify({"error": "not_enough_capacity"}), 400
-    big_count = sum(1 for f in chosen if int(f.get("capacity", 0)) >= 40)
-    if big_count > 1 or len(chosen) > 2:
-        return jsonify({"error": "max 1 big or 2 small"}), 400
 
+    rnd = _seeded_random(g.id, int(data["current_week"]), salt="release")
     released_records = []
     for f in chosen:
-        rec = _release_feature(data, f["key"], int(data["current_week"]), locale)
+        rec = _release_feature(
+            data,
+            f["key"],
+            int(data["current_week"]),
+            locale,
+            total_committed_cap=total_cap,
+            rnd=rnd,
+        )
         if rec:
             released_records.append(rec)
 
@@ -1594,9 +1773,10 @@ def facilitator_force_event(group_id: int):
     row, data = _get_or_init_state(g)
     if data.get("phase") != PHASE_PLAYING:
         return jsonify({"error": "not playing"}), 400
-    ev = next((e for e in _EVENTS_RU if e["id"] == event_id), None)
-    if not ev:
+    ev_raw = next((e for e in _EVENTS_RU if e["id"] == event_id), None)
+    if not ev_raw:
         return jsonify({"error": "unknown event"}), 400
+    ev = _strip_callables(ev_raw)
     data["current_event"] = ev
     data["event_resolved"] = False
     data["votes"]["event"] = {}

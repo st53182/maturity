@@ -1005,6 +1005,121 @@ def smoke_pm_sim_anti_repeat() -> None:
     assert seen_repeats <= 1, f"антиповтор не работает: {seen_repeats} повторов из {total}"
 
 
+def smoke_pm_sim_toolkit() -> None:
+    """PO Toolkit + Weekly Recap + Scrum penalty."""
+    _banner("PM SIM — PO toolkit + weekly recap + scrum penalty")
+
+    info = _bootstrap("pm_sim", "ru")
+    slug = info["slug"]
+    client = app.test_client()
+    po_token = _pm_join_po(client, slug)
+    client.post(f"/api/agile-training/pm-sim/g/{slug}/start", json={"participant_token": po_token})
+    state = _pm_state(client, slug, po_token)
+
+    # 1) Каталог должен быть в state и содержать все категории
+    catalog = state.get("po_action_catalog") or []
+    assert catalog, "po_action_catalog must not be empty"
+    cats = {a["category"] for a in catalog}
+    assert {"discovery", "growth", "pivot", "scrum"} <= cats, f"missing categories: {cats}"
+    _ok(f"каталог тулкита содержит {len(catalog)} действий, категории: {sorted(cats)}")
+
+    # 2) Применяем Daily — capacity на 2 поднимется (бонус), флаг did_daily_this_week=True
+    cap_before = state["capacity_left"]
+    resp = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/po-action",
+        json={"participant_token": po_token, "action_id": "daily"},
+    )
+    _assert_status(resp, 200, "po-action daily")
+    state = _pm_state(client, slug, po_token)
+    assert state["did_daily_this_week"] is True, "did_daily flag must be set"
+    assert state["capacity_left"] == cap_before + 2, f"daily must give +2 cap, got {state['capacity_left']} from {cap_before}"
+    _ok(f"daily применился: cap {cap_before} → {state['capacity_left']}, did_daily=True")
+
+    # 3) Повторно daily в той же неделе — должно быть заблокировано (cooldown)
+    resp = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/po-action",
+        json={"participant_token": po_token, "action_id": "daily"},
+    )
+    assert resp.status_code == 400, f"daily must be blocked, got {resp.status_code}"
+    body = resp.get_json()
+    assert "cooldown" in (body.get("reasons") or [None])[0], f"expected cooldown reason, got {body}"
+    _ok("daily на той же неделе блокируется по cooldown")
+
+    # 4) refinement — capacity_delta +5, tech_debt -1
+    state_before = _pm_state(client, slug, po_token)
+    resp = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/po-action",
+        json={"participant_token": po_token, "action_id": "refinement"},
+    )
+    _assert_status(resp, 200, "po-action refinement")
+    state = _pm_state(client, slug, po_token)
+    assert state["capacity_left"] >= state_before["capacity_left"] + 5 - 3, "refinement should net +2 cap (cost 3, +5 delta)"
+    _ok(f"refinement: cap {state_before['capacity_left']} → {state['capacity_left']}")
+
+    # 5) sprint_review требует чётной недели — на week=1 должно быть заблокировано
+    resp = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/po-action",
+        json={"participant_token": po_token, "action_id": "sprint_review"},
+    )
+    assert resp.status_code == 400, "sprint_review on odd week must be blocked"
+    body = resp.get_json()
+    assert "only_at_cycle_end" in (body.get("reasons") or [])
+    _ok("sprint_review на нечётной неделе заблокирован (only_at_cycle_end)")
+
+    # 6) pivot требует week_min=5 — на week=1 заблокирован
+    resp = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/po-action",
+        json={"participant_token": po_token, "action_id": "pivot"},
+    )
+    assert resp.status_code == 400, "pivot too early must be blocked"
+    body = resp.get_json()
+    assert "too_early" in (body.get("reasons") or [])
+    _ok("pivot на ранней неделе заблокирован (too_early)")
+
+    # 7) Закроем неделю → recap должен появиться, и focus.key валидный
+    decided = _pm_resolve_event(client, slug, po_token)
+    state_after_event = _pm_state(client, slug, po_token)
+    # На неделе 1 фича-окно открыто — релизнем что-нибудь
+    assert state_after_event["feature_choice_open"] is True
+    options = state_after_event["feature_options"]
+    safe = next((o for o in options if int(o["capacity"]) <= 25 and o["key"] != "stabilize"), options[0])
+    resp = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/feature/release",
+        json={"participant_token": po_token, "feature_keys": [safe["key"]]},
+    )
+    _assert_status(resp, 200, "release tiny feature")
+    state = _pm_state(client, slug, po_token)
+    recaps = state.get("weekly_recaps") or []
+    assert len(recaps) >= 1, f"weekly_recaps must be populated, got {recaps}"
+    last = recaps[-1]
+    assert last["week"] == 1, f"recap week must be 1, got {last['week']}"
+    assert last["next_week"] == 2
+    assert "focus" in last and isinstance(last["focus"], dict) and last["focus"].get("key"), "recap.focus.key required"
+    assert "deltas" in last and isinstance(last["deltas"], dict)
+    assert state["pending_recap_week"] == 1, "pending_recap_week must point to last closed week"
+    _ok(f"recap: week=1, focus={last['focus']['key']}, deltas keys={sorted(list(last['deltas'].keys()))[:4]}…")
+
+    # 8) Scrum penalty: НА новой неделе мы НЕ делаем daily → закроем её и проверим, что capacity упал и tech_debt вырос
+    state = _pm_state(client, slug, po_token)
+    assert state["current_week"] == 2
+    assert state["did_daily_this_week"] is False, "did_daily flag must reset on week tick"
+    cap_w2_start = state["capacity_left"]
+    debt_w2_start = state["metrics"]["tech_debt"]
+    # Без daily проходим решение события
+    _pm_resolve_event(client, slug, po_token)
+    state = _pm_state(client, slug, po_token)
+    # На неделе 2 (чётная) фич-окно НЕ открыто — week уже тикнула
+    assert state["current_week"] == 3, f"week must advance to 3, got {state['current_week']}"
+    # Долг подскочил, capacity_left на новом цикле — пусть проверим penalty флаг и tech_debt
+    assert state["metrics"]["tech_debt"] >= debt_w2_start + 2, f"tech_debt must grow by 2 (no daily): before={debt_w2_start}, after={state['metrics']['tech_debt']}"
+    _ok(f"scrum penalty: пропуск daily на w2 → tech_debt {debt_w2_start} → {state['metrics']['tech_debt']}")
+    # И recap по неделе 2 должен содержать scrum_penalty
+    recap_w2 = next((r for r in state.get("weekly_recaps", []) if r["week"] == 2), None)
+    assert recap_w2 is not None, "recap for week 2 missing"
+    assert recap_w2.get("scrum_penalty"), f"recap should mention scrum penalty, got {recap_w2.get('scrum_penalty')}"
+    _ok("recap для week=2 содержит scrum_penalty notes (no_daily)")
+
+
 # --------------------------- entry ---------------------------
 
 
@@ -1021,6 +1136,7 @@ def main() -> int:
         ("PM SIM logic+rules", smoke_pm_sim_logic),
         ("PM SIM slip / pending_releases", smoke_pm_sim_slip),
         ("PM SIM event anti-repeat", smoke_pm_sim_anti_repeat),
+        ("PM SIM toolkit + recap + scrum penalty", smoke_pm_sim_toolkit),
     ):
         try:
             fn()

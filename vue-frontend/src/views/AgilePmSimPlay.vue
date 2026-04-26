@@ -128,6 +128,62 @@
         <span v-for="r in riskBadges" :key="r" class="pmsim__risk">⚠ {{ r }}</span>
       </section>
 
+      <!-- PO Toolkit -->
+      <section class="pmsim__toolkit" v-if="(state.po_action_catalog || []).length">
+        <header class="pmsim__toolkit-head">
+          <h3>{{ $t('agileTraining.pmSim.toolkit.title') }}</h3>
+          <span class="pmsim__hint">{{ $t('agileTraining.pmSim.toolkit.hint') }}</span>
+        </header>
+        <div class="pmsim__toolkit-tabs">
+          <button v-for="t in toolkitCategories" :key="t.key"
+                  :class="['pmsim__tk-tab', { 'pmsim__tk-tab--active': toolkitTab === t.key }]"
+                  @click="toolkitTab = t.key">
+            {{ t.label }} <span class="pmsim__tk-count">{{ toolkitByCat[t.key].length }}</span>
+          </button>
+        </div>
+        <div class="pmsim__toolkit-grid">
+          <article v-for="a in visibleToolkitActions" :key="a.id"
+                   :class="['pmsim__tk-card', `pmsim__tk-card--${a.category}`,
+                            { 'pmsim__tk-card--locked': !a.status.available }]">
+            <header class="pmsim__tk-head">
+              <span class="pmsim__tk-icon" v-if="a.icon">{{ a.icon }}</span>
+              <strong>{{ a.title }}</strong>
+            </header>
+            <p class="pmsim__tk-desc">{{ a.description }}</p>
+            <ul class="pmsim__tk-effects">
+              <li v-if="a.cap_cost"><span class="pmsim__fe-key">{{ $t('agileTraining.pmSim.metric.capacity') }}</span><span class="pmsim__fe-value pmsim__fe-value--bad">−{{ a.cap_cost }}</span></li>
+              <li v-if="a.budget_cost"><span class="pmsim__fe-key">{{ $t('agileTraining.pmSim.metric.budget') }}</span><span class="pmsim__fe-value pmsim__fe-value--bad">−${{ formatNumber(a.budget_cost) }}</span></li>
+              <li v-for="(v, k) in a.effects" :key="k">
+                <span class="pmsim__fe-key">{{ effectLabel(k) }}</span>
+                <span class="pmsim__fe-value" :class="effectClass(v)">{{ effectValue(v) }}</span>
+              </li>
+            </ul>
+            <footer class="pmsim__tk-foot">
+              <span v-if="a.status.cooldown_left_weeks > 0" class="pmsim__pill pmsim__pill--ghost">
+                ⏳ {{ $t('agileTraining.pmSim.toolkit.cooldown', { n: a.status.cooldown_left_weeks }) }}
+              </span>
+              <span v-else-if="a.max_per_game" class="pmsim__pill pmsim__pill--ghost">
+                {{ a.status.used_count || 0 }}/{{ a.max_per_game }}
+              </span>
+              <span v-else-if="a.cooldown_weeks > 0" class="pmsim__pill pmsim__pill--ghost">
+                {{ $t('agileTraining.pmSim.toolkit.everyN', { n: a.cooldown_weeks }) }}
+              </span>
+              <span v-if="!a.status.available && a.status.blocked_reasons.length"
+                    class="pmsim__pill pmsim__pill--warn">
+                {{ blockedReasonLabel(a.status.blocked_reasons[0]) }}
+              </span>
+              <button class="pmsim__btn pmsim__btn--primary"
+                      :disabled="!isPO || !a.status.available || submitting"
+                      @click="applyPoAction(a)">
+                {{ $t('agileTraining.pmSim.toolkit.apply') }}
+              </button>
+            </footer>
+          </article>
+        </div>
+        <p v-if="!isPO" class="pmsim__hint">{{ $t('agileTraining.pmSim.toolkit.poOnly') }}</p>
+        <div class="pmsim__tk-error" v-if="toolkitError">{{ toolkitError }}</div>
+      </section>
+
       <!-- Event card -->
       <section v-if="state.current_event && !state.event_resolved" class="pmsim__event">
         <header>
@@ -334,6 +390,83 @@
       </div>
     </section>
 
+    <!-- Weekly Recap modal -->
+    <div class="pmsim__recap-overlay" v-if="recapToShow" @click.self="closeRecap">
+      <div class="pmsim__recap" role="dialog" aria-modal="true">
+        <header class="pmsim__recap-head">
+          <h3>{{ $t('agileTraining.pmSim.recap.title', { w: recapToShow.week }) }}</h3>
+          <button class="pmsim__recap-x" @click="closeRecap" aria-label="Close">×</button>
+        </header>
+        <p class="pmsim__recap-lead">
+          {{ $t('agileTraining.pmSim.recap.lead', { next: recapToShow.next_week }) }}
+        </p>
+
+        <div class="pmsim__recap-section" v-if="recapToShow.event">
+          <h4>{{ $t('agileTraining.pmSim.recap.eventTitle') }}</h4>
+          <p>
+            <strong>{{ recapToShow.event.title }}</strong>
+            <em v-if="recapToShow.decision"> → {{ recapToShow.decision.title }}</em>
+          </p>
+          <p class="pmsim__hint" v-if="(recapToShow.decision_notes || []).length">
+            {{ recapToShow.decision_notes.join(', ') }}
+          </p>
+        </div>
+
+        <div class="pmsim__recap-section" v-if="(recapToShow.released_features || []).length">
+          <h4>{{ $t('agileTraining.pmSim.recap.releasedTitle') }}</h4>
+          <ul>
+            <li v-for="(rel, ri) in recapToShow.released_features" :key="rel.key + ri">
+              {{ rel.title }}
+              <em class="pmsim__late-tag pmsim__late-tag--mini" v-if="rel.slipped">
+                ⏱ {{ $t('agileTraining.pmSim.slipped') }}
+              </em>
+            </li>
+          </ul>
+        </div>
+
+        <div class="pmsim__recap-section" v-if="(recapToShow.late_deliveries || []).length">
+          <h4>📦 {{ $t('agileTraining.pmSim.recap.lateDeliveriesTitle') }}</h4>
+          <ul>
+            <li v-for="(rel, ri) in recapToShow.late_deliveries" :key="'late-' + ri">
+              {{ rel.title }}
+              <span v-if="(rel.notes || []).length" class="pmsim__hint">— {{ rel.notes.join(', ') }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="pmsim__recap-section" v-if="(recapToShow.scrum_penalty || []).length">
+          <h4>⚠ {{ $t('agileTraining.pmSim.recap.scrumPenaltyTitle') }}</h4>
+          <p class="pmsim__hint">{{ $t('agileTraining.pmSim.recap.scrumPenaltyHint') }}</p>
+        </div>
+
+        <div class="pmsim__recap-section" v-if="recapDeltas.length">
+          <h4>{{ $t('agileTraining.pmSim.recap.metricsTitle') }}</h4>
+          <ul class="pmsim__recap-deltas">
+            <li v-for="d in recapDeltas" :key="d.key" :class="['pmsim__recap-delta', d.delta > 0 ? 'pmsim__recap-delta--up' : 'pmsim__recap-delta--down']">
+              <span class="pmsim__recap-key">{{ effectLabel(d.key) }}</span>
+              <span class="pmsim__recap-vals">
+                <span class="pmsim__recap-before">{{ d.before }}</span>
+                →
+                <span class="pmsim__recap-after">{{ d.after }}</span>
+                <em>({{ d.delta > 0 ? '+' : '' }}{{ d.delta }})</em>
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="pmsim__recap-section pmsim__recap-focus" v-if="recapToShow.focus">
+          <h4>🎯 {{ $t('agileTraining.pmSim.recap.focusTitle', { w: recapToShow.next_week }) }}</h4>
+          <p>{{ recapFocusText }}</p>
+        </div>
+
+        <footer class="pmsim__recap-foot">
+          <button class="pmsim__btn pmsim__btn--primary" @click="closeRecap">
+            {{ $t('agileTraining.pmSim.recap.continue') }}
+          </button>
+        </footer>
+      </div>
+    </div>
+
     <div v-if="loading" class="pmsim__loading">{{ $t('agileTraining.pmSim.loading') }}</div>
     <div v-if="loadError" class="pmsim__error">{{ loadError }}</div>
   </div>
@@ -382,6 +515,10 @@ export default {
       aiInput: '', aiReply: '', aiBusy: false,
       pollTimer: null,
       locale: this.$i18n.locale,
+      toolkitTab: 'discovery',
+      toolkitError: '',
+      recapDismissedWeek: -1,
+      recapForceShow: null,
     };
   },
   computed: {
@@ -485,6 +622,55 @@ export default {
       if (r < 35) return 'pmsim__risk-pill--med';
       return 'pmsim__risk-pill--high';
     },
+    toolkitCategories() {
+      return [
+        { key: 'discovery', label: this.$t('agileTraining.pmSim.toolkit.cat.discovery') },
+        { key: 'growth',    label: this.$t('agileTraining.pmSim.toolkit.cat.growth') },
+        { key: 'pivot',     label: this.$t('agileTraining.pmSim.toolkit.cat.pivot') },
+        { key: 'scrum',     label: this.$t('agileTraining.pmSim.toolkit.cat.scrum') },
+      ];
+    },
+    toolkitByCat() {
+      const list = this.state.po_action_catalog || [];
+      const out = { discovery: [], growth: [], pivot: [], scrum: [] };
+      list.forEach((a) => { if (out[a.category]) out[a.category].push(a); });
+      return out;
+    },
+    visibleToolkitActions() {
+      return this.toolkitByCat[this.toolkitTab] || [];
+    },
+    latestBackendRecap() {
+      const arr = this.state.weekly_recaps || [];
+      return arr.length ? arr[arr.length - 1] : null;
+    },
+    recapToShow() {
+      if (this.recapForceShow) return this.recapForceShow;
+      const r = this.latestBackendRecap;
+      if (!r) return null;
+      if (this.recapDismissedWeek === r.week) return null;
+      // Не показываем recap пользователю до того, как он стал участником
+      if (!this.participantToken) return null;
+      // Не показываем сразу: подождём, пока хотя бы /state получили
+      if (this.state.phase === 'lobby') return null;
+      return r;
+    },
+    recapDeltas() {
+      const r = this.recapToShow;
+      if (!r || !r.deltas) return [];
+      const order = ['users', 'active_users', 'satisfaction', 'stability', 'tech_debt', 'trust', 'capacity_left', 'budget', 'revenue_total', 'revenue_per_week'];
+      const out = [];
+      order.forEach((k) => {
+        const d = r.deltas[k];
+        if (d && d.delta !== 0) out.push({ key: k, before: d.before, after: d.after, delta: d.delta });
+      });
+      return out;
+    },
+    recapFocusText() {
+      const r = this.recapToShow;
+      if (!r || !r.focus) return '';
+      const key = r.focus.key || 'balanced';
+      return this.$t(`agileTraining.pmSim.recap.focus.${key}`);
+    },
   },
   watch: {
     '$i18n.locale'(val) { if (val !== this.locale) { this.locale = val; this.loadState(true).catch(()=>{}); } },
@@ -540,6 +726,7 @@ export default {
         revenue_per_week: 'revenue/w', revenue_potential: 'revenue', monetization_on: 'monetize',
         ad_strength: 'ads', tech_debt_delta: 'tech debt', investor_pressure_delta: 'investor pressure',
         first_week_satisfaction_dip: 'sat dip',
+        capacity_left: 'capacity', budget: 'budget', revenue_total: 'revenue',
       };
       return map[k] || k;
     },
@@ -682,6 +869,54 @@ export default {
     },
     printReport() {
       window.print();
+    },
+    async applyPoAction(action) {
+      if (!action || !action.id) return;
+      if (this.submitting) return;
+      this.submitting = true;
+      this.toolkitError = '';
+      try {
+        await axios.post(`/api/agile-training/pm-sim/g/${this.slug}/po-action`, {
+          participant_token: this.participantToken,
+          action_id: action.id,
+          locale: this.locale,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        const data = e.response && e.response.data;
+        if (data && data.error === 'blocked' && (data.reasons || []).length) {
+          this.toolkitError = this.$t('agileTraining.pmSim.toolkit.blocked', {
+            reason: this.blockedReasonLabel(data.reasons[0]),
+          });
+        } else {
+          this.toolkitError = (data && data.error) || e.message || 'Error';
+        }
+      } finally { this.submitting = false; }
+    },
+    blockedReasonLabel(reason) {
+      if (!reason) return '';
+      const key = String(reason).split(':')[0];
+      const left = String(reason).includes(':') ? String(reason).split(':')[1] : null;
+      const map = {
+        cooldown: this.$t('agileTraining.pmSim.toolkit.blockedReason.cooldown', { n: left || 0 }),
+        max_per_game: this.$t('agileTraining.pmSim.toolkit.blockedReason.max_per_game'),
+        not_enough_capacity: this.$t('agileTraining.pmSim.toolkit.blockedReason.not_enough_capacity'),
+        not_enough_budget: this.$t('agileTraining.pmSim.toolkit.blockedReason.not_enough_budget'),
+        too_early: this.$t('agileTraining.pmSim.toolkit.blockedReason.too_early'),
+        only_at_cycle_end: this.$t('agileTraining.pmSim.toolkit.blockedReason.only_at_cycle_end'),
+        low_satisfaction: this.$t('agileTraining.pmSim.toolkit.blockedReason.low_satisfaction'),
+        not_playing: this.$t('agileTraining.pmSim.toolkit.blockedReason.not_playing'),
+      };
+      return map[key] || reason;
+    },
+    closeRecap() {
+      const r = this.recapToShow;
+      if (r) this.recapDismissedWeek = r.week;
+      this.recapForceShow = null;
+    },
+    showLatestRecap() {
+      this.recapForceShow = null;
+      this.recapDismissedWeek = -1;
     },
   },
 };
@@ -833,6 +1068,76 @@ export default {
 .pmsim__final-events ol { padding-left: 20px; }
 
 .pmsim__loading { padding: 16px; color: #6b7280; }
+
+/* PO Toolkit */
+.pmsim__toolkit {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin: 12px 0;
+}
+.pmsim__toolkit-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.pmsim__toolkit-head h3 { margin: 0; font-size: 16px; }
+.pmsim__toolkit-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.pmsim__tk-tab {
+  background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
+  padding: 4px 12px; border-radius: 999px; cursor: pointer; font-size: 13px;
+}
+.pmsim__tk-tab--active { background: #4338ca; border-color: #4338ca; color: #fff; }
+.pmsim__tk-count { opacity: 0.7; margin-left: 4px; font-size: 11px; }
+.pmsim__toolkit-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px;
+}
+.pmsim__tk-card {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;
+  display: flex; flex-direction: column; gap: 6px; min-height: 180px;
+}
+.pmsim__tk-card--locked { opacity: 0.55; }
+.pmsim__tk-card--discovery { border-left: 3px solid #6366f1; }
+.pmsim__tk-card--growth    { border-left: 3px solid #f59e0b; }
+.pmsim__tk-card--pivot     { border-left: 3px solid #ef4444; }
+.pmsim__tk-card--scrum     { border-left: 3px solid #10b981; }
+.pmsim__tk-head { display: flex; align-items: center; gap: 6px; }
+.pmsim__tk-icon { font-size: 18px; }
+.pmsim__tk-desc { font-size: 12px; color: #475569; margin: 0; }
+.pmsim__tk-effects {
+  list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px;
+}
+.pmsim__tk-effects li { display: flex; gap: 3px; }
+.pmsim__tk-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.pmsim__tk-foot .pmsim__btn { margin-left: auto; padding: 4px 10px; font-size: 12px; }
+.pmsim__tk-error { color: #b91c1c; font-size: 12px; margin-top: 8px; }
+
+/* Weekly Recap modal */
+.pmsim__recap-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 40px 16px; z-index: 80; overflow: auto;
+}
+.pmsim__recap {
+  background: #fff; border-radius: 16px; max-width: 560px; width: 100%;
+  padding: 20px 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pmsim__recap-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pmsim__recap-head h3 { margin: 0; font-size: 18px; color: #0f172a; }
+.pmsim__recap-x {
+  background: transparent; border: 0; font-size: 24px; line-height: 1; color: #64748b; cursor: pointer;
+}
+.pmsim__recap-lead { font-size: 13px; color: #475569; margin: 0 0 8px 0; }
+.pmsim__recap-section { border-top: 1px dashed #e2e8f0; padding-top: 8px; margin-top: 4px; }
+.pmsim__recap-section h4 { margin: 0 0 4px 0; font-size: 13px; color: #1e293b; text-transform: uppercase; letter-spacing: 0.03em; }
+.pmsim__recap-section ul { margin: 4px 0 0 16px; padding: 0; font-size: 13px; color: #1e293b; }
+.pmsim__recap-deltas { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.pmsim__recap-delta {
+  display: flex; justify-content: space-between; padding: 4px 8px; border-radius: 6px;
+  background: #f8fafc; font-size: 13px;
+}
+.pmsim__recap-delta--up { background: #ecfdf5; color: #065f46; }
+.pmsim__recap-delta--down { background: #fef2f2; color: #7f1d1d; }
+.pmsim__recap-key { font-weight: 600; }
+.pmsim__recap-vals em { font-style: normal; opacity: 0.7; margin-left: 4px; }
+.pmsim__recap-focus { background: #eef2ff; border-radius: 8px; padding: 8px 10px; }
+.pmsim__recap-focus h4 { color: #312e81; }
+.pmsim__recap-focus p { margin: 0; font-size: 13px; color: #312e81; }
+.pmsim__recap-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
 
 @media print {
   .pmsim__top, .pmsim__lang, .pmsim__ai, .pmsim__cta, .pmsim__decision-bar, .pmsim__btn { display: none !important; }

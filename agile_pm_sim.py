@@ -166,6 +166,9 @@ _EVENTS_RU: List[Dict[str, Any]] = [
             {"id": "quick", "title": "Быстрый фикс",
              "description": "Костыль на пару дней — позже придётся переделать.",
              "effects": {"satisfaction": 3, "stability": -5, "tech_debt": 4, "capacity_delta": -8}},
+            {"id": "interview", "title": "Сначала проблемное интервью",
+             "description": "Поговорить с 5 пользователями: возможно, проблема не в уведомлениях, а в наполнении.",
+             "effects": {"satisfaction": 2, "trust": 2, "tech_debt": -1, "capacity_delta": -8}},
         ],
     }),
     _ev({
@@ -185,6 +188,9 @@ _EVENTS_RU: List[Dict[str, Any]] = [
             {"id": "focus", "title": "Сфокусироваться на текущей аудитории",
              "description": "Не идти за конкурентом, усилить лояльность.",
              "effects": {"satisfaction": 3, "growth_pct": -3}},
+            {"id": "ab_test", "title": "Запустить A/B тест каналов",
+             "description": "Выкатить минимальную версию на 10% пользователей — проверим спрос без больших затрат.",
+             "effects": {"satisfaction": 2, "trust": 1, "active_users_pct": 2, "tech_debt": 2, "capacity_delta": -10}},
         ],
     }),
     _ev({
@@ -227,6 +233,9 @@ _EVENTS_RU: List[Dict[str, Any]] = [
             {"id": "delay", "title": "Отложить монетизацию",
              "description": "Доверие важнее, но инвестор давит.",
              "effects": {"trust": 2, "investor_pressure_delta": 1}},
+            {"id": "traffic", "title": "Вложиться в платный трафик",
+             "description": "Деньги в маркетинг: быстро прирастём, но без удержания они не задержатся.",
+             "effects": {"users_pct": 8, "satisfaction": -3, "trust": -1, "ad_strength": 1, "budget_delta": -15000}},
         ],
     }),
     _ev({
@@ -284,6 +293,9 @@ _EVENTS_RU: List[Dict[str, Any]] = [
             {"id": "queue", "title": "Очередь регистрации",
              "description": "Гасим хайп, бережём систему.",
              "effects": {"users_pct": 4, "trust": -2, "satisfaction": -2}},
+            {"id": "solution_iv", "title": "Solution-интервью с горячими пользователями",
+             "description": "Выяснить, что именно зацепило: целить в ядро ценности, а не в трафик.",
+             "effects": {"satisfaction": 4, "trust": 3, "users_pct": 3, "capacity_delta": -8}},
         ],
     }),
     _ev({
@@ -436,6 +448,163 @@ _FEATURES_RU: List[Dict[str, Any]] = [
 ]
 
 
+# --------------------------- catalog: PO toolkit actions ---------------------------
+#
+# Это «продуктовые ходы» (discovery / growth / pivot) и Scrum-события
+# (Daily / Refinement / Review / Retro). Их PO применяет ПАРАЛЛЕЛЬНО с
+# решением события — один клик, мгновенный эффект, кулдаун. Идея: тренируем
+# мышление PO о ритуалах Scrum и об инвестициях в product discovery.
+#
+# Каждое действие:
+#   - title / description (RU/EN)
+#   - category: discovery | growth | pivot | scrum
+#   - cap_cost / budget_cost
+#   - cooldown_weeks (через сколько можно повторить)
+#   - max_per_game (None = без лимита)
+#   - effects: применяются через _apply_metric_delta (тот же словарь, что у фич)
+#   - requires: { week_min, satisfaction, ... } — мягкие ограничения
+
+PO_ACTIONS: Dict[str, Dict[str, Any]] = {
+    # --- Discovery ---
+    "problem_interview": {
+        "title_ru": "Провести проблемное интервью",
+        "title_en": "Run problem interviews",
+        "description_ru": "Поговорить с 5 пользователями. Уточняешь настоящую боль — следующая фича попадёт точнее.",
+        "description_en": "Talk to 5 users. Sharpen real pain — next feature lands closer to value.",
+        "category": "discovery",
+        "icon": "🎤",
+        "cap_cost": 8,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "max_per_game": None,
+        "effects": {"satisfaction": 2, "trust": 2, "tech_debt": -2},
+    },
+    "solution_interview": {
+        "title_ru": "Провести solution-интервью",
+        "title_en": "Run solution interviews",
+        "description_ru": "Показать прототип — проверить, решит ли он проблему. Снижает риск опоздать со следующим релизом.",
+        "description_en": "Show a prototype — check that it actually solves the problem. Lowers slip risk on the next release.",
+        "category": "discovery",
+        "icon": "🧪",
+        "cap_cost": 6,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "effects": {"satisfaction": 1, "stability": 2, "tech_debt": -1},
+        "side_effects": {"next_release_risk_buff": 12},  # custom hook (см. _apply_po_action)
+    },
+    "ab_test": {
+        "title_ru": "Запустить A/B тест",
+        "title_en": "Run an A/B test",
+        "description_ru": "Маленький эксперимент вместо большой ставки. Низкий риск, но и эффект скромнее.",
+        "description_en": "A small experiment instead of a big bet. Low risk, modest reward.",
+        "category": "discovery",
+        "icon": "🆎",
+        "cap_cost": 10,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "effects": {"satisfaction": 2, "trust": 1, "active_users_pct": 2, "tech_debt": 2},
+    },
+    # --- Growth ---
+    "traffic_invest": {
+        "title_ru": "Вложиться в трафик",
+        "title_en": "Invest in paid traffic",
+        "description_ru": "Платный трафик: пользователей быстро прибавится, но без удержания они уйдут с разочарованием.",
+        "description_en": "Paid traffic: quick user spike. Without retention they churn back disappointed.",
+        "category": "growth",
+        "icon": "💸",
+        "cap_cost": 5,
+        "budget_cost": 15000,
+        "cooldown_weeks": 3,
+        "effects": {"users_pct": 8, "satisfaction": -3, "trust": -1, "ad_strength": 1},
+        "requires": {"satisfaction": 50},
+    },
+    "pivot": {
+        "title_ru": "Сделать пивот",
+        "title_en": "Pivot",
+        "description_ru": "Большая ставка на переосмысление продукта. Дорого, требует фокуса, но восстанавливает доверие и снимает долг.",
+        "description_en": "A big bet on rethinking the product. Costly and disruptive, but restores trust and pays off debt.",
+        "category": "pivot",
+        "icon": "🔄",
+        "cap_cost": 40,
+        "budget_cost": 10000,
+        "cooldown_weeks": 0,
+        "max_per_game": 1,
+        "requires": {"week_min": 5},
+        "effects": {"satisfaction": 6, "trust": 8, "tech_debt": -12, "stability": 4, "users_pct": -5},
+    },
+    # --- Scrum events ---
+    "daily": {
+        "title_ru": "Сходить на Daily Stand-up",
+        "title_en": "Attend Daily Stand-up",
+        "description_ru": "Раз в неделю команда синкается. Если PO не приходит — растёт долг и теряется capacity (в реальной жизни тоже).",
+        "description_en": "The team syncs once a week. If the PO skips — tech debt grows and capacity drops (just like in real life).",
+        "category": "scrum",
+        "icon": "🧍",
+        "cap_cost": 0,
+        "budget_cost": 0,
+        "cooldown_weeks": 1,
+        "effects": {"capacity_delta": 2},
+        "side_effects": {"mark_daily": True},
+    },
+    "refinement": {
+        "title_ru": "Провести Backlog Refinement",
+        "title_en": "Run Backlog Refinement",
+        "description_ru": "Уточняешь беклог с командой. Следующий цикл получит немного больше capacity — оценки точнее.",
+        "description_en": "Refine the backlog with the team. The next cycle gets a small capacity bump — estimates get sharper.",
+        "category": "scrum",
+        "icon": "📋",
+        "cap_cost": 3,
+        "budget_cost": 0,
+        "cooldown_weeks": 1,
+        "effects": {"capacity_delta": 5, "tech_debt": -1},
+    },
+    "sprint_review": {
+        "title_ru": "Провести Sprint Review",
+        "title_en": "Run Sprint Review",
+        "description_ru": "Демонстрируешь стейкхолдерам результаты. Доверие растёт, обратная связь — вход в следующий цикл.",
+        "description_en": "Demo to stakeholders. Trust grows; feedback feeds into the next cycle.",
+        "category": "scrum",
+        "icon": "🔍",
+        "cap_cost": 0,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "requires": {"cycle_end_week": True},  # только на чётной неделе цикла (w2,4,6,…)
+        "effects": {"trust": 4, "satisfaction": 2, "stability": 1},
+    },
+    "retro": {
+        "title_ru": "Провести Retrospective",
+        "title_en": "Run Retrospective",
+        "description_ru": "Команда чинит процесс. Долг уменьшается, стабильность растёт.",
+        "description_en": "The team fixes its process. Tech debt drops, stability rises.",
+        "category": "scrum",
+        "icon": "🔧",
+        "cap_cost": 2,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "requires": {"cycle_end_week": True},
+        "effects": {"tech_debt": -5, "stability": 3, "satisfaction": 1},
+    },
+}
+
+
+def _localize_action(action_id: str, action: Dict[str, Any], locale: str) -> Dict[str, Any]:
+    title = action.get("title_en") if locale == "en" else action.get("title_ru")
+    desc = action.get("description_en") if locale == "en" else action.get("description_ru")
+    return {
+        "id": action_id,
+        "title": title,
+        "description": desc,
+        "category": action.get("category"),
+        "icon": action.get("icon"),
+        "cap_cost": int(action.get("cap_cost", 0)),
+        "budget_cost": int(action.get("budget_cost", 0)),
+        "cooldown_weeks": int(action.get("cooldown_weeks", 0)),
+        "max_per_game": action.get("max_per_game"),
+        "requires": action.get("requires") or {},
+        "effects": action.get("effects") or {},
+    }
+
+
 # --------------------------- english strings ---------------------------
 # Перевод заголовков/описаний для основных текстов; ключи стабильные.
 
@@ -471,11 +640,13 @@ _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
         "improve": {"title": "Redo notifications", "description": "Slower, but properly contextual."},
         "delay": {"title": "Delay", "description": "Not a priority right now."},
         "quick": {"title": "Quick fix", "description": "A workaround for a couple of days."},
+        "interview": {"title": "Run problem interviews first", "description": "Talk to 5 users — maybe the issue isn't notifications, it's the content."},
     },
     "competitor_channels": {
         "rush": {"title": "Rush channels out", "description": "Big growth, big risk."},
         "research": {"title": "Research the need", "description": "Understand first, build better."},
         "focus": {"title": "Double down on current users", "description": "Don't chase the competitor."},
+        "ab_test": {"title": "Run an A/B test for channels", "description": "Ship a minimal version to 10% of users — measure demand cheaply."},
     },
     "outage": {
         "stabilize": {"title": "Freeze features and stabilize", "description": "Team fixes the platform."},
@@ -486,6 +657,7 @@ _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
         "ads": {"title": "Launch ads", "description": "Fast money, painful trust hit."},
         "subscription": {"title": "Launch Premium", "description": "Cleaner, but value matters."},
         "delay": {"title": "Delay monetization", "description": "Trust over revenue, investor pushes back."},
+        "traffic": {"title": "Invest in paid traffic", "description": "Budget into marketing: quick growth, but without retention they'll churn."},
     },
     "privacy_panic": {
         "e2ee": {"title": "Ship end-to-end encryption", "description": "Expensive, strong stance."},
@@ -501,6 +673,7 @@ _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
         "scale": {"title": "Scale fast", "description": "Spin up the cluster, buy capacity."},
         "ride": {"title": "Ride the wave", "description": "Hope the system survives."},
         "queue": {"title": "Signup queue", "description": "Cool the hype, save the system."},
+        "solution_iv": {"title": "Solution interviews with hot users", "description": "Find out what hooked them — aim at the value core, not just traffic."},
     },
     "team_burnout": {
         "rest": {"title": "Pause new features", "description": "Rest and small fixes."},
@@ -679,6 +852,13 @@ def _initial_state() -> Dict[str, Any]:
         "vote_by_token": {"event": {}, "feature": {}},
         "history": [],
         "metrics_history": [],
+        "weekly_recaps": [],
+        "pending_recap_week": None,
+        "did_daily_this_week": False,
+        "skipped_daily_last_week": False,
+        "po_actions": {},          # {action_id: {last_used_week, count}}
+        "po_action_log": [],       # история всех применений PO-действий
+        "next_release_risk_buff_pct": 0.0,  # бафф от solution_interview
         "status": STATUS_ALIVE,
         "death_reason": None,
         "leaderboard_unlocked_weeks": [],
@@ -990,9 +1170,14 @@ def _release_feature(
     data["capacity_left"] = int(data["capacity_left"]) - cap
 
     risk_pct = _delivery_risk_pct(data, total_committed_cap or cap)
+    risk_buff = float(data.get("next_release_risk_buff_pct", 0) or 0)
+    if risk_buff > 0:
+        risk_pct = max(0.0, risk_pct - risk_buff)
     slipped = False
     if risk_pct > 0 and rnd is not None:
         slipped = (rnd.random() * 100.0) < risk_pct
+    # бафф «израсходован» одним релизом, дальше — обычный риск
+    data["next_release_risk_buff_pct"] = 0.0
 
     cur_cycle = int(data.get("cycle_index", 1))
     base_rec = {
@@ -1147,6 +1332,14 @@ def _serialize_state(
         },
         "history": data.get("history", []),
         "metrics_history": data.get("metrics_history", []),
+        "weekly_recaps": data.get("weekly_recaps", []),
+        "pending_recap_week": data.get("pending_recap_week"),
+        "did_daily_this_week": bool(data.get("did_daily_this_week")),
+        "skipped_daily_last_week": bool(data.get("skipped_daily_last_week")),
+        "po_actions": data.get("po_actions", {}),
+        "po_action_log": (data.get("po_action_log") or [])[-30:],
+        "po_action_catalog": _localize_actions_for_state(data, locale),
+        "next_release_risk_buff_pct": float(data.get("next_release_risk_buff_pct", 0)),
         "leaderboard_unlocked_weeks": leaderboard_weeks,
         "facilitator_comments": data.get("facilitator_comments", []),
         "consequences_text": data.get("consequences_text", ""),
@@ -1182,6 +1375,118 @@ def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingPmSimSta
         return row, data
     data = _safe_json_load(row.data_json) or _initial_state()
     return row, data
+
+
+def _po_action_status(data: Dict[str, Any], action_id: str, action: Dict[str, Any]) -> Dict[str, Any]:
+    """Доступно ли действие сейчас? Если нет — почему."""
+    week = int(data.get("current_week", 1) or 1)
+    log = (data.get("po_actions") or {}).get(action_id) or {}
+    last = int(log.get("last_used_week", 0) or 0)
+    count = int(log.get("count", 0) or 0)
+    cd = int(action.get("cooldown_weeks", 0) or 0)
+    cd_left = max(0, (last + cd) - week) if last else 0
+
+    requires = action.get("requires") or {}
+    reasons: List[str] = []
+    if cd_left > 0:
+        reasons.append(f"cooldown:{cd_left}")
+    if action.get("max_per_game") is not None and count >= int(action["max_per_game"]):
+        reasons.append("max_per_game")
+    cap_left = int(data.get("capacity_left", 0) or 0)
+    cap_cost = int(action.get("cap_cost", 0) or 0)
+    if cap_cost > 0 and cap_left < cap_cost:
+        reasons.append("not_enough_capacity")
+    budget = int(data.get("budget", 0) or 0)
+    bcost = int(action.get("budget_cost", 0) or 0)
+    if bcost > 0 and budget < bcost:
+        reasons.append("not_enough_budget")
+    if "week_min" in requires and week < int(requires["week_min"]):
+        reasons.append("too_early")
+    if requires.get("cycle_end_week"):
+        # «Конец цикла» = чётная неделя (w2, w4, …)
+        if week % CYCLE_LEN != 0:
+            reasons.append("only_at_cycle_end")
+    if "satisfaction" in requires:
+        sat = int((data.get("metrics") or {}).get("satisfaction", 0))
+        if sat < int(requires["satisfaction"]):
+            reasons.append("low_satisfaction")
+
+    phase = data.get("phase")
+    if phase != PHASE_PLAYING:
+        reasons.append("not_playing")
+    return {
+        "available": not reasons,
+        "blocked_reasons": reasons,
+        "cooldown_left_weeks": cd_left,
+        "used_count": count,
+        "last_used_week": last or None,
+    }
+
+
+def _localize_actions_for_state(data: Dict[str, Any], locale: str) -> List[Dict[str, Any]]:
+    out = []
+    for aid, a in PO_ACTIONS.items():
+        loc = _localize_action(aid, a, locale)
+        loc["status"] = _po_action_status(data, aid, a)
+        out.append(loc)
+    return out
+
+
+def _apply_po_action(
+    data: Dict[str, Any],
+    action_id: str,
+    locale: str,
+) -> Dict[str, Any]:
+    """Применяет PO-действие. Возвращает запись для лога."""
+    action = PO_ACTIONS[action_id]
+    week = int(data.get("current_week", 1) or 1)
+
+    cap_cost = int(action.get("cap_cost", 0) or 0)
+    if cap_cost > 0:
+        data["capacity_left"] = max(0, int(data.get("capacity_left", 0)) - cap_cost)
+    bcost = int(action.get("budget_cost", 0) or 0)
+    if bcost > 0:
+        data["budget"] = max(0, int(data.get("budget", 0)) - bcost)
+
+    notes = _apply_metric_delta(data, action.get("effects") or {})
+
+    side = action.get("side_effects") or {}
+    if side.get("mark_daily"):
+        data["did_daily_this_week"] = True
+        data["skipped_daily_last_week"] = False
+    if "next_release_risk_buff" in side:
+        data["next_release_risk_buff_pct"] = float(data.get("next_release_risk_buff_pct", 0)) + float(side["next_release_risk_buff"])
+
+    # cooldown / counter
+    log = data.setdefault("po_actions", {})
+    entry = log.get(action_id) or {}
+    entry["last_used_week"] = week
+    entry["count"] = int(entry.get("count", 0)) + 1
+    log[action_id] = entry
+
+    title = action.get("title_en") if locale == "en" else action.get("title_ru")
+    rec = {
+        "week": week,
+        "action_id": action_id,
+        "title": title,
+        "category": action.get("category"),
+        "icon": action.get("icon"),
+        "consequences": notes,
+        "cap_cost": cap_cost,
+        "budget_cost": bcost,
+        "ts": _now_iso(),
+    }
+    data.setdefault("po_action_log", []).append(rec)
+    data.setdefault("history", []).append({
+        "week": week,
+        "kind": "po_action",
+        "action": {"id": action_id, "title": title, "category": action.get("category"), "icon": action.get("icon")},
+        "consequences": notes,
+        "cap_cost": cap_cost,
+        "budget_cost": bcost,
+        "ts": _now_iso(),
+    })
+    return rec
 
 
 def _save_state(row: AgileTrainingPmSimState, data: Dict[str, Any]) -> None:
@@ -1256,26 +1561,219 @@ def _record_metrics_snapshot(data: Dict[str, Any]) -> None:
     data.setdefault("metrics_history", []).append(snap)
 
 
+_RECAP_KEEP = 8  # сколько последних recap'ов хранить
+
+
+def _snapshot_metrics(data: Dict[str, Any]) -> Dict[str, Any]:
+    m = data.get("metrics") or {}
+    return {
+        "users": int(m.get("users", 0)),
+        "active_users": int(m.get("active_users", 0)),
+        "satisfaction": int(m.get("satisfaction", 0)),
+        "stability": int(m.get("stability", 0)),
+        "tech_debt": int(m.get("tech_debt", 0)),
+        "trust": int(m.get("trust", 0)),
+        "revenue_total": int(data.get("revenue_total", 0)),
+        "revenue_per_week": int(data.get("revenue_per_week", 0)),
+        "capacity_left": int(data.get("capacity_left", 0)),
+        "budget": int(data.get("budget", 0)),
+    }
+
+
+def _focus_for_next_week(data: Dict[str, Any], next_week: int) -> Dict[str, Any]:
+    """Подсказка PO: куда смотреть на следующей неделе, что не упустить."""
+    m = data.get("metrics") or {}
+    tech_debt = int(m.get("tech_debt", 0))
+    sat = int(m.get("satisfaction", 0))
+    trust = int(m.get("trust", 0))
+    stab = int(m.get("stability", 0))
+    users = int(m.get("users", 0))
+    rev = int(data.get("revenue_per_week", 0))
+    monetized = bool(data.get("monetization_on", False))
+    skipped_daily = bool(data.get("skipped_daily_last_week"))
+    focus_key = "balanced"
+    if stab < 50 or tech_debt > 65:
+        focus_key = "stabilize"
+    elif sat < 50:
+        focus_key = "discovery"
+    elif trust < 50:
+        focus_key = "trust"
+    elif monetized and rev <= 0:
+        focus_key = "monetize_check"
+    elif not monetized and next_week >= 9:
+        focus_key = "monetize"
+    elif users < 6000 and next_week >= 6:
+        focus_key = "growth"
+    return {
+        "key": focus_key,
+        "reasons": {
+            "tech_debt": tech_debt,
+            "stability": stab,
+            "satisfaction": sat,
+            "trust": trust,
+            "users": users,
+            "revenue_per_week": rev,
+            "skipped_daily_last_week": skipped_daily,
+        },
+    }
+
+
+def _build_weekly_recap(
+    data: Dict[str, Any],
+    week: int,
+    before: Dict[str, Any],
+    after: Dict[str, Any],
+    extras: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Сводка по только что закрытой неделе для PO-pop-up на старте следующей."""
+    diffs = {}
+    for k, v_after in after.items():
+        v_before = before.get(k, 0)
+        if v_after != v_before:
+            diffs[k] = {"before": v_before, "after": v_after, "delta": v_after - v_before}
+    next_week = min(TOTAL_WEEKS, week + 1)
+    return {
+        "week": week,
+        "next_week": next_week,
+        "before": before,
+        "after": after,
+        "deltas": diffs,
+        "event": extras.get("event"),
+        "decision": extras.get("decision"),
+        "decision_notes": extras.get("decision_notes") or [],
+        "released_features": extras.get("released_features") or [],
+        "late_deliveries": extras.get("late_deliveries") or [],
+        "scrum_penalty": extras.get("scrum_penalty") or [],
+        "focus": _focus_for_next_week(data, next_week),
+        "ts": _now_iso(),
+    }
+
+
+def _apply_scrum_penalty_if_needed(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Проверка scrum-дисциплины при тике недели.
+
+    Если за прошлую неделю PO не сходил на Daily Stand-up — команда теряет
+    capacity на следующую неделю (как в реальной жизни: коммуникация
+    провисает, появляются дубли работы).
+    """
+    notes: List[str] = []
+    if not data.get("did_daily_this_week"):
+        # На неделе НЕ был на Daily — penalty
+        m = data.get("metrics") or {}
+        m["tech_debt"] = int(_clamp(m.get("tech_debt", 0) + 2, 0, 100))
+        data["metrics"] = m
+        data["capacity_left"] = max(0, int(data.get("capacity_left", 0)) - 3)
+        data["skipped_daily_last_week"] = True
+        notes.append({"reason": "no_daily", "tech_debt": 2, "capacity_delta": -3})
+    else:
+        data["skipped_daily_last_week"] = False
+    data["did_daily_this_week"] = False  # сбрасываем флажок на новую неделю
+    return notes
+
+
 def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) -> None:
     """Заканчиваем текущую неделю: пассивные эффекты, статус, переход на следующую."""
+    week_closed = int(data["current_week"])
+    before_metrics = _snapshot_metrics(data)
+    last_event = (data.get("current_event") or {}) if data.get("current_event") else None
+    last_decision = next(
+        (h for h in reversed(data.get("history") or []) if h.get("kind") == "event" and int(h.get("week", -1)) == week_closed),
+        None,
+    )
+    last_feature = next(
+        (h for h in reversed(data.get("history") or []) if h.get("kind") == "feature" and int(h.get("week", -1)) == week_closed),
+        None,
+    )
+
     _apply_passive_week(data)
+    scrum_penalty = _apply_scrum_penalty_if_needed(data)
     status, reason = _evaluate_status(data)
     data["status"] = status
     if status == STATUS_DEAD:
         data["death_reason"] = reason
         data["phase"] = PHASE_FINISHED
         _record_metrics_snapshot(data)
+        # Финальный recap
+        recap = _build_weekly_recap(
+            data, week_closed, before_metrics, _snapshot_metrics(data),
+            {
+                "event": _summarize_event_decision(last_event, last_decision),
+                "decision": (last_decision or {}).get("option"),
+                "decision_notes": (last_decision or {}).get("consequences"),
+                "released_features": (last_feature or {}).get("released"),
+                "scrum_penalty": scrum_penalty,
+            },
+        )
+        _push_recap(data, recap)
         return
     _record_metrics_snapshot(data)
     if int(data["current_week"]) >= TOTAL_WEEKS:
         data["phase"] = PHASE_FINISHED
+        recap = _build_weekly_recap(
+            data, week_closed, before_metrics, _snapshot_metrics(data),
+            {
+                "event": _summarize_event_decision(last_event, last_decision),
+                "decision": (last_decision or {}).get("option"),
+                "decision_notes": (last_decision or {}).get("consequences"),
+                "released_features": (last_feature or {}).get("released"),
+                "scrum_penalty": scrum_penalty,
+            },
+        )
+        _push_recap(data, recap)
         return
     data["current_week"] = int(data["current_week"]) + 1
     data["current_event"] = None
     data["event_resolved"] = True
+    # Запоминаем какие фичи поедут «с опозданием» именно сейчас (до старта цикла)
+    pending_for_new_cycle = [
+        dict(r) for r in (data.get("pending_releases") or [])
+        if int(r.get("delivery_cycle", 0)) == int(data.get("cycle_index", 1)) + 1
+    ]
     _start_new_cycle_if_needed(data)
     _ensure_event_for_week(data, group_id, locale)
     _ensure_feature_options(data, group_id, locale)
+    after_metrics = _snapshot_metrics(data)
+    # late deliveries — то, что только что отгрузилось из pending
+    delivered_now = []
+    if pending_for_new_cycle:
+        delivered_now = [
+            r for r in (data.get("feature_releases") or [])
+            if int(r.get("delivered_at_week", -1)) == int(data["current_week"]) and r.get("slipped")
+        ]
+    recap = _build_weekly_recap(
+        data, week_closed, before_metrics, after_metrics,
+        {
+            "event": _summarize_event_decision(last_event, last_decision),
+            "decision": (last_decision or {}).get("option"),
+            "decision_notes": (last_decision or {}).get("consequences"),
+            "released_features": (last_feature or {}).get("released"),
+            "late_deliveries": delivered_now,
+            "scrum_penalty": scrum_penalty,
+        },
+    )
+    _push_recap(data, recap)
+
+
+def _summarize_event_decision(ev: Optional[Dict[str, Any]], decision_entry: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not ev and not decision_entry:
+        return None
+    if decision_entry and decision_entry.get("event"):
+        return {
+            "id": decision_entry["event"].get("id"),
+            "title": decision_entry["event"].get("title"),
+            "type": decision_entry["event"].get("type"),
+        }
+    if ev:
+        return {"id": ev.get("id"), "title": ev.get("title"), "type": ev.get("type")}
+    return None
+
+
+def _push_recap(data: Dict[str, Any], recap: Dict[str, Any]) -> None:
+    arr = data.setdefault("weekly_recaps", [])
+    arr.append(recap)
+    if len(arr) > _RECAP_KEEP:
+        del arr[: len(arr) - _RECAP_KEEP]
+    data["pending_recap_week"] = recap["week"]
 
 
 # --------------------------- ai helper ---------------------------
@@ -1594,6 +2092,41 @@ def participant_feature_release(slug: str):
     _close_week_and_advance(data, g.id, locale)
     _save_state(row, data)
     return jsonify({"ok": True, "state": _serialize_state(row, data, locale, token)})
+
+
+@bp_agile_pm_sim.post("/g/<slug>/po-action")
+def participant_po_action(slug: str):
+    """PO применяет действие из тулкита (discovery / growth / scrum-event / pivot)."""
+    g, sess = _group_and_session(slug)
+    if not g:
+        return jsonify({"error": "Group not found"}), 404
+    locale = _resolve_locale(request.args.get("locale"), sess)
+    body = request.get_json(silent=True) or {}
+    token = (body.get("participant_token") or "").strip()
+    action_id = (body.get("action_id") or "").strip()
+    if not token or not action_id:
+        return jsonify({"error": "bad request"}), 400
+    if action_id not in PO_ACTIONS:
+        return jsonify({"error": "unknown_action"}), 400
+    p = _require_participant(g, token)
+    if not p:
+        return jsonify({"error": "Participant not found"}), 404
+
+    row, data = _get_or_init_state(g)
+    if (data.get("roles", {}) or {}).get(token) != ROLE_PO:
+        return jsonify({"error": "only_po"}), 403
+    if data.get("phase") != PHASE_PLAYING:
+        return jsonify({"error": "not_playing"}), 400
+
+    action = PO_ACTIONS[action_id]
+    status = _po_action_status(data, action_id, action)
+    if not status["available"]:
+        return jsonify({"error": "blocked", "reasons": status["blocked_reasons"]}), 400
+
+    rec = _apply_po_action(data, action_id, locale)
+    _touch_participant(data, p)
+    _save_state(row, data)
+    return jsonify({"ok": True, "applied": rec, "state": _serialize_state(row, data, locale, token)})
 
 
 @bp_agile_pm_sim.post("/g/<slug>/start")

@@ -2741,6 +2741,52 @@
       "dueCycle": "due cycle {c}",
       "deliveredLate": "delivered late",
       "lateDeliveryHistory": "Late delivery from previous cycle",
+      "toolkit": {
+        "title": "PO toolkit",
+        "hint": "In parallel with event decisions — product moves and Scrum events. Each action has a capacity cost and a cooldown.",
+        "apply": "Apply",
+        "cooldown": "available in {n}w",
+        "everyN": "every {n}w",
+        "poOnly": "Only the PO can apply actions — the team sees the outcome.",
+        "blocked": "Not available now: {reason}",
+        "cat": {
+          "discovery": "Discovery",
+          "growth": "Growth",
+          "pivot": "Pivot",
+          "scrum": "Scrum events"
+        },
+        "blockedReason": {
+          "cooldown": "cooldown {n}w left",
+          "max_per_game": "limit reached",
+          "not_enough_capacity": "not enough capacity",
+          "not_enough_budget": "not enough budget",
+          "too_early": "too early",
+          "only_at_cycle_end": "only at cycle end (even week)",
+          "low_satisfaction": "satisfaction too low",
+          "not_playing": "game is not in playing phase"
+        }
+      },
+      "recap": {
+        "title": "Week {w} recap",
+        "lead": "What happened, how it moved the product, and what to look at on week {next}.",
+        "eventTitle": "Event and decision",
+        "releasedTitle": "Releases this cycle",
+        "lateDeliveriesTitle": "Delivered late",
+        "scrumPenaltyTitle": "Scrum discipline penalty",
+        "scrumPenaltyHint": "PO skipped Daily — the team loses capacity and gains tech debt. By design: Scrum discipline drives business outcomes.",
+        "metricsTitle": "Metrics changes",
+        "focusTitle": "Focus for week {w}",
+        "focus": {
+          "balanced": "Plenty of headroom — a great moment for a big bet or a discovery cycle so the next release lands closer to value.",
+          "stabilize": "The platform is stretched. Next week is for stabilization, a Retro and paying down debt.",
+          "discovery": "Satisfaction is sliding — talk to users. A problem interview brings focus back to value.",
+          "trust": "Trust is shaky. Small safe steps — an A/B test and a Sprint Review — restore it faster than another big push.",
+          "monetize_check": "Monetization is on but revenue isn't flowing. Solution interviews with paying / churned users will show what to fix.",
+          "monetize": "Time to think about money: subscription or ads. Run a Solution interview first so you don't break trust.",
+          "growth": "User base is small. You can invest in paid traffic — but only while satisfaction holds."
+        },
+        "continue": "Got it, continue"
+      },
       "history": "Timeline",
       "leaderboardOpened": "Facilitator opened the leaderboard at weeks",
       "leaderboard": "Leaderboard",

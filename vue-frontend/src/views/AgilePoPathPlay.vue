@@ -1,12 +1,12 @@
 <template>
-  <div class="po-play" v-if="loading">
+  <div class="po-play modern-ui" v-if="loading">
     <div class="po-play__spinner"></div>
     <div class="po-play__hint">{{ $t('common.loading') }}…</div>
   </div>
-  <div class="po-play po-play--error" v-else-if="errorText">
+  <div class="po-play po-play--error modern-ui" v-else-if="errorText">
     <p>{{ errorText }}</p>
   </div>
-  <div class="po-play" v-else>
+  <div class="po-play modern-ui" v-else>
     <header class="po-play__head">
       <div>
         <h1>🛣️ {{ content.title }}</h1>
@@ -790,7 +790,7 @@ export default {
 .po-welcome__tips { padding-left: 18px; color: #475569; }
 .po-welcome__lead { margin-top: 14px; font-weight: 600; }
 .po-welcome__row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.po-welcome__row input { flex: 1; min-width: 220px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 15px; }
+.po-welcome__row input { flex: 1; min-width: 220px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 15px; box-sizing: border-box; }
 .po-welcome__row input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
 .po-welcome__examples { margin-top: 18px; }
 .po-welcome__examples-h { font-weight: 700; color: #475569; margin-bottom: 6px; }
@@ -835,8 +835,11 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 130px;
+  min-width: 0;
   position: relative;
+  box-sizing: border-box;
   transition: border-color 0.18s, box-shadow 0.18s;
+  overflow: hidden;
 }
 .po-cell--filled { border-color: #c4b5fd; box-shadow: 0 1px 4px rgba(124,58,237,0.07); }
 .po-cell--primary { background: #faf5ff; border-color: #c4b5fd; }
@@ -850,6 +853,7 @@ export default {
 .po-cell textarea {
   flex: 1;
   width: 100%;
+  max-width: 100%;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -859,6 +863,8 @@ export default {
   line-height: 1.45;
   background: #fff;
   min-height: 70px;
+  box-sizing: border-box;
+  display: block;
 }
 .po-cell textarea:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
 .po-cell textarea:disabled { background: #f1f5f9; color: #475569; }
@@ -877,7 +883,7 @@ export default {
 .po-uncomfortable__intro { color: #92400e; }
 .po-uncomfortable__list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 10px; }
 .po-uncomfortable__q { font-weight: 600; }
-.po-uncomfortable__list textarea { width: 100%; padding: 7px 10px; border: 1px solid #fcd34d; border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical; background: #fff; margin-top: 4px; }
+.po-uncomfortable__list textarea { width: 100%; max-width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #fcd34d; border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical; background: #fff; margin-top: 4px; display: block; }
 .po-uncomfortable__empty { color: #92400e; }
 
 .po-confidence { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; }

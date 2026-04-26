@@ -1582,6 +1582,13 @@
         "bullet1": "Real back-and-forth via OpenAI on the server (API key required)",
         "bullet2": "Voice input in the browser; answers — automatic OpenAI read-aloud",
         "bullet3": "“Synthesize insights” — facts, pains, constraints, open questions"
+      },
+      "poPath": {
+        "title": "Product Owner Path: JTBD → Lean Canvas",
+        "desc": "A step-by-step workshop for future and current POs. 4 stages with a facilitator, statuses and an AI helper. Each stage is approved separately — the next one opens only after approval.",
+        "bullet1": "JTBD → Value Proposition → Market Fit → Lean Canvas, no skipping",
+        "bullet2": "Autosave and full state recovery on page refresh",
+        "bullet3": "AI: rephrase, ask uncomfortable questions — never grades"
       }
     },
     "problemDiscovery": {
@@ -2558,6 +2565,119 @@
         "po_designs_solution": {
           "title": "PO dictates how to implement"
         }
+      }
+    },
+    "poPath": {
+      "facTitle": "Product Owner Path — facilitator panel",
+      "facSubtitle": "Create a session, add groups, share links. Each participant's stage goes through your review: approve or send back for revision.",
+      "newSessionTitle": "Name for the “PO Path” session",
+      "stages": {
+        "jtbd": { "short": "JTBD" },
+        "value": { "short": "Value Prop" },
+        "fit": { "short": "Market Fit" },
+        "canvas": { "short": "Lean Canvas" }
+      },
+      "summary": { "short": "Final" },
+      "status": {
+        "draft": "Draft",
+        "submitted": "Awaiting review",
+        "in_review": "In discussion",
+        "needs_revision": "Needs revision",
+        "approved": "Approved"
+      },
+      "fields": {
+        "jtbd": {
+          "job_statement": { "label": "Job Statement" },
+          "context": { "label": "Context" },
+          "motivation": { "label": "Motivation" },
+          "barriers": { "label": "Barriers" },
+          "fears": { "label": "Fears" }
+        },
+        "value": {
+          "pains": { "label": "Pains" },
+          "gains": { "label": "Gains" },
+          "product": { "label": "Product" },
+          "pain_relievers": { "label": "Pain ↔ solution map" }
+        },
+        "fit": {
+          "customer": { "label": "Customer" },
+          "why_choose": { "label": "Why they’ll choose us" },
+          "alternatives": { "label": "Alternatives" },
+          "usage_context": { "label": "When they’ll use it" }
+        },
+        "canvas": {
+          "problem": { "label": "Problem" },
+          "segments": { "label": "Segments" },
+          "early_adopters": { "label": "Early adopters" },
+          "value_prop": { "label": "Unique value proposition" },
+          "solution": { "label": "Solution" },
+          "channels": { "label": "Channels" },
+          "revenue": { "label": "Revenue streams" },
+          "costs": { "label": "Cost structure" },
+          "metrics": { "label": "Key metrics" },
+          "unfair_advantage": { "label": "Unfair advantage" }
+        }
+      },
+      "fac": {
+        "participantsCount": "{n} participant | {n} participants | {n} participants",
+        "needsAction": "{n} await review",
+        "completed": "{n} completed",
+        "openGroup": "Open participant page",
+        "viewParticipants": "Open participants",
+        "resetGroup": "Reset group answers",
+        "resetConfirm": "Reset all answers for this group?",
+        "modalSub": "Pick a participant on the left to see details and approve/reject their stage.",
+        "stageNow": "Now",
+        "awaitsReview": "awaits review",
+        "pickPerson": "Pick a participant on the left to see their work.",
+        "joined": "Joined",
+        "confidence": "Confidence",
+        "aiQuestions": "AI uncomfortable questions and answers",
+        "history": "Stage history",
+        "tagApproved": "Approved",
+        "tagRejected": "Send back",
+        "tagNote": "Comment",
+        "approve": "Approve stage",
+        "reject": "Send back for revision",
+        "justComment": "Just comment",
+        "commentPlaceholder": "What did you discuss, what to improve? (visible to the participant)"
+      },
+      "play": {
+        "progress": "Stage {done}/{total}",
+        "saving": "Saving…",
+        "saved": "All saved",
+        "saveErr": "Save failed",
+        "stageOf": "Stage {i} of {total}",
+        "welcomeTitle": "Ready to start?",
+        "namePrompt": "How should we call you in the group? Only the facilitator and your team see this.",
+        "namePlaceholder": "Name, nickname or just #1",
+        "start": "Start",
+        "ideaExamples": "If you don’t have your own idea yet — pick one of these:",
+        "summaryShort": "Final",
+        "submitForReview": "Submit to facilitator",
+        "returnAndEdit": "Reopen and rewrite",
+        "returnConfirm": "This stage and the next ones will reset to draft and need approval again. Continue?",
+        "errStageEmpty": "Please fill at least one field before submitting.",
+        "rejectionTitle": "Facilitator asks for a revision",
+        "approvalTitle": "Stage approved",
+        "refJtbd": "JTBD from stage 1",
+        "refPrev": "Cheat-sheet from previous stages",
+        "prefill": "Pull from stages 1–2",
+        "uncomfortableTitle": "Uncomfortable questions about market fit",
+        "generate": "Generate AI questions",
+        "regenerate": "Regenerate questions",
+        "uncomfortablePlaceholder": "Honest answer — even if it’s rough.",
+        "uncomfortableEmpty": "Click “Generate” — AI will ask 3–5 questions to find weak spots.",
+        "confidence": "How confident are you in this stage?",
+        "aiImprove": "Rephrase",
+        "aiQuestions": "Ask clarifying questions",
+        "aiCallsLeft": "AI calls left: {n}",
+        "aiLimit": "AI call limit reached. You can keep going without the assistant.",
+        "autosaveAt": "Autosaved at {at}",
+        "print": "Print",
+        "copyText": "Copy as text",
+        "editCanvas": "Edit Lean Canvas",
+        "copied": "Copied to clipboard"
       }
     },
     "productThinking": {

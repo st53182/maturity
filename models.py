@@ -1078,6 +1078,60 @@ class AgileTrainingScrumSimState(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingPoPathAnswer(db.Model):
+    """Ответ участника тренинга «Путь Product Owner: JTBD → Value → Market Fit → Lean Canvas».
+
+    Многоэтапный воркшоп с фасилитатором. Одна запись на участника.
+    Структура `data_json`:
+      {
+        "current_stage": "jtbd"|"value"|"fit"|"canvas"|"done",
+        "stages": {
+          "jtbd":   {"status": "draft|submitted|in_review|approved|needs_revision",
+                     "data":   {...поля этапа...},
+                     "confidence": 0..5 | null,
+                     "comments": [{"author":"facilitator|self", "text": "...", "ts": iso, "kind": "review|note"}],
+                     "submitted_at": iso|null,
+                     "approved_at":  iso|null,
+                     "review_round": 0..N},
+          "value":  {...},
+          "fit":    {..., "ai_questions": [{"q":"...","answer":"..."}]},
+          "canvas": {...}
+        },
+        "ai_history": [{"mode": "...","input":"...","reply":"...","ts":iso}],
+        "ai_calls":   N
+      }
+    """
+
+    __tablename__ = "agile_training_po_path_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_po_path_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    current_stage = db.Column(db.String(16), nullable=False, default="jtbd", index=True)
+    overall_status = db.Column(db.String(16), nullable=True, index=True)  # quick filter for facilitator
+    stages_completed = db.Column(db.Integer, nullable=False, default=0, index=True)
+    ai_calls = db.Column(db.Integer, nullable=False, default=0)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

@@ -38,6 +38,7 @@ import AgileScrumRolesPlay from '@/views/AgileScrumRolesPlay.vue';
 import AgileProductThinkingPlay from '@/views/AgileProductThinkingPlay.vue';
 import AgileKanbanPlay from '@/views/AgileKanbanPlay.vue';
 import AgileScrumSimPlay from '@/views/AgileScrumSimPlay.vue';
+import AgilePoPathPlay from '@/views/AgilePoPathPlay.vue';
 
 const REMOVED_WORKSHOP_KEYS = new Set(['product_stories', 'user_story_map']);
 
@@ -55,6 +56,7 @@ export default {
     AgileProductThinkingPlay,
     AgileKanbanPlay,
     AgileScrumSimPlay,
+    AgilePoPathPlay,
   },
   data() {
     return {
@@ -79,6 +81,7 @@ export default {
       if (this.exerciseKey === 'product_thinking') return 'AgileProductThinkingPlay';
       if (this.exerciseKey === 'kanban_system') return 'AgileKanbanPlay';
       if (this.exerciseKey === 'scrum_simulator') return 'AgileScrumSimPlay';
+      if (this.exerciseKey === 'po_path') return 'AgilePoPathPlay';
       return 'AgilePrinciplesPlay';
     },
   },

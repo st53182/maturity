@@ -81,6 +81,7 @@ const routes = [
   {path: '/agile-training/product-thinking', name: 'AgileProductThinkingFacilitator', component: () => import('@/views/AgileProductThinkingFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/kanban', name: 'AgileKanbanFacilitator', component: () => import('@/views/AgileKanbanFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/scrum-sim', name: 'AgileScrumSimFacilitator', component: () => import('@/views/AgileScrumSimFacilitator.vue'), meta: { requiresAuth: true }},
+  {path: '/agile-training/po-path', name: 'AgilePoPathFacilitator', component: () => import('@/views/AgilePoPathFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/problem-discovery', name: 'ProblemDiscoveryPlay', component: () => import('@/views/ProblemDiscoveryPlay.vue')},
   {path: '/g/:slug', name: 'GroupPlay', component: () => import('@/views/GroupPlayGateway.vue')},
   {path: '/testing-types', name: 'TestingTypesAssignment', component: () => import('@/views/TestingTypesAssignment.vue'), meta: { requiresAuth: true }},

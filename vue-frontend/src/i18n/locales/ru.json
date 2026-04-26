@@ -1512,6 +1512,13 @@
         "bullet1": "Реальный диалог через OpenAI на сервере (нужен API-ключ)",
         "bullet2": "Голос ввода в браузере; ответы — автоматическая озвучка OpenAI",
         "bullet3": "Кнопка «Собрать инсайты» — факты, боли, ограничения, открытые вопросы"
+      },
+      "poPath": {
+        "title": "Путь Product Owner: JTBD → Lean Canvas",
+        "desc": "Пошаговый воркшоп для будущих и действующих PO. 4 этапа с фасилитатором, статусами и AI-помощником. Каждый этап обсуждается группой и одобряется отдельно — следующий открывается только после approval.",
+        "bullet1": "JTBD → Value Proposition → Market Fit → Lean Canvas, без перепрыгивания",
+        "bullet2": "Автосейв и восстановление состояния при обновлении страницы",
+        "bullet3": "AI: переформулировать, задать неудобные вопросы — но не оценивать"
       }
     },
     "problemDiscovery": {
@@ -2488,6 +2495,119 @@
         "po_designs_solution": {
           "title": "PO диктует, как реализовать задачу"
         }
+      }
+    },
+    "poPath": {
+      "facTitle": "Путь Product Owner — панель фасилитатора",
+      "facSubtitle": "Создайте тренинг, добавьте группы, раздайте ссылки. Каждый этап участника проходит у вас на проверку: одобрить или вернуть на доработку.",
+      "newSessionTitle": "Название тренинга «Путь PO»",
+      "stages": {
+        "jtbd": { "short": "JTBD" },
+        "value": { "short": "Value Prop" },
+        "fit": { "short": "Market Fit" },
+        "canvas": { "short": "Lean Canvas" }
+      },
+      "summary": { "short": "Финал" },
+      "status": {
+        "draft": "Черновик",
+        "submitted": "На проверке",
+        "in_review": "На обсуждении",
+        "needs_revision": "На доработке",
+        "approved": "Одобрено"
+      },
+      "fields": {
+        "jtbd": {
+          "job_statement": { "label": "Job Statement" },
+          "context": { "label": "Контекст" },
+          "motivation": { "label": "Мотивация" },
+          "barriers": { "label": "Барьеры" },
+          "fears": { "label": "Страхи" }
+        },
+        "value": {
+          "pains": { "label": "Боли" },
+          "gains": { "label": "Выгоды" },
+          "product": { "label": "Продукт" },
+          "pain_relievers": { "label": "Связка боль ↔ решение" }
+        },
+        "fit": {
+          "customer": { "label": "Клиент" },
+          "why_choose": { "label": "Почему выберет нас" },
+          "alternatives": { "label": "Альтернативы" },
+          "usage_context": { "label": "Когда использует" }
+        },
+        "canvas": {
+          "problem": { "label": "Проблема" },
+          "segments": { "label": "Сегменты" },
+          "early_adopters": { "label": "Early Adopters" },
+          "value_prop": { "label": "Ценностное предложение" },
+          "solution": { "label": "Решение" },
+          "channels": { "label": "Каналы" },
+          "revenue": { "label": "Доходы" },
+          "costs": { "label": "Затраты" },
+          "metrics": { "label": "Метрики" },
+          "unfair_advantage": { "label": "Несправедливое преимущество" }
+        }
+      },
+      "fac": {
+        "participantsCount": "{n} участник | {n} участников | {n} участников | {n} участников",
+        "needsAction": "{n} ждут проверки",
+        "completed": "{n} завершили",
+        "openGroup": "Открыть страницу участника",
+        "viewParticipants": "Открыть участников",
+        "resetGroup": "Сбросить ответы группы",
+        "resetConfirm": "Сбросить все ответы участников этой группы?",
+        "modalSub": "Слева — список участников и их прогресс. Кликните, чтобы открыть детали и одобрить/вернуть этап.",
+        "stageNow": "Сейчас",
+        "awaitsReview": "ждёт проверки",
+        "pickPerson": "Выберите участника слева, чтобы увидеть его работы.",
+        "joined": "Присоединился",
+        "confidence": "Уверенность",
+        "aiQuestions": "Неудобные вопросы AI и ответы участника",
+        "history": "История этапа",
+        "tagApproved": "Одобрено",
+        "tagRejected": "На доработку",
+        "tagNote": "Комментарий",
+        "approve": "Одобрить этап",
+        "reject": "Вернуть на доработку",
+        "justComment": "Только комментарий",
+        "commentPlaceholder": "Что обсудили, что улучшить? (видно участнику)"
+      },
+      "play": {
+        "progress": "Этап {done}/{total}",
+        "saving": "Сохраняем…",
+        "saved": "Всё сохранено",
+        "saveErr": "Не удалось сохранить",
+        "stageOf": "Этап {i} из {total}",
+        "welcomeTitle": "Готовы начать?",
+        "namePrompt": "Как вас называть в группе? Это видит только фасилитатор и сама команда.",
+        "namePlaceholder": "Имя, никнейм или просто #1",
+        "start": "Начать",
+        "ideaExamples": "Если своей идеи пока нет — возьмите одну из этих:",
+        "summaryShort": "Финал",
+        "submitForReview": "Отправить фасилитатору",
+        "returnAndEdit": "Вернуться и переписать",
+        "returnConfirm": "Этап и все следующие сбросятся в черновик и снова потребуют одобрения. Продолжить?",
+        "errStageEmpty": "Пожалуйста, заполните хотя бы одно поле перед отправкой.",
+        "rejectionTitle": "Фасилитатор просит доработать",
+        "approvalTitle": "Этап одобрен",
+        "refJtbd": "JTBD из 1 этапа",
+        "refPrev": "Шпаргалка из предыдущих этапов",
+        "prefill": "Подставить из этапов 1–2",
+        "uncomfortableTitle": "Неудобные вопросы про market fit",
+        "generate": "Сгенерировать вопросы AI",
+        "regenerate": "Пересоздать вопросы",
+        "uncomfortablePlaceholder": "Ваш честный ответ — даже если пока сыро.",
+        "uncomfortableEmpty": "Нажмите «Сгенерировать» — AI задаст 3–5 вопросов, чтобы найти слабые места гипотезы.",
+        "confidence": "Насколько вы уверены в этом этапе?",
+        "aiImprove": "Переформулировать",
+        "aiQuestions": "Задать уточняющие вопросы",
+        "aiCallsLeft": "Осталось AI-обращений: {n}",
+        "aiLimit": "Лимит AI-обращений исчерпан. Дальше можно проходить тренинг без помощника.",
+        "autosaveAt": "Автосохранение в {at}",
+        "print": "Распечатать",
+        "copyText": "Скопировать как текст",
+        "editCanvas": "Доработать Lean Canvas",
+        "copied": "Скопировано в буфер обмена"
       }
     },
     "productThinking": {

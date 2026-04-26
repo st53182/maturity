@@ -156,6 +156,18 @@
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
 
+      <article class="at-card at-card--featured" @click="$router.push('/agile-training/po-path')">
+        <span class="at-card__icon">🛣️</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.poPath.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.poPath.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.poPath.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.poPath.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.poPath.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
+
       <article class="at-card" @click="$router.push('/agile-training/problem-discovery')">
         <span class="at-card__icon">🎙️</span>
         <h2 class="at-card__title">{{ $t('agileTraining.hub.problemDiscovery.title') }}</h2>
@@ -284,6 +296,11 @@ export default {
   opacity: 0.85;
 }
 .at-card--soon:hover { transform: none; border-color: #e5e7eb; box-shadow: none; }
+.at-card--featured {
+  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
+  border-color: #c4b5fd;
+}
+.at-card--featured:hover { box-shadow: 0 14px 32px rgba(139, 92, 246, 0.22); }
 
 .at-card__icon { font-size: 32px; }
 .at-card__title {

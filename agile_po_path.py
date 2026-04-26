@@ -876,12 +876,19 @@ def participant_state(slug: str):
     locale = _resolve_locale(request.args.get("locale"), sess)
     token = (request.args.get("participant_token") or "").strip()
     answer_payload: Optional[Dict] = None
+    participant_known = False
     if token:
         p = _require_participant(g, token)
         if p:
-            a = AgileTrainingPoPathAnswer.query.filter_by(participant_id=p.id).first()
-            if a:
-                answer_payload = _serialize_answer(a)
+            participant_known = True
+            # Лениво создаём ответ при первом обращении: иначе после рефреша
+            # клиент видит answer=null и сваливается обратно на welcome-экран,
+            # даже если участник уже представился. Создание здесь дешёвое
+            # (пустой шаблон 4-х этапов), и ровно симметрично остальным
+            # ручкам, которые уже использовали `_get_or_create_answer`.
+            a = _get_or_create_answer(g.id, p.id)
+            db.session.commit()
+            answer_payload = _serialize_answer(a)
 
     return jsonify({
         "group": {"id": g.id, "name": g.name, "slug": g.slug},
@@ -899,6 +906,8 @@ def participant_state(slug: str):
         "ai_calls_limit": AI_CALLS_LIMIT_PER_PARTICIPANT,
         "field_text_limit": FIELD_TEXT_LIMIT,
         "answer": answer_payload,
+        "participant_known": participant_known,
+        "token_provided": bool(token),
     })
 
 

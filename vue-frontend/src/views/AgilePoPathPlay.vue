@@ -469,12 +469,17 @@ export default {
         this.stageLayout = res.data.stage_layout || {};
         this.aiCallsLimit = res.data.ai_calls_limit || this.aiCallsLimit;
         this.groupName = res.data.group?.name || '';
+        const tokenProvided = res.data.token_provided ?? !!this.participantToken;
+        const participantKnown = res.data.participant_known ?? !!res.data.answer;
         if (res.data.answer) {
           this.answer = res.data.answer;
           this.hasName = true;
           this.activeStage = this.answer.current_stage === 'done' ? 'canvas' : this.answer.current_stage;
           this.mergeLocalCacheIfPresent();
-        } else if (this.participantToken) {
+        } else if (tokenProvided && !participantKnown) {
+          try { localStorage.removeItem(this.storageKey); } catch (_) { /* noop */ }
+          this.hasName = false;
+        } else if (!this.participantToken) {
           this.hasName = false;
         }
       } catch (e) {

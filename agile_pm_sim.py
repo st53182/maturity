@@ -839,14 +839,27 @@ def _eligible_events(data: Dict[str, Any], week: int) -> List[Dict[str, Any]]:
     return out
 
 
+def _strip_callables(obj: Any) -> Any:
+    """Удаляет callable-поля (например, `trigger`-лямбды), чтобы dict можно было сохранить в JSON."""
+    if isinstance(obj, dict):
+        return {k: _strip_callables(v) for k, v in obj.items() if not callable(v)}
+    if isinstance(obj, list):
+        return [_strip_callables(v) for v in obj]
+    if isinstance(obj, tuple):
+        return [_strip_callables(v) for v in obj]
+    return obj
+
+
 def _pick_event(data: Dict[str, Any], week: int, group_id: int) -> Dict[str, Any]:
     rnd = _seeded_random(group_id, week, salt="event")
     candidates = _eligible_events(data, week)
     if not candidates:
         # fallback — generic user event
-        return _EVENTS_RU[0]
-    weights = [int(c.get("weight", 5)) for c in candidates]
-    return rnd.choices(candidates, weights=weights, k=1)[0]
+        chosen = _EVENTS_RU[0]
+    else:
+        weights = [int(c.get("weight", 5)) for c in candidates]
+        chosen = rnd.choices(candidates, weights=weights, k=1)[0]
+    return _strip_callables(chosen)
 
 
 def _apply_event_appearance(data: Dict[str, Any], ev: Dict[str, Any]) -> None:

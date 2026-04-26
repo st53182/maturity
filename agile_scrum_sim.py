@@ -1379,11 +1379,11 @@ def _apply_allocation_and_decision(data: Dict[str, Any]) -> List[str]:
         t = tasks.get(k)
         if not t or pts <= 0:
             continue
+        if t.get("column") != TASK_COL_IN_PROGRESS:
+            continue
         if not _is_workable(tasks, t):
             continue
         _add_progress_capped(t, int(pts))
-        if t.get("column") == TASK_COL_BACKLOG:
-            t["column"] = TASK_COL_IN_PROGRESS
 
     for t in tasks.values():
         if t.get("column") == TASK_COL_REVIEW and t.get("_new_in_review"):
@@ -1750,6 +1750,8 @@ def day_allocate(slug: str):
             p_ = max(0, min(cap, int(v)))
         except Exception:
             p_ = 0
+        if t.get("column") != TASK_COL_IN_PROGRESS:
+            p_ = 0
         if not _is_workable(tasks, t):
             p_ = 0
         need_left = max(0, _task_need(t) - int(t.get("progress", 0)))
@@ -1900,6 +1902,104 @@ def day_end(slug: str):
             "decision": None, "swarm_task": None, "buffer_used": False,
             "capacity_mod_today": carry,
         }
+
+    if p:
+        _touch_participant(data, p)
+    _save_state(row, data)
+    return jsonify({"ok": True, "state": _serialize_state(row, data, "ru", token)})
+
+
+@bp_agile_scrum_sim.post("/g/<slug>/task/start")
+def task_start(slug: str):
+    """Явно перенести задачу из Sprint Backlog в «В работе».
+
+    Игроки сами решают, с какой задачи начинать и какую брать следующей,
+    а не отдают этот выбор системе. Старт допустим только когда:
+      * задача сейчас в Sprint Backlog (column == backlog);
+      * её зависимости готовы (deps в Done или Review);
+      * она не заблокирована текущим событием.
+    """
+    g, _ = _group_and_session(slug)
+    if not g:
+        return jsonify({"error": "Group not found"}), 404
+    body = request.get_json(silent=True) or {}
+    token = (body.get("participant_token") or "").strip()
+    p = _require_participant(g, token) if token else None
+    task_key = (body.get("task_key") or "").strip()
+    if not task_key:
+        return jsonify({"error": "task_key required"}), 400
+
+    row, data = _get_or_init_state(g)
+    phase = data.get("phase", "")
+    if not phase.startswith("day_"):
+        return jsonify({"error": "tasks can be started only during a sprint day"}), 400
+
+    tasks = data.get("tasks", {}) or {}
+    t = tasks.get(task_key)
+    if not t:
+        return jsonify({"error": "task not found"}), 404
+    if t.get("column") != TASK_COL_BACKLOG:
+        return jsonify({"error": "task is not in sprint backlog"}), 400
+    if t.get("state") == "blocked":
+        return jsonify({"error": "task is blocked"}), 400
+    if not _tasks_deps_done(tasks, t):
+        missing = [
+            tasks[d].get("title", d)
+            for d in (t.get("deps") or [])
+            if d in tasks and tasks[d].get("column") not in DEP_READY_COLUMNS
+        ]
+        return jsonify({
+            "error": "deps not ready",
+            "missing": missing,
+        }), 400
+
+    t["column"] = TASK_COL_IN_PROGRESS
+
+    if p:
+        _touch_participant(data, p)
+    _save_state(row, data)
+    return jsonify({"ok": True, "state": _serialize_state(row, data, "ru", token)})
+
+
+@bp_agile_scrum_sim.post("/g/<slug>/task/return")
+def task_return(slug: str):
+    """Вернуть задачу из «В работе» в Sprint Backlog.
+
+    Разрешено только если по задаче ещё не двигали прогресс — иначе
+    мы бы потеряли уже сделанную работу. Это про «передумали брать»,
+    а не про «выкинуть из спринта посреди работы».
+    """
+    g, _ = _group_and_session(slug)
+    if not g:
+        return jsonify({"error": "Group not found"}), 404
+    body = request.get_json(silent=True) or {}
+    token = (body.get("participant_token") or "").strip()
+    p = _require_participant(g, token) if token else None
+    task_key = (body.get("task_key") or "").strip()
+    if not task_key:
+        return jsonify({"error": "task_key required"}), 400
+
+    row, data = _get_or_init_state(g)
+    phase = data.get("phase", "")
+    if not phase.startswith("day_"):
+        return jsonify({"error": "tasks can be returned only during a sprint day"}), 400
+
+    tasks = data.get("tasks", {}) or {}
+    t = tasks.get(task_key)
+    if not t:
+        return jsonify({"error": "task not found"}), 404
+    if t.get("column") != TASK_COL_IN_PROGRESS:
+        return jsonify({"error": "task is not in progress"}), 400
+    if int(t.get("progress", 0)) > 0:
+        return jsonify({"error": "task already has progress"}), 400
+
+    t["column"] = TASK_COL_BACKLOG
+
+    pending = data.setdefault("pending_day", {})
+    alloc = pending.get("allocation") or {}
+    if task_key in alloc:
+        alloc.pop(task_key, None)
+        pending["allocation"] = alloc
 
     if p:
         _touch_participant(data, p)

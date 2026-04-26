@@ -211,21 +211,57 @@
                 <span class="sp__cap-chip">⚡ {{ state.capacity_today }} {{ content.labels.points }}</span>
               </h4>
               <p class="sp__hint">{{ $t('agileTraining.scrumSim.allocHint') }}</p>
-              <div v-if="showWaitingHint" class="sp__waiting-hint">
-                <span class="sp__waiting-icon">⏳</span>
-                <span>
-                  {{ $t('agileTraining.scrumSim.waitingHint', {
-                    count: waitingTasks.length,
-                    names: waitingBlockerTitles.join(', '),
-                  }) }}
-                </span>
+
+              <!-- Pull from sprint backlog: players choose which task to start themselves. -->
+              <div class="sp__pull">
+                <div class="sp__pull-head">
+                  <span>▶ {{ $t('agileTraining.scrumSim.canStartTitle') }}</span>
+                  <small v-if="startableTasks.length">{{ $t('agileTraining.scrumSim.canStartHint') }}</small>
+                </div>
+                <div v-if="startableTasks.length === 0 && startableBlockedByDeps.length === 0" class="sp__pull-empty">
+                  {{ $t('agileTraining.scrumSim.canStartEmpty') }}
+                </div>
+                <div v-else>
+                  <div
+                    v-for="t in startableTasks"
+                    :key="t.key"
+                    class="sp__pull-row"
+                  >
+                    <div class="sp__pull-name">
+                      <span>{{ t.title }}</span>
+                      <small>{{ $t('agileTraining.scrumSim.need') }}: {{ taskNeedLeft(t) }}</small>
+                    </div>
+                    <button
+                      class="sp__btn sp__btn--primary sp__btn--tiny"
+                      :disabled="startBusy === t.key"
+                      @click="startTask(t.key)"
+                    >
+                      ▶ {{ $t('agileTraining.scrumSim.startTask') }}
+                    </button>
+                  </div>
+                  <div
+                    v-for="t in startableBlockedByDeps"
+                    :key="t.key"
+                    class="sp__pull-row sp__pull-row--locked"
+                  >
+                    <div class="sp__pull-name">
+                      <span>🔒 {{ t.title }}</span>
+                      <small>{{ $t('agileTraining.scrumSim.waitsFor') }}: {{ t.missing.join(', ') }}</small>
+                    </div>
+                    <button class="sp__btn sp__btn--tiny" disabled :title="$t('agileTraining.scrumSim.cannotStartYet')">
+                      🔒
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              <!-- Allocation: only tasks already in progress. -->
               <div v-if="workableTasks.length === 0" class="sp__empty-block">
-                {{ $t('agileTraining.scrumSim.noWorkable') }}
+                {{ $t('agileTraining.scrumSim.noInProgress') }}
               </div>
               <div v-else class="sp__alloc">
                 <div class="sp__alloc-head">
-                  <span>{{ $t('agileTraining.scrumSim.priorityOrder') }}</span>
+                  <span>{{ $t('agileTraining.scrumSim.inProgressTitle') }}</span>
                   <button class="sp__btn sp__btn--ghost sp__btn--tiny" @click="autoAllocate" :title="$t('agileTraining.scrumSim.autoAllocateHint')">
                     ⚡ {{ $t('agileTraining.scrumSim.autoAllocate') }}
                   </button>
@@ -243,6 +279,15 @@
                   <div class="sp__alloc-name">
                     <span>{{ t.title }}</span>
                     <small>{{ $t('agileTraining.scrumSim.need') }}: {{ taskNeedLeft(t) }}</small>
+                    <button
+                      v-if="canReturnTask(t)"
+                      class="sp__pull-return"
+                      :disabled="returnBusy === t.key"
+                      @click="returnTask(t.key)"
+                      :title="$t('agileTraining.scrumSim.returnHint')"
+                    >
+                      ↩ {{ $t('agileTraining.scrumSim.returnTask') }}
+                    </button>
                   </div>
                   <div class="sp__alloc-controls">
                     <button class="sp__btn sp__btn--tiny" @click="addAlloc(t.key, -1)">−</button>
@@ -609,6 +654,9 @@ export default {
 
       eventPopupOpen: false,
       eventPopupSeenKey: '',
+
+      startBusy: '',
+      returnBusy: '',
     };
   },
   computed: {
@@ -715,7 +763,7 @@ export default {
       const allTasks = this.state.tasks || [];
       const byKey = Object.fromEntries(allTasks.map(t => [t.key, t]));
       return allTasks.filter(t => {
-        if (!['backlog', 'in_progress'].includes(t.column)) return false;
+        if (t.column !== 'in_progress') return false;
         if (t.state === 'blocked') return false;
         const depsReady = (t.deps || []).every(d => {
           const dep = byKey[d];
@@ -724,6 +772,40 @@ export default {
         });
         return depsReady;
       });
+    },
+    startableTasks() {
+      if (!this.state) return [];
+      const allTasks = this.state.tasks || [];
+      const byKey = Object.fromEntries(allTasks.map(t => [t.key, t]));
+      return allTasks.filter(t => {
+        if (t.column !== 'backlog') return false;
+        if (t.state === 'blocked') return false;
+        return (t.deps || []).every(d => {
+          const dep = byKey[d];
+          if (!dep) return true;
+          return ['done', 'review'].includes(dep.column);
+        });
+      });
+    },
+    startableBlockedByDeps() {
+      if (!this.state) return [];
+      const allTasks = this.state.tasks || [];
+      const byKey = Object.fromEntries(allTasks.map(t => [t.key, t]));
+      return allTasks
+        .filter(t => t.column === 'backlog' && t.state !== 'blocked')
+        .filter(t => (t.deps || []).some(d => {
+          const dep = byKey[d];
+          return dep && !['done', 'review'].includes(dep.column);
+        }))
+        .map(t => ({
+          key: t.key,
+          title: t.title,
+          complexity: t.complexity,
+          missing: (t.deps || [])
+            .map(d => byKey[d])
+            .filter(dep => dep && !['done', 'review'].includes(dep.column))
+            .map(dep => dep.title),
+        }));
     },
     waitingTasks() {
       if (!this.state) return [];
@@ -1147,6 +1229,48 @@ export default {
       });
       await this.loadState(true);
     },
+    canReturnTask(t) {
+      if (!t) return false;
+      if (t.column !== 'in_progress') return false;
+      if (Number(t.progress || 0) > 0) return false;
+      if (t.state === 'blocked') return false;
+      return true;
+    },
+    async startTask(key) {
+      if (!key || this.startBusy) return;
+      this.startBusy = key;
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/task/start`, {
+          participant_token: this.participantToken,
+          task_key: key,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        const data = e && e.response && e.response.data;
+        if (data && data.error === 'deps not ready' && Array.isArray(data.missing) && data.missing.length) {
+          alert(this.$t('agileTraining.scrumSim.startBlockedByDeps', { names: data.missing.join(', ') }));
+        } else {
+          alert((data && data.error) || 'Error');
+        }
+      } finally {
+        this.startBusy = '';
+      }
+    },
+    async returnTask(key) {
+      if (!key || this.returnBusy) return;
+      this.returnBusy = key;
+      try {
+        await axios.post(`/api/agile-training/scrum-sim/g/${this.slug}/task/return`, {
+          participant_token: this.participantToken,
+          task_key: key,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        alert((e && e.response && e.response.data && e.response.data.error) || 'Error');
+      } finally {
+        this.returnBusy = '';
+      }
+    },
     maybeOpenEventPopup() {
       if (!this.state || !this.isDayPhase) return;
       const pd = this.pendingDay || {};
@@ -1509,6 +1633,37 @@ export default {
 .sp__day-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; }
 .sp__day-col h4 { display: flex; justify-content: space-between; align-items: center; }
 .sp__cap-chip { font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+
+.sp__pull {
+  margin: 8px 0 12px;
+  padding: 8px 10px 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+}
+.sp__pull-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-size: 12px; font-weight: 700; color: #0f172a; padding: 2px 0 6px;
+}
+.sp__pull-head small { font-weight: 500; color: #64748b; font-size: 11px; }
+.sp__pull-empty { color: #94a3b8; font-size: 12px; padding: 6px 0; }
+.sp__pull-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 6px 10px; margin-top: 4px;
+}
+.sp__pull-row--locked { background: #f1f5f9; border-style: dashed; }
+.sp__pull-name { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; }
+.sp__pull-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp__pull-name small { color: #94a3b8; font-size: 11px; margin-top: 1px; }
+.sp__pull-return {
+  align-self: flex-start; margin-top: 2px;
+  font-size: 10px; line-height: 1; padding: 2px 6px;
+  background: transparent; border: 1px solid #e2e8f0; border-radius: 6px;
+  color: #64748b; cursor: pointer;
+}
+.sp__pull-return:hover:not(:disabled) { border-color: #94a3b8; color: #334155; }
+.sp__pull-return:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .sp__alloc { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
 .sp__alloc-head {

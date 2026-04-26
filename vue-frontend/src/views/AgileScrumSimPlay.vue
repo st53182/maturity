@@ -103,6 +103,9 @@
         <p class="sp__hint sp__planning-depshint">
           💡 {{ $t('agileTraining.scrumSim.planningDepsHint') }}
         </p>
+        <p class="sp__hint sp__planning-depshint">
+          🎲 {{ $t('agileTraining.scrumSim.planningEventsHint') }}
+        </p>
         <p class="sp__hint">{{ content.context.sprint_goal_hint }}</p>
         <label class="sp__label">{{ $t('agileTraining.scrumSim.sprintGoal') }}</label>
         <textarea

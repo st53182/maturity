@@ -50,7 +50,7 @@
       <p class="po-welcome__lead">{{ $t('agileTraining.poPath.play.namePrompt') }}</p>
       <div class="po-welcome__row">
         <input v-model="displayNameInput" :placeholder="$t('agileTraining.poPath.play.namePlaceholder')" maxlength="60" />
-        <button @click="startSession" :disabled="!displayNameInput.trim()">{{ $t('agileTraining.poPath.play.start') }} →</button>
+        <button class="po-btn-primary" @click="startSession" :disabled="!displayNameInput.trim()">{{ $t('agileTraining.poPath.play.start') }} →</button>
       </div>
       <div class="po-welcome__examples">
         <div class="po-welcome__examples-h">{{ $t('agileTraining.poPath.play.ideaExamples') }}</div>
@@ -108,11 +108,20 @@
         <p>{{ latestApprovalComment.text }}</p>
       </div>
 
-      <!-- Fields -->
-      <div class="po-fields">
-        <div v-for="key in stageKeys" :key="'f_' + key" class="po-field">
-          <label class="po-field__label">{{ stageContent.fields[key]?.label || key }}</label>
-          <div class="po-field__hint" v-if="stageContent.fields[key]?.hint">{{ stageContent.fields[key].hint }}</div>
+      <!-- Canvas-style fields grid -->
+      <div class="po-canvas-form" :class="['po-canvas-form--' + activeStage]">
+        <div
+          v-for="key in stageKeys"
+          :key="'f_' + key"
+          class="po-cell"
+          :class="cellClass(key)"
+          :style="cellStyle(key)"
+        >
+          <div class="po-cell__head">
+            <label class="po-cell__label">{{ stageContent.fields[key]?.label || key }}</label>
+            <span class="po-cell__num">{{ fieldNumber(key) }}</span>
+          </div>
+          <div class="po-cell__hint" v-if="stageContent.fields[key]?.hint">{{ stageContent.fields[key].hint }}</div>
           <textarea
             :value="stageData[key] || ''"
             @input="onFieldInput(key, $event.target.value)"
@@ -120,9 +129,9 @@
             :disabled="isStageLocked"
             rows="3"
           ></textarea>
-          <div class="po-field__actions">
-            <button class="po-link-btn" :disabled="isStageLocked || aiBusy" @click="aiImproveField(key)">✨ {{ $t('agileTraining.poPath.play.aiImprove') }}</button>
-            <button class="po-link-btn" :disabled="isStageLocked || aiBusy" @click="aiQuestionsField(key)">❓ {{ $t('agileTraining.poPath.play.aiQuestions') }}</button>
+          <div class="po-cell__actions">
+            <button class="po-link-btn" :disabled="isStageLocked || aiBusy || !participantToken" @click="aiImproveField(key)">✨ {{ $t('agileTraining.poPath.play.aiImprove') }}</button>
+            <button class="po-link-btn" :disabled="isStageLocked || aiBusy || !participantToken" @click="aiQuestionsField(key)">❓ {{ $t('agileTraining.poPath.play.aiQuestions') }}</button>
           </div>
         </div>
       </div>
@@ -131,7 +140,7 @@
       <section v-if="activeStage === 'fit'" class="po-uncomfortable">
         <div class="po-uncomfortable__head">
           <h3>🔥 {{ $t('agileTraining.poPath.play.uncomfortableTitle') }}</h3>
-          <button class="btn-ghost" :disabled="aiBusy || isStageLocked || aiCallsRemaining <= 0" @click="generateUncomfortable">
+          <button class="po-btn-ghost" :disabled="aiBusy || isStageLocked || aiCallsRemaining <= 0 || !participantToken" @click="generateUncomfortable">
             {{ uncomfortableQuestions.length ? $t('agileTraining.poPath.play.regenerate') : $t('agileTraining.poPath.play.generate') }}
           </button>
         </div>
@@ -172,9 +181,10 @@
           <span v-if="lastSaveAt" class="po-stage__autosave">💾 {{ $t('agileTraining.poPath.play.autosaveAt', { at: lastSaveLabel }) }}</span>
         </div>
         <div class="po-stage__foot-actions">
-          <button v-if="canReturnHere" class="btn-ghost" @click="returnHere">↩ {{ $t('agileTraining.poPath.play.returnAndEdit') }}</button>
-          <button class="btn-primary" :disabled="!canSubmit || syncing" @click="submitStage">
-            🚀 {{ $t('agileTraining.poPath.play.submitForReview') }}
+          <button v-if="canReturnHere" class="po-btn-ghost" @click="returnHere">↩ {{ $t('agileTraining.poPath.play.returnAndEdit') }}</button>
+          <button class="po-btn-primary" :disabled="!canSubmit || syncing" @click="submitStage">
+            <span v-if="activeStage === 'canvas'">🏁 {{ $t('agileTraining.poPath.play.finishStage') }}</span>
+            <span v-else>➡ {{ $t('agileTraining.poPath.play.nextStage') }}</span>
           </button>
         </div>
       </footer>
@@ -225,9 +235,9 @@
       </div>
 
       <footer class="po-final__foot">
-        <button class="btn-ghost" @click="window?.print && window.print()">🖨 {{ $t('agileTraining.poPath.play.print') }}</button>
-        <button class="btn-ghost" @click="copySummary">📋 {{ $t('agileTraining.poPath.play.copyText') }}</button>
-        <button class="btn-ghost" @click="activeStage = 'canvas'">↩ {{ $t('agileTraining.poPath.play.editCanvas') }}</button>
+        <button class="po-btn-ghost" @click="onPrint">🖨 {{ $t('agileTraining.poPath.play.print') }}</button>
+        <button class="po-btn-ghost" @click="copySummary">📋 {{ $t('agileTraining.poPath.play.copyText') }}</button>
+        <button class="po-btn-ghost" @click="activeStage = 'canvas'">↩ {{ $t('agileTraining.poPath.play.editCanvas') }}</button>
       </footer>
     </section>
   </div>
@@ -252,6 +262,7 @@ export default {
       content: { stages: {}, summary: { title: '', subtitle: '' }, idea_examples: [], tips: [], status_labels: {} },
       contentLocale: 'ru',
       stageFields: {},
+      stageLayout: {},
       aiCallsLimit: 30,
       // session/group
       groupName: '',
@@ -397,6 +408,29 @@ export default {
     },
     stageShort(s) { return this.$t('agileTraining.poPath.stages.' + s + '.short') || s; },
     canvasFieldLabel(key) { return this.content.stages?.canvas?.fields?.[key]?.label || key; },
+    cellStyle(key) {
+      const layout = (this.stageLayout?.[this.activeStage] || {})[key];
+      if (!layout) return {};
+      return {
+        gridColumn: `${layout.col} / span ${layout.colspan || 1}`,
+        gridRow: `${layout.row} / span ${layout.rowspan || 1}`,
+      };
+    },
+    cellClass(key) {
+      const layout = (this.stageLayout?.[this.activeStage] || {})[key];
+      const cls = [];
+      if (layout?.accent) cls.push('po-cell--' + layout.accent);
+      if ((this.stageData[key] || '').trim()) cls.push('po-cell--filled');
+      return cls;
+    },
+    fieldNumber(key) {
+      const fields = this.stageFields[this.activeStage] || [];
+      const idx = fields.indexOf(key);
+      return idx < 0 ? '' : String(idx + 1);
+    },
+    onPrint() {
+      try { window.print(); } catch (_) { /* noop */ }
+    },
     stageStatus(s) { return (this.answer?.stages?.[s]?.status) || 'draft'; },
     getStageData(s) { return this.answer?.stages?.[s] || { status: 'draft', data: {}, comments: [] }; },
     getCanvasField(key) { return (this.getStageData('canvas').data || {})[key] || ''; },
@@ -432,6 +466,7 @@ export default {
         this.content = res.data.content || this.content;
         this.contentLocale = res.data.effective_locale || 'ru';
         this.stageFields = res.data.stage_fields || {};
+        this.stageLayout = res.data.stage_layout || {};
         this.aiCallsLimit = res.data.ai_calls_limit || this.aiCallsLimit;
         this.groupName = res.data.group?.name || '';
         if (res.data.answer) {
@@ -549,6 +584,7 @@ export default {
       }
     },
     async submitStage() {
+      if (!this.participantToken) { this.handleLostParticipant(); return; }
       await this.flushAutosave();
       try {
         const res = await axios.post(`/api/agile-training/po-path/g/${this.slug}/submit`, {
@@ -556,14 +592,35 @@ export default {
           stage: this.activeStage,
         });
         this.answer = res.data.answer;
+        this.aiReply = '';
+        const next = res.data.next_stage;
+        if (next && next !== 'done' && STAGES.includes(next)) {
+          this.activeStage = next;
+          this.scrollTop();
+        } else if (next === 'done' || this.allApproved) {
+          this.activeStage = 'done';
+          this.scrollTop();
+        }
       } catch (e) {
+        const status = e.response?.status;
         const err = e.response?.data?.error;
         if (err === 'stage_empty') {
           alert(this.$t('agileTraining.poPath.play.errStageEmpty'));
+        } else if (status === 404 || err === 'Participant not found') {
+          this.handleLostParticipant();
         } else {
           alert(err || e.message);
         }
       }
+    },
+    scrollTop() {
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { /* noop */ }
+    },
+    handleLostParticipant() {
+      try { localStorage.removeItem(this.storageKey); } catch (_) { /* noop */ }
+      this.answer = null;
+      this.hasName = false;
+      alert(this.$t('agileTraining.poPath.play.sessionLost'));
     },
     async returnHere() {
       if (!window.confirm(this.$t('agileTraining.poPath.play.returnConfirm'))) return;
@@ -609,6 +666,7 @@ export default {
     // ---------- AI ----------
     async aiAssistGeneric(mode, userInput) {
       if (this.aiBusy) return;
+      if (!this.participantToken) { this.handleLostParticipant(); return; }
       this.aiBusy = true;
       try {
         const res = await axios.post(`/api/agile-training/po-path/g/${this.slug}/ai-assist`, {
@@ -621,26 +679,32 @@ export default {
         this.aiReply = res.data.reply || '';
         if (this.answer) this.answer.ai_calls_remaining = res.data.ai_calls_remaining;
       } catch (e) {
+        const status = e.response?.status;
         const err = e.response?.data?.error;
         if (err === 'ai_limit_exceeded') {
           alert(this.$t('agileTraining.poPath.play.aiLimit'));
+        } else if (status === 404 || err === 'Participant not found' || err === 'participant_token required') {
+          this.handleLostParticipant();
         } else {
-          alert(err || e.message);
+          alert(err || e.message || this.$t('agileTraining.poPath.play.aiError'));
         }
       } finally {
         this.aiBusy = false;
       }
     },
     aiImproveField(key) {
-      const text = this.stageData[key] || '';
+      const text = (this.stageData[key] || '').trim();
+      if (!text) { alert(this.$t('agileTraining.poPath.play.aiNeedText')); return; }
       this.aiAssistGeneric('improve', text);
     },
     aiQuestionsField(key) {
-      const text = this.stageData[key] || '';
+      const text = (this.stageData[key] || '').trim();
+      if (!text) { alert(this.$t('agileTraining.poPath.play.aiNeedText')); return; }
       this.aiAssistGeneric('questions', text);
     },
     async generateUncomfortable() {
       if (this.aiBusy) return;
+      if (!this.participantToken) { this.handleLostParticipant(); return; }
       this.aiBusy = true;
       try {
         const res = await axios.post(`/api/agile-training/po-path/g/${this.slug}/ai-uncomfortable`, {
@@ -653,8 +717,10 @@ export default {
         this.answer.ai_calls_remaining = res.data.ai_calls_remaining;
         this.persistLocalCache();
       } catch (e) {
+        const status = e.response?.status;
         const err = e.response?.data?.error;
         if (err === 'ai_limit_exceeded') alert(this.$t('agileTraining.poPath.play.aiLimit'));
+        else if (status === 404 || err === 'Participant not found') this.handleLostParticipant();
         else alert(err || e.message);
       } finally {
         this.aiBusy = false;
@@ -707,7 +773,7 @@ export default {
 .po-play__sync--err { background: #fee2e2; color: #b91c1c; }
 
 .po-stepper { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.po-step { display: flex; gap: 8px; align-items: center; background: #fff; border: 1px solid #e5e7eb; padding: 9px 14px; border-radius: 999px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.po-step { display: flex; gap: 8px; align-items: center; background: #fff; border: 1px solid #e5e7eb; padding: 9px 14px; border-radius: 999px; font-weight: 600; font-size: 13px; cursor: pointer; color: #0f172a; line-height: 1.2; box-shadow: none; }
 .po-step:disabled { opacity: 0.5; cursor: not-allowed; }
 .po-step--active { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; border-color: transparent; }
 .po-step--approved { border-color: #16a34a; color: #166534; }
@@ -723,10 +789,9 @@ export default {
 .po-welcome h2 { margin: 0 0 8px; }
 .po-welcome__tips { padding-left: 18px; color: #475569; }
 .po-welcome__lead { margin-top: 14px; font-weight: 600; }
-.po-welcome__row { display: flex; gap: 8px; margin-top: 8px; }
-.po-welcome__row input { flex: 1; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 15px; }
-.po-welcome__row button { padding: 10px 18px; border: none; border-radius: 10px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-weight: 600; cursor: pointer; }
-.po-welcome__row button:disabled { opacity: 0.4; cursor: not-allowed; }
+.po-welcome__row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.po-welcome__row input { flex: 1; min-width: 220px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 15px; }
+.po-welcome__row input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
 .po-welcome__examples { margin-top: 18px; }
 .po-welcome__examples-h { font-weight: 700; color: #475569; margin-bottom: 6px; }
 .po-welcome__examples ul { list-style: '— '; padding-left: 16px; color: #475569; }
@@ -752,13 +817,59 @@ export default {
 .po-feedback__h { font-weight: 700; color: #b91c1c; margin-bottom: 4px; }
 .po-feedback--ok .po-feedback__h { color: #047857; }
 
-.po-fields { display: grid; gap: 12px; margin-top: 14px; }
-.po-field { background: #f8fafc; border: 1px solid #e5e7eb; padding: 12px; border-radius: 12px; }
-.po-field__label { font-weight: 700; }
-.po-field__hint { color: #64748b; font-size: 13px; margin-bottom: 6px; }
-.po-field textarea { width: 100%; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical; line-height: 1.5; }
-.po-field textarea:disabled { background: #f1f5f9; color: #475569; }
-.po-field__actions { display: flex; gap: 10px; margin-top: 6px; font-size: 13px; }
+.po-canvas-form {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #faf5ff 100%);
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+.po-cell {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  min-height: 130px;
+  position: relative;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.po-cell--filled { border-color: #c4b5fd; box-shadow: 0 1px 4px rgba(124,58,237,0.07); }
+.po-cell--primary { background: #faf5ff; border-color: #c4b5fd; }
+.po-cell--ok { background: #f0fdf4; border-color: #bbf7d0; }
+.po-cell--warm { background: #fffbeb; border-color: #fde68a; }
+.po-cell--danger { background: #fef2f2; border-color: #fecaca; }
+.po-cell__head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.po-cell__label { font-weight: 700; font-size: 13.5px; color: #0f172a; line-height: 1.3; }
+.po-cell__num { font-size: 11px; font-weight: 700; color: #94a3b8; background: rgba(15,23,42,0.04); border-radius: 999px; padding: 1px 7px; }
+.po-cell__hint { color: #64748b; font-size: 12px; margin: 4px 0 6px; line-height: 1.4; }
+.po-cell textarea {
+  flex: 1;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  resize: vertical;
+  line-height: 1.45;
+  background: #fff;
+  min-height: 70px;
+}
+.po-cell textarea:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+.po-cell textarea:disabled { background: #f1f5f9; color: #475569; }
+.po-cell__actions { display: flex; gap: 10px; margin-top: 6px; font-size: 12px; flex-wrap: wrap; }
+@media (max-width: 900px) {
+  .po-canvas-form { grid-template-columns: 1fr 1fr; }
+  .po-cell { grid-column: auto !important; grid-row: auto !important; }
+}
+@media (max-width: 540px) {
+  .po-canvas-form { grid-template-columns: 1fr; }
+}
 
 .po-uncomfortable { margin-top: 16px; padding: 14px 16px; border: 1px solid #fbbf24; background: #fffbeb; border-radius: 12px; }
 .po-uncomfortable__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -785,10 +896,12 @@ export default {
 .po-stage__autosave { color: #64748b; font-size: 12px; }
 .po-stage__foot-actions { display: flex; gap: 8px; }
 
-.btn-primary { padding: 10px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-weight: 700; cursor: pointer; font-size: 15px; }
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-ghost { background: #fff; border: 1px solid #cbd5e1; color: #475569; padding: 8px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 13px; }
-.btn-ghost:hover { border-color: #7c3aed; color: #7c3aed; }
+.po-btn-primary { padding: 10px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-weight: 700; cursor: pointer; font-size: 15px; line-height: 1.2; }
+.po-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.po-btn-primary:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(124,58,237,0.25); }
+.po-btn-ghost { background: #fff; border: 1px solid #cbd5e1; color: #475569; padding: 8px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 13px; line-height: 1.2; }
+.po-btn-ghost:hover:not(:disabled) { border-color: #7c3aed; color: #7c3aed; }
+.po-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .po-final__head h2 { margin: 0; }
 .po-final__compact { display: grid; gap: 14px; margin-top: 14px; }

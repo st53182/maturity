@@ -168,6 +168,18 @@
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
 
+      <article class="at-card at-card--featured" @click="$router.push('/agile-training/pm-sim')">
+        <span class="at-card__icon">📡</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.pmSim.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.pmSim.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.pmSim.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.pmSim.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.pmSim.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
+
       <article class="at-card" @click="$router.push('/agile-training/problem-discovery')">
         <span class="at-card__icon">🎙️</span>
         <h2 class="at-card__title">{{ $t('agileTraining.hub.problemDiscovery.title') }}</h2>

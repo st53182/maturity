@@ -92,8 +92,14 @@ def _tasks_ru() -> List[Dict[str, Any]]:
     """Пресет backlog для ремонта квартиры. Ключи стабильные, чтобы ссылаться в событиях.
 
     Задачи подобраны так, чтобы каждая занимала несколько дней работы команды
-    (complexity 3–12 пунктов при 6 капасити/день × 10 дней = 60). Суммарно core
-    задач больше мощности — команде придётся договариваться про descope.
+    (complexity 2–12 пунктов при 6 капасити/день × 10 дней = 60). Суммарный
+    объём существенно больше мощности — команде придётся договариваться про
+    descope и явно выбирать, с чего стартовать.
+
+    Дополнительно есть «независимые» задачи без зависимостей (мойка окон,
+    замена входной двери, батареи, домофон, остекление балкона) — чтобы дать
+    участникам реальный выбор, с чего начать спринт, не упираясь в одну
+    цепочку «штробление → электрика → плитка → сантехника».
     """
     return [
         {"key": "demo_tiles",      "title": "Демонтаж старой плитки",           "desc": "Снять плитку в ванной, коридоре, вывезти мусор",     "complexity": 4,  "core": True,  "deps": []},
@@ -112,6 +118,15 @@ def _tasks_ru() -> List[Dict[str, Any]]:
         {"key": "photo_shoot",     "title": "Фотосессия для объявления",        "desc": "Снять квартиру для публикации объявления",           "complexity": 3,  "core": False, "deps": ["cleaning"]},
         {"key": "smart_home",      "title": "Умный дом (базовый набор)",        "desc": "Умные розетки и датчик протечки — бонус для жильцов", "complexity": 5,  "core": False, "deps": ["electrical"]},
         {"key": "balcony_glazing", "title": "Остекление балкона",               "desc": "Тёплое остекление и отделка балкона",                "complexity": 6,  "core": False, "deps": []},
+        # --- независимые задачи (нет deps) — чтобы у команды был выбор, с чего стартовать
+        {"key": "windows_clean",   "title": "Мойка окон и стеклопакетов",       "desc": "Снаружи и внутри, удалить наклейки, рамы, подоконники", "complexity": 3,  "core": False, "deps": []},
+        {"key": "entrance_door",   "title": "Замена входной двери",             "desc": "Демонтаж старой, монтаж новой, регулировка замков и доводчика", "complexity": 5, "core": True,  "deps": []},
+        {"key": "radiators",       "title": "Замена батарей отопления",         "desc": "Снять старые секции, поставить новые радиаторы, опрессовать", "complexity": 5, "core": True,  "deps": []},
+        {"key": "intercom",        "title": "Замена домофона и звонка",         "desc": "Вынос трубки, прокладка слаботочки, прошивка ключей",       "complexity": 2, "core": False, "deps": []},
+        # --- задачи с короткими цепочками — расширяют пул без удлинения критического пути
+        {"key": "doors_inner",     "title": "Установка межкомнатных дверей",    "desc": "Сборка коробок, врезка петель, навеска полотен, наличники",  "complexity": 5, "core": True,  "deps": ["drywall", "laminate"]},
+        {"key": "wifi_setup",      "title": "Wi-Fi и интернет",                  "desc": "Подключить провайдера, расставить роутер и mesh-точки",      "complexity": 2, "core": False, "deps": ["electrical"]},
+        {"key": "appliances_test", "title": "Тест техники после монтажа",        "desc": "Проверить кухню и сантехнику в реальных режимах работы",     "complexity": 2, "core": False, "deps": ["kitchen_install"]},
     ]
 
 
@@ -134,6 +149,13 @@ def _tasks_en() -> List[Dict[str, Any]]:
         "photo_shoot":     ("Photo shoot for the listing",  "Photograph the flat for the listing"),
         "smart_home":      ("Smart home (starter kit)",     "Smart sockets and a leak sensor — a tenant bonus"),
         "balcony_glazing": ("Balcony glazing",              "Warm glazing and balcony finish"),
+        "windows_clean":   ("Window cleaning",              "Inside and outside, frames and sills, peel off the stickers"),
+        "entrance_door":   ("Entrance door replacement",    "Remove the old door, install the new one, fit locks and closer"),
+        "radiators":       ("Radiator replacement",         "Take down old sections, mount new radiators, pressure-test"),
+        "intercom":        ("Intercom and doorbell",        "Replace the handset, run low-voltage wiring, program the keys"),
+        "doors_inner":     ("Interior doors install",       "Assemble frames, hinge, hang panels, fit casings"),
+        "wifi_setup":      ("Wi-Fi and internet",           "Connect ISP, place the router and mesh nodes"),
+        "appliances_test": ("Appliance commissioning",      "Test kitchen and plumbing under real load"),
     }
     out: List[Dict[str, Any]] = []
     for t in base:
@@ -143,80 +165,206 @@ def _tasks_en() -> List[Dict[str, Any]]:
 
 
 def _events_ru() -> List[Dict[str, Any]]:
-    """8 событий на 10 дней (дни 3 и 8 — спокойные).
+    """Пул событий спринта.
 
-    Формат: {key, day, title, description, effects[]}. Эффекты — см. `_apply_event_effects`.
+    Формат: {key, title, description, effects[], targets[], min_day, max_day, requires_fired[]}.
+
+    * `targets` — на каких задачах событие имеет смысл. Если в Sprint Backlog
+      нет ни одной из этих задач (команда не взяла их в спринт), событие
+      исключается из пула — чтобы не тратить день на сообщение «нечего ломать».
+    * `targets=[]` (или отсутствует) — non-targeted событие (погода, болезнь,
+      запрос заказчика). Стреляет в любом случае.
+    * `min_day`/`max_day` — окно, когда событие имеет смысл (срочный запрос
+      заказчика — поздний спринт, плиточный срыв — ранний).
+    * `requires_fired` — список ключей событий, которые должны были произойти
+      ДО этого (например, «поставщик нагоняет срыв» имеет смысл только если
+      ранее был «срыв поставки плитки»).
+
+    Сбор пула в `_generate_event_schedule` строит расписание один раз — на
+    `planning_confirm`, опираясь на фактически взятый Sprint Backlog.
     """
     return [
+        # ---- targeted: классические события на конкретные задачи ----
         {
             "key": "material_delay",
-            "day": 1,
             "title": "Поставка плитки задерживается",
             "description": "Поставщик сообщил: плитка приедет позже обещанного. Задачи, связанные с плиткой, замораживаются до разблокировки.",
+            "targets": ["tiles_bathroom"],
+            "min_day": 1, "max_day": 4,
             "effects": [
                 {"type": "block", "task": "tiles_bathroom", "reason": "Нет плитки на складе"}
             ],
         },
         {
-            "key": "weather_rain",
-            "day": 2,
-            "title": "Ливень, квартира промокла",
-            "description": "Дождь зашёл через вентиляцию — пол мокрый, маляры не могут работать. Сегодня мощность команды ниже.",
-            "effects": [
-                {"type": "capacity_delta", "delta": -2, "day_only": True}
-            ],
-        },
-        {
-            "key": "worker_sick",
-            "day": 4,
-            "title": "Один из мастеров заболел",
-            "description": "Команда сегодня меньше. Дневная мощность снижена на 2 пункта.",
-            "effects": [
-                {"type": "capacity_delta", "delta": -2, "day_only": True}
-            ],
-        },
-        {
-            "key": "hidden_defect",
-            "day": 5,
-            "title": "Скрытый дефект стены",
-            "description": "За шпаклёвкой обнаружены трещины. Задачу «Шпаклёвка стен» нужно переделать частично — появился дополнительный объём работы.",
-            "effects": [
-                {"type": "rework", "task": "drywall", "extra": 3}
-            ],
-        },
-        {
             "key": "supplier_ahead",
-            "day": 6,
             "title": "Поставщик нагоняет срыв",
             "description": "Плитка приехала раньше, чем обещали, а бригада на соседнем объекте закончила пораньше и готова помочь. Мощность сегодня выше, и блок по плитке снят.",
+            "targets": ["tiles_bathroom"],
+            "min_day": 4, "max_day": 9,
+            "requires_fired": ["material_delay"],
             "effects": [
                 {"type": "unblock", "task": "tiles_bathroom"},
                 {"type": "capacity_delta", "delta": 2, "day_only": True},
             ],
         },
         {
+            "key": "hidden_defect",
+            "title": "Скрытый дефект стены",
+            "description": "За шпаклёвкой обнаружены трещины. Задачу «Шпаклёвка стен» нужно переделать частично — появился дополнительный объём работы.",
+            "targets": ["drywall"],
+            "min_day": 4, "max_day": 8,
+            "effects": [
+                {"type": "rework", "task": "drywall", "extra": 3}
+            ],
+        },
+        {
             "key": "inspector_visit",
-            "day": 7,
             "title": "Визит инспектора",
             "description": "Инспектор нашёл недочёты в монтажной схеме кухни. Задачу по сборке кухни нужно будет частично переделать — объём работ вырос.",
+            "targets": ["kitchen_install"],
+            "min_day": 5, "max_day": 9,
             "effects": [
                 {"type": "rework", "task": "kitchen_install", "extra": 2}
             ],
         },
         {
             "key": "subcontractor_noshow",
-            "day": 9,
             "title": "Субподрядчик не вышел",
             "description": "Сантехники-чистовики не приехали — у них форс-мажор на другом объекте. «Чистовая сантехника» заблокирована, пока SM не решит вопрос через эскалацию.",
+            "targets": ["plumbing_finish"],
+            "min_day": 6, "max_day": 9,
             "effects": [
                 {"type": "block", "task": "plumbing_finish", "reason": "Субподрядчик не вышел"},
             ],
         },
         {
+            "key": "paint_color_change",
+            "title": "Заказчик передумал по цвету",
+            "description": "После просмотра выкрасов заказчик попросил изменить цвет стен. Часть покраски придётся переделать.",
+            "targets": ["paint"],
+            "min_day": 4, "max_day": 9,
+            "effects": [
+                {"type": "rework", "task": "paint", "extra": 2}
+            ],
+        },
+        # ---- targeted на новые задачи ----
+        {
+            "key": "door_misorder",
+            "title": "Привезли не ту входную дверь",
+            "description": "На объект приехала дверь не того размера. Монтаж блокирован, пока поставщик не пришлёт замену.",
+            "targets": ["entrance_door"],
+            "min_day": 2, "max_day": 6,
+            "effects": [
+                {"type": "block", "task": "entrance_door", "reason": "Поставщик прислал не ту модель"},
+            ],
+        },
+        {
+            "key": "radiator_leak",
+            "title": "Течёт радиатор после опрессовки",
+            "description": "После опрессовки одна из батарей дала течь — нужно перепаковать соединения и снова проверить.",
+            "targets": ["radiators"],
+            "min_day": 3, "max_day": 8,
+            "effects": [
+                {"type": "rework", "task": "radiators", "extra": 3}
+            ],
+        },
+        {
+            "key": "doors_inner_jam",
+            "title": "Полотна межкомнатных дверей перекошены",
+            "description": "После усадки коробок одно из полотен заедает. Нужно подгонять заново — появился дополнительный объём.",
+            "targets": ["doors_inner"],
+            "min_day": 5, "max_day": 10,
+            "effects": [
+                {"type": "rework", "task": "doors_inner", "extra": 2}
+            ],
+        },
+        {
+            "key": "wifi_provider_delay",
+            "title": "Провайдер не приехал на подключение",
+            "description": "Заявка на подключение интернета задерживается. Wi-Fi пока не работает — задача в блоке, пока не решим вопрос.",
+            "targets": ["wifi_setup"],
+            "min_day": 4, "max_day": 9,
+            "effects": [
+                {"type": "block", "task": "wifi_setup", "reason": "Провайдер перенёс подключение"},
+            ],
+        },
+        {
+            "key": "appliance_dent",
+            "title": "Скол на технике при разгрузке",
+            "description": "На вытяжке нашли скол. Перекрашивать или менять — спорный вопрос, но в любом случае это лишняя работа.",
+            "targets": ["appliances_test"],
+            "min_day": 7, "max_day": 10,
+            "effects": [
+                {"type": "rework", "task": "appliances_test", "extra": 1}
+            ],
+        },
+        {
+            "key": "intercom_wiring",
+            "title": "Старая слаботочка под домофон не годится",
+            "description": "Кабельная разводка под домофон оказалась хрупкой — придётся протянуть новую.",
+            "targets": ["intercom"],
+            "min_day": 2, "max_day": 7,
+            "effects": [
+                {"type": "rework", "task": "intercom", "extra": 1}
+            ],
+        },
+        {
+            "key": "window_cleaner_busy",
+            "title": "Промышленные альпинисты заняты",
+            "description": "Бригада, которая моет окна снаружи, ушла на другой объект. Мойка фасадных окон в блоке.",
+            "targets": ["windows_clean"],
+            "min_day": 2, "max_day": 8,
+            "effects": [
+                {"type": "block", "task": "windows_clean", "reason": "Альпинисты на другом объекте"},
+            ],
+        },
+        # ---- non-targeted: фон, который стреляет всегда (нет пустых дней) ----
+        {
+            "key": "weather_rain",
+            "title": "Ливень, квартира промокла",
+            "description": "Дождь зашёл через вентиляцию — пол мокрый, маляры не могут работать. Сегодня мощность команды ниже.",
+            "targets": [],
+            "min_day": 1, "max_day": 5,
+            "effects": [
+                {"type": "capacity_delta", "delta": -2, "day_only": True}
+            ],
+        },
+        {
+            "key": "worker_sick",
+            "title": "Один из мастеров заболел",
+            "description": "Команда сегодня меньше. Дневная мощность снижена на 2 пункта.",
+            "targets": [],
+            "min_day": 2, "max_day": 9,
+            "effects": [
+                {"type": "capacity_delta", "delta": -2, "day_only": True}
+            ],
+        },
+        {
+            "key": "extra_hands",
+            "title": "Подкрепление с соседнего объекта",
+            "description": "На соседнем объекте закончились задачи — двое мастеров пришли помочь до конца дня.",
+            "targets": [],
+            "min_day": 3, "max_day": 9,
+            "effects": [
+                {"type": "capacity_delta", "delta": 2, "day_only": True}
+            ],
+        },
+        {
+            "key": "dust_storm",
+            "title": "Пыльная буря — закрыли окна",
+            "description": "Сегодня пришлось ограничить открытое окно — дышать тяжелее, темп слегка просел.",
+            "targets": [],
+            "min_day": 2, "max_day": 8,
+            "effects": [
+                {"type": "capacity_delta", "delta": -1, "day_only": True}
+            ],
+        },
+        {
             "key": "urgent_change",
-            "day": 10,
             "title": "Срочный запрос от заказчика",
             "description": "Заказчик хочет добавить тёплый пол в ванную. Появилась новая задача — PO должен решить, брать её в спринт или отказаться.",
+            "targets": [],
+            "min_day": 6, "max_day": 10,
             "effects": [
                 {"type": "add_task", "task": {
                     "key": "warm_floor",
@@ -241,6 +389,16 @@ def _events_en() -> List[Dict[str, Any]]:
         "inspector_visit":      ("Inspector visit",                  "The inspector found issues in the kitchen installation. The kitchen task has extra work now."),
         "subcontractor_noshow": ("Subcontractor didn't show up",     "The finish-plumbing crew didn't arrive — emergency on another site. \"Finish plumbing\" is blocked until the SM escalates it."),
         "urgent_change":        ("Urgent change request",            "The client wants underfloor heating in the bathroom. A new task appeared — the PO must decide whether to take it on."),
+        "paint_color_change":   ("Client changed colour preference", "After seeing test patches the client wants a different shade. Part of the painting needs redoing."),
+        "door_misorder":        ("Wrong entrance door delivered",    "The wrong size door arrived. Install is blocked until the supplier sends a replacement."),
+        "radiator_leak":        ("Radiator leak after pressure test", "After pressure-testing one of the radiators leaks — repack the joints and retest."),
+        "doors_inner_jam":      ("Interior door panels stick",       "After frame settling one panel sticks. Adjustments add extra work."),
+        "wifi_provider_delay":  ("ISP doesn't show for the install", "The internet hookup is delayed. Wi-Fi is blocked until it's resolved."),
+        "appliance_dent":       ("Dent on appliance during unload",  "There's a chip on the hood. Repaint or replace is debatable — but it's extra work."),
+        "intercom_wiring":      ("Old intercom wiring is brittle",   "The low-voltage line for the intercom is fragile — pull a new run."),
+        "window_cleaner_busy":  ("Rope-access crew is busy",         "The crew that cleans façade windows went to another site. External window cleaning is blocked."),
+        "extra_hands":          ("Reinforcements from a sister site", "A nearby site finished early — two craftspeople come to help today."),
+        "dust_storm":           ("Dust storm — windows had to close", "We had to keep windows shut today — breathing was harder, the pace dipped."),
     }
     out: List[Dict[str, Any]] = []
     for e in base:
@@ -572,6 +730,7 @@ def _initial_state(locale: str = "ru") -> Dict[str, Any]:
         "paused": False,
         "swarm_used_sprint": False,
         "reduce_scope_used_sprint": False,
+        "event_schedule": {},         # str(day) -> event_key (генерится на planning_confirm)
         "updated_at": _now_iso(),
     }
 
@@ -714,6 +873,104 @@ def _is_workable(tasks: Dict[str, Dict[str, Any]], t: Dict[str, Any]) -> bool:
 def _recompute_blocks_from_deps(tasks: Dict[str, Dict[str, Any]]) -> None:
     """Если блок снят и deps готовы — задача становится ok. Иначе ok-задачи не трогаем."""
     pass  # блок снимается/ставится событиями явно
+
+
+SPRINT_COLUMNS = (TASK_COL_BACKLOG, TASK_COL_IN_PROGRESS, TASK_COL_REVIEW, TASK_COL_DONE)
+QUIET_DAYS = (3, 8)
+
+
+def _events_pool(locale: str = "ru") -> List[Dict[str, Any]]:
+    return _events_en() if locale == "en" else _events_ru()
+
+
+def _generate_event_schedule(
+    data: Dict[str, Any],
+    group_id: int,
+    locale: str = "ru",
+) -> Dict[str, str]:
+    """Сгенерировать расписание событий на спринт под фактический Sprint Backlog.
+
+    Главная идея — события стреляют только по тем задачам, которые команда
+    действительно взяла в спринт. Если задача осталась в Product Backlog —
+    связанные с ней события исключаются из пула. Чтобы при этом не получить
+    «пустые» дни, в пуле всегда есть non-targeted события (погода, болезнь,
+    запрос заказчика), которые могут стрелять при любом составе.
+
+    Алгоритм:
+      1. Берём пул событий, фильтруем по targets ∩ Sprint Backlog.
+      2. Для каждого дня (1..SPRINT_DAYS, кроме «тихих» 3 и 8) подбираем
+         подходящее событие, учитывая `min_day`/`max_day` и `requires_fired`.
+      3. RNG seed `f"scrum-events:{group_id}:{sprint_keys}"` — одинаковое
+         расписание для всех игроков команды и устойчиво к повторным запросам.
+
+    Возвращает `{ "1": "material_delay", "5": "hidden_defect", ... }` —
+    ключ-строка, чтобы JSON-сериализация в БД ровно совпадала.
+    """
+    tasks = data.get("tasks", {}) or {}
+    in_sprint = sorted(
+        k for k, t in tasks.items() if t.get("column") in SPRINT_COLUMNS
+    )
+    in_sprint_set = set(in_sprint)
+
+    pool = _events_pool(locale)
+    eligible: List[Dict[str, Any]] = []
+    for ev in pool:
+        targets = ev.get("targets") or []
+        if not targets or any(t in in_sprint_set for t in targets):
+            eligible.append(ev)
+
+    rng = random.Random(f"scrum-events:{group_id}:{','.join(in_sprint)}")
+    rng.shuffle(eligible)
+
+    schedule: Dict[str, str] = {}
+    fired: set = set()
+    for day in range(1, SPRINT_DAYS + 1):
+        if day in QUIET_DAYS:
+            continue
+        chosen = None
+        for ev in eligible:
+            if ev["key"] in fired:
+                continue
+            if day < int(ev.get("min_day", 1)):
+                continue
+            if day > int(ev.get("max_day", SPRINT_DAYS)):
+                continue
+            req = ev.get("requires_fired") or []
+            if any(r not in fired for r in req):
+                continue
+            chosen = ev
+            break
+        if chosen:
+            fired.add(chosen["key"])
+            schedule[str(day)] = chosen["key"]
+    return schedule
+
+
+def _ensure_event_schedule(
+    data: Dict[str, Any],
+    group_id: int,
+    locale: str = "ru",
+) -> Dict[str, str]:
+    """Получить (и при необходимости пересоздать) расписание событий.
+
+    Если schedule отсутствует (миграция со старых state) — генерируем сейчас,
+    но с учётом уже сыгранных в истории дней (их события не повторяем).
+    """
+    schedule = data.get("event_schedule") or {}
+    if schedule:
+        return schedule
+
+    fresh = _generate_event_schedule(data, group_id, locale)
+    fired_keys = set()
+    for d in (data.get("days") or []):
+        ek = (d.get("event") or {}).get("key")
+        if ek and ek != "no_event":
+            fired_keys.add(ek)
+    if fired_keys:
+        fresh = {day: k for day, k in fresh.items() if k not in fired_keys}
+
+    data["event_schedule"] = fresh
+    return fresh
 
 
 def _apply_event_effects(data: Dict[str, Any], event: Dict[str, Any]) -> List[str]:
@@ -1239,6 +1496,7 @@ def _serialize_state(row: AgileTrainingScrumSimState, data: Dict[str, Any], loca
         "notes": data.get("notes", {}),
         "swarm_used_sprint": bool(data.get("swarm_used_sprint", False)),
         "reduce_scope_used_sprint": bool(data.get("reduce_scope_used_sprint", False)),
+        "event_schedule": data.get("event_schedule", {}),
         "my": {
             "token": participant_token or None,
             "role": data.get("roles", {}).get(participant_token or ""),
@@ -1400,6 +1658,7 @@ def planning_confirm(slug: str):
         "day": 1, "event_applied": False, "allocation": {},
         "decision": None, "swarm_task": None, "buffer_used": False,
     }
+    data["event_schedule"] = _generate_event_schedule(data, g.id, "ru")
     if p:
         _touch_participant(data, p)
     _save_state(row, data)
@@ -1426,8 +1685,10 @@ def day_reveal_event(slug: str):
         return jsonify({"ok": True, "state": _serialize_state(row, data, "ru", token)})
 
     day = int(data.get("current_day", 1))
-    events = _events_ru()
-    today_event = next((e for e in events if int(e.get("day", 0)) == day), None)
+    schedule = _ensure_event_schedule(data, g.id, "ru")
+    today_key = schedule.get(str(day))
+    events_by_key = {e["key"]: e for e in _events_ru()}
+    today_event = events_by_key.get(today_key) if today_key else None
 
     notes: List[str] = []
     if today_event:
@@ -1439,7 +1700,16 @@ def day_reveal_event(slug: str):
             "notes": notes,
         }
     else:
-        pending["event"] = {"key": "no_event", "title": "Обычный день", "description": "Сегодня без сюрпризов — работаем как запланировали.", "notes": []}
+        pending["event"] = {
+            "key": "no_event",
+            "title": "Обычный день",
+            "description": (
+                "Сегодня без сюрпризов — работаем как запланировали. "
+                "События стреляют только по задачам, которые команда взяла в спринт; "
+                "если день тихий — у вас просто чуть больше времени двигать выбранные задачи."
+            ),
+            "notes": [],
+        }
     pending["event_applied"] = True
     pending.setdefault("allocation", {})
     if p:

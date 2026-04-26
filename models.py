@@ -1132,6 +1132,37 @@ class AgileTrainingPoPathAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingPmSimState(db.Model):
+    """Командный продуктовый симулятор Product Owner на 20 недель.
+
+    Multiplayer-тренажёр: одна запись на группу = одна «команда», все участники
+    видят один общий дашборд и голосуют за решения; PO подтверждает выбор.
+    Весь игровой артефакт хранится в `data_json` (см. agile_pm_sim._initial_state).
+    """
+
+    __tablename__ = "agile_training_pm_sim_state"
+    __table_args__ = (
+        db.UniqueConstraint("group_id", name="uq_pm_sim_state_group"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    phase = db.Column(db.String(32), nullable=False, default="lobby", index=True)
+    current_week = db.Column(db.Integer, nullable=False, default=0, index=True)
+    status = db.Column(db.String(16), nullable=False, default="alive", index=True)
+    revenue_total = db.Column(db.Integer, nullable=False, default=0, index=True)
+    version = db.Column(db.Integer, nullable=False, default=0)
+    paused = db.Column(db.Boolean, nullable=False, default=False)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

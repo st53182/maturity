@@ -83,10 +83,15 @@ COMMENT_LIMIT = 2000
 STAGE_FIELDS: Dict[str, List[str]] = {
     "jtbd": [
         "job_statement",
+        "trigger",
         "context",
+        "frequency",
         "motivation",
+        "outcomes",
+        "current_solution",
         "barriers",
         "fears",
+        "success_criteria",
     ],
     "value": [
         "pains",
@@ -112,6 +117,49 @@ STAGE_FIELDS: Dict[str, List[str]] = {
         "unfair_advantage",
         "early_adopters",
     ],
+}
+
+
+# Layout канваса по этапам: row,col,colspan,rowspan для CSS grid.
+# Используется фронтом, чтобы рендерить форму как «канвас», а не стек.
+# Сетка для всех этапов — 6 колонок (адаптивно сжимается на мобилках).
+STAGE_LAYOUT: Dict[str, Dict[str, Dict[str, int]]] = {
+    "jtbd": {
+        "job_statement":    {"row": 1, "col": 1, "colspan": 4, "rowspan": 1, "accent": "primary"},
+        "trigger":          {"row": 1, "col": 5, "colspan": 2, "rowspan": 1},
+        "context":          {"row": 2, "col": 1, "colspan": 3, "rowspan": 1},
+        "frequency":        {"row": 2, "col": 4, "colspan": 3, "rowspan": 1},
+        "motivation":       {"row": 3, "col": 1, "colspan": 2, "rowspan": 1, "accent": "warm"},
+        "outcomes":         {"row": 3, "col": 3, "colspan": 2, "rowspan": 1, "accent": "ok"},
+        "current_solution": {"row": 3, "col": 5, "colspan": 2, "rowspan": 1},
+        "barriers":         {"row": 4, "col": 1, "colspan": 2, "rowspan": 1, "accent": "danger"},
+        "fears":            {"row": 4, "col": 3, "colspan": 2, "rowspan": 1, "accent": "danger"},
+        "success_criteria": {"row": 4, "col": 5, "colspan": 2, "rowspan": 1, "accent": "ok"},
+    },
+    "value": {
+        "product":        {"row": 1, "col": 1, "colspan": 6, "rowspan": 1, "accent": "primary"},
+        "pains":          {"row": 2, "col": 1, "colspan": 3, "rowspan": 1, "accent": "danger"},
+        "gains":          {"row": 2, "col": 4, "colspan": 3, "rowspan": 1, "accent": "ok"},
+        "pain_relievers": {"row": 3, "col": 1, "colspan": 6, "rowspan": 1, "accent": "warm"},
+    },
+    "fit": {
+        "customer":      {"row": 1, "col": 1, "colspan": 6, "rowspan": 1, "accent": "primary"},
+        "why_choose":    {"row": 2, "col": 1, "colspan": 3, "rowspan": 1, "accent": "ok"},
+        "alternatives":  {"row": 2, "col": 4, "colspan": 3, "rowspan": 1},
+        "usage_context": {"row": 3, "col": 1, "colspan": 6, "rowspan": 1, "accent": "warm"},
+    },
+    "canvas": {
+        "problem":          {"row": 1, "col": 1, "colspan": 2, "rowspan": 2, "accent": "danger"},
+        "solution":         {"row": 1, "col": 3, "colspan": 1, "rowspan": 1, "accent": "warm"},
+        "metrics":          {"row": 2, "col": 3, "colspan": 1, "rowspan": 1},
+        "value_prop":       {"row": 1, "col": 4, "colspan": 1, "rowspan": 2, "accent": "primary"},
+        "unfair_advantage": {"row": 1, "col": 5, "colspan": 1, "rowspan": 1, "accent": "ok"},
+        "channels":         {"row": 2, "col": 5, "colspan": 1, "rowspan": 1},
+        "segments":         {"row": 1, "col": 6, "colspan": 1, "rowspan": 2, "accent": "ok"},
+        "early_adopters":   {"row": 3, "col": 1, "colspan": 2, "rowspan": 1},
+        "costs":            {"row": 3, "col": 3, "colspan": 2, "rowspan": 1, "accent": "danger"},
+        "revenue":          {"row": 3, "col": 5, "colspan": 2, "rowspan": 1, "accent": "ok"},
+    },
 }
 
 
@@ -151,25 +199,50 @@ CONTENT = {
                         "hint": "«Когда [ситуация], я хочу [действие], чтобы [результат]»",
                         "placeholder": "Когда у меня в семье болеет ребёнок, я хочу за 5 минут понять, к какому врачу идти, чтобы не терять день в гугле и звонках",
                     },
+                    "trigger": {
+                        "label": "Триггер",
+                        "hint": "Спусковой крючок: что именно запускает эту работу прямо сейчас?",
+                        "placeholder": "Ребёнок проснулся ночью с температурой 38,5 → паника родителей.",
+                    },
                     "context": {
                         "label": "Контекст",
-                        "hint": "Где, когда и при каких обстоятельствах эта работа возникает.",
+                        "hint": "Где, когда и при каких обстоятельствах работа возникает.",
                         "placeholder": "Будний вечер, оба родителя устали, поликлиника уже закрыта, симптомы непонятные.",
+                    },
+                    "frequency": {
+                        "label": "Частота",
+                        "hint": "Как часто человек сталкивается с этой работой? (раз в день/неделю/год)",
+                        "placeholder": "5–8 раз в год; в сезон ОРВИ — почти каждые 2 недели.",
                     },
                     "motivation": {
                         "label": "Мотивация",
-                        "hint": "Что человек на самом деле хочет получить — функционально, эмоционально, социально.",
-                        "placeholder": "Спокойствие («сделал что мог»), быстрое решение, ощущение контроля.",
+                        "hint": "Что человек на самом деле хочет — функционально, эмоционально, социально.",
+                        "placeholder": "Спокойствие («сделал всё что мог»), быстрое решение, ощущение контроля.",
+                    },
+                    "outcomes": {
+                        "label": "Желаемый исход",
+                        "hint": "Что должно произойти, чтобы работа считалась выполненной хорошо.",
+                        "placeholder": "За 5 минут получает чёткий план: «вызвать скорую / ждать утра / идти к ЛОРу» без сомнений.",
+                    },
+                    "current_solution": {
+                        "label": "Как решает сейчас",
+                        "hint": "Чем человек закрывает эту работу СЕГОДНЯ, без вашего продукта.",
+                        "placeholder": "Гуглит симптомы 30 минут, потом звонит знакомой педиатру, потом всё равно вызывает скорую «на всякий».",
                     },
                     "barriers": {
                         "label": "Барьеры",
-                        "hint": "Что мешает решить эту задачу прямо сейчас.",
-                        "placeholder": "Гуглёж даёт пугающие диагнозы, у знакомого врача нет времени отвечать, платные приложения требуют подписки заранее.",
+                        "hint": "Что мешает решить задачу прямо сейчас.",
+                        "placeholder": "Google пугает; у знакомых врачей нет времени; платные приложения требуют подписки заранее.",
                     },
                     "fears": {
                         "label": "Страхи",
                         "hint": "Чего человек боится, выбирая решение.",
-                        "placeholder": "Что нарвётся на «врача-консультанта», который ничего не скажет конкретного и заберёт деньги.",
+                        "placeholder": "Что нарвётся на «врача-консультанта», который ничего конкретного не скажет и заберёт деньги.",
+                    },
+                    "success_criteria": {
+                        "label": "Критерии успеха",
+                        "hint": "Как человек поймёт, что задача решена? Что он почувствует/увидит?",
+                        "placeholder": "Ребёнок к утру стабилен; родитель чувствует «я сделал верно»; не пришлось тратить день на гугл.",
                     },
                 },
             },
@@ -358,15 +431,35 @@ CONTENT = {
                         "hint": "“When [situation], I want [action], so that [outcome]”",
                         "placeholder": "When my child gets sick at night, I want to know in 5 minutes which doctor to go to, so I don’t spend the day googling.",
                     },
+                    "trigger": {
+                        "label": "Trigger",
+                        "hint": "What exactly fires this job RIGHT NOW?",
+                        "placeholder": "Child wakes up at night with 38.5°C fever → parents panic.",
+                    },
                     "context": {
                         "label": "Context",
                         "hint": "Where and when this job pops up.",
-                        "placeholder": "Weeknight, both parents tired, the clinic is closed, symptoms are unclear.",
+                        "placeholder": "Weeknight, both parents tired, the clinic is closed, symptoms unclear.",
+                    },
+                    "frequency": {
+                        "label": "Frequency",
+                        "hint": "How often does the person face this job? (per day / week / year)",
+                        "placeholder": "5–8 times a year; during flu season — almost every 2 weeks.",
                     },
                     "motivation": {
                         "label": "Motivation",
-                        "hint": "What does the person actually want — functional, emotional, social.",
+                        "hint": "What do they actually want — functional, emotional, social.",
                         "placeholder": "Calm (“I did everything I could”), a quick answer, sense of control.",
+                    },
+                    "outcomes": {
+                        "label": "Desired outcome",
+                        "hint": "What has to happen for this job to be done well.",
+                        "placeholder": "Within 5 minutes — a clear plan: call ER / wait until morning / see ENT, no doubt.",
+                    },
+                    "current_solution": {
+                        "label": "How they solve it today",
+                        "hint": "How they close this job TODAY, without your product.",
+                        "placeholder": "Googles symptoms for 30 min, calls a doctor friend, ends up calling ER “just in case”.",
                     },
                     "barriers": {
                         "label": "Barriers",
@@ -377,6 +470,11 @@ CONTENT = {
                         "label": "Fears",
                         "hint": "What are they afraid of when choosing a solution.",
                         "placeholder": "Hitting a “consultant doctor” that says nothing concrete and takes the money.",
+                    },
+                    "success_criteria": {
+                        "label": "Success criteria",
+                        "hint": "How will they know the job is done? What will they feel / see?",
+                        "placeholder": "Child stable by morning; parent feels “I did the right thing”; no day lost to googling.",
                     },
                 },
             },
@@ -763,6 +861,7 @@ def content_public():
         "locale": locale,
         "stages": list(STAGES),
         "stage_fields": STAGE_FIELDS,
+        "stage_layout": STAGE_LAYOUT,
         "ai_calls_limit": AI_CALLS_LIMIT_PER_PARTICIPANT,
         "field_text_limit": FIELD_TEXT_LIMIT,
         **bundle,
@@ -796,6 +895,7 @@ def participant_state(slug: str):
         "content": CONTENT.get(locale, CONTENT["ru"]),
         "stages": list(STAGES),
         "stage_fields": STAGE_FIELDS,
+        "stage_layout": STAGE_LAYOUT,
         "ai_calls_limit": AI_CALLS_LIMIT_PER_PARTICIPANT,
         "field_text_limit": FIELD_TEXT_LIMIT,
         "answer": answer_payload,
@@ -860,16 +960,10 @@ def participant_answer(slug: str):
                     st["confidence"] = ic
             except Exception:
                 pass
-    if st["status"] == STATUS_APPROVED:
-        # Если пишут в одобренный этап (через /return он уже должен быть в draft),
-        # но всё равно подстрахуемся:
-        st["status"] = STATUS_DRAFT
-        st["approved_at"] = None
-    elif st["status"] in {STATUS_SUBMITTED, STATUS_IN_REVIEW}:
-        # Пока ждёт фасилитатора — изменения тоже разрешим (мы же autosave),
-        # но сбросим в draft чтобы не было путаницы.
-        st["status"] = STATUS_DRAFT
-        st["submitted_at"] = None
+    # В self-paced режиме НЕ сбрасываем статус на autosave: участник
+    # может сохранять правки в одобренный этап (после /return) или продолжать
+    # дописывать уже отправленный — статус не меняется. Реальный «откат»
+    # одобрения происходит только через явный /return.
 
     _persist_answer(a, state)
     db.session.commit()
@@ -878,7 +972,14 @@ def participant_answer(slug: str):
 
 @bp_agile_po_path.post("/g/<slug>/submit")
 def participant_submit(slug: str):
-    """Отправить этап фасилитатору на проверку (status → submitted)."""
+    """Завершить этап и перейти к следующему (self-paced режим).
+
+    В self-paced воркшопе нет блокировки фасилитатором: как только участник
+    нажал «Дальше» с непустыми полями, этап одобряется автоматически и
+    `current_stage` сдвигается. Фасилитатор всё равно может потом нажать
+    «вернуть на доработку» в своей панели — тогда этап вернётся в
+    needs_revision и текущим снова станет он.
+    """
     g, _sess = _group_and_session(slug)
     if not g:
         return jsonify({"error": "Group not found"}), 404
@@ -901,11 +1002,19 @@ def participant_submit(slug: str):
     st = state["stages"][stage]
     if not _stage_has_meaningful_content(stage, st.get("data") or {}):
         return jsonify({"error": "stage_empty"}), 400
-    st["status"] = STATUS_SUBMITTED
-    st["submitted_at"] = _now_iso()
+    st["status"] = STATUS_APPROVED
+    now = _now_iso()
+    st["submitted_at"] = now
+    st["approved_at"] = now
     _persist_answer(a, state)
     db.session.commit()
-    return jsonify({"submitted": True, "answer": _serialize_answer(a)})
+    next_stage = NEXT_STAGE.get(stage, "done")
+    return jsonify({
+        "submitted": True,
+        "approved": True,
+        "next_stage": next_stage,
+        "answer": _serialize_answer(a),
+    })
 
 
 @bp_agile_po_path.post("/g/<slug>/return")

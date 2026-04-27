@@ -132,6 +132,18 @@
         <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
       </article>
 
+      <article class="at-card" @click="$router.push('/agile-training/stakeholder-matrix')">
+        <span class="at-card__icon">🤝</span>
+        <h2 class="at-card__title">{{ $t('agileTraining.hub.stakeholderMatrix.title') }}</h2>
+        <p class="at-card__desc">{{ $t('agileTraining.hub.stakeholderMatrix.desc') }}</p>
+        <ul class="at-card__list">
+          <li>{{ $t('agileTraining.hub.stakeholderMatrix.bullet1') }}</li>
+          <li>{{ $t('agileTraining.hub.stakeholderMatrix.bullet2') }}</li>
+          <li>{{ $t('agileTraining.hub.stakeholderMatrix.bullet3') }}</li>
+        </ul>
+        <span class="at-card__cta">{{ $t('agileTraining.hub.start') }} →</span>
+      </article>
+
       <article class="at-card" @click="$router.push('/agile-training/kanban')">
         <span class="at-card__icon">🧩</span>
         <h2 class="at-card__title">{{ $t('agileTraining.hub.kanban.title') }}</h2>

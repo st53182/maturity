@@ -411,11 +411,22 @@ export default {
 </script>
 
 <style scoped>
-.sb-page { position: relative; min-height: calc(100vh - 40px); }
+.sb-page {
+  position: relative;
+  min-height: calc(100vh - 40px);
+  /* Reference page tint; tokens in revolut-refresh.css :root */
+  --sb-local-surface: var(--sb-surface, #fff);
+  --sb-local-ink: var(--sb-ink, #0f172a);
+  --sb-local-muted: var(--sb-ink-muted, #64748b);
+  --sb-local-primary: var(--sb-primary, #1d4ed8);
+  --sb-local-primary-rgb: var(--sb-primary-rgb);
+  --sb-local-radius: var(--sb-radius-card, 12px);
+  --sb-local-shadow: var(--sb-shadow-card, 0 8px 28px rgba(15, 23, 42, 0.08));
+}
 .sb-page__bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-.sb-page__orb { position: absolute; width: 540px; height: 540px; border-radius: 50%; filter: blur(60px); opacity: 0.55; }
-.sb-page__orb--1 { top: -220px; left: -210px; background: radial-gradient(circle at 30% 30%, rgba(120, 119, 255, 0.4), transparent 65%); }
-.sb-page__orb--2 { bottom: -220px; right: -160px; background: radial-gradient(circle at 70% 70%, rgba(0, 194, 255, 0.35), transparent 65%); }
+.sb-page__orb { position: absolute; width: 540px; height: 540px; border-radius: 50%; filter: blur(60px); opacity: 0.5; }
+.sb-page__orb--1 { top: -220px; left: -210px; background: radial-gradient(circle at 30% 30%, rgba(var(--sb-local-primary-rgb), 0.2), transparent 65%); }
+.sb-page__orb--2 { bottom: -220px; right: -160px; background: radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.2), transparent 65%); }
 
 .sb-intro,
 .sb-toolbar,
@@ -424,14 +435,14 @@ export default {
 .sb-modal-overlay { position: relative; z-index: 1; }
 
 .sb-intro {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(246, 249, 255, 0.78));
+  background: var(--sb-local-surface);
   border: 1px solid rgba(10, 20, 45, 0.08);
-  border-radius: 18px;
+  border-radius: var(--sb-local-radius);
   padding: 20px 22px;
-  box-shadow: 0 18px 42px rgba(10, 20, 45, 0.08);
+  box-shadow: var(--sb-local-shadow);
 }
-.sb-intro__lead { margin: 0 0 10px; color: rgba(10, 20, 45, 0.9); line-height: 1.55; }
-.sb-intro__bullets { margin: 0; padding-left: 20px; color: rgba(10, 20, 45, 0.78); line-height: 1.55; }
+.sb-intro__lead { margin: 0 0 10px; color: var(--sb-local-ink); line-height: 1.55; }
+.sb-intro__bullets { margin: 0; padding-left: 20px; color: var(--sb-local-muted); line-height: 1.55; }
 
 .sb-toolbar {
   display: flex;
@@ -444,19 +455,22 @@ export default {
 .sb-scope { min-width: 260px; }
 .sb-scope__tabs {
   display: inline-flex;
-  border: 1px solid rgba(10, 20, 45, 0.12);
-  border-radius: 12px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.92);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 .sb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .sb-industry {
   margin-bottom: 18px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--sb-local-surface);
   border: 1px solid rgba(10, 20, 45, 0.08);
-  border-radius: 14px;
+  border-radius: var(--sb-radius-input, 10px);
   padding: 12px 16px;
+  box-shadow: var(--sb-local-shadow);
 }
 
 .sb-grid {
@@ -466,19 +480,19 @@ export default {
 }
 
 .sb-summary {
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--sb-local-surface);
   border: 1px solid rgba(10, 20, 45, 0.08);
-  border-radius: 18px;
+  border-radius: var(--sb-local-radius);
   padding: 16px 18px;
-  box-shadow: 0 18px 42px rgba(10, 20, 45, 0.08);
+  box-shadow: var(--sb-local-shadow);
   cursor: pointer;
   transition: 0.18s ease;
   min-height: 120px;
 }
 .sb-summary:hover {
   transform: translateY(-2px);
-  border-color: rgba(32, 90, 255, 0.35);
-  box-shadow: 0 22px 50px rgba(10, 20, 45, 0.12);
+  border-color: rgba(var(--sb-local-primary-rgb), 0.3);
+  box-shadow: var(--sb-shadow-card-hover, 0 14px 36px rgba(15, 23, 42, 0.1));
 }
 .sb-summary--wide { grid-column: 1 / -1; }
 
@@ -495,16 +509,16 @@ export default {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(32, 90, 255, 0.9);
+  color: var(--sb-local-primary);
 }
-.sb-summary__body { margin: 0; font-size: 14px; line-height: 1.55; color: rgba(10, 20, 45, 0.88); }
-.sb-summary__empty { margin: 0; font-size: 13px; color: rgba(10, 20, 45, 0.55); font-style: italic; line-height: 1.5; }
+.sb-summary__body { margin: 0; font-size: 14px; line-height: 1.55; color: var(--sb-local-ink); }
+.sb-summary__empty { margin: 0; font-size: 13px; color: var(--sb-local-muted); font-style: italic; line-height: 1.5; }
 .sb-summary__chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .sb-summary__chip {
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(32, 90, 255, 0.1);
-  color: rgba(32, 90, 255, 0.95);
+  background: rgba(var(--sb-local-primary-rgb), 0.1);
+  color: var(--sb-local-primary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -520,7 +534,7 @@ export default {
   background: #fff;
   box-sizing: border-box;
 }
-.sb-input:focus { outline: none; border-color: rgba(32, 90, 255, 0.5); box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.12); }
+.sb-input:focus { outline: none; border-color: rgba(var(--sb-local-primary-rgb), 0.5); box-shadow: 0 0 0 3px rgba(var(--sb-local-primary-rgb), 0.12); }
 .sb-input--kr { font-size: 13px; }
 
 .sb-textarea {
@@ -535,7 +549,7 @@ export default {
   resize: vertical;
   box-sizing: border-box;
 }
-.sb-textarea:focus { outline: none; border-color: rgba(32, 90, 255, 0.5); box-shadow: 0 0 0 3px rgba(32, 90, 255, 0.12); }
+.sb-textarea:focus { outline: none; border-color: rgba(var(--sb-local-primary-rgb), 0.5); box-shadow: 0 0 0 3px rgba(var(--sb-local-primary-rgb), 0.12); }
 .sb-textarea--tight { min-height: 60px; }
 
 .sb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
@@ -545,8 +559,8 @@ export default {
   gap: 6px;
   padding: 4px 6px 4px 10px;
   border-radius: 999px;
-  background: rgba(32, 90, 255, 0.08);
-  border: 1px solid rgba(32, 90, 255, 0.2);
+  background: rgba(var(--sb-local-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--sb-local-primary-rgb), 0.2);
   font-size: 13px;
 }
 .sb-chip__input {

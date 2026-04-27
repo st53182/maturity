@@ -1561,6 +1561,13 @@
         "bullet2": "2 cases to choose from (an IT product and «organize a team party»), AI helper and guiding questions",
         "bullet3": "Save results as PDF and a facilitator view for discussion"
       },
+      "stakeholderMatrix": {
+        "title": "Stakeholder management: power / interest matrix",
+        "desc": "Drag roles into a 3×3 matrix. There is no single correct answer — discuss, review consequences, then run a second round after an event. AI asks Socratic questions without giving the final answer.",
+        "bullet1": "Drag & drop, reflection prompts, 2×2 strategy notes",
+        "bullet2": "Consequence hints (not grades), event, matrix revision",
+        "bullet3": "Autosave, JSON export, facilitator view to compare teams"
+      },
       "backHome": "Back to exercises",
       "howItWorks": {
         "title": "How it works",
@@ -2893,6 +2900,61 @@
         "trust": "Trust dropping",
         "techDebt": "Tech debt is high",
         "noRevenue": "No revenue after launching monetization"
+      }
+    },
+    "stakeholderMatrix": {
+      "playTitle": "Stakeholder matrix",
+      "facTitle": "Stakeholders — facilitator",
+      "facSubtitle": "Create a session, add teams, share /g/ links. Participants drag roles into a 3×3 matrix.",
+      "newSessionTitle": "Session: stakeholder matrix",
+      "nameLabel": "Display name (optional)",
+      "namePlaceholder": "Name or nickname",
+      "join": "Join",
+      "next": "Next",
+      "back": "Back",
+      "finish": "Finish",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "download": "Download JSON",
+      "aiTitle": "AI helper (questions, no ready-made answers)",
+      "aiPlaceholder": "What are you thinking about?",
+      "askAi": "Ask AI",
+      "aiLimit": "AI request limit reached",
+      "matrix": { "pool": "Roles off the matrix" },
+      "roles": {
+        "cto": "CTO / tech lead",
+        "cfo": "CFO / finance",
+        "hr": "HR / people",
+        "po": "Product Owner",
+        "developer": "Developer",
+        "marketing": "Marketing",
+        "sponsor": "Sponsor / budget owner",
+        "ciso": "CISO / security",
+        "pm": "Project manager",
+        "customer": "Business customer",
+        "end_user": "End user",
+        "compliance": "Compliance"
+      },
+      "discussion": {
+        "q1": "Why does this role have this level of power in your scenario?",
+        "q2": "Why is interest high or low right now?",
+        "q3": "What happens if you ignore this role?"
+      },
+      "screens": {
+        "context": { "h2": "1. Context" },
+        "roles": { "h2": "2. Roles", "lead": "Role set for the matrix." },
+        "matrix": {
+          "h2": "3. Placement (round 1)",
+          "h2R2": "8. Second round",
+          "leadR1": "Drag roles from the pool into cells.",
+          "leadR2": "Adjust placement after the event.",
+          "needAll": "Place every role on the matrix to continue."
+        },
+        "discussion": { "h2": "4. Discussion", "lead": "Capture notes for the debrief." },
+        "strategy": { "h2": "5. Strategy (2×2)", "lead": "How to engage by power and interest." },
+        "consequences": { "h2": "6. Consequences", "lead": "Heuristics — not “right/wrong”.", "empty": "No heuristics fired — discuss your context.", "strong": "Strengths" },
+        "event": { "h2": "7. Event", "lead": "Pick a scenario for round 2." },
+        "final": { "h2": "9. Wrap-up", "lead": "Compare rounds.", "round1": "Round 1", "round2": "Round 2", "reflect": "Reflection", "reflectLead": "What will you take away?" }
       }
     },
     "productThinking": {

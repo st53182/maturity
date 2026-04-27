@@ -1163,6 +1163,41 @@ class AgileTrainingPmSimState(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingStakeholderMatrixAnswer(db.Model):
+    """Тренажёр «Матрица стейкхолдеров» (влияние × заинтересованность, 3×3).
+
+    Одна запись на участника. `data_json`: расстановка ролей, ответы на вопросы
+    обсуждения, стратегии по квадрантам, второй раунд, AI-история, счётчик AI.
+    """
+
+    __tablename__ = "agile_training_stakeholder_matrix_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_stakeholder_matrix_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    screen = db.Column(db.String(32), nullable=True, index=True)
+    ai_calls = db.Column(db.Integer, nullable=False, default=0)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingRewriteSuggestion(db.Model):
     """Коллективные предложения по переформулировке принципа внутри одной группы.
 

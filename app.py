@@ -109,6 +109,7 @@ from agile_wsjf import bp_agile_wsjf
 from agile_scrum_events import bp_agile_scrum_events
 from agile_scrum_roles import bp_agile_scrum_roles
 from agile_product_thinking import bp_agile_product_thinking
+from agile_stakeholder_matrix import bp_agile_stakeholder_matrix
 from agile_kanban import bp_agile_kanban
 from agile_scrum_sim import bp_agile_scrum_sim
 from agile_po_path import bp_agile_po_path
@@ -265,6 +266,7 @@ app.register_blueprint(bp_agile_wsjf)
 app.register_blueprint(bp_agile_scrum_events)
 app.register_blueprint(bp_agile_scrum_roles)
 app.register_blueprint(bp_agile_product_thinking)
+app.register_blueprint(bp_agile_stakeholder_matrix)
 app.register_blueprint(bp_agile_kanban)
 app.register_blueprint(bp_agile_scrum_sim)
 app.register_blueprint(bp_agile_po_path)

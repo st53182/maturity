@@ -10,6 +10,19 @@
   --vl-primary-hover-start: #102457;
   --vl-primary-hover-end: #1f46ae;
   --vl-danger: #d43b50;
+
+  /* Strategy Builder / team-product reference (blue #1D4ED8, white cards, soft page bg) */
+  --sb-primary: #1d4ed8;
+  --sb-primary-hover: #1e40af;
+  --sb-primary-rgb: 29, 78, 216;
+  --sb-ink: #0f172a;
+  --sb-ink-muted: #64748b;
+  --sb-page-bg: #f4f6fb;
+  --sb-surface: #ffffff;
+  --sb-radius-card: 12px;
+  --sb-radius-input: 10px;
+  --sb-shadow-card: 0 8px 28px rgba(15, 23, 42, 0.08);
+  --sb-shadow-card-hover: 0 14px 36px rgba(15, 23, 42, 0.1);
 }
 
 html,
@@ -673,28 +686,28 @@ button {
 }
 
 #app .sb-page button.sb-btn:hover:not(:disabled) {
-  border-color: rgba(32, 90, 255, 0.45) !important;
-  background: #f3f6ff !important;
-  color: rgba(32, 90, 255, 0.95) !important;
+  border-color: rgba(var(--sb-primary-rgb), 0.45) !important;
+  background: rgba(var(--sb-primary-rgb), 0.06) !important;
+  color: var(--sb-primary) !important;
   transform: translateY(-1px);
 }
 
 #app .sb-page button.sb-btn:active:not(:disabled) {
   transform: translateY(0);
-  background: #e8edff !important;
+  background: rgba(var(--sb-primary-rgb), 0.1) !important;
 }
 
 #app .sb-page button.sb-btn--primary {
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88)) !important;
+  background: var(--sb-primary) !important;
   border-color: transparent !important;
   color: #fff !important;
-  box-shadow: 0 6px 16px rgba(32, 90, 255, 0.35) !important;
+  box-shadow: 0 6px 16px rgba(var(--sb-primary-rgb), 0.35) !important;
 }
 
 #app .sb-page button.sb-btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(24, 70, 200, 0.98), rgba(0, 160, 220, 0.94)) !important;
+  background: var(--sb-primary-hover) !important;
   color: #fff !important;
-  box-shadow: 0 10px 22px rgba(32, 90, 255, 0.4) !important;
+  box-shadow: 0 10px 22px rgba(var(--sb-primary-rgb), 0.38) !important;
   transform: translateY(-1px);
 }
 
@@ -704,51 +717,49 @@ button {
   cursor: not-allowed;
 }
 
-/* Scope tab segment: clear active + hover state */
+/* Scope tabs: pill row (reference: separate blue pills) */
 #app .sb-page button.sb-scope__tab {
-  padding: 8px 14px !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: rgba(10, 20, 45, 0.7) !important;
+  padding: 8px 16px !important;
+  border: 1px solid rgba(var(--sb-primary-rgb), 0.22) !important;
+  border-radius: 999px !important;
+  background: var(--sb-surface) !important;
+  color: rgba(10, 20, 45, 0.75) !important;
   font-size: 13px;
   font-weight: 600;
 }
 
-#app .sb-page button.sb-scope__tab + button.sb-scope__tab {
-  border-left: 1px solid rgba(10, 20, 45, 0.08) !important;
-}
-
 #app .sb-page button.sb-scope__tab:hover:not(.sb-scope__tab--on) {
-  background: rgba(32, 90, 255, 0.08) !important;
-  color: rgba(32, 90, 255, 0.95) !important;
+  background: rgba(var(--sb-primary-rgb), 0.08) !important;
+  color: var(--sb-primary) !important;
+  border-color: rgba(var(--sb-primary-rgb), 0.35) !important;
 }
 
 #app .sb-page button.sb-scope__tab--on {
-  background: linear-gradient(135deg, rgba(32, 90, 255, 0.96), rgba(0, 194, 255, 0.88)) !important;
+  background: var(--sb-primary) !important;
   color: #fff !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25) !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(var(--sb-primary-rgb), 0.35) !important;
 }
 
 /* AI-helper button on each card */
 #app .sb-page button.sb-ai-btn {
   padding: 6px 12px !important;
   border-radius: 10px !important;
-  border: 1px solid rgba(32, 90, 255, 0.35) !important;
-  background: rgba(32, 90, 255, 0.09) !important;
-  color: rgba(32, 90, 255, 0.95) !important;
+  border: 1px solid rgba(var(--sb-primary-rgb), 0.35) !important;
+  background: rgba(var(--sb-primary-rgb), 0.09) !important;
+  color: var(--sb-primary) !important;
   font-size: 12px;
   font-weight: 600;
 }
 
 #app .sb-page button.sb-ai-btn:hover:not(:disabled) {
-  background: rgba(32, 90, 255, 0.18) !important;
-  border-color: rgba(32, 90, 255, 0.55) !important;
-  color: rgba(24, 70, 200, 1) !important;
+  background: rgba(var(--sb-primary-rgb), 0.16) !important;
+  border-color: rgba(var(--sb-primary-rgb), 0.5) !important;
+  color: var(--sb-primary-hover) !important;
 }
 
 #app .sb-page button.sb-ai-btn:active:not(:disabled) {
-  background: rgba(32, 90, 255, 0.28) !important;
+  background: rgba(var(--sb-primary-rgb), 0.24) !important;
   transform: translateY(0);
 }
 
@@ -758,13 +769,13 @@ button {
   border: none !important;
   border-radius: 8px !important;
   background: transparent !important;
-  color: rgba(32, 90, 255, 0.95) !important;
+  color: var(--sb-primary) !important;
   font-size: 12px;
   font-weight: 600;
 }
 
 #app .sb-page button.sb-link-btn:hover {
-  background: rgba(32, 90, 255, 0.1) !important;
+  background: rgba(var(--sb-primary-rgb), 0.1) !important;
 }
 
 #app .sb-page button.sb-link-btn--danger {
@@ -816,30 +827,30 @@ button {
 /* "+ ценность" dashed chip */
 #app .sb-page button.sb-chip--add {
   padding: 6px 12px !important;
-  border: 1px dashed rgba(32, 90, 255, 0.35) !important;
+  border: 1px dashed rgba(var(--sb-primary-rgb), 0.35) !important;
   background: transparent !important;
-  color: rgba(32, 90, 255, 0.95) !important;
+  color: var(--sb-primary) !important;
   border-radius: 999px !important;
   font-size: 13px;
   font-weight: 600;
 }
 
 #app .sb-page button.sb-chip--add:hover {
-  background: rgba(32, 90, 255, 0.08) !important;
-  border-color: rgba(32, 90, 255, 0.55) !important;
+  background: rgba(var(--sb-primary-rgb), 0.08) !important;
+  border-color: rgba(var(--sb-primary-rgb), 0.55) !important;
 }
 
 /* Ghost secondary button */
 #app .sb-page button.sb-btn.sb-btn--ghost {
   background: transparent !important;
-  border: 1px solid rgba(32, 90, 255, 0.35) !important;
-  color: rgba(32, 90, 255, 0.95) !important;
+  border: 1px solid rgba(var(--sb-primary-rgb), 0.35) !important;
+  color: var(--sb-primary) !important;
   box-shadow: none !important;
 }
 #app .sb-page button.sb-btn.sb-btn--ghost:hover:not(:disabled) {
-  background: rgba(32, 90, 255, 0.08) !important;
-  border-color: rgba(32, 90, 255, 0.55) !important;
-  color: rgba(24, 70, 200, 1) !important;
+  background: rgba(var(--sb-primary-rgb), 0.08) !important;
+  border-color: rgba(var(--sb-primary-rgb), 0.55) !important;
+  color: var(--sb-primary-hover) !important;
 }
 #app .sb-page button.sb-btn.sb-btn--block {
   width: 100% !important;

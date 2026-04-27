@@ -2736,6 +2736,16 @@
       "poConfirmsHint": "Only the Product Owner can lock the team's final decision.",
       "featureCycleTitle": "Cycle {c}: feature pick for 2 weeks",
       "featureRules": "Rule: 1 big feature (≥40 cap), or up to 2 small ones, or pick \"Stabilize\" instead.",
+      "feat": {
+        "small": "small",
+        "big": "big",
+        "solo": "must go alone",
+        "helpEmpty": "Compose the cycle: one big feature, two small ones, or Stabilize. Mind your focus quotas.",
+        "helpStabilize": "Stabilize is a quality investment — it can't be combined with other features this cycle.",
+        "helpBig": "A big feature takes the whole cycle — nothing else fits with it.",
+        "helpOneSmall": "Add one more small feature of the same or different focus.",
+        "helpTwo": "Two small features — a balanced mix. Click again to deselect and swap."
+      },
       "using": "using",
       "picked": "Picked",
       "releaseFeatures": "Release picked features",
@@ -2750,7 +2760,7 @@
       "lateDeliveryHistory": "Late delivery from previous cycle",
       "toolkit": {
         "title": "PO toolkit",
-        "hint": "Pick a card (click again to deselect), then press Apply.",
+        "hint": "Pick a card (click again to deselect), then press Apply. The PO has limited attention: only a few weighty actions per week.",
         "selected": "Selected: {name}",
         "clear": "Clear",
         "apply": "Apply",
@@ -2758,22 +2768,52 @@
         "everyN": "every {n}w",
         "poOnly": "Only the PO can apply actions — the team sees the outcome.",
         "blocked": "Not available now: {reason}",
+        "budgetTitle": "PO weekly budget",
+        "budgetUsed": "Used {used}/{limit}",
+        "budgetHint": "The PO is also a person: attention is finite. No more than {limit} weighty actions per week. Scrum events (Daily/Review/Retro) don't count.",
+        "actionCost": "PO move",
+        "focusTag": {
+          "business": "Business",
+          "tech_debt": "Tech debt",
+          "architecture": "Architecture"
+        },
         "cat": {
           "discovery": "Discovery",
           "growth": "Growth",
           "pivot": "Pivot",
+          "engineering": "Engineering",
+          "business": "Business practices",
           "scrum": "Scrum events"
         },
         "blockedReason": {
           "cooldown": "cooldown {n}w left",
           "max_per_game": "limit reached",
-          "not_enough_capacity": "not enough capacity",
+          "not_enough_capacity": "not enough team capacity",
           "not_enough_budget": "not enough budget",
           "too_early": "too early",
           "only_at_cycle_end": "only at cycle end (even week)",
           "low_satisfaction": "satisfaction too low",
           "not_playing": "game is not in playing phase",
-          "need_problem_interview": "run problem interviews first"
+          "need_problem_interview": "run problem interviews first",
+          "po_weekly_limit": "PO action budget for this week is exhausted"
+        }
+      },
+      "quotas": {
+        "title": "PO quotas: where we invest",
+        "hint": "The PO splits the team's focus across three lanes. Industry baseline: {biz}% business, {debt}% tech debt, {arch}% architecture. At cycle end actual investment is compared with the quotas: balanced — small bonus, skewed — soft penalty.",
+        "save": "Save quotas",
+        "saved": "Saved",
+        "actualThisCycle": "Actual this cycle:",
+        "noWorkYet": "no investment yet — release a feature or apply a focused PO action",
+        "deviation": "deviation",
+        "labels": {
+          "business": "Business work",
+          "tech_debt": "Tech debt",
+          "architecture": "Architecture"
+        },
+        "errors": {
+          "sum": "Quotas must sum to exactly 100%.",
+          "range": "Each quota must be between 0 and 100."
         }
       },
       "metricKey": {
@@ -2814,6 +2854,11 @@
           "generic": "Ritual discipline issues — see the metric deltas."
         },
         "metricsTitle": "Metrics changes",
+        "quotaTitle": "Quotas vs actual",
+        "quotaBalanced": "Balanced cycle — small bonus to trust and satisfaction.",
+        "quotaPenalty": "Heavy skew — investment must move closer to PO quotas.",
+        "quotaOk": "Some skew, but within tolerance.",
+        "quotaNoWork": "No focused investment in the cycle.",
         "focusTitle": "Focus for week {w}",
         "focus": {
           "balanced": "Plenty of headroom — a great moment for a big bet or a discovery cycle so the next release lands closer to value.",
@@ -2842,10 +2887,13 @@
       "pickEvent": "pick an event",
       "applyEvent": "Apply",
       "aiCoach": "AI coach",
-      "aiHint": "Describe a doubt — coach will explain the trade-off.",
-      "aiTradeoff": "Explain trade-off",
-      "aiUserVoice": "Voice of users",
+      "aiHint": "Describe a doubt — the coach explains the trade-off but never gives the ready answer.",
+      "aiTradeoff": "Compare trade-offs",
+      "aiTradeoffHint": "Show pros and cons of the current options for the team.",
+      "aiUserVoice": "What would the user say",
+      "aiUserVoiceHint": "User-voice simulation: which phrases and emotions sit behind the metrics, what users are angry about and what matters to them right now.",
       "aiExplain": "Explain situation",
+      "aiExplainHint": "Plain-language breakdown of the product situation plus 1–2 clarifying questions for the team.",
       "confirmReset": "Reset the game for this team?",
       "metric": {
         "users": "Users",

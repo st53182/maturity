@@ -1,5 +1,5 @@
 <template>
-  <div class="pmsim" :class="{ 'pmsim--dead': isDead, 'pmsim--at-risk': isAtRisk }">
+  <div class="pmsim modern-ui" :class="{ 'pmsim--dead': isDead, 'pmsim--at-risk': isAtRisk }">
     <header class="pmsim__top">
       <div class="pmsim__brand">
         <span class="pmsim__logo">📡</span>
@@ -128,17 +128,79 @@
         <span v-for="r in riskBadges" :key="r" class="pmsim__risk">⚠ {{ r }}</span>
       </section>
 
+      <!-- PO Quotas widget -->
+      <section class="pmsim__quotas" v-if="quotaFocusList.length">
+        <header class="pmsim__quotas-head">
+          <h3>{{ $t('agileTraining.pmSim.quotas.title') }}</h3>
+          <span class="pmsim__hint">
+            {{ $t('agileTraining.pmSim.quotas.hint', {
+              biz: quotaDefaults.business || 50,
+              debt: quotaDefaults.tech_debt || 30,
+              arch: quotaDefaults.architecture || 20,
+            }) }}
+          </span>
+        </header>
+        <div class="pmsim__quotas-grid">
+          <div v-for="f in quotaFocusList" :key="f"
+               :class="['pmsim__quota-card', `pmsim__quota-card--${f}`]">
+            <div class="pmsim__quota-label">{{ $t('agileTraining.pmSim.quotas.labels.' + f) }}</div>
+            <div class="pmsim__quota-input-row">
+              <input type="number" min="0" max="100" :step="5"
+                     v-model.number="quotaDraft[f]"
+                     :disabled="!isPO || quotasSaving" />
+              <span class="pmsim__quota-unit">%</span>
+            </div>
+            <div class="pmsim__quota-actual">
+              <span class="pmsim__hint">{{ $t('agileTraining.pmSim.quotas.actualThisCycle') }}</span>
+              <strong v-if="quotaActualPct[f] !== null" :class="quotaDeviationClass(f)">
+                {{ quotaActualPct[f] }}%
+                <em class="pmsim__quota-dev">
+                  {{ $t('agileTraining.pmSim.quotas.deviation') }}: {{ quotaDeviationText(f) }}
+                </em>
+              </strong>
+              <em v-else class="pmsim__hint">{{ $t('agileTraining.pmSim.quotas.noWorkYet') }}</em>
+            </div>
+          </div>
+        </div>
+        <div class="pmsim__quotas-bar" v-if="isPO">
+          <span class="pmsim__hint" :class="{ 'pmsim__hint--ok': quotasSavedFlash }">
+            {{ quotaDraftSum }}%
+            <em v-if="quotasSavedFlash">— {{ $t('agileTraining.pmSim.quotas.saved') }}</em>
+          </span>
+          <button type="button" class="pmsim__btn pmsim__btn--primary"
+                  :disabled="!isPO || !quotasDraftValid || quotasSaving || !quotasDirty"
+                  @click="saveQuotas">
+            {{ $t('agileTraining.pmSim.quotas.save') }}
+          </button>
+        </div>
+        <div class="pmsim__tk-error" v-if="quotasError">{{ quotasError }}</div>
+      </section>
+
       <!-- PO Toolkit -->
       <section class="pmsim__toolkit" v-if="(state.po_action_catalog || []).length">
         <header class="pmsim__toolkit-head">
-          <h3>{{ $t('agileTraining.pmSim.toolkit.title') }}</h3>
-          <span class="pmsim__hint">{{ $t('agileTraining.pmSim.toolkit.hint') }}</span>
+          <div>
+            <h3>{{ $t('agileTraining.pmSim.toolkit.title') }}</h3>
+            <span class="pmsim__hint">{{ $t('agileTraining.pmSim.toolkit.hint') }}</span>
+          </div>
+          <div class="pmsim__po-budget">
+            <span class="pmsim__po-budget-label">{{ $t('agileTraining.pmSim.toolkit.budgetTitle') }}</span>
+            <strong class="pmsim__po-budget-value">
+              {{ $t('agileTraining.pmSim.toolkit.budgetUsed', {
+                used: state.po_actions_used_this_week || 0,
+                limit: state.po_actions_per_week_limit || 2,
+              }) }}
+            </strong>
+            <span class="pmsim__hint">
+              {{ $t('agileTraining.pmSim.toolkit.budgetHint', { limit: state.po_actions_per_week_limit || 2 }) }}
+            </span>
+          </div>
         </header>
         <div class="pmsim__toolkit-tabs">
           <button v-for="t in toolkitCategories" :key="t.key"
                   :class="['pmsim__tk-tab', { 'pmsim__tk-tab--active': toolkitTab === t.key }]"
                   @click="toolkitTab = t.key">
-            {{ t.label }} <span class="pmsim__tk-count">{{ toolkitByCat[t.key].length }}</span>
+            {{ t.label }} <span class="pmsim__tk-count">{{ (toolkitByCat[t.key] || []).length }}</span>
           </button>
         </div>
         <div class="pmsim__toolkit-grid">
@@ -151,11 +213,15 @@
             <header class="pmsim__tk-head">
               <span class="pmsim__tk-icon" v-if="a.icon">{{ a.icon }}</span>
               <strong>{{ a.title }}</strong>
+              <span v-if="a.focus" class="pmsim__focus-tag" :class="`pmsim__focus-tag--${a.focus}`">
+                {{ $t('agileTraining.pmSim.toolkit.focusTag.' + a.focus) }}
+              </span>
             </header>
             <p class="pmsim__tk-desc">{{ a.description }}</p>
             <ul class="pmsim__tk-effects">
               <li v-if="a.cap_cost"><span class="pmsim__fe-key">{{ $t('agileTraining.pmSim.metric.capacity') }}</span><span class="pmsim__fe-value pmsim__fe-value--bad">−{{ a.cap_cost }}</span></li>
               <li v-if="a.budget_cost"><span class="pmsim__fe-key">{{ $t('agileTraining.pmSim.metric.budget') }}</span><span class="pmsim__fe-value pmsim__fe-value--bad">−${{ formatNumber(a.budget_cost) }}</span></li>
+              <li v-if="a.po_action_cost"><span class="pmsim__fe-key">{{ $t('agileTraining.pmSim.toolkit.actionCost') }}</span><span class="pmsim__fe-value pmsim__fe-value--bad">−{{ a.po_action_cost }}</span></li>
               <li v-for="(v, k) in a.effects" :key="k">
                 <span class="pmsim__fe-key">{{ effectLabel(k) }}</span>
                 <span class="pmsim__fe-value" :class="effectClass(v)">{{ effectValue(v) }}</span>
@@ -239,6 +305,9 @@
       <section v-if="state.feature_choice_open" class="pmsim__features">
         <h2>{{ $t('agileTraining.pmSim.featureCycleTitle', { c: state.cycle_index }) }}</h2>
         <p class="pmsim__hint">{{ $t('agileTraining.pmSim.featureRules') }}</p>
+        <div class="pmsim__pick-help" v-if="featurePickHelp">
+          <span>{{ featurePickHelp }}</span>
+        </div>
         <p class="pmsim__capacity-line">
           {{ $t('agileTraining.pmSim.metric.capacity') }}: <strong>{{ state.capacity_left }}</strong>
           <span v-if="featureCapacityUsed > 0"> · {{ $t('agileTraining.pmSim.using') }}: {{ featureCapacityUsed }}</span>
@@ -259,12 +328,29 @@
           <article
             v-for="f in state.feature_options"
             :key="String(f.key)"
-            :class="['pmsim__feature', { 'pmsim__feature--picked': featurePicksStr.includes(String(f.key)) }]"
+            :class="['pmsim__feature',
+                     { 'pmsim__feature--picked': featurePicksStr.includes(String(f.key)),
+                       'pmsim__feature--big': Number(f.capacity) >= 40 && String(f.key) !== 'stabilize',
+                       'pmsim__feature--stabilize': String(f.key) === 'stabilize' }]"
             @click="toggleFeaturePick(f)">
             <header>
               <strong>{{ f.title }}</strong>
               <span class="pmsim__feat-cap">{{ f.capacity }} cap</span>
             </header>
+            <div class="pmsim__feat-tags">
+              <span v-if="f.focus" class="pmsim__focus-tag" :class="`pmsim__focus-tag--${f.focus}`">
+                {{ $t('agileTraining.pmSim.toolkit.focusTag.' + f.focus) }}
+              </span>
+              <span v-if="String(f.key) === 'stabilize'" class="pmsim__pick-badge pmsim__pick-badge--solo">
+                {{ $t('agileTraining.pmSim.feat.solo') }}
+              </span>
+              <span v-else-if="Number(f.capacity) >= 40" class="pmsim__pick-badge pmsim__pick-badge--big">
+                {{ $t('agileTraining.pmSim.feat.big') }}
+              </span>
+              <span v-else class="pmsim__pick-badge pmsim__pick-badge--small">
+                {{ $t('agileTraining.pmSim.feat.small') }}
+              </span>
+            </div>
             <p>{{ f.description }}</p>
             <ul class="pmsim__feat-effects">
               <li v-for="(v,k) in f.effects" :key="k">
@@ -307,18 +393,42 @@
       </section>
 
       <!-- Last consequences -->
-      <section v-if="state.consequences_text" class="pmsim__consequences">
-        <strong>{{ $t('agileTraining.pmSim.lastConsequences') }}:</strong> {{ state.consequences_text }}
+      <section v-if="lastConsequencesParts.length || state.consequences_text" class="pmsim__consequences">
+        <strong>{{ $t('agileTraining.pmSim.lastConsequences') }}:</strong>
+        <span v-if="lastConsequencesParts.length" class="pmsim__cons-list">
+          <span v-for="(p, i) in lastConsequencesParts" :key="i"
+                class="pmsim__cons-pill"
+                :class="p.delta > 0 ? 'pmsim__cons-pill--up' : (p.delta < 0 ? 'pmsim__cons-pill--down' : '')">
+            {{ p.label }} {{ p.delta > 0 ? '+' : '' }}{{ p.delta }}
+          </span>
+        </span>
+        <span v-else>{{ state.consequences_text }}</span>
       </section>
 
       <!-- AI helper -->
       <section class="pmsim__ai">
         <h3>{{ $t('agileTraining.pmSim.aiCoach') }}</h3>
+        <p class="pmsim__hint">{{ $t('agileTraining.pmSim.aiHint') }}</p>
         <textarea v-model="aiInput" rows="2" :placeholder="$t('agileTraining.pmSim.aiHint')"></textarea>
         <div class="pmsim__ai-row">
-          <button class="pmsim__btn pmsim__btn--ghost" :disabled="aiBusy || aiCallsLeft<=0" @click="askAi('tradeoff')">{{ $t('agileTraining.pmSim.aiTradeoff') }}</button>
-          <button class="pmsim__btn pmsim__btn--ghost" :disabled="aiBusy || aiCallsLeft<=0" @click="askAi('userVoice')">{{ $t('agileTraining.pmSim.aiUserVoice') }}</button>
-          <button class="pmsim__btn pmsim__btn--ghost" :disabled="aiBusy || aiCallsLeft<=0" @click="askAi('explain')">{{ $t('agileTraining.pmSim.aiExplain') }}</button>
+          <button class="pmsim__btn pmsim__btn--ghost"
+                  :disabled="aiBusy || aiCallsLeft<=0"
+                  :title="$t('agileTraining.pmSim.aiTradeoffHint')"
+                  @click="askAi('tradeoff')">
+            {{ $t('agileTraining.pmSim.aiTradeoff') }}
+          </button>
+          <button class="pmsim__btn pmsim__btn--ghost"
+                  :disabled="aiBusy || aiCallsLeft<=0"
+                  :title="$t('agileTraining.pmSim.aiUserVoiceHint')"
+                  @click="askAi('userVoice')">
+            {{ $t('agileTraining.pmSim.aiUserVoice') }}
+          </button>
+          <button class="pmsim__btn pmsim__btn--ghost"
+                  :disabled="aiBusy || aiCallsLeft<=0"
+                  :title="$t('agileTraining.pmSim.aiExplainHint')"
+                  @click="askAi('explain')">
+            {{ $t('agileTraining.pmSim.aiExplain') }}
+          </button>
           <span class="pmsim__ai-counter">{{ aiCallsLeft }}/{{ state.my && state.my.ai_calls_limit }}</span>
         </div>
         <pre class="pmsim__ai-reply" v-if="aiReply">{{ aiReply }}</pre>
@@ -421,7 +531,14 @@
             <strong>{{ recapToShow.event.title }}</strong>
             <em v-if="recapToShow.decision"> → {{ recapToShow.decision.title }}</em>
           </p>
-          <p class="pmsim__hint" v-if="(recapToShow.decision_notes || []).length">
+          <div v-if="recapDecisionStructParts.length" class="pmsim__cons-list">
+            <span v-for="(p, i) in recapDecisionStructParts" :key="i"
+                  class="pmsim__cons-pill"
+                  :class="p.delta > 0 ? 'pmsim__cons-pill--up' : (p.delta < 0 ? 'pmsim__cons-pill--down' : '')">
+              {{ p.label }} {{ p.delta > 0 ? '+' : '' }}{{ p.delta }}
+            </span>
+          </div>
+          <p class="pmsim__hint" v-else-if="(recapToShow.decision_notes || []).length">
             {{ recapToShow.decision_notes.join(', ') }}
           </p>
         </div>
@@ -470,6 +587,20 @@
               </span>
             </li>
           </ul>
+        </div>
+
+        <div class="pmsim__recap-section" v-if="recapQuotaReport">
+          <h4>📐 {{ $t('agileTraining.pmSim.recap.quotaTitle') }}</h4>
+          <ul class="pmsim__recap-quota-list">
+            <li v-for="f in quotaFocusList" :key="f">
+              <strong>{{ $t('agileTraining.pmSim.quotas.labels.' + f) }}</strong>:
+              {{ recapQuotaReport.actual_pct[f] || 0 }}% / {{ recapQuotaReport.quotas[f] || 0 }}%
+              <em :class="recapQuotaReport.deviations && Math.abs(recapQuotaReport.deviations[f] || 0) > 22 ? 'pmsim__cons-pill--down' : ''">
+                ({{ (recapQuotaReport.deviations[f] || 0) > 0 ? '+' : '' }}{{ recapQuotaReport.deviations[f] || 0 }} pp)
+              </em>
+            </li>
+          </ul>
+          <p class="pmsim__hint">{{ recapQuotaText }}</p>
         </div>
 
         <div class="pmsim__recap-section pmsim__recap-focus" v-if="recapToShow.focus">
@@ -538,6 +669,10 @@ export default {
       poToolkitDraft: null,
       recapDismissedWeek: -1,
       recapForceShow: null,
+      quotaDraft: { business: 50, tech_debt: 30, architecture: 20 },
+      quotasSaving: false,
+      quotasError: '',
+      quotasSavedFlash: false,
     };
   },
   computed: {
@@ -646,20 +781,91 @@ export default {
     },
     toolkitCategories() {
       return [
-        { key: 'discovery', label: this.$t('agileTraining.pmSim.toolkit.cat.discovery') },
-        { key: 'growth',    label: this.$t('agileTraining.pmSim.toolkit.cat.growth') },
-        { key: 'pivot',     label: this.$t('agileTraining.pmSim.toolkit.cat.pivot') },
-        { key: 'scrum',     label: this.$t('agileTraining.pmSim.toolkit.cat.scrum') },
+        { key: 'discovery',   label: this.$t('agileTraining.pmSim.toolkit.cat.discovery') },
+        { key: 'business',    label: this.$t('agileTraining.pmSim.toolkit.cat.business') },
+        { key: 'engineering', label: this.$t('agileTraining.pmSim.toolkit.cat.engineering') },
+        { key: 'growth',      label: this.$t('agileTraining.pmSim.toolkit.cat.growth') },
+        { key: 'pivot',       label: this.$t('agileTraining.pmSim.toolkit.cat.pivot') },
+        { key: 'scrum',       label: this.$t('agileTraining.pmSim.toolkit.cat.scrum') },
       ];
     },
     toolkitByCat() {
       const list = this.state.po_action_catalog || [];
-      const out = { discovery: [], growth: [], pivot: [], scrum: [] };
-      list.forEach((a) => { if (out[a.category]) out[a.category].push(a); });
+      const out = { discovery: [], business: [], engineering: [], growth: [], pivot: [], scrum: [] };
+      list.forEach((a) => {
+        const cat = a.category || 'discovery';
+        if (out[cat]) out[cat].push(a);
+        else out.discovery.push(a);
+      });
       return out;
     },
     visibleToolkitActions() {
       return this.toolkitByCat[this.toolkitTab] || [];
+    },
+    quotaFocusList() {
+      return this.state.quota_focuses || ['business', 'tech_debt', 'architecture'];
+    },
+    quotaDefaults() {
+      return this.state.quota_defaults || { business: 50, tech_debt: 30, architecture: 20 };
+    },
+    quotaActualPct() {
+      const load = this.state.cycle_focus_load || {};
+      let total = 0;
+      this.quotaFocusList.forEach((f) => { total += Number(load[f]) || 0; });
+      const out = {};
+      this.quotaFocusList.forEach((f) => {
+        if (total <= 0) { out[f] = null; return; }
+        out[f] = Math.round(((Number(load[f]) || 0) / total) * 100);
+      });
+      return out;
+    },
+    quotaDraftSum() {
+      return this.quotaFocusList.reduce((s, f) => s + (Number(this.quotaDraft[f]) || 0), 0);
+    },
+    quotasDraftValid() {
+      if (this.quotaDraftSum !== 100) return false;
+      return this.quotaFocusList.every((f) => {
+        const v = Number(this.quotaDraft[f]);
+        return Number.isFinite(v) && v >= 0 && v <= 100;
+      });
+    },
+    quotasDirty() {
+      const cur = this.state.quotas || {};
+      return this.quotaFocusList.some((f) => Number(cur[f] || 0) !== Number(this.quotaDraft[f] || 0));
+    },
+    lastConsequencesParts() {
+      const arr = this.state.consequences_struct || [];
+      return this.localizeConsequenceStruct(arr);
+    },
+    recapDecisionStructParts() {
+      const r = this.recapToShow;
+      if (!r) return [];
+      const arr = r.decision_notes_struct || [];
+      return this.localizeConsequenceStruct(arr);
+    },
+    recapQuotaReport() {
+      const r = this.recapToShow;
+      if (!r || !r.quota_report) return null;
+      return r.quota_report;
+    },
+    recapQuotaText() {
+      const r = this.recapQuotaReport;
+      if (!r) return '';
+      const dev = r.max_deviation || 0;
+      const tol = (this.state.quota_tolerance_pct != null) ? this.state.quota_tolerance_pct : 18;
+      const heavy = 22;
+      if (dev <= tol) return this.$t('agileTraining.pmSim.recap.quotaBalanced');
+      if (dev >= heavy) return this.$t('agileTraining.pmSim.recap.quotaPenalty');
+      return this.$t('agileTraining.pmSim.recap.quotaOk');
+    },
+    featurePickHelp() {
+      const t = (k, v) => this.$t(`agileTraining.pmSim.feat.${k}`, v || {});
+      if (!this.featurePicks.length) return t('helpEmpty');
+      if (this.pickedHasStabilize) return t('helpStabilize');
+      if (this.pickedBigCount === 1) return t('helpBig');
+      if (this.featurePicks.length === 2) return t('helpTwo');
+      if (this.featurePicks.length === 1) return t('helpOneSmall');
+      return '';
     },
     latestBackendRecap() {
       const arr = this.state.weekly_recaps || [];
@@ -697,6 +903,10 @@ export default {
   watch: {
     '$i18n.locale'(val) { if (val !== this.locale) { this.locale = val; this.loadState(true).catch(()=>{}); } },
     'state.feature_choice_open'(val) { if (!val) this.featurePicks = []; },
+    'state.quotas': {
+      deep: true,
+      handler(val) { this.syncQuotaDraft(val); },
+    },
   },
   async mounted() {
     this.participantToken = read(TOKEN_KEY_PREFIX, this.slug);
@@ -704,6 +914,7 @@ export default {
     try { await this.loadState(true); }
     catch (e) { this.loadError = (e.response && e.response.data && e.response.data.error) || e.message || 'Error'; }
     finally { this.loading = false; }
+    this.syncQuotaDraft(this.state.quotas);
     this.startPolling();
   },
   beforeUnmount() { this.stopPolling(); },
@@ -868,19 +1079,19 @@ export default {
         this.featurePicks = [key];
         return;
       }
-      n = n.filter((k) => {
+      const onlySmall = n.filter((k) => {
         const e = this.featMeta(k);
         return !e.isStabilize && !e.isBig;
       });
-      if (n.length === 0) {
+      if (onlySmall.length === 0) {
         this.featurePicks = [key];
         return;
       }
-      if (n.length === 1) {
-        this.featurePicks = [n[0], key];
+      if (onlySmall.length === 1) {
+        this.featurePicks = [onlySmall[0], key];
         return;
       }
-      this.featurePicks = [n[0], key];
+      this.featurePicks = [onlySmall[1], key];
     },
     selectToolkitAction(a) {
       if (!this.isPO) return;
@@ -973,8 +1184,79 @@ export default {
         low_satisfaction: this.$t('agileTraining.pmSim.toolkit.blockedReason.low_satisfaction'),
         not_playing: this.$t('agileTraining.pmSim.toolkit.blockedReason.not_playing'),
         need_problem_interview: this.$t('agileTraining.pmSim.toolkit.blockedReason.need_problem_interview'),
+        po_weekly_limit: this.$t('agileTraining.pmSim.toolkit.blockedReason.po_weekly_limit'),
       };
       return map[key] || reason;
+    },
+    syncQuotaDraft(value) {
+      const src = value || this.state.quotas || {};
+      const next = {};
+      this.quotaFocusList.forEach((f) => {
+        const v = Number(src[f]);
+        next[f] = Number.isFinite(v) ? v : (this.quotaDefaults[f] || 0);
+      });
+      this.quotaDraft = next;
+    },
+    quotaDeviation(focus) {
+      const actual = this.quotaActualPct[focus];
+      if (actual === null || actual === undefined) return 0;
+      const target = Number((this.state.quotas || {})[focus]) || 0;
+      return Math.round(actual - target);
+    },
+    quotaDeviationText(focus) {
+      const d = this.quotaDeviation(focus);
+      return (d > 0 ? '+' : '') + d + ' pp';
+    },
+    quotaDeviationClass(focus) {
+      const d = Math.abs(this.quotaDeviation(focus));
+      const tol = Number(this.state.quota_tolerance_pct) || 18;
+      const heavy = 22;
+      if (d <= tol) return 'pmsim__quota-actual--ok';
+      if (d >= heavy) return 'pmsim__quota-actual--bad';
+      return 'pmsim__quota-actual--warn';
+    },
+    async saveQuotas() {
+      if (!this.isPO) return;
+      this.quotasError = '';
+      if (!this.quotasDraftValid) {
+        this.quotasError = this.quotaDraftSum === 100
+          ? this.$t('agileTraining.pmSim.quotas.errors.range')
+          : this.$t('agileTraining.pmSim.quotas.errors.sum');
+        return;
+      }
+      this.quotasSaving = true;
+      try {
+        await axios.post(`/api/agile-training/pm-sim/g/${this.slug}/quotas`, {
+          participant_token: this.participantToken,
+          quotas: this.quotaDraft,
+        });
+        this.quotasSavedFlash = true;
+        setTimeout(() => { this.quotasSavedFlash = false; }, 2000);
+        await this.loadState(true);
+      } catch (e) {
+        const msg = (e.response && e.response.data && e.response.data.error) || e.message || 'Error';
+        if (msg === 'quotas_must_sum_to_100') {
+          this.quotasError = this.$t('agileTraining.pmSim.quotas.errors.sum');
+        } else if (msg === 'invalid_quota_range' || msg === 'invalid_quota') {
+          this.quotasError = this.$t('agileTraining.pmSim.quotas.errors.range');
+        } else {
+          this.quotasError = msg;
+        }
+      } finally {
+        this.quotasSaving = false;
+      }
+    },
+    localizeConsequenceStruct(arr) {
+      if (!Array.isArray(arr) || !arr.length) return [];
+      const out = [];
+      arr.forEach((rec) => {
+        if (!rec || typeof rec !== 'object') return;
+        const k = rec.key || rec.type;
+        const delta = Number(rec.delta);
+        if (!Number.isFinite(delta) || delta === 0) return;
+        out.push({ key: k, delta, label: this.effectLabel(k) });
+      });
+      return out;
     },
     closeRecap() {
       const r = this.recapToShow;
@@ -1009,10 +1291,38 @@ export default {
 .pmsim__lead { color: #374151; line-height: 1.55; }
 .pmsim__form { display: flex; gap: 10px; margin-top: 14px; }
 .pmsim__form input { flex: 1; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
-.pmsim__btn { border: 1px solid #cbd5e1; background: #fff; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.pmsim__btn--primary { background: linear-gradient(135deg,#6366f1,#22c55e); color: #fff; border-color: transparent; }
-.pmsim__btn--primary:disabled { opacity: 0.55; cursor: not-allowed; }
-.pmsim__btn--ghost { background: #f8fafc; }
+.pmsim__btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: normal;
+  text-align: center;
+  white-space: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.pmsim__btn:hover:not(:disabled) { border-color: #94a3b8; background: #f8fafc; color: #0f172a; }
+.pmsim__btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.pmsim__btn--primary {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4338ca;
+}
+.pmsim__btn--primary:hover:not(:disabled) { background: #4338ca; border-color: #3730a3; color: #fff; }
+.pmsim__btn--ghost { background: #f8fafc; color: #1f2937; }
+.pmsim__btn--ghost:hover:not(:disabled) { background: #eef2ff; border-color: #c7d2fe; color: #1f2937; }
+.pmsim__btn--danger { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.pmsim__btn--danger:hover:not(:disabled) { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; }
+.pmsim__btn--lg { padding: 10px 18px; font-size: 14px; }
 .pmsim__error { color: #b91c1c; margin-top: 8px; }
 .pmsim__hint { color: #6b7280; font-size: 13px; margin-top: 6px; }
 
@@ -1157,10 +1467,12 @@ export default {
   display: flex; flex-direction: column; gap: 6px; min-height: 180px;
 }
 .pmsim__tk-card--locked { opacity: 0.55; }
-.pmsim__tk-card--discovery { border-left: 3px solid #6366f1; }
-.pmsim__tk-card--growth    { border-left: 3px solid #f59e0b; }
-.pmsim__tk-card--pivot     { border-left: 3px solid #ef4444; }
-.pmsim__tk-card--scrum     { border-left: 3px solid #10b981; }
+.pmsim__tk-card--discovery   { border-left: 3px solid #6366f1; }
+.pmsim__tk-card--business    { border-left: 3px solid #0ea5e9; }
+.pmsim__tk-card--engineering { border-left: 3px solid #14b8a6; }
+.pmsim__tk-card--growth      { border-left: 3px solid #f59e0b; }
+.pmsim__tk-card--pivot       { border-left: 3px solid #ef4444; }
+.pmsim__tk-card--scrum       { border-left: 3px solid #10b981; }
 .pmsim__tk-head { display: flex; align-items: center; gap: 6px; }
 .pmsim__tk-icon { font-size: 18px; }
 .pmsim__tk-desc { font-size: 12px; color: #475569; margin: 0; }
@@ -1214,6 +1526,82 @@ export default {
 .pmsim__recap-focus h4 { color: #312e81; }
 .pmsim__recap-focus p { margin: 0; font-size: 13px; color: #312e81; }
 .pmsim__recap-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* PO weekly action budget */
+.pmsim__toolkit-head { align-items: flex-start; }
+.pmsim__po-budget {
+  display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px;
+  padding: 6px 10px; max-width: 320px;
+}
+.pmsim__po-budget-label { font-size: 11px; color: #4338ca; text-transform: uppercase; letter-spacing: 0.04em; }
+.pmsim__po-budget-value { font-size: 16px; color: #1e1b4b; }
+.pmsim__po-budget .pmsim__hint { margin: 0; font-size: 11px; color: #4338ca; text-align: right; }
+
+/* Focus tag (business / tech_debt / architecture) */
+.pmsim__focus-tag {
+  display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; line-height: 1.4; border: 1px solid transparent;
+  margin-left: 6px; white-space: nowrap;
+}
+.pmsim__focus-tag--business     { background: #ecfeff; color: #155e75; border-color: #67e8f9; }
+.pmsim__focus-tag--tech_debt    { background: #fff7ed; color: #9a3412; border-color: #fdba74; }
+.pmsim__focus-tag--architecture { background: #f5f3ff; color: #4c1d95; border-color: #c4b5fd; }
+
+/* Feature card extras */
+.pmsim__feat-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0 0; }
+.pmsim__pick-badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 999px; border: 1px solid transparent;
+  text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600;
+}
+.pmsim__pick-badge--solo  { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+.pmsim__pick-badge--big   { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+.pmsim__pick-badge--small { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+.pmsim__feature--big { border-style: dashed; }
+.pmsim__feature--stabilize header strong { color: #047857; }
+.pmsim__pick-help {
+  background: #eef2ff; border: 1px solid #c7d2fe; color: #312e81;
+  padding: 6px 10px; border-radius: 8px; font-size: 12px; margin: 6px 0;
+}
+
+/* Quotas widget */
+.pmsim__quotas { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; margin: 12px 0; }
+.pmsim__quotas-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.pmsim__quotas-head h3 { margin: 0; font-size: 16px; }
+.pmsim__quotas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.pmsim__quota-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.pmsim__quota-card--business     { border-left: 3px solid #0ea5e9; }
+.pmsim__quota-card--tech_debt    { border-left: 3px solid #f97316; }
+.pmsim__quota-card--architecture { border-left: 3px solid #8b5cf6; }
+.pmsim__quota-label { font-size: 12px; color: #475569; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; }
+.pmsim__quota-input-row { display: flex; align-items: center; gap: 4px; }
+.pmsim__quota-input-row input {
+  width: 70px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700;
+  background: #fff;
+}
+.pmsim__quota-input-row input:disabled { background: #f1f5f9; color: #475569; }
+.pmsim__quota-unit { color: #64748b; font-size: 13px; }
+.pmsim__quota-actual { font-size: 12px; color: #475569; display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.pmsim__quota-actual strong { font-size: 13px; }
+.pmsim__quota-dev { font-style: normal; opacity: 0.85; margin-left: 4px; font-size: 11px; }
+.pmsim__quota-actual--ok strong   { color: #065f46; }
+.pmsim__quota-actual--warn strong { color: #92400e; }
+.pmsim__quota-actual--bad strong  { color: #991b1b; }
+.pmsim__quotas-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pmsim__hint--ok { color: #065f46; }
+
+/* Consequences pills */
+.pmsim__cons-list { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
+.pmsim__cons-pill {
+  display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px;
+  font-size: 12px; background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; font-weight: 600;
+}
+.pmsim__cons-pill--up   { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+.pmsim__cons-pill--down { background: #fef2f2; color: #7f1d1d; border-color: #fca5a5; }
+
+/* Recap quotas */
+.pmsim__recap-quota-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 13px; }
+.pmsim__recap-quota-list em { font-style: normal; margin-left: 4px; }
 
 @media print {
   .pmsim__top, .pmsim__lang, .pmsim__ai, .pmsim__cta, .pmsim__decision-bar, .pmsim__btn { display: none !important; }

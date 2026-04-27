@@ -87,6 +87,21 @@ STATUS_ALIVE = "alive"
 STATUS_AT_RISK = "at_risk"
 STATUS_DEAD = "dead"
 
+# --- PO action budget ---
+# PO тоже ограничен: его «инструменты» (problem-интервью, рефакторинг, ретро,
+# архитектурный обзор и т.п.) — это активная работа, и за неделю их не больше
+# заданного числа. Так фокус становится осознанным выбором, а не «нажму всё».
+PO_ACTIONS_PER_WEEK_LIMIT = 2
+
+# --- Quotas ---
+# Эталонный баланс инвестиций PO: 50% бизнес-задачи, 30% тех. долг, 20% архитектура.
+# PO может скорректировать квоты под свою стратегию, но крупное отклонение от
+# заявленных квот в фактической работе цикла приводит к мягким штрафам.
+QUOTA_FOCUSES = ("business", "tech_debt", "architecture")
+QUOTA_DEFAULTS = {"business": 50, "tech_debt": 30, "architecture": 20}
+QUOTA_DEVIATION_TOLERANCE_PCT = 18  # ±18 п.п. по каждой оси — норма
+QUOTA_DEVIATION_PENALTY_HEAVY = 22   # >22 п.п. — серьёзный штраф
+
 
 # --------------------------- catalog: events ---------------------------
 #
@@ -404,47 +419,61 @@ _EVENTS_RU: List[Dict[str, Any]] = [
 _FEATURES_RU: List[Dict[str, Any]] = [
     {"key": "reactions", "title": "Реакции на сообщения",
      "description": "Простой способ ответить эмоцией без сообщения.",
-     "capacity": 20, "budget": 0,
+     "capacity": 20, "budget": 0, "focus": "business",
      "effects": {"users_pct": 3, "satisfaction": 5, "tech_debt": 3}},
     {"key": "voice", "title": "Голосовые сообщения",
      "description": "Самая ожидаемая просьба пользователей.",
-     "capacity": 35, "budget": 0,
+     "capacity": 35, "budget": 0, "focus": "business",
      "effects": {"active_users_pct": 6, "satisfaction": 4, "stability": -3, "tech_debt": 5}},
     {"key": "channels", "title": "Каналы для сообществ",
      "description": "Большая фича — авторы получают подписчиков.",
-     "capacity": 50, "budget": 0,
+     "capacity": 50, "budget": 0, "focus": "business",
      "effects": {"users_pct": 12, "tech_debt": 10, "stability": -5, "revenue_potential": 8000}},
     {"key": "premium", "title": "Подписка Premium",
      "description": "Платный пакет: облачное хранение, темы, эмодзи.",
-     "capacity": 40, "budget": 0,
+     "capacity": 40, "budget": 0, "focus": "business",
      "effects": {"satisfaction": -2, "monetization_on": True, "revenue_per_week": 4000},
      "requires": {"satisfaction": 60}},
     {"key": "ads", "title": "Реклама в каналах",
      "description": "Быстрый источник денег.",
-     "capacity": 20, "budget": 0,
+     "capacity": 20, "budget": 0, "focus": "business",
      "effects": {"satisfaction": -10, "trust": -5, "monetization_on": True,
                   "revenue_per_week": 5000, "ad_strength": 1}},
     {"key": "e2ee", "title": "Сквозное шифрование",
      "description": "Доверие вырастет, но фича дорогая.",
-     "capacity": 45, "budget": 0,
+     "capacity": 45, "budget": 0, "focus": "architecture",
      "effects": {"trust": 18, "satisfaction": 4, "tech_debt": 8}},
     {"key": "stabilize", "title": "Стабилизация платформы",
      "description": "Не фича, а вложение в качество.",
-     "capacity": 35, "budget": 0,
+     "capacity": 35, "budget": 0, "focus": "tech_debt",
      "effects": {"stability": 15, "tech_debt": -10}},
     {"key": "redesign", "title": "Редизайн интерфейса",
      "description": "Свежий вид и переосмысление навигации.",
-     "capacity": 30, "budget": 0,
+     "capacity": 30, "budget": 0, "focus": "business",
      "effects": {"satisfaction": 8, "active_users_pct": 3, "first_week_satisfaction_dip": 3}},
     {"key": "stickers", "title": "Маркетплейс стикеров",
      "description": "Контент-фича + чуть денег от продаж.",
-     "capacity": 25, "budget": 0,
+     "capacity": 25, "budget": 0, "focus": "business",
      "effects": {"satisfaction": 4, "users_pct": 2, "revenue_per_week": 1200, "monetization_on": True}},
     {"key": "analytics", "title": "Аналитика для авторов",
      "description": "Поддерживает каналы — авторы остаются дольше.",
-     "capacity": 30, "budget": 0,
+     "capacity": 30, "budget": 0, "focus": "business",
      "effects": {"satisfaction": 2, "active_users_pct": 4, "tech_debt": 4},
      "requires": {"feature": "channels"}},
+    # --- Engineering / architecture фичи: усиливают платформу.
+    {"key": "observability", "title": "Метрики и observability",
+     "description": "Сбор телеметрии и алёрты: видим продакшн, ловим инциденты до пользователей.",
+     "capacity": 25, "budget": 0, "focus": "architecture",
+     "effects": {"stability": 7, "tech_debt": -3, "trust": 2}},
+    {"key": "platform_split", "title": "Разделить монолит",
+     "description": "Большая инвестиция в архитектуру: сервис на сервисы. Снимает долг и рост стабильности, но дорогая.",
+     "capacity": 50, "budget": 0, "focus": "architecture",
+     "effects": {"stability": 10, "tech_debt": -15, "capacity_delta": -5},
+     "requires": {"satisfaction": 55}},
+    {"key": "ci_cd", "title": "CI/CD и автотесты",
+     "description": "Автоматический пайплайн поставки. Команда быстрее доезжает до релиза, меньше регрессий.",
+     "capacity": 30, "budget": 0, "focus": "tech_debt",
+     "effects": {"stability": 5, "tech_debt": -7, "capacity_delta": 0}},
 ]
 
 
@@ -465,17 +494,19 @@ _FEATURES_RU: List[Dict[str, Any]] = [
 #   - requires: { week_min, satisfaction, ... } — мягкие ограничения
 
 PO_ACTIONS: Dict[str, Dict[str, Any]] = {
-    # --- Discovery ---
+    # --- Discovery (focus = business: разбираемся в ценности продукта) ---
     "problem_interview": {
         "title_ru": "Провести проблемное интервью",
         "title_en": "Run problem interviews",
-        "description_ru": "Поговорить с 5 пользователями. Уточняешь настоящую боль — следующая фича попадёт точнее.",
-        "description_en": "Talk to 5 users. Sharpen real pain — next feature lands closer to value.",
+        "description_ru": "Поговорить с 5 пользователями о их реальной боли. Это не тренинг, а исследование: после интервью лучше понимаешь, какую проблему стоит решать. Следующая фича попадёт точнее.",
+        "description_en": "Talk to 5 users about their real pain. It's research, not coaching: after interviews you'll know which problem is worth solving. The next feature lands closer to value.",
         "category": "discovery",
+        "focus": "business",
         "icon": "🎤",
         "cap_cost": 8,
         "budget_cost": 0,
         "cooldown_weeks": 2,
+        "po_action_cost": 1,
         "max_per_game": None,
         "effects": {"satisfaction": 2, "trust": 2, "tech_debt": -1},
     },
@@ -485,13 +516,15 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "description_ru": "Показать прототип — проверить, решит ли он проблему. Снижает риск опоздать со следующим релизом. Сначала нужны проблемные интервью.",
         "description_en": "Show a prototype — after problem interviews, check that it solves the need. Lowers slip risk on the next release.",
         "category": "discovery",
+        "focus": "business",
         "icon": "🧪",
         "cap_cost": 6,
         "budget_cost": 0,
         "cooldown_weeks": 2,
+        "po_action_cost": 1,
         "requires": {"after_action": "problem_interview"},
         "effects": {"satisfaction": 1, "stability": 2, "tech_debt": -1},
-        "side_effects": {"next_release_risk_buff": 12},  # custom hook (см. _apply_po_action)
+        "side_effects": {"next_release_risk_buff": 12},
     },
     "ab_test": {
         "title_ru": "Запустить A/B тест",
@@ -499,23 +532,27 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "description_ru": "Маленький эксперимент вместо большой ставки. Низкий риск, но и эффект скромнее.",
         "description_en": "A small experiment instead of a big bet. Low risk, modest reward.",
         "category": "discovery",
+        "focus": "business",
         "icon": "🆎",
         "cap_cost": 10,
         "budget_cost": 0,
         "cooldown_weeks": 2,
+        "po_action_cost": 1,
         "effects": {"satisfaction": 2, "trust": 1, "active_users_pct": 2, "tech_debt": 2},
     },
-    # --- Growth ---
+    # --- Growth (focus = business) ---
     "traffic_invest": {
-        "title_ru": "Вложиться в трафик",
+        "title_ru": "Вложиться в платный трафик",
         "title_en": "Invest in paid traffic",
         "description_ru": "Платный трафик: пользователей быстро прибавится, но без удержания они уйдут с разочарованием.",
         "description_en": "Paid traffic: quick user spike. Without retention they churn back disappointed.",
         "category": "growth",
+        "focus": "business",
         "icon": "💸",
         "cap_cost": 5,
         "budget_cost": 15000,
         "cooldown_weeks": 3,
+        "po_action_cost": 1,
         "effects": {"users_pct": 8, "satisfaction": -3, "trust": -1, "ad_strength": 1},
         "requires": {"satisfaction": 50},
     },
@@ -525,25 +562,122 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "description_ru": "Большая ставка на переосмысление продукта. Дорого, требует фокуса, но восстанавливает доверие и снимает долг.",
         "description_en": "A big bet on rethinking the product. Costly and disruptive, but restores trust and pays off debt.",
         "category": "pivot",
+        "focus": "business",
         "icon": "🔄",
         "cap_cost": 40,
         "budget_cost": 10000,
         "cooldown_weeks": 0,
+        "po_action_cost": 2,
         "max_per_game": 1,
         "requires": {"week_min": 5},
         "effects": {"satisfaction": 6, "trust": 8, "tech_debt": -12, "stability": 4, "users_pct": -5},
     },
-    # --- Scrum events ---
+    # --- Stakeholders & business hygiene (focus = business) ---
+    "stakeholder_sync": {
+        "title_ru": "Стейкхолдер-синк",
+        "title_en": "Stakeholder sync",
+        "description_ru": "Встреча с заказчиком и стейкхолдерами: показать roadmap, обсудить риски, договориться о приоритетах. Снимает напряжение давления инвестора.",
+        "description_en": "Meet with the customer and stakeholders: show the roadmap, discuss risks, align priorities. Eases investor pressure.",
+        "category": "business",
+        "focus": "business",
+        "icon": "🤝",
+        "cap_cost": 4,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "po_action_cost": 1,
+        "effects": {"trust": 4, "satisfaction": 1},
+        "side_effects": {"investor_pressure_release": 1},
+    },
+    "prioritization_workshop": {
+        "title_ru": "Воркшоп по приоритизации",
+        "title_en": "Prioritization workshop",
+        "description_ru": "Команда вместе сортирует беклог по ценности и риску. Следующий цикл идёт точнее, меньше переделок.",
+        "description_en": "The team sorts the backlog by value and risk together. The next cycle is sharper, with less rework.",
+        "category": "business",
+        "focus": "business",
+        "icon": "🗂️",
+        "cap_cost": 6,
+        "budget_cost": 0,
+        "cooldown_weeks": 3,
+        "po_action_cost": 1,
+        "effects": {"capacity_delta": 4, "satisfaction": 1, "tech_debt": -1},
+        "side_effects": {"next_release_risk_buff": 6},
+    },
+    # --- Engineering: tech debt (focus = tech_debt) ---
+    "tech_debt_sprint": {
+        "title_ru": "Спринт по техдолгу",
+        "title_en": "Tech-debt sprint",
+        "description_ru": "Команда фокусированно режет долг: рефакторинг, чистка флагов, медленные запросы. Дорого по capacity, но даёт стабильность.",
+        "description_en": "A focused tech-debt push: refactors, flag cleanup, slow queries. Pricey on capacity, but builds stability.",
+        "category": "engineering",
+        "focus": "tech_debt",
+        "icon": "🧹",
+        "cap_cost": 18,
+        "budget_cost": 0,
+        "cooldown_weeks": 4,
+        "po_action_cost": 1,
+        "max_per_game": 3,
+        "effects": {"tech_debt": -10, "stability": 6, "satisfaction": -1},
+    },
+    "team_one_on_one": {
+        "title_ru": "1:1 с инженерами",
+        "title_en": "Engineering 1:1s",
+        "description_ru": "Поговорить с инженерами: где буксуем, что мешает, какие риски не видны на дайли. Маленькое снижение долга и риск-баффа на следующий релиз.",
+        "description_en": "Quick 1:1s with engineers: where we get stuck, what's invisible at standup. Small debt reduction and a risk buffer for the next release.",
+        "category": "engineering",
+        "focus": "tech_debt",
+        "icon": "👂",
+        "cap_cost": 4,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "po_action_cost": 1,
+        "effects": {"tech_debt": -2, "satisfaction": 1, "trust": 1},
+        "side_effects": {"next_release_risk_buff": 5},
+    },
+    # --- Engineering: architecture (focus = architecture) ---
+    "arch_review": {
+        "title_ru": "Архитектурный обзор",
+        "title_en": "Architecture review",
+        "description_ru": "Сессия с тех-лидом: смотрим узкие места, точки отказа, что готово ли к нагрузке. Снижает риск опоздать с релизом.",
+        "description_en": "A session with the tech lead: bottlenecks, failure points, scaling readiness. Lowers slip risk on the next release.",
+        "category": "engineering",
+        "focus": "architecture",
+        "icon": "🏛️",
+        "cap_cost": 6,
+        "budget_cost": 0,
+        "cooldown_weeks": 2,
+        "po_action_cost": 1,
+        "effects": {"stability": 2, "tech_debt": -1, "trust": 1},
+        "side_effects": {"next_release_risk_buff": 8},
+    },
+    "arch_decision": {
+        "title_ru": "Принять архитектурное решение",
+        "title_en": "Architecture decision",
+        "description_ru": "Сделать выбор по большому архитектурному вопросу (база, очередь, разбиение сервиса). Долгий хвост на стабильности и долге.",
+        "description_en": "Commit to a big architectural decision (DB, queue, service split). Pays off in stability and debt over time.",
+        "category": "engineering",
+        "focus": "architecture",
+        "icon": "🧭",
+        "cap_cost": 12,
+        "budget_cost": 0,
+        "cooldown_weeks": 3,
+        "po_action_cost": 1,
+        "max_per_game": 3,
+        "effects": {"stability": 4, "tech_debt": -4, "trust": 1},
+    },
+    # --- Scrum events (process, focus не учитываем в квотах) ---
     "daily": {
         "title_ru": "Сходить на Daily Stand-up",
         "title_en": "Attend Daily Stand-up",
         "description_ru": "Синк по поставке: статус, риски, зависимости. Без дайли PO не в курсе части ситуации с поставкой и слеп к части рисков в работе.",
         "description_en": "Sync on delivery, risks, and dependencies. Without it the PO misses part of the story and is blind to some delivery issues.",
         "category": "scrum",
+        "focus": None,
         "icon": "🧍",
         "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 1,
+        "po_action_cost": 0,
         "effects": {"capacity_delta": 2},
         "side_effects": {"mark_daily": True},
     },
@@ -553,10 +687,12 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "description_ru": "Уточняешь беклог с командой. Следующий цикл получит немного больше capacity — оценки точнее.",
         "description_en": "Refine the backlog with the team. The next cycle gets a small capacity bump — estimates get sharper.",
         "category": "scrum",
+        "focus": None,
         "icon": "📋",
         "cap_cost": 3,
         "budget_cost": 0,
         "cooldown_weeks": 1,
+        "po_action_cost": 1,
         "effects": {"capacity_delta": 5, "tech_debt": -1},
     },
     "sprint_review": {
@@ -565,11 +701,13 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "description_ru": "Смотрите приращение, собирайте фидбэк. Без обзора PO не получает сигнала от стейкхолдеров — выше риск принять неверный продуктовый курс на следующем цикле.",
         "description_en": "See the increment and collect feedback. Without it, the PO lacks external signal — product bets get riskier.",
         "category": "scrum",
+        "focus": None,
         "icon": "🔍",
         "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
-        "requires": {"cycle_end_week": True},  # только на чётной неделе цикла (w2,4,6,…)
+        "po_action_cost": 0,
+        "requires": {"cycle_end_week": True},
         "effects": {"trust": 4, "satisfaction": 2, "stability": 1},
         "side_effects": {"mark_sprint_review": True},
     },
@@ -579,10 +717,12 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "description_ru": "Процесс и качество сотрудничества. Без ретро команда не снимает трения — работа в следующем цикле заметно медленнее и дороже по ретворку.",
         "description_en": "Process and team health. Without it friction sticks — the next cycle costs more in rework and drag.",
         "category": "scrum",
+        "focus": None,
         "icon": "🔧",
         "cap_cost": 2,
         "budget_cost": 0,
         "cooldown_weeks": 2,
+        "po_action_cost": 0,
         "requires": {"cycle_end_week": True},
         "effects": {"tech_debt": -5, "stability": 3, "satisfaction": 1},
         "side_effects": {"mark_retro": True},
@@ -598,10 +738,12 @@ def _localize_action(action_id: str, action: Dict[str, Any], locale: str) -> Dic
         "title": title,
         "description": desc,
         "category": action.get("category"),
+        "focus": action.get("focus"),
         "icon": action.get("icon"),
         "cap_cost": int(action.get("cap_cost", 0)),
         "budget_cost": int(action.get("budget_cost", 0)),
         "cooldown_weeks": int(action.get("cooldown_weeks", 0)),
+        "po_action_cost": int(action.get("po_action_cost", 0)),
         "max_per_game": action.get("max_per_game"),
         "requires": action.get("requires") or {},
         "effects": action.get("effects") or {},
@@ -716,6 +858,12 @@ _FEATURE_EN: Dict[str, Dict[str, str]] = {
     "redesign": {"title": "UI redesign", "description": "Fresh look, better navigation."},
     "stickers": {"title": "Stickers marketplace", "description": "Content + a bit of revenue."},
     "analytics": {"title": "Author analytics", "description": "Supports channels — authors stick around."},
+    "observability": {"title": "Metrics & observability",
+        "description": "Telemetry + alerts: spot incidents before users do."},
+    "platform_split": {"title": "Break the monolith",
+        "description": "Big architecture investment: split into services. Pays off debt, raises stability."},
+    "ci_cd": {"title": "CI/CD & autotests",
+        "description": "Automated delivery pipeline. Faster releases, fewer regressions."},
 }
 
 
@@ -861,6 +1009,12 @@ def _initial_state() -> Dict[str, Any]:
         "skipped_daily_last_week": False,
         "po_actions": {},          # {action_id: {last_used_week, count}}
         "po_action_log": [],       # история всех применений PO-действий
+        "po_actions_used_this_week": 0,
+        "po_actions_per_week_limit": PO_ACTIONS_PER_WEEK_LIMIT,
+        # Квоты PO: эталон 50/30/20 (бизнес/тех. долг/архитектура).
+        "quotas": dict(QUOTA_DEFAULTS),
+        "quota_history": [],            # [{cycle, actual_pct: {...}, deviations: {...}, penalty: {..}}]
+        "cycle_focus_load": {f: 0 for f in QUOTA_FOCUSES},  # cap, потраченный по фокусам в текущем цикле
         "next_release_risk_buff_pct": 0.0,  # бафф от solution_interview
         "next_release_slip_penalty_pct": 0.0,  # штраф: не ходил на review / т.п.
         "next_week_cap_adj": 0,  # снимаем со «свежей» ёмкости следующей недели
@@ -885,17 +1039,33 @@ def _seeded_random(group_id: int, week: int, salt: str = "") -> random.Random:
     return random.Random(seed)
 
 
-def _apply_metric_delta(data: Dict[str, Any], delta: Dict[str, Any]) -> List[str]:
-    """Применяет числовой эффект варианта/фичи к data, возвращает человеческие лейблы изменений."""
+def _apply_metric_delta(
+    data: Dict[str, Any],
+    delta: Dict[str, Any],
+    struct: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Применяет числовой эффект варианта/фичи к data, возвращает человеческие лейблы изменений.
+
+    Если передан `struct` — заполняет его машинно-читаемыми записями вида
+    ``{"key": "satisfaction", "delta": 5, "type": "metric"}``. Это нужно фронту,
+    чтобы локализовать названия метрик (RU/EN), а не показывать английские ключи.
+    """
     m = data["metrics"]
     notes: List[str] = []
+    track = struct if struct is not None else None
+
+    def push_struct(record: Dict[str, Any]) -> None:
+        if track is not None:
+            track.append(record)
 
     def bump(name: str, value: float, lo=0, hi=100, fmt="±{v}"):
         cur = m[name]
         new = _clamp(cur + value, lo, hi)
         if abs(new - cur) >= 0.01:
             m[name] = round(new, 1) if isinstance(new, float) else int(new)
+            applied = int(round(new - cur))
             notes.append(f"{name} {fmt.format(v=int(round(value)))}")
+            push_struct({"type": "metric", "key": name, "delta": applied})
 
     for k in METRIC_KEYS:
         if k in delta:
@@ -905,49 +1075,57 @@ def _apply_metric_delta(data: Dict[str, Any], delta: Dict[str, Any]) -> List[str
         cur = m["users"]
         diff = int(round(cur * float(delta["users_pct"]) / 100.0))
         m["users"] = max(0, cur + diff)
-        # active users пересчитаем через формулу позже, но добавим прирост пропорционально
         m["active_users"] = max(0, m["active_users"] + int(diff * 0.4))
         notes.append(f"users {'+' if diff >= 0 else ''}{diff}")
+        push_struct({"type": "users", "key": "users", "delta": diff})
 
     if "active_users_pct" in delta:
         cur = m["active_users"]
         diff = int(round(cur * float(delta["active_users_pct"]) / 100.0))
         m["active_users"] = max(0, cur + diff)
         notes.append(f"active_users {'+' if diff >= 0 else ''}{diff}")
+        push_struct({"type": "users", "key": "active_users", "delta": diff})
 
     if "churn_bump" in delta:
-        # моментальный отток в процентах от users
         pct = float(delta["churn_bump"])
         cur = m["users"]
         lost = int(round(cur * pct / 100.0))
         m["users"] = max(0, cur - lost)
         m["active_users"] = max(0, m["active_users"] - int(lost * 0.5))
         notes.append(f"churn -{lost}")
+        push_struct({"type": "churn", "key": "users", "delta": -lost})
 
     if "growth_pct" in delta:
-        # отложенный рост в течение цикла
         data["pending_growth_pct"] = float(data.get("pending_growth_pct", 0)) + float(delta["growth_pct"])
 
     if "capacity_delta" in delta:
         data["capacity_left"] = max(0, int(data.get("capacity_left", CAPACITY_PER_CYCLE)) + int(delta["capacity_delta"]))
         notes.append(f"capacity {int(delta['capacity_delta']):+d}")
+        push_struct({"type": "capacity", "key": "capacity", "delta": int(delta["capacity_delta"])})
 
     if "budget_delta" in delta:
         data["budget"] = int(data.get("budget", 0)) + int(delta["budget_delta"])
         notes.append(f"budget {int(delta['budget_delta']):+d}")
+        push_struct({"type": "budget", "key": "budget", "delta": int(delta["budget_delta"])})
 
     if "revenue_per_week" in delta:
         data["revenue_per_week"] = max(0, int(data.get("revenue_per_week", 0)) + int(delta["revenue_per_week"]))
         notes.append(f"revenue/week → {data['revenue_per_week']}")
+        push_struct({"type": "revenue_rate", "key": "revenue_per_week", "delta": int(delta["revenue_per_week"]),
+                     "value": int(data["revenue_per_week"])})
 
     if "monetization_on" in delta and delta["monetization_on"]:
         data["monetization_on"] = True
 
     if "ad_strength" in delta:
-        data["ad_strength"] = max(0, int(data.get("ad_strength", 0)) + int(delta["ad_strength"]))
+        prev = int(data.get("ad_strength", 0))
+        data["ad_strength"] = max(0, prev + int(delta["ad_strength"]))
+        push_struct({"type": "ad_strength", "key": "ad_strength", "delta": int(delta["ad_strength"])})
 
     if "investor_pressure_delta" in delta:
         data["investor_pressure"] = int(data.get("investor_pressure", 0)) + int(delta["investor_pressure_delta"])
+        push_struct({"type": "investor_pressure", "key": "investor_pressure",
+                     "delta": int(delta["investor_pressure_delta"])})
 
     if "tech_debt_delta" in delta:
         bump("tech_debt", float(delta["tech_debt_delta"]))
@@ -1087,15 +1265,16 @@ def _resolve_event_decision(
     ev: Dict[str, Any],
     option_id: str,
     locale: str,
-) -> Tuple[Dict[str, Any], List[str]]:
+) -> Tuple[Dict[str, Any], List[str], List[Dict[str, Any]]]:
     chosen = next((o for o in ev["options"] if o["id"] == option_id), None)
     if not chosen:
         chosen = ev["options"][0]
-    notes = _apply_metric_delta(data, chosen.get("effects", {}))
+    struct: List[Dict[str, Any]] = []
+    notes = _apply_metric_delta(data, chosen.get("effects", {}), struct)
 
     if chosen.get("unlocks"):
         data.setdefault("unlocked_feature_keys", []).append(chosen["unlocks"])
-    return chosen, notes
+    return chosen, notes, struct
 
 
 def _eligible_features(data: Dict[str, Any], locale: str) -> List[Dict[str, Any]]:
@@ -1117,12 +1296,54 @@ def _eligible_features(data: Dict[str, Any], locale: str) -> List[Dict[str, Any]
 
 
 def _select_feature_options(data: Dict[str, Any], group_id: int, week: int, locale: str) -> List[Dict[str, Any]]:
+    """Собираем 5 опций для окна выбора фич.
+
+    Правила пула:
+      • «Стабилизация» всегда показывается — это страховка от тех. долга.
+      • Гарантируем минимум две «маленькие» фичи (cap < 40), чтобы PO мог
+        собрать комбинацию из двух мелких — иначе мульти-выбор бессмысленен.
+      • Если в пуле есть architecture/tech_debt опции — поднимаем хотя бы одну,
+        чтобы участникам было что выбрать под соответствующую квоту.
+      • Остаток заполняется случайными вариантами по сиду.
+    """
     rnd = _seeded_random(group_id, week, salt="features")
     pool = _eligible_features(data, locale)
-    must = [f for f in pool if f["key"] in {"stabilize"}]
-    rest = [f for f in pool if f["key"] not in {"stabilize"}]
-    rnd.shuffle(rest)
-    return (must + rest)[:5]
+    by_key = {f["key"]: f for f in pool}
+
+    def take(predicate, count, picked_keys):
+        out: List[Dict[str, Any]] = []
+        candidates = [f for f in pool if predicate(f) and f["key"] not in picked_keys]
+        rnd.shuffle(candidates)
+        for f in candidates[:count]:
+            out.append(f)
+            picked_keys.add(f["key"])
+        return out
+
+    picked: List[Dict[str, Any]] = []
+    picked_keys: set = set()
+
+    if "stabilize" in by_key:
+        picked.append(by_key["stabilize"])
+        picked_keys.add("stabilize")
+
+    picked.extend(take(lambda f: int(f.get("capacity", 0)) < 40 and f["key"] != "stabilize", 2, picked_keys))
+    picked.extend(take(lambda f: f.get("focus") == "architecture", 1, picked_keys))
+    picked.extend(take(lambda f: f.get("focus") == "tech_debt", 1, picked_keys))
+
+    while len(picked) < 5:
+        rest = [f for f in pool if f["key"] not in picked_keys]
+        if not rest:
+            break
+        rnd.shuffle(rest)
+        f = rest[0]
+        picked.append(f)
+        picked_keys.add(f["key"])
+
+    rnd.shuffle(picked)
+    if "stabilize" in picked_keys:
+        stab = next(f for f in picked if f["key"] == "stabilize")
+        picked = [stab] + [f for f in picked if f["key"] != "stabilize"]
+    return picked[:5]
 
 
 def _delivery_risk_pct(data: Dict[str, Any], total_committed_cap: int) -> float:
@@ -1141,6 +1362,93 @@ def _delivery_risk_pct(data: Dict[str, Any], total_committed_cap: int) -> float:
     debt_adj = max(0.0, debt - RISK_DEBT_NEUTRAL) * RISK_DEBT_SLOPE
     stab_adj = max(0.0, RISK_STAB_NEUTRAL - stab) * RISK_STAB_SLOPE
     return max(0.0, min(float(RISK_MAX_PCT), base + debt_adj + stab_adj))
+
+
+def _focus_load_add(data: Dict[str, Any], focus: Optional[str], cap_used: int) -> None:
+    """Учитывает потраченный capacity по нужной оси (business / tech_debt / architecture).
+
+    Действия без focus (Scrum-события и т.п.) и с неположительным cap_used
+    игнорируются: они не относятся к продуктовым инвестициям и не должны
+    искажать квоты.
+    """
+    if not focus or focus not in QUOTA_FOCUSES:
+        return
+    cap_used = int(cap_used or 0)
+    if cap_used <= 0:
+        return
+    bucket = data.setdefault("cycle_focus_load", {f: 0 for f in QUOTA_FOCUSES})
+    bucket[focus] = int(bucket.get(focus, 0) or 0) + cap_used
+
+
+def _quota_evaluation_for_cycle(
+    data: Dict[str, Any],
+    cycle_index: int,
+) -> Optional[Dict[str, Any]]:
+    """Сверяет фактическое распределение текущего цикла с квотами PO.
+
+    Возвращает структурированный «отчёт по балансу» и применяет мягкие
+    последствия к метрикам: похвала за баланс, мягкий штраф за крупный перекос.
+    """
+    bucket = data.get("cycle_focus_load") or {}
+    total = sum(int(bucket.get(f, 0) or 0) for f in QUOTA_FOCUSES)
+    quotas = data.get("quotas") or dict(QUOTA_DEFAULTS)
+    if total <= 0:
+        return None
+    actual_pct: Dict[str, int] = {}
+    for f in QUOTA_FOCUSES:
+        actual_pct[f] = int(round((int(bucket.get(f, 0) or 0) / float(total)) * 100.0))
+    deviations: Dict[str, int] = {f: int(actual_pct[f] - int(quotas.get(f, 0))) for f in QUOTA_FOCUSES}
+    abs_dev = {f: abs(d) for f, d in deviations.items()}
+    max_dev = max(abs_dev.values()) if abs_dev else 0
+    penalty: Dict[str, int] = {}
+    struct: List[Dict[str, Any]] = []
+
+    if max_dev <= QUOTA_DEVIATION_TOLERANCE_PCT:
+        delta = {"trust": 1, "satisfaction": 1}
+        _apply_metric_delta(data, delta, struct)
+        penalty = {"kind": "balance_bonus", "trust": 1, "satisfaction": 1}
+    elif max_dev >= QUOTA_DEVIATION_PENALTY_HEAVY:
+        # Кто перегнут — туда и боль. Если сильно загнули в business, страдает
+        # стабильность и долг копится. Если ушли в tech/arch — давление от
+        # инвестора и недовольство пользователей.
+        delta: Dict[str, Any] = {}
+        biz_dev = deviations.get("business", 0)
+        debt_dev = deviations.get("tech_debt", 0)
+        arch_dev = deviations.get("architecture", 0)
+        if biz_dev >= QUOTA_DEVIATION_PENALTY_HEAVY:
+            delta["stability"] = -3
+            delta["tech_debt"] = 4
+            penalty = {"kind": "biz_overshoot", "stability": -3, "tech_debt": 4}
+        elif debt_dev >= QUOTA_DEVIATION_PENALTY_HEAVY:
+            delta["satisfaction"] = -2
+            delta["investor_pressure_delta"] = 1
+            penalty = {"kind": "debt_overshoot", "satisfaction": -2, "investor_pressure": 1}
+        elif arch_dev >= QUOTA_DEVIATION_PENALTY_HEAVY:
+            delta["satisfaction"] = -2
+            delta["users_pct"] = -1
+            penalty = {"kind": "arch_overshoot", "satisfaction": -2, "users_pct": -1}
+        else:
+            # сильно недобрали в чём-то — мягкий штраф по доверию
+            delta["trust"] = -2
+            penalty = {"kind": "neglect", "trust": -2}
+        _apply_metric_delta(data, delta, struct)
+    else:
+        penalty = {"kind": "ok"}
+
+    report = {
+        "cycle": int(cycle_index),
+        "actual_pct": actual_pct,
+        "quotas": dict(quotas),
+        "deviations": deviations,
+        "max_deviation": int(max_dev),
+        "penalty": penalty,
+        "struct": struct,
+        "ts": _now_iso(),
+    }
+    data.setdefault("quota_history", []).append(report)
+    if len(data["quota_history"]) > 12:
+        del data["quota_history"][: len(data["quota_history"]) - 12]
+    return report
 
 
 def _bump_recent_feature_count(data: Dict[str, Any], fkey: str) -> None:
@@ -1201,6 +1509,12 @@ def _release_feature(
         "slipped": False,
     }
 
+    focus = f.get("focus")
+    base_rec["focus"] = focus
+    # Капасити команды списали — это уже инвестиция в выбранную ось,
+    # даже если фича опаздывает (она всё равно «съела» работу команды).
+    _focus_load_add(data, focus, cap)
+
     if slipped:
         # Фича уехала в следующий цикл: эффектов пока нет, висит в pending.
         base_rec["slipped"] = True
@@ -1208,13 +1522,15 @@ def _release_feature(
         data.setdefault("pending_releases", []).append(base_rec)
         return base_rec
 
-    notes = _apply_metric_delta(data, f.get("effects", {}))
+    struct: List[Dict[str, Any]] = []
+    notes = _apply_metric_delta(data, f.get("effects", {}), struct)
     _bump_recent_feature_count(data, fkey)
     rec = dict(base_rec)
     rec["week"] = week
     rec["cycle"] = cur_cycle
     rec["delivered_at_week"] = week
     rec["notes"] = notes
+    rec["notes_struct"] = struct
     data.setdefault("feature_releases", []).append(rec)
     return rec
 
@@ -1239,13 +1555,15 @@ def _process_due_pending_releases(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         f = next((x for x in _FEATURES_RU if x["key"] == rec.get("key")), None)
         if not f:
             continue
-        notes = _apply_metric_delta(data, f.get("effects", {}))
+        struct: List[Dict[str, Any]] = []
+        notes = _apply_metric_delta(data, f.get("effects", {}), struct)
         _bump_recent_feature_count(data, rec.get("key", ""))
         out = dict(rec)
         out["week"] = cur_week
         out["cycle"] = cur_cycle
         out["delivered_at_week"] = cur_week
         out["notes"] = notes
+        out["notes_struct"] = struct
         data.setdefault("feature_releases", []).append(out)
         delivered.append(out)
     data["pending_releases"] = keep
@@ -1265,6 +1583,8 @@ def _start_new_cycle_if_needed(data: Dict[str, Any]) -> None:
     if w % CYCLE_LEN == 1:  # неделя 1, 3, 5, ... — старт цикла
         new_cycle = (w + 1) // CYCLE_LEN  # 1..10
         data["cycle_index"] = new_cycle
+        # Сбрасываем счётчик распределения по фокусам — стартуем чистый цикл.
+        data["cycle_focus_load"] = {f: 0 for f in QUOTA_FOCUSES}
         # Pending releases, которые «дозреют» именно в этом цикле
         carry_cap = sum(
             int(r.get("capacity", 0))
@@ -1349,6 +1669,16 @@ def _serialize_state(
         "po_actions": data.get("po_actions", {}),
         "po_action_log": (data.get("po_action_log") or [])[-30:],
         "po_action_catalog": _localize_actions_for_state(data, locale),
+        "po_actions_used_this_week": int(data.get("po_actions_used_this_week", 0) or 0),
+        "po_actions_per_week_limit": int(
+            data.get("po_actions_per_week_limit", PO_ACTIONS_PER_WEEK_LIMIT) or PO_ACTIONS_PER_WEEK_LIMIT
+        ),
+        "quotas": data.get("quotas") or dict(QUOTA_DEFAULTS),
+        "quota_defaults": dict(QUOTA_DEFAULTS),
+        "quota_focuses": list(QUOTA_FOCUSES),
+        "quota_history": (data.get("quota_history") or [])[-6:],
+        "cycle_focus_load": data.get("cycle_focus_load") or {f: 0 for f in QUOTA_FOCUSES},
+        "consequences_struct": data.get("consequences_struct") or [],
         "next_release_risk_buff_pct": float(data.get("next_release_risk_buff_pct", 0)),
         "next_release_slip_penalty_pct": float(data.get("next_release_slip_penalty_pct", 0) or 0),
         "next_week_cap_adj": int(data.get("next_week_cap_adj", 0) or 0),
@@ -1387,6 +1717,19 @@ def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingPmSimSta
         db.session.commit()
         return row, data
     data = _safe_json_load(row.data_json) or _initial_state()
+    # Лёгкая миграция: подсыпаем поля, которые могли отсутствовать в старых
+    # сейвах (квоты, лимит действий PO, focus_load). Делаем без сохранения —
+    # запишется при следующем save.
+    if "quotas" not in data:
+        data["quotas"] = dict(QUOTA_DEFAULTS)
+    if "quota_history" not in data:
+        data["quota_history"] = []
+    if "cycle_focus_load" not in data:
+        data["cycle_focus_load"] = {f: 0 for f in QUOTA_FOCUSES}
+    if "po_actions_used_this_week" not in data:
+        data["po_actions_used_this_week"] = 0
+    if "po_actions_per_week_limit" not in data:
+        data["po_actions_per_week_limit"] = PO_ACTIONS_PER_WEEK_LIMIT
     return row, data
 
 
@@ -1413,6 +1756,13 @@ def _po_action_status(data: Dict[str, Any], action_id: str, action: Dict[str, An
     bcost = int(action.get("budget_cost", 0) or 0)
     if bcost > 0 and budget < bcost:
         reasons.append("not_enough_budget")
+
+    # PO action budget per week — у PO своё «капасити» внимания.
+    po_cost = int(action.get("po_action_cost", 0) or 0)
+    used = int(data.get("po_actions_used_this_week", 0) or 0)
+    limit = int(data.get("po_actions_per_week_limit", PO_ACTIONS_PER_WEEK_LIMIT) or PO_ACTIONS_PER_WEEK_LIMIT)
+    if po_cost > 0 and (used + po_cost) > limit:
+        reasons.append("po_weekly_limit")
     if "week_min" in requires and week < int(requires["week_min"]):
         reasons.append("too_early")
     if requires.get("cycle_end_week"):
@@ -1467,7 +1817,13 @@ def _apply_po_action(
     if bcost > 0:
         data["budget"] = max(0, int(data.get("budget", 0)) - bcost)
 
-    notes = _apply_metric_delta(data, action.get("effects") or {})
+    # Учитываем потраченное капасити в выбранной оси (фокусе) — это влияет на
+    # сверку с квотами в конце цикла.
+    focus = action.get("focus")
+    _focus_load_add(data, focus, cap_cost)
+
+    struct: List[Dict[str, Any]] = []
+    notes = _apply_metric_delta(data, action.get("effects") or {}, struct)
 
     side = action.get("side_effects") or {}
     if side.get("mark_daily"):
@@ -1487,6 +1843,14 @@ def _apply_po_action(
         b[str(c)] = e
     if "next_release_risk_buff" in side:
         data["next_release_risk_buff_pct"] = float(data.get("next_release_risk_buff_pct", 0)) + float(side["next_release_risk_buff"])
+    if side.get("investor_pressure_release"):
+        cur = int(data.get("investor_pressure", 0) or 0)
+        data["investor_pressure"] = max(0, cur - int(side["investor_pressure_release"]))
+
+    # PO action budget per week.
+    po_cost = int(action.get("po_action_cost", 0) or 0)
+    if po_cost > 0:
+        data["po_actions_used_this_week"] = int(data.get("po_actions_used_this_week", 0) or 0) + po_cost
 
     # cooldown / counter
     log = data.setdefault("po_actions", {})
@@ -1501,20 +1865,26 @@ def _apply_po_action(
         "action_id": action_id,
         "title": title,
         "category": action.get("category"),
+        "focus": focus,
         "icon": action.get("icon"),
         "consequences": notes,
+        "consequences_struct": struct,
         "cap_cost": cap_cost,
         "budget_cost": bcost,
+        "po_action_cost": po_cost,
         "ts": _now_iso(),
     }
     data.setdefault("po_action_log", []).append(rec)
     data.setdefault("history", []).append({
         "week": week,
         "kind": "po_action",
-        "action": {"id": action_id, "title": title, "category": action.get("category"), "icon": action.get("icon")},
+        "action": {"id": action_id, "title": title, "category": action.get("category"),
+                   "focus": focus, "icon": action.get("icon")},
         "consequences": notes,
+        "consequences_struct": struct,
         "cap_cost": cap_cost,
         "budget_cost": bcost,
+        "po_action_cost": po_cost,
         "ts": _now_iso(),
     })
     return rec
@@ -1672,9 +2042,11 @@ def _build_weekly_recap(
         "event": extras.get("event"),
         "decision": extras.get("decision"),
         "decision_notes": extras.get("decision_notes") or [],
+        "decision_notes_struct": extras.get("decision_notes_struct") or [],
         "released_features": extras.get("released_features") or [],
         "late_deliveries": extras.get("late_deliveries") or [],
         "scrum_penalty": extras.get("scrum_penalty") or [],
+        "quota_report": extras.get("quota_report"),
         "focus": _focus_for_next_week(data, next_week),
         "ts": _now_iso(),
     }
@@ -1762,6 +2134,20 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
 
     _apply_passive_week(data)
     scrum_penalty = _apply_scrum_penalty_if_needed(data, week_closed)
+
+    # Если только что закрылась чётная неделя — это конец цикла. Сверим
+    # фактическое распределение работы по фокусам с заявленными квотами.
+    quota_report: Optional[Dict[str, Any]] = None
+    if week_closed > 0 and week_closed % CYCLE_LEN == 0:
+        quota_report = _quota_evaluation_for_cycle(data, int(data.get("cycle_index", 1)))
+        if quota_report:
+            data.setdefault("history", []).append({
+                "week": week_closed,
+                "kind": "quota_check",
+                "report": quota_report,
+                "ts": _now_iso(),
+            })
+
     status, reason = _evaluate_status(data)
     data["status"] = status
     if status == STATUS_DEAD:
@@ -1775,8 +2161,10 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
                 "event": _summarize_event_decision(last_event, last_decision),
                 "decision": (last_decision or {}).get("option"),
                 "decision_notes": (last_decision or {}).get("consequences"),
+                "decision_notes_struct": (last_decision or {}).get("consequences_struct"),
                 "released_features": (last_feature or {}).get("released"),
                 "scrum_penalty": scrum_penalty,
+                "quota_report": quota_report,
             },
         )
         _push_recap(data, recap)
@@ -1790,8 +2178,10 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
                 "event": _summarize_event_decision(last_event, last_decision),
                 "decision": (last_decision or {}).get("option"),
                 "decision_notes": (last_decision or {}).get("consequences"),
+                "decision_notes_struct": (last_decision or {}).get("consequences_struct"),
                 "released_features": (last_feature or {}).get("released"),
                 "scrum_penalty": scrum_penalty,
+                "quota_report": quota_report,
             },
         )
         _push_recap(data, recap)
@@ -1799,6 +2189,8 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
     data["current_week"] = int(data["current_week"]) + 1
     data["current_event"] = None
     data["event_resolved"] = True
+    # Бюджет действий PO обновляется каждую неделю.
+    data["po_actions_used_this_week"] = 0
     # Запоминаем какие фичи поедут «с опозданием» именно сейчас (до старта цикла)
     pending_for_new_cycle = [
         dict(r) for r in (data.get("pending_releases") or [])
@@ -1822,9 +2214,11 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
             "event": _summarize_event_decision(last_event, last_decision),
             "decision": (last_decision or {}).get("option"),
             "decision_notes": (last_decision or {}).get("consequences"),
+            "decision_notes_struct": (last_decision or {}).get("consequences_struct"),
             "released_features": (last_feature or {}).get("released"),
             "late_deliveries": delivered_now,
             "scrum_penalty": scrum_penalty,
+            "quota_report": quota_report,
         },
     )
     _push_recap(data, recap)
@@ -1935,6 +2329,10 @@ def content_public():
         "leaderboard_weeks": list(LEADERBOARD_WEEKS),
         "roles": list(ALLOWED_ROLES),
         "metric_keys": list(METRIC_KEYS) + ["users", "active_users"],
+        "po_actions_per_week_limit": PO_ACTIONS_PER_WEEK_LIMIT,
+        "quota_focuses": list(QUOTA_FOCUSES),
+        "quota_defaults": dict(QUOTA_DEFAULTS),
+        "quota_tolerance_pct": QUOTA_DEVIATION_TOLERANCE_PCT,
     })
 
 
@@ -2065,10 +2463,11 @@ def participant_event_decide(slug: str):
     ev = data.get("current_event") or {}
     if not ev:
         return jsonify({"error": "no event"}), 400
-    chosen, notes = _resolve_event_decision(data, ev, option_id, locale)
+    chosen, notes, struct = _resolve_event_decision(data, ev, option_id, locale)
 
     consequences = ", ".join(notes) if notes else ("без видимых изменений" if locale != "en" else "no visible changes")
     data["consequences_text"] = consequences
+    data["consequences_struct"] = struct
 
     data.setdefault("history", []).append({
         "week": int(data["current_week"]),
@@ -2076,6 +2475,7 @@ def participant_event_decide(slug: str):
         "event": {"id": ev["id"], "title": ev["title"], "type": ev.get("type")},
         "option": {"id": chosen["id"], "title": chosen["title"]},
         "consequences": notes,
+        "consequences_struct": struct,
         "votes": dict(data.get("votes", {}).get("event", {})),
         "ts": _now_iso(),
     })
@@ -2168,6 +2568,49 @@ def participant_feature_release(slug: str):
     _close_week_and_advance(data, g.id, locale)
     _save_state(row, data)
     return jsonify({"ok": True, "state": _serialize_state(row, data, locale, token)})
+
+
+@bp_agile_pm_sim.post("/g/<slug>/quotas")
+def participant_set_quotas(slug: str):
+    """PO задаёт квоты на бизнес/тех. долг/архитектуру.
+
+    Сумма должна быть 100. Каждое значение в [0, 100]. Эталон 50/30/20.
+    Квоты сравниваются с фактической работой команды в конце цикла:
+    серьёзный перекос — мягкий штраф, баланс — небольшой бонус.
+    """
+    g, sess = _group_and_session(slug)
+    if not g:
+        return jsonify({"error": "Group not found"}), 404
+    locale = _resolve_locale(request.args.get("locale"), sess)
+    body = request.get_json(silent=True) or {}
+    token = (body.get("participant_token") or "").strip()
+    raw = body.get("quotas") or {}
+    if not token or not isinstance(raw, dict):
+        return jsonify({"error": "bad request"}), 400
+    p = _require_participant(g, token)
+    if not p:
+        return jsonify({"error": "Participant not found"}), 404
+
+    row, data = _get_or_init_state(g)
+    if (data.get("roles", {}) or {}).get(token) != ROLE_PO:
+        return jsonify({"error": "only_po"}), 403
+
+    parsed: Dict[str, int] = {}
+    for f in QUOTA_FOCUSES:
+        try:
+            v = int(round(float(raw.get(f, 0))))
+        except (TypeError, ValueError):
+            return jsonify({"error": "invalid_quota"}), 400
+        if v < 0 or v > 100:
+            return jsonify({"error": "invalid_quota_range"}), 400
+        parsed[f] = v
+    if sum(parsed.values()) != 100:
+        return jsonify({"error": "quotas_must_sum_to_100"}), 400
+
+    data["quotas"] = parsed
+    _touch_participant(data, p)
+    _save_state(row, data)
+    return jsonify({"ok": True, "quotas": parsed, "state": _serialize_state(row, data, locale, token)})
 
 
 @bp_agile_pm_sim.post("/g/<slug>/po-action")

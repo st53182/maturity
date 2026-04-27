@@ -144,7 +144,10 @@
         <div class="pmsim__toolkit-grid">
           <article v-for="a in visibleToolkitActions" :key="a.id"
                    :class="['pmsim__tk-card', `pmsim__tk-card--${a.category}`,
-                            { 'pmsim__tk-card--locked': !a.status.available }]">
+                            { 'pmsim__tk-card--locked': !a.status.available,
+                              'pmsim__tk-card--draft': poToolkitDraft && poToolkitDraft.id === a.id,
+                              'pmsim__tk-card--selectable': isPO }]"
+                   @click="selectToolkitAction(a)">
             <header class="pmsim__tk-head">
               <span class="pmsim__tk-icon" v-if="a.icon">{{ a.icon }}</span>
               <strong>{{ a.title }}</strong>
@@ -172,13 +175,24 @@
                     class="pmsim__pill pmsim__pill--warn">
                 {{ blockedReasonLabel(a.status.blocked_reasons[0]) }}
               </span>
-              <button class="pmsim__btn pmsim__btn--primary"
-                      :disabled="!isPO || !a.status.available || submitting"
-                      @click="applyPoAction(a)">
-                {{ $t('agileTraining.pmSim.toolkit.apply') }}
-              </button>
             </footer>
           </article>
+        </div>
+        <div class="pmsim__toolkit-bar" v-if="isPO">
+          <span v-if="poToolkitDraft" class="pmsim__tk-draft-label">
+            {{ $t('agileTraining.pmSim.toolkit.selected', { name: poToolkitDraft.title }) }}
+          </span>
+          <div class="pmsim__toolkit-bar-btns">
+            <button type="button" class="pmsim__btn pmsim__btn--ghost"
+                    :disabled="!poToolkitDraft" @click="clearToolkitDraft">
+              {{ $t('agileTraining.pmSim.toolkit.clear') }}
+            </button>
+            <button type="button" class="pmsim__btn pmsim__btn--primary"
+                    :disabled="!poToolkitDraft || !poToolkitDraft.status.available || submitting"
+                    @click="confirmToolkitDraft">
+              {{ $t('agileTraining.pmSim.toolkit.apply') }}
+            </button>
+          </div>
         </div>
         <p v-if="!isPO" class="pmsim__hint">{{ $t('agileTraining.pmSim.toolkit.poOnly') }}</p>
         <div class="pmsim__tk-error" v-if="toolkitError">{{ toolkitError }}</div>
@@ -244,8 +258,8 @@
         <div class="pmsim__feature-grid">
           <article
             v-for="f in state.feature_options"
-            :key="f.key"
-            :class="['pmsim__feature', { 'pmsim__feature--picked': featurePicks.includes(f.key) }]"
+            :key="String(f.key)"
+            :class="['pmsim__feature', { 'pmsim__feature--picked': featurePicksStr.includes(String(f.key)) }]"
             @click="toggleFeaturePick(f)">
             <header>
               <strong>{{ f.title }}</strong>
@@ -258,10 +272,10 @@
                 <span class="pmsim__fe-value" :class="effectClass(v)">{{ effectValue(v) }}</span>
               </li>
             </ul>
-            <div class="pmsim__feat-pick" v-if="featurePicks.includes(f.key)">✓ {{ $t('agileTraining.pmSim.picked') }}</div>
-            <div class="pmsim__votes-row">
+            <div class="pmsim__feat-pick" v-if="featurePicksStr.includes(String(f.key))">✓ {{ $t('agileTraining.pmSim.picked') }}</div>
+            <div class="pmsim__votes-row" @click.stop>
               <span class="pmsim__pill">{{ $t('agileTraining.pmSim.votes') }}: {{ (state.votes.feature && state.votes.feature[f.key]) || 0 }}</span>
-              <button class="pmsim__btn pmsim__btn--ghost" @click.stop="voteFeature(f.key)">
+              <button class="pmsim__btn pmsim__btn--ghost" @click="voteFeature(f.key)">
                 {{ myFeatureVote === f.key ? $t('agileTraining.pmSim.voted') : $t('agileTraining.pmSim.vote') }}
               </button>
             </div>
@@ -436,7 +450,11 @@
 
         <div class="pmsim__recap-section" v-if="(recapToShow.scrum_penalty || []).length">
           <h4>⚠ {{ $t('agileTraining.pmSim.recap.scrumPenaltyTitle') }}</h4>
-          <p class="pmsim__hint">{{ $t('agileTraining.pmSim.recap.scrumPenaltyHint') }}</p>
+          <ul class="pmsim__recap-scrum-list">
+            <li v-for="(sp, si) in recapToShow.scrum_penalty" :key="si + (sp.narrative_key || sp.reason)">
+              <p class="pmsim__hint">{{ scrumPenaltyNarrative(sp) }}</p>
+            </li>
+          </ul>
         </div>
 
         <div class="pmsim__recap-section" v-if="recapDeltas.length">
@@ -517,11 +535,15 @@ export default {
       locale: this.$i18n.locale,
       toolkitTab: 'discovery',
       toolkitError: '',
+      poToolkitDraft: null,
       recapDismissedWeek: -1,
       recapForceShow: null,
     };
   },
   computed: {
+    featurePicksStr() {
+      return (this.featurePicks || []).map((k) => String(k));
+    },
     isPO() { return !!(this.state.my && this.state.my.is_po); },
     myRole() { return (this.state.my && this.state.my.role) || ''; },
     myEventVote() { return this.state.my_vote && this.state.my_vote.event; },
@@ -573,15 +595,15 @@ export default {
     },
     featureCapacityUsed() {
       const map = {};
-      (this.state.feature_options || []).forEach((f) => { map[f.key] = f.capacity; });
-      return this.featurePicks.reduce((sum, k) => sum + (Number(map[k]) || 0), 0);
+      (this.state.feature_options || []).forEach((f) => { map[String(f.key)] = f.capacity; });
+      return (this.featurePicks || []).reduce((sum, k) => sum + (Number(map[String(k)]) || 0), 0);
     },
     pickedHasStabilize() {
-      return (this.featurePicks || []).some((k) => k === 'stabilize');
+      return (this.featurePicks || []).some((k) => String(k) === 'stabilize');
     },
     pickedBigCount() {
       return (this.featurePicks || []).filter((k) => {
-        const f = (this.state.feature_options || []).find((x) => x.key === k);
+        const f = (this.state.feature_options || []).find((x) => String(x.key) === String(k));
         return f && (f.capacity || 0) >= 40;
       }).length;
     },
@@ -719,6 +741,9 @@ export default {
       return Object.values(this.state.roles || {}).includes(k);
     },
     effectLabel(k) {
+      const kk = String(k);
+      const path = `agileTraining.pmSim.metricKey.${kk}`;
+      if (this.$te && this.$te(path)) return this.$t(path);
       const map = {
         users: 'users', users_pct: 'users %', active_users: 'active', active_users_pct: 'active %',
         satisfaction: 'sat', stability: 'stab', tech_debt: 'tech debt', trust: 'trust',
@@ -728,7 +753,7 @@ export default {
         first_week_satisfaction_dip: 'sat dip',
         capacity_left: 'capacity', budget: 'budget', revenue_total: 'revenue',
       };
-      return map[k] || k;
+      return map[kk] || kk;
     },
     effectClass(v) {
       if (typeof v === 'boolean') return '';
@@ -819,32 +844,73 @@ export default {
         this.loadError = (e.response && e.response.data && e.response.data.error) || e.message || 'Error';
       } finally { this.submitting = false; }
     },
+    featMeta(key) {
+      const k = String(key);
+      const row = (this.state.feature_options || []).find((x) => String(x.key) === k);
+      const cap = Number((row && row.capacity) != null ? row.capacity : 0);
+      return { key: k, cap, isBig: cap >= 40, isStabilize: k === 'stabilize' };
+    },
     toggleFeaturePick(f) {
-      const idx = this.featurePicks.indexOf(f.key);
-      if (idx >= 0) { this.featurePicks.splice(idx, 1); return; }
-      const big = this.state.feature_options.find((x) => x.key === f.key && (x.capacity || 0) >= 40);
-      if (big && this.featurePicks.some((k) => {
-        const ff = this.state.feature_options.find((x) => x.key === k);
-        return !!ff;
-      })) {
-        this.featurePicks = [f.key];
+      const m = this.featMeta(f.key);
+      const key = m.key;
+      let n = (this.featurePicks || []).map((x) => String(x));
+      const i = n.indexOf(key);
+      if (i >= 0) {
+        n.splice(i, 1);
+        this.featurePicks = n;
         return;
       }
-      const wouldBig = this.featurePicks.filter((k) => {
-        const ff = this.state.feature_options.find((x) => x.key === k);
-        return ff && (ff.capacity || 0) >= 40;
-      }).length + ((f.capacity || 0) >= 40 ? 1 : 0);
-      if (wouldBig > 1) { this.featurePicks = [f.key]; return; }
-      if (this.featurePicks.length >= 2) {
-        this.featurePicks = [this.featurePicks[this.featurePicks.length - 1], f.key];
+      if (m.isStabilize) {
+        this.featurePicks = [key];
         return;
       }
-      this.featurePicks.push(f.key);
+      if (m.isBig) {
+        this.featurePicks = [key];
+        return;
+      }
+      n = n.filter((k) => {
+        const e = this.featMeta(k);
+        return !e.isStabilize && !e.isBig;
+      });
+      if (n.length === 0) {
+        this.featurePicks = [key];
+        return;
+      }
+      if (n.length === 1) {
+        this.featurePicks = [n[0], key];
+        return;
+      }
+      this.featurePicks = [n[0], key];
+    },
+    selectToolkitAction(a) {
+      if (!this.isPO) return;
+      if (this.poToolkitDraft && this.poToolkitDraft.id === a.id) {
+        this.poToolkitDraft = null;
+        this.toolkitError = '';
+        return;
+      }
+      this.toolkitError = '';
+      this.poToolkitDraft = a;
+    },
+    clearToolkitDraft() {
+      this.poToolkitDraft = null;
+      this.toolkitError = '';
+    },
+    async confirmToolkitDraft() {
+      if (!this.poToolkitDraft) return;
+      await this.applyPoAction(this.poToolkitDraft);
+      this.poToolkitDraft = null;
+    },
+    scrumPenaltyNarrative(sp) {
+      const k = (sp && (sp.narrative_key || sp.reason)) || 'generic';
+      const path = `agileTraining.pmSim.recap.scrumNarrative.${k}`;
+      if (this.$te(path)) return this.$t(path);
+      return this.$t('agileTraining.pmSim.recap.scrumNarrative.generic');
     },
     async confirmFeatureRelease(skip) {
       this.submitting = true;
       try {
-        const keys = skip ? [] : this.featurePicks.slice();
+        const keys = skip ? [] : this.featurePicks.map((k) => String(k));
         await axios.post(`/api/agile-training/pm-sim/g/${this.slug}/feature/release`, {
           participant_token: this.participantToken, feature_keys: keys,
         });
@@ -906,6 +972,7 @@ export default {
         only_at_cycle_end: this.$t('agileTraining.pmSim.toolkit.blockedReason.only_at_cycle_end'),
         low_satisfaction: this.$t('agileTraining.pmSim.toolkit.blockedReason.low_satisfaction'),
         not_playing: this.$t('agileTraining.pmSim.toolkit.blockedReason.not_playing'),
+        need_problem_interview: this.$t('agileTraining.pmSim.toolkit.blockedReason.need_problem_interview'),
       };
       return map[key] || reason;
     },
@@ -1102,7 +1169,16 @@ export default {
 }
 .pmsim__tk-effects li { display: flex; gap: 3px; }
 .pmsim__tk-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: auto; }
-.pmsim__tk-foot .pmsim__btn { margin-left: auto; padding: 4px 10px; font-size: 12px; }
+.pmsim__tk-card--selectable { cursor: pointer; }
+.pmsim__tk-card--draft { box-shadow: 0 0 0 2px #6366f1; }
+.pmsim__toolkit-bar {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+  padding: 10px 12px; background: #f1f5f9; border-radius: 10px; border: 1px solid #e2e8f0;
+}
+.pmsim__tk-draft-label { font-size: 13px; color: #312e81; }
+.pmsim__toolkit-bar-btns { display: flex; gap: 8px; }
+.pmsim__recap-scrum-list { margin: 6px 0 0; padding-left: 18px; }
+.pmsim__recap-scrum-list .pmsim__hint { margin: 0 0 6px; }
 .pmsim__tk-error { color: #b91c1c; font-size: 12px; margin-top: 8px; }
 
 /* Weekly Recap modal */

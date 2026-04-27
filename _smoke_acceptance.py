@@ -830,7 +830,11 @@ def smoke_pm_sim_logic() -> None:
     if state2["phase"] != "finished":
         assert state2["cycle_index"] == 2, f"expected cycle=2 at w3 got {state2['cycle_index']}"
         assert state2["feature_choice_open"] is True
-        assert state2["capacity_left"] == 100, "new cycle must refill capacity"
+        # После старта цикла на w3 ёмкость = 100 − carry − штрафы за прошлую чётную неделю
+        # (без Daily, без Review, без Retro) — типично −5 к «свежим» 100.
+        assert state2["capacity_left"] == 95, (
+            f"expected 100 - 5 scrum adj at new cycle start, got {state2['capacity_left']}"
+        )
         # Решаем event w3
         decided3 = _pm_resolve_event(client, slug, po_token)
         opts3 = decided3["state"]["feature_options"]
@@ -1023,6 +1027,15 @@ def smoke_pm_sim_toolkit() -> None:
     assert {"discovery", "growth", "pivot", "scrum"} <= cats, f"missing categories: {cats}"
     _ok(f"каталог тулкита содержит {len(catalog)} действий, категории: {sorted(cats)}")
 
+    # 0) Solution interview только после problem interview
+    r0 = client.post(
+        f"/api/agile-training/pm-sim/g/{slug}/po-action",
+        json={"participant_token": po_token, "action_id": "solution_interview"},
+    )
+    assert r0.status_code == 400, "solution_interview without problem must be 400"
+    assert "need_problem" in (r0.get_json() or {}).get("reasons", [None])[0], r0.get_data(as_text=True)
+    _ok("solution_interview без problem_interview отклонён (need_problem_interview)")
+
     # 2) Применяем Daily — capacity на 2 поднимется (бонус), флаг did_daily_this_week=True
     cap_before = state["capacity_left"]
     resp = client.post(
@@ -1111,13 +1124,21 @@ def smoke_pm_sim_toolkit() -> None:
     # На неделе 2 (чётная) фич-окно НЕ открыто — week уже тикнула
     assert state["current_week"] == 3, f"week must advance to 3, got {state['current_week']}"
     # Долг подскочил, capacity_left на новом цикле — пусть проверим penalty флаг и tech_debt
-    assert state["metrics"]["tech_debt"] >= debt_w2_start + 2, f"tech_debt must grow by 2 (no daily): before={debt_w2_start}, after={state['metrics']['tech_debt']}"
-    _ok(f"scrum penalty: пропуск daily на w2 → tech_debt {debt_w2_start} → {state['metrics']['tech_debt']}")
-    # И recap по неделе 2 должен содержать scrum_penalty
+    assert state["metrics"]["tech_debt"] > debt_w2_start, (
+        f"tech_debt should rise (no daily / no review / no retro + passive): "
+        f"before={debt_w2_start}, after={state['metrics']['tech_debt']}"
+    )
+    _ok(f"scrum penalty: закрытие w2 (без daily, без review, без retro) → tech_debt {debt_w2_start} → {state['metrics']['tech_debt']}")
+    # И recap по неделе 2 — несколько нарративов
     recap_w2 = next((r for r in state.get("weekly_recaps", []) if r["week"] == 2), None)
     assert recap_w2 is not None, "recap for week 2 missing"
-    assert recap_w2.get("scrum_penalty"), f"recap should mention scrum penalty, got {recap_w2.get('scrum_penalty')}"
-    _ok("recap для week=2 содержит scrum_penalty notes (no_daily)")
+    pen = recap_w2.get("scrum_penalty") or []
+    assert len(pen) >= 1, f"scrum_penalty list expected, got {pen}"
+    reasons = {p.get("reason") for p in pen}
+    assert "no_daily" in reasons, f"expected no_daily in {reasons}"
+    # На чётной w2 ожидаем также отсутствие review/retro за цикл
+    assert "no_sprint_review" in reasons and "no_retro" in reasons, f"expected review+retro gaps in {reasons}"
+    _ok("recap week=2: no_daily, no_sprint_review, no_retro")
 
 
 # --------------------------- entry ---------------------------

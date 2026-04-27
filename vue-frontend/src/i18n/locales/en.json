@@ -2743,7 +2743,9 @@
       "lateDeliveryHistory": "Late delivery from previous cycle",
       "toolkit": {
         "title": "PO toolkit",
-        "hint": "In parallel with event decisions — product moves and Scrum events. Each action has a capacity cost and a cooldown.",
+        "hint": "Pick a card (click again to deselect), then press Apply.",
+        "selected": "Selected: {name}",
+        "clear": "Clear",
         "apply": "Apply",
         "cooldown": "available in {n}w",
         "everyN": "every {n}w",
@@ -2763,8 +2765,33 @@
           "too_early": "too early",
           "only_at_cycle_end": "only at cycle end (even week)",
           "low_satisfaction": "satisfaction too low",
-          "not_playing": "game is not in playing phase"
+          "not_playing": "game is not in playing phase",
+          "need_problem_interview": "run problem interviews first"
         }
+      },
+      "metricKey": {
+        "satisfaction": "Satisfaction",
+        "stability": "Stability",
+        "tech_debt": "Tech debt",
+        "trust": "Trust",
+        "users": "Users",
+        "active_users": "Active users",
+        "users_pct": "Users %",
+        "active_users_pct": "Active %",
+        "capacity_delta": "Capacity delta",
+        "churn_bump": "Churn",
+        "growth_pct": "Growth %",
+        "budget_delta": "Budget delta",
+        "revenue_per_week": "Revenue / wk",
+        "revenue_potential": "Revenue potential",
+        "ad_strength": "Ad strength",
+        "monetization_on": "Monetization",
+        "tech_debt_delta": "Tech debt",
+        "investor_pressure_delta": "Investor pressure",
+        "first_week_satisfaction_dip": "Satisfaction dip",
+        "capacity_left": "Capacity",
+        "budget": "Budget",
+        "revenue_total": "Revenue (total)"
       },
       "recap": {
         "title": "Week {w} recap",
@@ -2772,8 +2799,13 @@
         "eventTitle": "Event and decision",
         "releasedTitle": "Releases this cycle",
         "lateDeliveriesTitle": "Delivered late",
-        "scrumPenaltyTitle": "Scrum discipline penalty",
-        "scrumPenaltyHint": "PO skipped Daily — the team loses capacity and gains tech debt. By design: Scrum discipline drives business outcomes.",
+        "scrumPenaltyTitle": "Scrum rituals and PO presence",
+        "scrumNarrative": {
+          "no_daily": "You skipped Daily: you miss part of the delivery story and in-flight risk — more chance of a wrong priority. +1 tech debt, −1 trust, −3 capacity after the week rolls (applied after the refill).",
+          "no_review": "No Sprint Review: weak external product feedback — higher slip risk on the next release, −2 trust.",
+          "no_retro": "No Retrospective: process friction remains — the next cycle is heavier: +2 tech debt, −2 capacity after the refill.",
+          "generic": "Ritual discipline issues — see the metric deltas."
+        },
         "metricsTitle": "Metrics changes",
         "focusTitle": "Focus for week {w}",
         "focus": {

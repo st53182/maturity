@@ -477,18 +477,19 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "max_per_game": None,
-        "effects": {"satisfaction": 2, "trust": 2, "tech_debt": -2},
+        "effects": {"satisfaction": 2, "trust": 2, "tech_debt": -1},
     },
     "solution_interview": {
         "title_ru": "Провести solution-интервью",
         "title_en": "Run solution interviews",
-        "description_ru": "Показать прототип — проверить, решит ли он проблему. Снижает риск опоздать со следующим релизом.",
-        "description_en": "Show a prototype — check that it actually solves the problem. Lowers slip risk on the next release.",
+        "description_ru": "Показать прототип — проверить, решит ли он проблему. Снижает риск опоздать со следующим релизом. Сначала нужны проблемные интервью.",
+        "description_en": "Show a prototype — after problem interviews, check that it solves the need. Lowers slip risk on the next release.",
         "category": "discovery",
         "icon": "🧪",
         "cap_cost": 6,
         "budget_cost": 0,
         "cooldown_weeks": 2,
+        "requires": {"after_action": "problem_interview"},
         "effects": {"satisfaction": 1, "stability": 2, "tech_debt": -1},
         "side_effects": {"next_release_risk_buff": 12},  # custom hook (см. _apply_po_action)
     },
@@ -536,8 +537,8 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
     "daily": {
         "title_ru": "Сходить на Daily Stand-up",
         "title_en": "Attend Daily Stand-up",
-        "description_ru": "Раз в неделю команда синкается. Если PO не приходит — растёт долг и теряется capacity (в реальной жизни тоже).",
-        "description_en": "The team syncs once a week. If the PO skips — tech debt grows and capacity drops (just like in real life).",
+        "description_ru": "Синк по поставке: статус, риски, зависимости. Без дайли PO не в курсе части ситуации с поставкой и слеп к части рисков в работе.",
+        "description_en": "Sync on delivery, risks, and dependencies. Without it the PO misses part of the story and is blind to some delivery issues.",
         "category": "scrum",
         "icon": "🧍",
         "cap_cost": 0,
@@ -561,8 +562,8 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
     "sprint_review": {
         "title_ru": "Провести Sprint Review",
         "title_en": "Run Sprint Review",
-        "description_ru": "Демонстрируешь стейкхолдерам результаты. Доверие растёт, обратная связь — вход в следующий цикл.",
-        "description_en": "Demo to stakeholders. Trust grows; feedback feeds into the next cycle.",
+        "description_ru": "Смотрите приращение, собирайте фидбэк. Без обзора PO не получает сигнала от стейкхолдеров — выше риск принять неверный продуктовый курс на следующем цикле.",
+        "description_en": "See the increment and collect feedback. Without it, the PO lacks external signal — product bets get riskier.",
         "category": "scrum",
         "icon": "🔍",
         "cap_cost": 0,
@@ -570,12 +571,13 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "cooldown_weeks": 2,
         "requires": {"cycle_end_week": True},  # только на чётной неделе цикла (w2,4,6,…)
         "effects": {"trust": 4, "satisfaction": 2, "stability": 1},
+        "side_effects": {"mark_sprint_review": True},
     },
     "retro": {
         "title_ru": "Провести Retrospective",
         "title_en": "Run Retrospective",
-        "description_ru": "Команда чинит процесс. Долг уменьшается, стабильность растёт.",
-        "description_en": "The team fixes its process. Tech debt drops, stability rises.",
+        "description_ru": "Процесс и качество сотрудничества. Без ретро команда не снимает трения — работа в следующем цикле заметно медленнее и дороже по ретворку.",
+        "description_en": "Process and team health. Without it friction sticks — the next cycle costs more in rework and drag.",
         "category": "scrum",
         "icon": "🔧",
         "cap_cost": 2,
@@ -583,6 +585,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "cooldown_weeks": 2,
         "requires": {"cycle_end_week": True},
         "effects": {"tech_debt": -5, "stability": 3, "satisfaction": 1},
+        "side_effects": {"mark_retro": True},
     },
 }
 
@@ -859,6 +862,9 @@ def _initial_state() -> Dict[str, Any]:
         "po_actions": {},          # {action_id: {last_used_week, count}}
         "po_action_log": [],       # история всех применений PO-действий
         "next_release_risk_buff_pct": 0.0,  # бафф от solution_interview
+        "next_release_slip_penalty_pct": 0.0,  # штраф: не ходил на review / т.п.
+        "next_week_cap_adj": 0,  # снимаем со «свежей» ёмкости следующей недели
+        "scrum_by_cycle": {},  # { "1": { "review": true, "retro": false }, ... }
         "status": STATUS_ALIVE,
         "death_reason": None,
         "leaderboard_unlocked_weeks": [],
@@ -1173,11 +1179,15 @@ def _release_feature(
     risk_buff = float(data.get("next_release_risk_buff_pct", 0) or 0)
     if risk_buff > 0:
         risk_pct = max(0.0, risk_pct - risk_buff)
+    slip_pen = float(data.get("next_release_slip_penalty_pct", 0) or 0)
+    if slip_pen > 0:
+        risk_pct = min(float(RISK_MAX_PCT), risk_pct + slip_pen)
     slipped = False
     if risk_pct > 0 and rnd is not None:
         slipped = (rnd.random() * 100.0) < risk_pct
-    # бафф «израсходован» одним релизом, дальше — обычный риск
+    # бафф/штраф «израсходованы» одним релизом
     data["next_release_risk_buff_pct"] = 0.0
+    data["next_release_slip_penalty_pct"] = 0.0
 
     cur_cycle = int(data.get("cycle_index", 1))
     base_rec = {
@@ -1340,6 +1350,9 @@ def _serialize_state(
         "po_action_log": (data.get("po_action_log") or [])[-30:],
         "po_action_catalog": _localize_actions_for_state(data, locale),
         "next_release_risk_buff_pct": float(data.get("next_release_risk_buff_pct", 0)),
+        "next_release_slip_penalty_pct": float(data.get("next_release_slip_penalty_pct", 0) or 0),
+        "next_week_cap_adj": int(data.get("next_week_cap_adj", 0) or 0),
+        "scrum_by_cycle": data.get("scrum_by_cycle", {}),
         "leaderboard_unlocked_weeks": leaderboard_weeks,
         "facilitator_comments": data.get("facilitator_comments", []),
         "consequences_text": data.get("consequences_text", ""),
@@ -1410,6 +1423,12 @@ def _po_action_status(data: Dict[str, Any], action_id: str, action: Dict[str, An
         sat = int((data.get("metrics") or {}).get("satisfaction", 0))
         if sat < int(requires["satisfaction"]):
             reasons.append("low_satisfaction")
+    if requires.get("after_action"):
+        need_id = str(requires["after_action"])
+        prev_ent = (data.get("po_actions") or {}).get(need_id) or {}
+        prev_cnt = int(prev_ent.get("count", 0) or 0)
+        if prev_cnt < 1:
+            reasons.append("need_problem_interview")
 
     phase = data.get("phase")
     if phase != PHASE_PLAYING:
@@ -1454,6 +1473,18 @@ def _apply_po_action(
     if side.get("mark_daily"):
         data["did_daily_this_week"] = True
         data["skipped_daily_last_week"] = False
+    if side.get("mark_sprint_review"):
+        c = int(data.get("cycle_index", 1) or 1)
+        b = data.setdefault("scrum_by_cycle", {})
+        e = dict(b.get(str(c)) or {})
+        e["review"] = True
+        b[str(c)] = e
+    if side.get("mark_retro"):
+        c = int(data.get("cycle_index", 1) or 1)
+        b = data.setdefault("scrum_by_cycle", {})
+        e = dict(b.get(str(c)) or {})
+        e["retro"] = True
+        b[str(c)] = e
     if "next_release_risk_buff" in side:
         data["next_release_risk_buff_pct"] = float(data.get("next_release_risk_buff_pct", 0)) + float(side["next_release_risk_buff"])
 
@@ -1649,25 +1680,69 @@ def _build_weekly_recap(
     }
 
 
-def _apply_scrum_penalty_if_needed(data: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Проверка scrum-дисциплины при тике недели.
-
-    Если за прошлую неделю PO не сходил на Daily Stand-up — команда теряет
-    capacity на следующую неделю (как в реальной жизни: коммуникация
-    провисает, появляются дубли работы).
+def _apply_next_week_cap_adj(data: Dict[str, Any]) -> None:
+    """Штраф capacity, накопленный при закрытии прошлой недели, снимается
+    после перехода на новую неделю и (если было) пополнения в _start_new_cycle_if_needed.
     """
-    notes: List[str] = []
+    adj = int(data.get("next_week_cap_adj", 0) or 0)
+    if adj <= 0:
+        return
+    data["capacity_left"] = max(0, int(data.get("capacity_left", 0)) - adj)
+    data["next_week_cap_adj"] = 0
+
+
+def _apply_scrum_penalty_if_needed(data: Dict[str, Any], week_closed: int) -> List[Dict[str, Any]]:
+    """Scrum: Daily; на чётных неделях — отметки Review/Retro за завершившийся цикл."""
+    notes: List[Dict[str, Any]] = []
+    m = data.setdefault("metrics", {})
+    cap_adj = 0
+
     if not data.get("did_daily_this_week"):
-        # На неделе НЕ был на Daily — penalty
-        m = data.get("metrics") or {}
-        m["tech_debt"] = int(_clamp(m.get("tech_debt", 0) + 2, 0, 100))
-        data["metrics"] = m
-        data["capacity_left"] = max(0, int(data.get("capacity_left", 0)) - 3)
+        m["tech_debt"] = int(_clamp(m.get("tech_debt", 0) + 1, 0, 100))
+        m["trust"] = int(_clamp(m.get("trust", 0) - 1, 0, 100))
+        cap_adj += 3
         data["skipped_daily_last_week"] = True
-        notes.append({"reason": "no_daily", "tech_debt": 2, "capacity_delta": -3})
+        notes.append(
+            {
+                "reason": "no_daily",
+                "narrative_key": "no_daily",
+                "tech_debt": 1,
+                "trust": -1,
+                "next_cap_adj": 3,
+            }
+        )
     else:
         data["skipped_daily_last_week"] = False
-    data["did_daily_this_week"] = False  # сбрасываем флажок на новую неделю
+
+    if week_closed > 0 and week_closed % CYCLE_LEN == 0:
+        ended_c = week_closed // CYCLE_LEN
+        sc = (data.get("scrum_by_cycle") or {}).get(str(ended_c)) or {}
+        if not sc.get("review"):
+            m["trust"] = int(_clamp(m.get("trust", 0) - 2, 0, 100))
+            prev = float(data.get("next_release_slip_penalty_pct", 0) or 0)
+            data["next_release_slip_penalty_pct"] = min(25.0, prev + 5.0)
+            notes.append(
+                {
+                    "reason": "no_sprint_review",
+                    "narrative_key": "no_review",
+                    "trust": -2,
+                    "slip_penalty_add": 5.0,
+                }
+            )
+        if not sc.get("retro"):
+            m["tech_debt"] = int(_clamp(m.get("tech_debt", 0) + 2, 0, 100))
+            cap_adj += 2
+            notes.append(
+                {
+                    "reason": "no_retro",
+                    "narrative_key": "no_retro",
+                    "tech_debt": 2,
+                    "next_cap_adj": 2,
+                }
+            )
+
+    data["next_week_cap_adj"] = cap_adj
+    data["did_daily_this_week"] = False
     return notes
 
 
@@ -1686,7 +1761,7 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
     )
 
     _apply_passive_week(data)
-    scrum_penalty = _apply_scrum_penalty_if_needed(data)
+    scrum_penalty = _apply_scrum_penalty_if_needed(data, week_closed)
     status, reason = _evaluate_status(data)
     data["status"] = status
     if status == STATUS_DEAD:
@@ -1730,6 +1805,7 @@ def _close_week_and_advance(data: Dict[str, Any], group_id: int, locale: str) ->
         if int(r.get("delivery_cycle", 0)) == int(data.get("cycle_index", 1)) + 1
     ]
     _start_new_cycle_if_needed(data)
+    _apply_next_week_cap_adj(data)
     _ensure_event_for_week(data, group_id, locale)
     _ensure_feature_options(data, group_id, locale)
     after_metrics = _snapshot_metrics(data)

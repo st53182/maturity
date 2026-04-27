@@ -478,13 +478,29 @@ export function bucketCounts(placements) {
   return counts;
 }
 
-/** Простая «оценка покрытия»: больше «satisfied / close» — выше, минимальные — снижают. */
+/**
+ * Баланс расстановки: 100 % — роли равномерно распределены по 4 зонам матрицы,
+ * 0 % — все собраны в одной зоне. Считается через нормированную энтропию Шеннона
+ * по бакетам minimal / informed / satisfied / close.
+ *
+ * Это НЕ оценка «правильно/неправильно» — просто индикатор того, насколько
+ * сбалансировано вы распределили внимание (или утонули в одном квадранте).
+ */
 export function coverageScore(placements) {
   const c = bucketCounts(placements);
-  const total = c.minimal + c.informed + c.satisfied + c.close;
-  if (!total) return 0;
-  const positive = c.close * 2 + c.satisfied * 1.5 + c.informed * 0.6 + c.minimal * 0.2;
-  return Math.round((positive / (total * 2)) * 100);
+  const buckets = [c.minimal, c.informed, c.satisfied, c.close];
+  const total = buckets.reduce((a, b) => a + b, 0);
+  if (total <= 1) return 0;
+  let h = 0;
+  buckets.forEach((n) => {
+    if (n > 0) {
+      const p = n / total;
+      h += -p * Math.log2(p);
+    }
+  });
+  const maxH = Math.log2(buckets.length);
+  if (maxH <= 0) return 0;
+  return Math.round((h / maxH) * 100);
 }
 
 /** Сравнивает раунд 1 и раунд 2 — кто двинулся куда. */

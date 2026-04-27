@@ -2950,7 +2950,7 @@
           "leadR2": "Adjust placement after the event. What changed — and who needs more attention now?",
           "needAll": "Place every role on the matrix to continue.",
           "coverageTitle": "How attention is distributed",
-          "coverageHint": "Not a right/wrong score — just a map of where you spend energy.",
+          "coverageHint": "100 % — roles are spread evenly across all 4 zones of the matrix. 0 % — they all pile up in one quadrant. It's a balance indicator, not a right/wrong score.",
           "eventBadge": "Event affects these roles"
         },
         "discussion": { "h2": "4. Discussion", "lead": "Capture short notes — for the debrief, not for grading." },
@@ -2959,7 +2959,7 @@
         "event": { "h2": "7. The event reshapes the map", "lead": "Pick an event. Under each, see who it pushes hardest.", "impactLabel": "Who has it harder now" },
         "final": { "h2": "9. Wrap-up and round comparison", "lead": "What changed between rounds — and why.", "round1": "Round 1", "round2": "Round 2", "reflect": "Reflection", "reflectLead": "What will you take away? Where will you place differently tomorrow?", "diffTitle": "Who moved", "diffEmpty": "The placement stayed the same." }
       },
-      "coverage": { "minimal": "Minimal", "informed": "Informed", "satisfied": "Keep satisfied", "close": "Closely", "score": "Coverage" },
+      "coverage": { "minimal": "Minimal", "informed": "Informed", "satisfied": "Keep satisfied", "close": "Closely", "score": "Balance" },
       "diff": { "up": "raised", "down": "lowered", "side": "shifted", "placed": "added", "removed": "removed" },
       "report": {
         "title": "Stakeholder matrix — summary report",

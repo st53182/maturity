@@ -39,6 +39,8 @@ EVENT_OPTIONS = {
     "delays", "resistance", "budget_up", "tech_issues",
 }
 
+CASE_KEYS = {"digital_bank", "retail_crm", "citizen_portal"}
+
 CONTENT: Dict[str, Any] = {
     "ru": {
         "scenario_lead": (
@@ -277,6 +279,7 @@ def _default_data() -> Dict:
         "discussion": {},
         "strategy_quadrant": {"hh": "", "hl": "", "lh": "", "ll": ""},
         "event_key": None,
+        "case_key": None,
         "ai_history": [],
     }
 
@@ -301,6 +304,7 @@ def _serialize_answer(a: AgileTrainingStakeholderMatrixAnswer) -> Dict:
         "discussion": data.get("discussion") or {},
         "strategy_quadrant": data["strategy_quadrant"],
         "event_key": data.get("event_key"),
+        "case_key": data.get("case_key"),
         "ai_history": data.get("ai_history") or [],
         "ai_calls": int(a.ai_calls or 0),
         "ai_calls_remaining": max(0, AI_CALLS_LIMIT - int(a.ai_calls or 0)),
@@ -336,6 +340,7 @@ def participant_state(slug: str):
     content = dict(CONTENT.get(locale, CONTENT["ru"]))
     content["role_ids"] = ROLE_IDS
     content["event_keys"] = list(EVENT_OPTIONS)
+    content["case_keys"] = list(CASE_KEYS)
 
     answer_payload = None
     if token:
@@ -413,6 +418,14 @@ def participant_answer(slug: str):
             ek = str(ek).strip()
             if ek in EVENT_OPTIONS:
                 data["event_key"] = ek
+    if "case_key" in body:
+        ck = body.get("case_key")
+        if ck is None or ck == "":
+            data["case_key"] = None
+        else:
+            ck = str(ck).strip()
+            if ck in CASE_KEYS:
+                data["case_key"] = ck
     if "screen" in body:
         sc = (body.get("screen") or "").strip().lower()
         if sc in ALLOWED_SCREENS:

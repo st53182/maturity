@@ -2941,21 +2941,26 @@
         "q3": "What happens if you ignore this role?"
       },
       "screens": {
-        "context": { "h2": "1. Context" },
-        "roles": { "h2": "2. Roles", "lead": "Role set for the matrix." },
+        "context": { "h2": "1. Pick a case", "lead": "Pick the situation you want to map. This becomes your context for the rest of the exercise.", "pickCta": "Take this case", "goalLabel": "Goal", "flavorLabel": "What matters" },
+        "roles": { "h2": "2. The stakeholder cast", "lead": "These are the people you'll work with. Each has a motivation and a sore spot. Read before you place them.", "motivationLabel": "What matters to them", "quoteLabel": "Quote" },
         "matrix": {
           "h2": "3. Placement (round 1)",
           "h2R2": "8. Second round",
-          "leadR1": "Drag roles from the pool into cells.",
-          "leadR2": "Adjust placement after the event.",
-          "needAll": "Place every role on the matrix to continue."
+          "leadR1": "Drag roles from the pool into cells. Think about a real organization, not a textbook.",
+          "leadR2": "Adjust placement after the event. What changed — and who needs more attention now?",
+          "needAll": "Place every role on the matrix to continue.",
+          "coverageTitle": "How attention is distributed",
+          "coverageHint": "Not a right/wrong score — just a map of where you spend energy.",
+          "eventBadge": "Event affects these roles"
         },
-        "discussion": { "h2": "4. Discussion", "lead": "Capture notes for the debrief." },
-        "strategy": { "h2": "5. Strategy (2×2)", "lead": "How to engage by power and interest." },
-        "consequences": { "h2": "6. Consequences", "lead": "Heuristics — not “right/wrong”.", "empty": "No heuristics fired — discuss your context.", "strong": "Strengths" },
-        "event": { "h2": "7. Event", "lead": "Pick a scenario for round 2." },
-        "final": { "h2": "9. Wrap-up", "lead": "Compare rounds.", "round1": "Round 1", "round2": "Round 2", "reflect": "Reflection", "reflectLead": "What will you take away?" }
-      }
+        "discussion": { "h2": "4. Discussion", "lead": "Capture short notes — for the debrief, not for grading." },
+        "strategy": { "h2": "5. Strategy per group", "lead": "How will you engage each of the four groups for the next 2-3 months?", "starterLabel": "Ready-made phrases — click to insert" },
+        "consequences": { "h2": "6. Consequences and reactions", "lead": "Not \"right/wrong\". Heuristics and in-character lines based on your placement.", "empty": "No heuristics fired — discuss your context.", "strong": "Strengths", "reactionsTitle": "What they\u2019d say (in character)" },
+        "event": { "h2": "7. The event reshapes the map", "lead": "Pick an event. Under each, see who it pushes hardest.", "impactLabel": "Who has it harder now" },
+        "final": { "h2": "9. Wrap-up and round comparison", "lead": "What changed between rounds — and why.", "round1": "Round 1", "round2": "Round 2", "reflect": "Reflection", "reflectLead": "What will you take away? Where will you place differently tomorrow?", "diffTitle": "Who moved", "diffEmpty": "The placement stayed the same." }
+      },
+      "coverage": { "minimal": "Minimal", "informed": "Informed", "satisfied": "Keep satisfied", "close": "Closely", "score": "Coverage" },
+      "diff": { "up": "raised", "down": "lowered", "side": "shifted", "placed": "added", "removed": "removed" }
     },
     "productThinking": {
       "playTitle": "Product thinking: User Story, Job Story and decomposition",

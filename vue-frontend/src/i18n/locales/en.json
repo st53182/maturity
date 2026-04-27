@@ -3863,6 +3863,8 @@
     "sqlRunNow": "Run now",
     "sqlRun": "Run",
     "sqlResetDb": "Reset database",
+    "sqlResetProgress": "Reset progress",
+    "sqlResetProgressConfirm": "Reset all progress for SQL tasks? Lesson and task completion will be cleared; you can start over from the first lesson.",
     "sqlResultTitle": "Result",
     "sqlResultEmpty": "Click Run to see the result table.",
     "sqlNoSelectResult": "Executed. No row set to display (e.g. only INSERT/UPDATE or empty SELECT).",
@@ -3879,7 +3881,7 @@
     "sqlNextLesson": "Next lesson",
     "sqlStayHere": "Stay here",
     "sqlCourseCompleteTitle": "SQL track complete",
-    "sqlCourseCompleteBody": "You finished all lessons. You can redo tasks anytime; to reset progress, clear site data for this app.",
+    "sqlCourseCompleteBody": "You finished all lessons. You can redo tasks anytime. To start from scratch, use \"Reset progress\" at the top of the page.",
     "sqlClose": "Close"
   },
   "backlogPrep": {

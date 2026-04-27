@@ -5,7 +5,17 @@
     </button>
 
     <header class="sql-header">
-      <h1>{{ $t('qa.sqlPageTitle') }}</h1>
+      <div class="sql-header__row">
+        <h1 class="sql-header__title">{{ $t('qa.sqlPageTitle') }}</h1>
+        <button
+          v-if="!loading"
+          type="button"
+          class="sql-btn-secondary sql-header-reset"
+          @click="confirmResetProgress"
+        >
+          {{ $t('qa.sqlResetProgress') }}
+        </button>
+      </div>
       <p class="sql-lead">{{ $t('qa.sqlPageLead') }}</p>
       <p class="sql-note">{{ $t('qa.sqlBrowserOnly') }}</p>
       <p class="sql-note sql-note--soft">{{ $t('qa.sqlTasksHint') }}</p>
@@ -367,6 +377,34 @@ export default {
         /* ignore */
       }
     },
+    confirmResetProgress() {
+      if (!window.confirm(this.$t('qa.sqlResetProgressConfirm'))) {
+        return;
+      }
+      this.resetAllProgress();
+    },
+    resetAllProgress() {
+      try {
+        localStorage.removeItem(SQL_PROGRESS_STORAGE_KEY);
+      } catch (_) {
+        /* ignore */
+      }
+      this.completedTasks = {};
+      this.activeLesson = 0;
+      this.activeTaskIndex = 0;
+      this.lessonCompleteOpen = false;
+      this.showHintSql = false;
+      this.showCorrectSql = false;
+      this.sqlCorrectCongrats = false;
+      this.runError = null;
+      this.resultMessage = '';
+      this.resultColumns = [];
+      this.resultRows = [];
+      this.syncEditorForTask();
+      if (this.db && this.seedBytes) {
+        this.restoreDbFromSeed();
+      }
+    },
     isLessonComplete(lessonIdx) {
       const L = this.lessons[lessonIdx];
       if (!L) return false;
@@ -657,9 +695,23 @@ export default {
   text-decoration: underline;
 }
 
-.sql-header h1 {
-  margin: 0 0 0.5rem;
+.sql-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.sql-header__title {
+  margin: 0;
   font-size: 1.65rem;
+}
+
+.sql-header-reset {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .sql-lead {

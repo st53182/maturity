@@ -322,13 +322,81 @@
 
         <h3 class="sh-subh">{{ $t('agileTraining.stakeholderMatrix.screens.final.reflect') }}</h3>
         <p class="sh-note">{{ $t('agileTraining.stakeholderMatrix.screens.final.reflectLead') }}</p>
-        <div class="sh-actions">
-          <button type="button" class="sh-btn" @click="downloadJson">{{ $t('agileTraining.stakeholderMatrix.download') }}</button>
+        <div class="sh-actions sh-actions--final">
+          <button type="button" class="sh-btn sh-btn--primary sh-btn--print" @click="printReport">
+            <span aria-hidden="true">📄</span>
+            {{ $t('agileTraining.stakeholderMatrix.actions.print') }}
+          </button>
+          <button type="button" class="sh-btn" @click="showSummary = !showSummary">
+            {{ showSummary
+              ? $t('agileTraining.stakeholderMatrix.actions.hideSummary')
+              : $t('agileTraining.stakeholderMatrix.actions.showSummary') }}
+          </button>
+          <button type="button" class="sh-btn sh-btn--ghost" @click="downloadJson">
+            {{ $t('agileTraining.stakeholderMatrix.actions.json') }}
+          </button>
         </div>
+
+        <SummaryReport
+          v-if="showSummary"
+          dom-id="sh-report"
+          :group-name="groupName"
+          :participant-name="participantName"
+          :locale="locale"
+          :active-case="activeCase"
+          :active-event="activeEvent"
+          :placements-r1="placementsR1"
+          :placements-r2="placementsR2"
+          :discussion="discussion"
+          :strategy-quadrant="strategyQuadrant"
+          :strategy-hints="contentCopy.strategy_quadrant_hints"
+          :reactions="reactionsR1"
+          :diff="roundDiff"
+          :consequences-r1="consequenceListR1"
+          :consequences-r2="consequenceListR2"
+          :strengths-r1="strengthsR1"
+          :strengths-r2="strengthsR2"
+          :personas="currentPersonas"
+          :level-labels="contentCopy.level_labels || []"
+          :level-labels-x="contentCopy.level_labels_x || []"
+          :cell-strategy="contentCopy.cell_strategy || {}"
+          :axis-x="(contentCopy.axis && contentCopy.axis.x) || ''"
+          :axis-y="(contentCopy.axis && contentCopy.axis.y) || ''"
+        />
+
         <div class="sh-nav">
           <button type="button" class="sh-btn" @click="goScreen('matrix_r2')">← {{ $t('agileTraining.stakeholderMatrix.back') }}</button>
         </div>
       </section>
+
+      <!-- always-mounted hidden report just for printing -->
+      <SummaryReport
+        v-if="!showSummary && screen === 'final'"
+        class="sh-report-print-only"
+        dom-id="sh-report-print"
+        :group-name="groupName"
+        :participant-name="participantName"
+        :locale="locale"
+        :active-case="activeCase"
+        :active-event="activeEvent"
+        :placements-r1="placementsR1"
+        :placements-r2="placementsR2"
+        :discussion="discussion"
+        :strategy-quadrant="strategyQuadrant"
+        :strategy-hints="contentCopy.strategy_quadrant_hints"
+        :reactions="reactionsR1"
+        :diff="roundDiff"
+        :consequences-r1="consequenceListR1"
+        :consequences-r2="consequenceListR2"
+        :strengths-r1="strengthsR1"
+        :strengths-r2="strengthsR2"
+        :personas="currentPersonas"
+        :level-labels="contentCopy.level_labels || []"
+        :level-labels-x="contentCopy.level_labels_x || []"
+        :cell-strategy="contentCopy.cell_strategy || {}"
+        :axis-x="(contentCopy.axis && contentCopy.axis.x) || ''"
+        :axis-y="(contentCopy.axis && contentCopy.axis.y) || ''"
+      />
     </div>
   </div>
   <div v-else class="sh-play sh-play--load">
@@ -343,6 +411,7 @@ import { syncI18nFallback } from '@/i18n';
 import MatrixGrid from './stakeholderMatrix/MatrixGrid.vue';
 import AiBlock from './stakeholderMatrix/AiBlock.vue';
 import CoverageMeter from './stakeholderMatrix/CoverageMeter.vue';
+import SummaryReport from './stakeholderMatrix/SummaryReport.vue';
 import { computeConsequencesClient, computeStrengthsClient } from './stakeholderMatrix/logic.js';
 import {
   PERSONAS, CASES, EVENTS, STRATEGY_STARTERS,
@@ -354,7 +423,7 @@ const LS_KEY = 'at_stakeholder_m_state_';
 
 export default {
   name: 'StakeholderMatrixPlay',
-  components: { MatrixGrid, AiBlock, CoverageMeter },
+  components: { MatrixGrid, AiBlock, CoverageMeter, SummaryReport },
   props: { slug: { type: String, required: true } },
   data() {
     return {
@@ -381,6 +450,8 @@ export default {
       saveState: 'idle',
       saveTimer: null,
       dirty: false,
+      showSummary: false,
+      participantName: '',
     };
   },
   computed: {
@@ -652,6 +723,7 @@ export default {
           display_name: (this.joinName || '').trim() || undefined,
         });
         this.participantToken = res.data.participant_token;
+        this.participantName = (this.joinName || '').trim();
         this.writeToken(this.participantToken);
         this.ensureDiscussionShape();
         await this.bootstrap();
@@ -678,6 +750,15 @@ export default {
           alert(this.$t('agileTraining.stakeholderMatrix.aiLimit'));
         }
       }
+    },
+    async printReport() {
+      const wasHidden = !this.showSummary;
+      if (wasHidden) {
+        this.showSummary = true;
+        await this.$nextTick();
+        await new Promise((r) => setTimeout(r, 60));
+      }
+      try { window.print(); } catch (_) { /* noop */ }
     },
     downloadJson() {
       const data = {
@@ -833,4 +914,45 @@ export default {
 .sh-diff__role { color: #64748b; font-size: 12.5px; }
 .sh-diff__arrow { font-size: 16px; color: #1d4ed8; font-weight: 700; }
 .sh-diff__kind { color: #1f2937; }
+
+.sh-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.sh-actions--final { padding: 12px; background: #f0f9ff; border: 1px solid rgba(29,78,216,0.18); border-radius: 12px; }
+.sh-btn--print { font-size: 14px; }
+.sh-btn--ghost { background: transparent; border: none; color: #1d4ed8; text-decoration: underline; padding: 6px 8px; }
+.sh-btn--ghost:hover { color: #1e40af; }
+
+.sh-report-print-only { display: none; }
+</style>
+
+<style>
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  body * { visibility: hidden !important; }
+  .sh-report-print-only,
+  .sh-report-print-only *,
+  #sh-report,
+  #sh-report * {
+    visibility: visible !important;
+  }
+  .sh-report-print-only {
+    display: block !important;
+    position: absolute !important;
+    left: 0; top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  #sh-report {
+    position: absolute !important;
+    left: 0; top: 0;
+    width: 100%;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .sh-play, .sh-card, .sh-flow { box-shadow: none !important; border: none !important; padding: 0 !important; background: #fff !important; }
+}
 </style>

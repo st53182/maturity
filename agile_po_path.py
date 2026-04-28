@@ -93,11 +93,12 @@ STAGE_FIELDS: Dict[str, List[str]] = {
         "fears",
         "success_criteria",
     ],
+    # На value-этапе pains и gains — списки объектов (см. _clean_value_data).
+    # Здесь они перечислены в "field-список", но фронт рендерит их особым UI.
     "value": [
+        "product",
         "pains",
         "gains",
-        "product",
-        "pain_relievers",
     ],
     "fit": [
         "customer",
@@ -136,11 +137,12 @@ STAGE_LAYOUT: Dict[str, Dict[str, Dict[str, int]]] = {
         "fears":            {"row": 4, "col": 3, "colspan": 2, "rowspan": 1, "accent": "danger"},
         "success_criteria": {"row": 4, "col": 5, "colspan": 2, "rowspan": 1, "accent": "ok"},
     },
+    # Layout для value не используется (фронт рендерит свою UI), но оставляем
+    # accent для блоков, чтобы при желании можно было визуально различить.
     "value": {
-        "product":        {"row": 1, "col": 1, "colspan": 6, "rowspan": 1, "accent": "primary"},
-        "pains":          {"row": 2, "col": 1, "colspan": 3, "rowspan": 1, "accent": "danger"},
-        "gains":          {"row": 2, "col": 4, "colspan": 3, "rowspan": 1, "accent": "ok"},
-        "pain_relievers": {"row": 3, "col": 1, "colspan": 6, "rowspan": 1, "accent": "warm"},
+        "product": {"row": 1, "col": 1, "colspan": 6, "rowspan": 1, "accent": "primary"},
+        "pains":   {"row": 2, "col": 1, "colspan": 3, "rowspan": 1, "accent": "danger"},
+        "gains":   {"row": 2, "col": 4, "colspan": 3, "rowspan": 1, "accent": "ok"},
     },
     "fit": {
         "customer":      {"row": 1, "col": 1, "colspan": 6, "rowspan": 1, "accent": "primary"},
@@ -251,28 +253,40 @@ CONTENT = {
                 "context": "Теперь покажем, как наш продукт решает эту задачу.",
                 "explainer": (
                     "Идея: «Наш продукт помогает [сегмент] выполнить [job], "
-                    "снимая [pains] и давая [gains]». Опирайтесь на JTBD из этапа 1 — он отображается рядом."
+                    "снимая [pains] и давая [gains]». Каждую боль и каждую выгоду опишите ОТДЕЛЬНО — "
+                    "и для каждой сразу укажите, как продукт её закрывает или создаёт. Опирайтесь на JTBD из этапа 1 — он отображается рядом."
                 ),
                 "fields": {
-                    "pains": {
-                        "label": "Боли",
-                        "hint": "Какие проблемы и раздражители есть у клиента, пока он делает эту job без вашего продукта.",
-                        "placeholder": "Тратит 30 минут на гугление; чувствует тревогу; боится переплатить за бесполезную консультацию.",
-                    },
-                    "gains": {
-                        "label": "Выгоды",
-                        "hint": "Что человек получит, если работа сделана хорошо. Включая эмоции и статус.",
-                        "placeholder": "За 3 минуты получает план: «вызвать скорую/ждать утра/идти к ЛОРу». Ощущение «я хорошая мать».",
-                    },
                     "product": {
                         "label": "Продукт",
                         "hint": "Что мы вообще делаем — одним абзацем, без лишних деталей.",
                         "placeholder": "Чат-бот, который по симптомам ребёнка задаёт 5–7 уточняющих вопросов и в конце даёт маршрут с конкретным следующим шагом.",
                     },
-                    "pain_relievers": {
-                        "label": "Как продукт закрывает боли и даёт выгоды",
-                        "hint": "Связка боль ↔ фича. Лучше списком.",
-                        "placeholder": "— Не нужно гуглить → бот сам спрашивает по чек-листу врачей.\n— Тревога снижается → в ответе всегда есть «когда срочно, а когда подождать».\n— Не платит наугад → первая консультация бесплатна.",
+                    "pains": {
+                        "label": "Боли клиента",
+                        "hint": (
+                            "Каждая боль — отдельная карточка. Сначала формулируем саму боль, "
+                            "потом — как именно продукт её снимает (pain reliever). 3–5 болей сильнее, чем 10."
+                        ),
+                        "placeholder_text": "Например: «Гуглит симптомы по 30 минут и не получает понятного ответа.»",
+                        "placeholder_action": "Например: «Бот за 90 секунд проводит по чек-листу симптомов и выдаёт чёткий следующий шаг.»",
+                        "label_text": "Описание боли",
+                        "label_action": "Болеутоляющее (как продукт снимает)",
+                        "add_label": "+ добавить боль",
+                        "empty": "Пока не указано ни одной боли. Добавьте 3–5 — и для каждой опишите, как продукт её снимет.",
+                    },
+                    "gains": {
+                        "label": "Выгоды клиента",
+                        "hint": (
+                            "Каждая выгода — отдельная карточка. Включая эмоции и статус. "
+                            "Сразу укажите, как продукт эту выгоду создаёт (gain creator). Без маркетинговых штампов."
+                        ),
+                        "placeholder_text": "Например: «За 3 минуты — план действий и спокойствие.»",
+                        "placeholder_action": "Например: «Бот сразу даёт следующий шаг: вызвать скорую / ждать утра / идти к ЛОРу.»",
+                        "label_text": "Описание выгоды",
+                        "label_action": "Создатель выгоды (как продукт её даёт)",
+                        "add_label": "+ добавить выгоду",
+                        "empty": "Пока не указано ни одной выгоды. Добавьте 3–5 и для каждой опишите, как именно продукт её создаёт.",
                     },
                 },
             },
@@ -483,28 +497,40 @@ CONTENT = {
                 "context": "Now show how the product solves this job.",
                 "explainer": (
                     "Idea: “Our product helps [segment] do [job], removing [pains] and giving [gains]”. "
+                    "Describe each pain and each gain as a SEPARATE card — and right next to it write down how the product addresses it. "
                     "Lean on the JTBD from stage 1 — it stays visible next to you."
                 ),
                 "fields": {
-                    "pains": {
-                        "label": "Pains",
-                        "hint": "What annoys / hurts the customer doing this job without your product.",
-                        "placeholder": "30 minutes of googling; anxiety; afraid of paying for a useless consultation.",
-                    },
-                    "gains": {
-                        "label": "Gains",
-                        "hint": "What they get if it goes well — including emotion and status.",
-                        "placeholder": "In 3 minutes — a plan: call ER / wait until morning / see ENT. The “I’m a good parent” feeling.",
-                    },
                     "product": {
                         "label": "Product",
                         "hint": "What we’re actually building, in one paragraph.",
                         "placeholder": "A bot that asks 5–7 clarifying questions about symptoms and gives a clear next step.",
                     },
-                    "pain_relievers": {
-                        "label": "How the product relieves pains and creates gains",
-                        "hint": "Pair: pain ↔ feature. Use a list.",
-                        "placeholder": "— No more googling → bot follows a doctor checklist.\n— Less anxiety → answer always says when to wait vs. when to act.\n— No paid blind shots → first consult is free.",
+                    "pains": {
+                        "label": "Customer pains",
+                        "hint": (
+                            "Each pain is its own card. First write the pain, then — how the product relieves it (pain reliever). "
+                            "3–5 sharp pains beat 10 fuzzy ones."
+                        ),
+                        "placeholder_text": "E.g. “Spends 30 minutes googling and still gets no clear answer.”",
+                        "placeholder_action": "E.g. “Bot walks them through a 90-second symptom checklist and gives a single next step.”",
+                        "label_text": "Pain description",
+                        "label_action": "Pain reliever (how the product solves it)",
+                        "add_label": "+ add pain",
+                        "empty": "No pains yet. Add 3–5 — for each one, describe how the product relieves it.",
+                    },
+                    "gains": {
+                        "label": "Customer gains",
+                        "hint": (
+                            "Each gain is its own card — including emotions and status. "
+                            "Right after the gain, describe how the product creates it (gain creator). No marketing fluff."
+                        ),
+                        "placeholder_text": "E.g. “In 3 minutes — a plan and calm.”",
+                        "placeholder_action": "E.g. “Bot returns the next step: call ER / wait until morning / see ENT.”",
+                        "label_text": "Gain description",
+                        "label_action": "Gain creator (how the product gives it)",
+                        "add_label": "+ add gain",
+                        "empty": "No gains yet. Add 3–5 and describe how the product creates each one.",
                     },
                 },
             },
@@ -707,6 +733,8 @@ def _ensure_state_shape(state: Dict) -> Dict:
             st.setdefault("submitted_at", None)
             st.setdefault("approved_at", None)
             st.setdefault("review_round", 0)
+        if k == "value":
+            _migrate_value_data_inplace(st.get("data") or {})
         stages[k] = st
     state["stages"] = stages
     if "ai_history" not in state or not isinstance(state["ai_history"], list):
@@ -735,7 +763,111 @@ def _stage_field_keys(stage: str) -> List[str]:
     return STAGE_FIELDS.get(stage, [])
 
 
+# ---------- value-stage list items (pains / gains) ----------
+
+
+VALUE_LIST_LIMIT = 12  # сколько максимум болей/выгод храним
+
+
+def _new_item_id() -> str:
+    return secrets.token_hex(4)
+
+
+_SEVERITY_LEVELS = {"low", "mid", "high"}
+
+
+def _clean_value_items(raw, action_key: str) -> List[Dict]:
+    """Нормализует список pains/gains.
+
+    Принимает либо строку (legacy) — превратится в один элемент,
+    либо список объектов вида {id, text, reliever|creator,
+    severity|importance}.
+    """
+    weight_key = "severity" if action_key == "reliever" else "importance"
+    default_weight = "mid"
+    if isinstance(raw, str):
+        text = _clamp_text(raw)
+        if not text:
+            return []
+        return [{"id": _new_item_id(), "text": text, action_key: "", weight_key: default_weight}]
+    if not isinstance(raw, list):
+        return []
+    out: List[Dict] = []
+    for item in raw[:VALUE_LIST_LIMIT]:
+        if not isinstance(item, dict):
+            continue
+        text = _clamp_text(item.get("text"))
+        action = _clamp_text(item.get(action_key)) or ""
+        if not text and not action:
+            continue
+        item_id = str(item.get("id") or "").strip()[:32] or _new_item_id()
+        weight_raw = str(item.get(weight_key) or "").strip().lower()
+        weight = weight_raw if weight_raw in _SEVERITY_LEVELS else default_weight
+        out.append({
+            "id": item_id,
+            "text": text or "",
+            action_key: action or "",
+            weight_key: weight,
+        })
+    return out
+
+
+def _clean_value_data(raw: Dict) -> Dict:
+    out: Dict = {}
+    if not isinstance(raw, dict):
+        return out
+    product = _clamp_text(raw.get("product"))
+    if product is not None:
+        out["product"] = product
+    out["pains"] = _clean_value_items(raw.get("pains"), action_key="reliever")
+    out["gains"] = _clean_value_items(raw.get("gains"), action_key="creator")
+    return out
+
+
+def _migrate_value_data_inplace(value_data: Dict) -> None:
+    """Миграция старого формата (pains: str, pain_relievers: str) в списки."""
+    if not isinstance(value_data, dict):
+        return
+    legacy_relievers = value_data.pop("pain_relievers", None) if isinstance(
+        value_data.get("pain_relievers"), str
+    ) else None
+    pains = value_data.get("pains")
+    if isinstance(pains, str):
+        text = pains.strip()
+        if text:
+            new_pains = [{
+                "id": _new_item_id(),
+                "text": text[:FIELD_TEXT_LIMIT],
+                "reliever": (legacy_relievers or "").strip()[:FIELD_TEXT_LIMIT],
+                "severity": "mid",
+            }]
+        else:
+            new_pains = []
+        value_data["pains"] = new_pains
+    elif isinstance(pains, list):
+        value_data["pains"] = _clean_value_items(pains, action_key="reliever")
+    else:
+        value_data["pains"] = []
+    gains = value_data.get("gains")
+    if isinstance(gains, str):
+        text = gains.strip()
+        value_data["gains"] = [{
+            "id": _new_item_id(),
+            "text": text[:FIELD_TEXT_LIMIT],
+            "creator": "",
+            "importance": "mid",
+        }] if text else []
+    elif isinstance(gains, list):
+        value_data["gains"] = _clean_value_items(gains, action_key="creator")
+    else:
+        value_data["gains"] = []
+    if "pain_relievers" in value_data:
+        value_data.pop("pain_relievers", None)
+
+
 def _clean_stage_data(stage: str, raw: Dict) -> Dict:
+    if stage == "value":
+        return _clean_value_data(raw or {})
     out: Dict = {}
     if not isinstance(raw, dict):
         return out
@@ -751,10 +883,49 @@ def _stage_has_meaningful_content(stage: str, data: Dict) -> bool:
     """Готов ли этап к отправке — хотя бы 1 не-пустое ключевое поле."""
     if not isinstance(data, dict):
         return False
+    if stage == "value":
+        if (data.get("product") or "").strip():
+            return True
+        for it in (data.get("pains") or []):
+            if isinstance(it, dict) and ((it.get("text") or "").strip() or (it.get("reliever") or "").strip()):
+                return True
+        for it in (data.get("gains") or []):
+            if isinstance(it, dict) and ((it.get("text") or "").strip() or (it.get("creator") or "").strip()):
+                return True
+        return False
     for key in _stage_field_keys(stage):
         if (data.get(key) or "").strip():
             return True
     return False
+
+
+def _flatten_value_for_text(value_data: Dict) -> str:
+    """Превращает списки pains/gains в плоский текст для AI-контекста."""
+    if not isinstance(value_data, dict):
+        return ""
+    parts: List[str] = []
+    product = (value_data.get("product") or "").strip()
+    if product:
+        parts.append(f"product: {product[:300]}")
+    for i, it in enumerate(value_data.get("pains") or [], 1):
+        if not isinstance(it, dict):
+            continue
+        t = (it.get("text") or "").strip()
+        r = (it.get("reliever") or "").strip()
+        sev = (it.get("severity") or "mid").strip().lower()
+        if not t and not r:
+            continue
+        parts.append(f"pain {i} [{sev}]: {t[:200]} | reliever: {r[:200]}")
+    for i, it in enumerate(value_data.get("gains") or [], 1):
+        if not isinstance(it, dict):
+            continue
+        t = (it.get("text") or "").strip()
+        c = (it.get("creator") or "").strip()
+        imp = (it.get("importance") or "mid").strip().lower()
+        if not t and not c:
+            continue
+        parts.append(f"gain {i} [{imp}]: {t[:200]} | creator: {c[:200]}")
+    return "\n".join(parts)
 
 
 def _serialize_stage(state: Dict, stage: str) -> Dict:
@@ -1284,15 +1455,33 @@ def participant_ai_assist(slug: str):
         d = state["stages"][stage_for_ctx].get("data") or {}
         if isinstance(d, dict) and d:
             ctx_lines.append("Что участник пока написал на этом этапе:")
-            for k, v in d.items():
-                ctx_lines.append(f"- {k}: {v[:300]}")
+            if stage_for_ctx == "value":
+                flat = _flatten_value_for_text(d)
+                if flat:
+                    for line in flat.splitlines():
+                        ctx_lines.append(f"- {line}")
+            else:
+                for k, v in d.items():
+                    if isinstance(v, str):
+                        ctx_lines.append(f"- {k}: {v[:300]}")
     # Подмешаем краткую сводку по предыдущим этапам — чтобы AI был связным
     for k in STAGES:
         if k == stage_for_ctx:
             break
         d = state["stages"][k].get("data") or {}
-        if d:
-            ctx_lines.append(f"[{k}] {' / '.join(f'{kk}: {vv[:120]}' for kk, vv in d.items())}")
+        if not d:
+            continue
+        if k == "value":
+            flat = _flatten_value_for_text(d)
+            if flat:
+                ctx_lines.append(f"[value] {flat[:600]}")
+        else:
+            parts = []
+            for kk, vv in d.items():
+                if isinstance(vv, str):
+                    parts.append(f"{kk}: {vv[:120]}")
+            if parts:
+                ctx_lines.append(f"[{k}] {' / '.join(parts)}")
 
     client = _openai_client()
     reply_text = ""
@@ -1378,8 +1567,16 @@ def participant_ai_uncomfortable(slug: str):
     earlier = []
     for k in ("jtbd", "value"):
         d = state["stages"][k].get("data") or {}
-        for kk, vv in d.items():
-            earlier.append(f"[{k}/{kk}] {vv[:240]}")
+        if not d:
+            continue
+        if k == "value":
+            flat = _flatten_value_for_text(d)
+            if flat:
+                earlier.append(f"[value] {flat[:600]}")
+        else:
+            for kk, vv in d.items():
+                if isinstance(vv, str):
+                    earlier.append(f"[{k}/{kk}] {vv[:240]}")
 
     questions: List[str] = []
     client = _openai_client()

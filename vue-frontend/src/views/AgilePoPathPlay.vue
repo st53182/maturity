@@ -64,9 +64,10 @@
     <section v-else-if="activeStage !== 'done'" class="po-card po-stage">
       <header class="po-stage__head">
         <div>
-          <div class="po-stage__kicker">{{ $t('agileTraining.poPath.play.stageOf', { i: stageIdx + 1, total: 4 }) }}</div>
+          <div class="po-stage__kicker">{{ $t('agileTraining.poPath.play.stageOf', { i: stageIdx + 1, total: 4 }) }} · ⏱ {{ stageEstimatedTime }}</div>
           <h2>{{ stageContent.title }}</h2>
           <p class="po-stage__context">{{ stageContent.context }}</p>
+          <p v-if="stageNextHint" class="po-stage__next">→ {{ stageNextHint }}</p>
         </div>
         <span class="po-status" :class="['po-status--' + currentStageStatus]">
           {{ statusEmoji(currentStageStatus) }} {{ statusLabel(currentStageStatus) }}
@@ -82,15 +83,19 @@
           <li v-for="kv in jtbdSummary" :key="'rj_' + kv.k"><b>{{ kv.label }}:</b> {{ kv.value }}</li>
         </ul>
       </aside>
-      <aside v-if="activeStage === 'fit' && (jtbdSummary.length || valueSummary.length)" class="po-ref">
+      <aside v-if="activeStage === 'fit' && (jtbdSummary.length || valueSummary.length || valueSummaryItems('pains').length || valueSummaryItems('gains').length)" class="po-ref">
         <div class="po-ref__h">📌 {{ $t('agileTraining.poPath.play.refPrev') }}</div>
         <details v-if="jtbdSummary.length">
           <summary>JTBD</summary>
           <ul><li v-for="kv in jtbdSummary" :key="'rfj_' + kv.k"><b>{{ kv.label }}:</b> {{ kv.value }}</li></ul>
         </details>
-        <details v-if="valueSummary.length">
+        <details v-if="valueSummary.length || valueSummaryItems('pains').length || valueSummaryItems('gains').length">
           <summary>Value</summary>
-          <ul><li v-for="kv in valueSummary" :key="'rfv_' + kv.k"><b>{{ kv.label }}:</b> {{ kv.value }}</li></ul>
+          <ul>
+            <li v-for="kv in valueSummary" :key="'rfv_' + kv.k"><b>{{ kv.label }}:</b> {{ kv.value }}</li>
+            <li v-for="(it, i) in valueSummaryItems('pains').slice(0, 3)" :key="'rfvp_' + (it.id || i)">🔥 {{ it.text }}<span v-if="it.reliever"> → {{ it.reliever }}</span></li>
+            <li v-for="(it, i) in valueSummaryItems('gains').slice(0, 3)" :key="'rfvg_' + (it.id || i)">🎯 {{ it.text }}<span v-if="it.creator"> → {{ it.creator }}</span></li>
+          </ul>
         </details>
       </aside>
       <aside v-if="activeStage === 'canvas'" class="po-ref">
@@ -108,10 +113,10 @@
         <p>{{ latestApprovalComment.text }}</p>
       </div>
 
-      <!-- Canvas-style fields grid -->
+      <!-- Canvas-style fields grid (для value-этапа здесь только продукт) -->
       <div class="po-canvas-form" :class="['po-canvas-form--' + activeStage]">
         <div
-          v-for="key in stageKeys"
+          v-for="key in canvasFormKeys"
           :key="'f_' + key"
           class="po-cell"
           :class="cellClass(key)"
@@ -135,6 +140,126 @@
           </div>
         </div>
       </div>
+
+      <!-- Stage-specific: Value Proposition pains/gains lists -->
+      <section v-if="activeStage === 'value'" class="po-vp">
+        <div class="po-vp__rule">
+          <span class="po-vp__rule-icon">🧩</span>
+          <span>{{ $t('agileTraining.poPath.play.valueRule') }}</span>
+        </div>
+        <div class="po-vp__col po-vp__col--pains">
+          <header class="po-vp__col-head">
+            <h3>{{ $t('agileTraining.poPath.play.valuePainsTitle') }}</h3>
+            <span class="po-vp__counter">{{ painsCounterLabel }}</span>
+          </header>
+          <p class="po-vp__hint">{{ valueField('pains').hint }}</p>
+          <div class="po-vp__top-actions" v-if="canImportPainsFromJtbd">
+            <button class="po-link-btn" :disabled="isStageLocked" @click="importPainsFromJtbd">📥 {{ $t('agileTraining.poPath.play.importFromJtbd') }}</button>
+            <span class="po-vp__top-hint">{{ $t('agileTraining.poPath.play.importFromJtbdHint') }}</span>
+          </div>
+          <div v-if="!valuePains.length" class="po-vp__empty">{{ valueField('pains').empty }}</div>
+          <div v-else class="po-vp__items">
+            <div
+              v-for="(item, idx) in valuePains"
+              :key="'pain_' + item.id"
+              class="po-vp__item po-vp__item--pain"
+              :class="['po-vp__item--sev-' + (item.severity || 'mid')]"
+            >
+              <div class="po-vp__item-head">
+                <span class="po-vp__item-num">{{ idx + 1 }}</span>
+                <div class="po-vp__chips">
+                  <button
+                    v-for="sev in painSeverities"
+                    :key="'sev_' + item.id + '_' + sev.key"
+                    class="po-vp__chip"
+                    :class="{ 'po-vp__chip--on': (item.severity || 'mid') === sev.key, ['po-vp__chip--' + sev.key]: true }"
+                    :disabled="isStageLocked"
+                    :title="sev.title"
+                    @click="updateValueItem('pains', item.id, 'severity', sev.key)"
+                  >{{ sev.icon }} {{ sev.label }}</button>
+                </div>
+                <button class="po-vp__remove" :disabled="isStageLocked" :title="$t('agileTraining.poPath.play.valueRemoveItem')" @click="removeValueItem('pains', item.id)">✕</button>
+              </div>
+              <label>{{ valueField('pains').label_text }}</label>
+              <textarea
+                :value="item.text || ''"
+                @input="updateValueItem('pains', item.id, 'text', $event.target.value)"
+                :placeholder="valueField('pains').placeholder_text || ''"
+                :disabled="isStageLocked"
+                rows="2"
+              ></textarea>
+              <div class="po-vp__bridge"><span>↓ {{ $t('agileTraining.poPath.play.bridgePain') }}</span></div>
+              <label>{{ valueField('pains').label_action }}</label>
+              <textarea
+                :value="item.reliever || ''"
+                @input="updateValueItem('pains', item.id, 'reliever', $event.target.value)"
+                :placeholder="valueField('pains').placeholder_action || ''"
+                :disabled="isStageLocked"
+                rows="2"
+              ></textarea>
+              <div class="po-vp__per-actions">
+                <button class="po-link-btn" :disabled="isStageLocked || aiBusy || !participantToken" @click="aiSuggestForValueItem('pains', item.id)">{{ $t('agileTraining.poPath.play.aiSuggestPair') }}</button>
+              </div>
+            </div>
+          </div>
+          <button class="po-vp__add" :disabled="isStageLocked || valuePains.length >= valueListMax" @click="addValueItem('pains')">{{ valueField('pains').add_label || $t('agileTraining.poPath.play.valueAddPain') }}</button>
+          <div v-if="valuePains.length >= valueListMax" class="po-vp__limit">{{ $t('agileTraining.poPath.play.valueMaxItems', { n: valueListMax }) }}</div>
+        </div>
+        <div class="po-vp__col po-vp__col--gains">
+          <header class="po-vp__col-head">
+            <h3>{{ $t('agileTraining.poPath.play.valueGainsTitle') }}</h3>
+            <span class="po-vp__counter">{{ gainsCounterLabel }}</span>
+          </header>
+          <p class="po-vp__hint">{{ valueField('gains').hint }}</p>
+          <div v-if="!valueGains.length" class="po-vp__empty">{{ valueField('gains').empty }}</div>
+          <div v-else class="po-vp__items">
+            <div
+              v-for="(item, idx) in valueGains"
+              :key="'gain_' + item.id"
+              class="po-vp__item po-vp__item--gain"
+              :class="['po-vp__item--imp-' + (item.importance || 'mid')]"
+            >
+              <div class="po-vp__item-head">
+                <span class="po-vp__item-num">{{ idx + 1 }}</span>
+                <div class="po-vp__chips">
+                  <button
+                    v-for="imp in gainImportances"
+                    :key="'imp_' + item.id + '_' + imp.key"
+                    class="po-vp__chip"
+                    :class="{ 'po-vp__chip--on': (item.importance || 'mid') === imp.key, ['po-vp__chip--imp-' + imp.key]: true }"
+                    :disabled="isStageLocked"
+                    :title="imp.title"
+                    @click="updateValueItem('gains', item.id, 'importance', imp.key)"
+                  >{{ imp.icon }} {{ imp.label }}</button>
+                </div>
+                <button class="po-vp__remove" :disabled="isStageLocked" :title="$t('agileTraining.poPath.play.valueRemoveItem')" @click="removeValueItem('gains', item.id)">✕</button>
+              </div>
+              <label>{{ valueField('gains').label_text }}</label>
+              <textarea
+                :value="item.text || ''"
+                @input="updateValueItem('gains', item.id, 'text', $event.target.value)"
+                :placeholder="valueField('gains').placeholder_text || ''"
+                :disabled="isStageLocked"
+                rows="2"
+              ></textarea>
+              <div class="po-vp__bridge po-vp__bridge--gain"><span>↓ {{ $t('agileTraining.poPath.play.bridgeGain') }}</span></div>
+              <label>{{ valueField('gains').label_action }}</label>
+              <textarea
+                :value="item.creator || ''"
+                @input="updateValueItem('gains', item.id, 'creator', $event.target.value)"
+                :placeholder="valueField('gains').placeholder_action || ''"
+                :disabled="isStageLocked"
+                rows="2"
+              ></textarea>
+              <div class="po-vp__per-actions">
+                <button class="po-link-btn" :disabled="isStageLocked || aiBusy || !participantToken" @click="aiSuggestForValueItem('gains', item.id)">{{ $t('agileTraining.poPath.play.aiSuggestPair') }}</button>
+              </div>
+            </div>
+          </div>
+          <button class="po-vp__add" :disabled="isStageLocked || valueGains.length >= valueListMax" @click="addValueItem('gains')">{{ valueField('gains').add_label || $t('agileTraining.poPath.play.valueAddGain') }}</button>
+          <div v-if="valueGains.length >= valueListMax" class="po-vp__limit">{{ $t('agileTraining.poPath.play.valueMaxItems', { n: valueListMax }) }}</div>
+        </div>
+      </section>
 
       <!-- Stage-specific: Market Fit AI uncomfortable -->
       <section v-if="activeStage === 'fit'" class="po-uncomfortable">
@@ -205,6 +330,24 @@
         <div class="po-final__block">
           <h3>2 · Value Proposition</h3>
           <ul><li v-for="kv in summaryStage('value')" :key="'sv_' + kv.k"><b>{{ kv.label }}:</b> {{ kv.value }}</li></ul>
+          <div v-if="valueSummaryItems('pains').length" class="po-final__sub">
+            <div class="po-final__sub-h">{{ $t('agileTraining.poPath.play.valuePainsTitle') }}</div>
+            <ol class="po-final__pairs">
+              <li v-for="(it, i) in valueSummaryItems('pains')" :key="'svp_' + (it.id || i)">
+                <div class="po-final__pair-text"><span v-if="it.severity" class="po-final__pair-tag" :class="'po-final__pair-tag--' + it.severity">{{ painSevIcon(it.severity) }}</span>{{ it.text || '—' }}</div>
+                <div v-if="it.reliever" class="po-final__pair-action">→ {{ it.reliever }}</div>
+              </li>
+            </ol>
+          </div>
+          <div v-if="valueSummaryItems('gains').length" class="po-final__sub">
+            <div class="po-final__sub-h">{{ $t('agileTraining.poPath.play.valueGainsTitle') }}</div>
+            <ol class="po-final__pairs">
+              <li v-for="(it, i) in valueSummaryItems('gains')" :key="'svg_' + (it.id || i)">
+                <div class="po-final__pair-text"><span v-if="it.importance" class="po-final__pair-tag" :class="'po-final__pair-tag--imp-' + it.importance">{{ gainImpIcon(it.importance) }}</span>{{ it.text || '—' }}</div>
+                <div v-if="it.creator" class="po-final__pair-action">→ {{ it.creator }}</div>
+              </li>
+            </ol>
+          </div>
         </div>
         <div class="po-final__block">
           <h3>3 · Market Fit</h3>
@@ -280,15 +423,75 @@ export default {
       // AI
       aiBusy: false,
       aiReply: '',
+      aiTargetField: '',
+      // Reactive cache of participant token. Хранится отдельно от
+      // localStorage (computed на localStorage не пересчитывается, потому что
+      // localStorage не реактивен, и пользователь после клика «Начать»
+      // оставался на welcome-экране).
+      participantToken: '',
+      // Кэш ответа из localStorage: применяется один раз после loadState,
+      // чтобы не потерять «несохранёнки» после refresh. Нереактивен по сути.
+      localCache: null,
+      qaTimer: null,
     };
   },
   computed: {
-    participantToken() { return this.tokenFromStorage(); },
     storageKey() { return 'po_path:' + this.slug; },
     cacheKey() { return 'po_path_cache:' + this.slug; },
     stageContent() { return this.content.stages?.[this.activeStage] || {}; },
     stageKeys() { return this.stageFields[this.activeStage] || []; },
+    canvasFormKeys() {
+      const keys = this.stageFields[this.activeStage] || [];
+      if (this.activeStage === 'value') {
+        return keys.filter(k => k === 'product');
+      }
+      return keys;
+    },
     stageIdx() { return STAGES.indexOf(this.activeStage); },
+    valuePains() {
+      const data = this.getStageData('value').data || {};
+      return Array.isArray(data.pains) ? data.pains : [];
+    },
+    valueGains() {
+      const data = this.getStageData('value').data || {};
+      return Array.isArray(data.gains) ? data.gains : [];
+    },
+    valueListMax() { return 12; },
+    painSeverities() {
+      return [
+        { key: 'low', icon: '🟢', label: this.$t('agileTraining.poPath.play.painSev.low'), title: this.$t('agileTraining.poPath.play.painSev.lowHint') },
+        { key: 'mid', icon: '🟠', label: this.$t('agileTraining.poPath.play.painSev.mid'), title: this.$t('agileTraining.poPath.play.painSev.midHint') },
+        { key: 'high', icon: '🔴', label: this.$t('agileTraining.poPath.play.painSev.high'), title: this.$t('agileTraining.poPath.play.painSev.highHint') },
+      ];
+    },
+    gainImportances() {
+      return [
+        { key: 'low', icon: '🌱', label: this.$t('agileTraining.poPath.play.gainImp.low'), title: this.$t('agileTraining.poPath.play.gainImp.lowHint') },
+        { key: 'mid', icon: '✨', label: this.$t('agileTraining.poPath.play.gainImp.mid'), title: this.$t('agileTraining.poPath.play.gainImp.midHint') },
+        { key: 'high', icon: '🌟', label: this.$t('agileTraining.poPath.play.gainImp.high'), title: this.$t('agileTraining.poPath.play.gainImp.highHint') },
+      ];
+    },
+    painsCounterLabel() {
+      const total = this.valuePains.length;
+      if (!total) return this.$t('agileTraining.poPath.play.valuePainsCounter', { n: 0 });
+      const counts = { low: 0, mid: 0, high: 0 };
+      for (const p of this.valuePains) counts[p?.severity || 'mid'] = (counts[p?.severity || 'mid'] || 0) + 1;
+      return this.$t('agileTraining.poPath.play.valuePainsCounter', { n: total })
+        + ` · 🔴${counts.high} 🟠${counts.mid} 🟢${counts.low}`;
+    },
+    gainsCounterLabel() {
+      const total = this.valueGains.length;
+      if (!total) return this.$t('agileTraining.poPath.play.valueGainsCounter', { n: 0 });
+      const counts = { low: 0, mid: 0, high: 0 };
+      for (const g of this.valueGains) counts[g?.importance || 'mid'] = (counts[g?.importance || 'mid'] || 0) + 1;
+      return this.$t('agileTraining.poPath.play.valueGainsCounter', { n: total })
+        + ` · 🌟${counts.high} ✨${counts.mid} 🌱${counts.low}`;
+    },
+    canImportPainsFromJtbd() {
+      const j = this.getStageData('jtbd').data || {};
+      const has = (s) => typeof s === 'string' && s.trim().length > 0;
+      return has(j.barriers) || has(j.fears) || has(j.current_solution);
+    },
     stageData() { return this.getStageData(this.activeStage).data || {}; },
     confidence() { return this.getStageData(this.activeStage).confidence; },
     currentStageStatus() { return this.getStageData(this.activeStage).status || 'draft'; },
@@ -312,6 +515,13 @@ export default {
       if (this.isStageLocked) return false;
       if (this.serverCurrentStage !== this.activeStage) return false;
       if (this.activeStage !== this.serverCurrentStage) return false;
+      if (this.activeStage === 'value') {
+        const data = this.stageData || {};
+        if ((data.product || '').trim()) return true;
+        if (Array.isArray(data.pains) && data.pains.some(it => ((it?.text || '').trim() || (it?.reliever || '').trim()))) return true;
+        if (Array.isArray(data.gains) && data.gains.some(it => ((it?.text || '').trim() || (it?.creator || '').trim()))) return true;
+        return false;
+      }
       const hasContent = (this.stageKeys || []).some(k => (this.stageData[k] || '').trim());
       return hasContent;
     },
@@ -331,6 +541,17 @@ export default {
     canPrefillCanvas() {
       const c = this.getStageData('canvas').data || {};
       return !c.problem && !c.value_prop;
+    },
+    stageEstimatedTime() {
+      const map = { jtbd: '12–15', value: '12–15', fit: '8–10', canvas: '15–20' };
+      const range = map[this.activeStage] || '10';
+      return this.$t('agileTraining.poPath.play.estMinutes', { range });
+    },
+    stageNextHint() {
+      const next = { jtbd: 'value', value: 'fit', fit: 'canvas', canvas: 'done' }[this.activeStage];
+      if (!next || next === 'done') return this.$t('agileTraining.poPath.play.nextHintDone');
+      const stageTitleKey = 'agileTraining.poPath.stages.' + next + '.short';
+      return this.$t('agileTraining.poPath.play.nextHint', { next: this.$t(stageTitleKey) });
     },
     latestRejectionComment() {
       const list = this.getStageData(this.activeStage).comments || [];
@@ -353,8 +574,14 @@ export default {
     },
   },
   async mounted() {
+    this.participantToken = this.tokenFromStorage();
     this.restoreLocalCache();
     await this.loadState();
+    if (this.participantToken && !this.answer) {
+      this.answer = this.buildEmptyAnswer();
+      this.hasName = true;
+      this.activeStage = 'jtbd';
+    }
   },
   beforeUnmount() {
     if (this.saveTimer) clearTimeout(this.saveTimer);
@@ -365,6 +592,11 @@ export default {
     },
     saveTokenToStorage(token) {
       try { localStorage.setItem(this.storageKey, token); } catch (_) { /* noop */ }
+      this.participantToken = token || '';
+    },
+    clearTokenStorage() {
+      try { localStorage.removeItem(this.storageKey); } catch (_) { /* noop */ }
+      this.participantToken = '';
     },
     restoreLocalCache() {
       try {
@@ -372,7 +604,7 @@ export default {
         if (!raw) return;
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
-          this._localCache = parsed; // merge later when answer arrives
+          this.localCache = parsed; // merge later when answer arrives
         }
       } catch (_) { /* noop */ }
     },
@@ -457,8 +689,12 @@ export default {
     },
 
     // ---------- API ----------
-    async loadState() {
-      this.loading = true;
+    async loadState(options = {}) {
+      const keepName = !!options.keepName;
+      // Спиннер показываем только на первый раз. После того как у нас уже
+      // есть answer (даже стаб) — не моргаем загрузкой, чтобы не сбрасывать
+      // welcome→stage визуально.
+      if (!this.answer) this.loading = true;
       try {
         const res = await axios.get(`/api/agile-training/po-path/g/${this.slug}/state`, {
           params: this.participantToken ? { participant_token: this.participantToken, locale: this.$i18n.locale } : { locale: this.$i18n.locale },
@@ -476,20 +712,49 @@ export default {
           this.hasName = true;
           this.activeStage = this.answer.current_stage === 'done' ? 'canvas' : this.answer.current_stage;
           this.mergeLocalCacheIfPresent();
-        } else if (tokenProvided && !participantKnown) {
-          try { localStorage.removeItem(this.storageKey); } catch (_) { /* noop */ }
+        } else if (!keepName && tokenProvided && !participantKnown) {
+          this.clearTokenStorage();
           this.hasName = false;
-        } else if (!this.participantToken) {
+        } else if (!keepName && !this.participantToken) {
           this.hasName = false;
         }
       } catch (e) {
-        this.errorText = (e.response?.data?.error) || e.message || 'Error';
+        if (!keepName) {
+          this.errorText = (e.response?.data?.error) || e.message || 'Error';
+        }
       } finally {
         this.loading = false;
       }
     },
+    buildEmptyAnswer() {
+      // Локальный stub — чтобы UI ушёл с welcome сразу после клика «Начать»,
+      // не дожидаясь GET /state. Первый autosave создаст реальную запись на сервере.
+      const stages = {};
+      for (const s of STAGES) {
+        const stage = {
+          stage: s,
+          status: 'draft',
+          data: s === 'value' ? { pains: [], gains: [] } : {},
+          confidence: null,
+          comments: [],
+          submitted_at: null,
+          approved_at: null,
+          review_round: 0,
+        };
+        if (s === 'fit') stage.ai_questions = [];
+        stages[s] = stage;
+      }
+      return {
+        id: null,
+        current_stage: 'jtbd',
+        stages_completed: 0,
+        stages,
+        ai_calls: 0,
+        ai_calls_remaining: this.aiCallsLimit || 30,
+      };
+    },
     mergeLocalCacheIfPresent() {
-      const cache = this._localCache;
+      const cache = this.localCache;
       if (!cache || !cache.stages || !this.answer) return;
       // Поверх серверного ответа: добавляем поля, которых не было — клиент мог
       // ещё не успеть отправить последний autosave. Только для not-locked этапов.
@@ -518,8 +783,18 @@ export default {
         if (existing) body.participant_token = existing;
         const res = await axios.post(`/api/agile-training/g/${this.slug}/participant`, body);
         this.saveTokenToStorage(res.data.participant_token);
+        // Сразу переключаем UI: создаём локальный стейт ответа и показываем
+        // первый этап. Без этого welcome иногда «зависал» до refresh из-за
+        // временного рассинхрона между POST /participant и GET /state.
+        if (!this.answer) this.answer = this.buildEmptyAnswer();
+        this.activeStage = 'jtbd';
         this.hasName = true;
-        await this.loadState();
+        this.$nextTick(() => this.scrollTop());
+        // Тихо подгружаем серверный стейт в фоне; стаб уже отрисован — даже если
+        // запрос упадёт или вернёт answer=null, пользователь продолжит работу.
+        try {
+          await this.loadState({ keepName: true });
+        } catch (_) { /* ignore */ }
       } catch (e) {
         alert((e.response?.data?.error) || e.message);
       }
@@ -549,8 +824,8 @@ export default {
       q.answer = value;
       this.persistLocalCache();
       // ответ сохраняется отдельной ручкой — debounce
-      if (this._qaTimer) clearTimeout(this._qaTimer);
-      this._qaTimer = setTimeout(() => this.saveQuestionAnswer(qId, value), 600);
+      if (this.qaTimer) clearTimeout(this.qaTimer);
+      this.qaTimer = setTimeout(() => this.saveQuestionAnswer(qId, value), 600);
     },
     async saveQuestionAnswer(qId, value) {
       try {
@@ -622,7 +897,7 @@ export default {
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { /* noop */ }
     },
     handleLostParticipant() {
-      try { localStorage.removeItem(this.storageKey); } catch (_) { /* noop */ }
+      this.clearTokenStorage();
       this.answer = null;
       this.hasName = false;
       alert(this.$t('agileTraining.poPath.play.sessionLost'));
@@ -644,12 +919,24 @@ export default {
       const fields = this.stageFields[s] || [];
       const out = [];
       for (const k of fields) {
-        const value = (data[k] || '').trim();
+        if (s === 'value' && (k === 'pains' || k === 'gains')) continue; // показываем списком отдельно
+        const v = data[k];
+        const value = typeof v === 'string' ? v.trim() : '';
         if (!value) continue;
         out.push({ k, label: this.content.stages?.[s]?.fields?.[k]?.label || k, value });
       }
       return out;
     },
+    valueSummaryItems(kind) {
+      const items = (this.getStageData('value').data || {})[kind] || [];
+      const actionKey = kind === 'pains' ? 'reliever' : 'creator';
+      const filtered = (Array.isArray(items) ? items : []).filter(it => (it?.text || '').trim() || (it?.[actionKey] || '').trim());
+      const wKey = kind === 'pains' ? 'severity' : 'importance';
+      const w = (s) => (s === 'high' ? 2 : s === 'low' ? 0 : 1);
+      return filtered.slice().sort((a, b) => w(b?.[wKey]) - w(a?.[wKey]));
+    },
+    painSevIcon(s) { return s === 'high' ? '🔴' : s === 'low' ? '🟢' : '🟠'; },
+    gainImpIcon(s) { return s === 'high' ? '🌟' : s === 'low' ? '🌱' : '✨'; },
     prefillCanvas() {
       if (!this.answer) return;
       const canvas = this.answer.stages.canvas;
@@ -657,16 +944,129 @@ export default {
       const data = { ...(canvas.data || {}) };
       const jtbd = this.getStageData('jtbd').data || {};
       const value = this.getStageData('value').data || {};
+      const painList = Array.isArray(value.pains) ? value.pains : [];
+      const gainList = Array.isArray(value.gains) ? value.gains : [];
+      const sevWeight = (s) => (s === 'high' ? 2 : s === 'low' ? 0 : 1);
+      const sortedPains = [...painList].sort((a, b) => sevWeight(b?.severity) - sevWeight(a?.severity));
+      const sortedGains = [...gainList].sort((a, b) => sevWeight(b?.importance) - sevWeight(a?.importance));
+      const painTexts = sortedPains.map(p => (p?.text || '').trim()).filter(Boolean);
+      const reliefTexts = sortedPains.map(p => (p?.reliever || '').trim()).filter(Boolean);
+      const gainCreators = sortedGains.map(g => (g?.creator || '').trim()).filter(Boolean);
       if (!data.problem) {
-        const parts = [jtbd.barriers, jtbd.fears, value.pains].filter(Boolean);
+        const parts = [jtbd.barriers, jtbd.fears, ...painTexts].filter(Boolean);
         if (parts.length) data.problem = parts.join('\n').slice(0, 1500);
       }
       if (!data.value_prop) {
         if (value.product) data.value_prop = value.product;
       }
-      if (!data.solution && value.pain_relievers) data.solution = value.pain_relievers;
+      if (!data.solution) {
+        const lines = [...reliefTexts, ...gainCreators];
+        if (lines.length) data.solution = lines.map(l => '— ' + l).join('\n').slice(0, 1500);
+      }
       canvas.data = data;
       this.scheduleAutosave(0);
+    },
+    valueField(kind) {
+      return (this.content.stages?.value?.fields || {})[kind] || {};
+    },
+    ensureValueArrays() {
+      if (!this.answer) return;
+      let stage = this.answer.stages.value;
+      if (!stage) {
+        stage = { status: 'draft', data: {}, comments: [] };
+        this.answer.stages.value = stage;
+      }
+      if (!stage.data || typeof stage.data !== 'object') stage.data = {};
+      if (!Array.isArray(stage.data.pains)) stage.data.pains = [];
+      if (!Array.isArray(stage.data.gains)) stage.data.gains = [];
+    },
+    generateLocalId() {
+      return Math.random().toString(16).slice(2, 10) + Date.now().toString(16).slice(-4);
+    },
+    addValueItem(kind) {
+      this.ensureValueArrays();
+      const arr = this.answer.stages.value.data[kind];
+      if (arr.length >= this.valueListMax) return;
+      const item = { id: this.generateLocalId(), text: '' };
+      if (kind === 'pains') {
+        item.reliever = '';
+        item.severity = 'mid';
+      } else {
+        item.creator = '';
+        item.importance = 'mid';
+      }
+      arr.push(item);
+      this.persistLocalCache();
+      this.scheduleAutosave(0);
+    },
+    importPainsFromJtbd() {
+      this.ensureValueArrays();
+      const arr = this.answer.stages.value.data.pains;
+      const j = this.getStageData('jtbd').data || {};
+      const sources = [];
+      const split = (s) => String(s || '').split(/\n|;|·/).map(t => t.trim()).filter(Boolean);
+      for (const t of split(j.barriers)) sources.push({ text: t, severity: 'mid' });
+      for (const t of split(j.fears)) sources.push({ text: t, severity: 'high' });
+      if (j.current_solution && typeof j.current_solution === 'string' && j.current_solution.trim()) {
+        sources.push({ text: this.$t('agileTraining.poPath.play.importHardWay') + ': ' + j.current_solution.trim().slice(0, 220), severity: 'mid' });
+      }
+      if (!sources.length) {
+        alert(this.$t('agileTraining.poPath.play.importEmpty'));
+        return;
+      }
+      const existingTexts = new Set(arr.map(x => (x?.text || '').trim().toLowerCase()));
+      let added = 0;
+      for (const s of sources) {
+        if (arr.length >= this.valueListMax) break;
+        const norm = (s.text || '').trim().toLowerCase();
+        if (!norm || existingTexts.has(norm)) continue;
+        existingTexts.add(norm);
+        arr.push({
+          id: this.generateLocalId(),
+          text: s.text,
+          reliever: '',
+          severity: s.severity || 'mid',
+        });
+        added++;
+      }
+      if (!added) {
+        alert(this.$t('agileTraining.poPath.play.importDuplicates'));
+        return;
+      }
+      this.persistLocalCache();
+      this.scheduleAutosave(0);
+    },
+    removeValueItem(kind, id) {
+      this.ensureValueArrays();
+      const arr = this.answer.stages.value.data[kind];
+      const idx = arr.findIndex(it => it && it.id === id);
+      if (idx >= 0) arr.splice(idx, 1);
+      this.persistLocalCache();
+      this.scheduleAutosave(0);
+    },
+    updateValueItem(kind, id, field, value) {
+      this.ensureValueArrays();
+      const arr = this.answer.stages.value.data[kind];
+      const it = arr.find(x => x && x.id === id);
+      if (!it) return;
+      it[field] = value;
+      this.persistLocalCache();
+      this.scheduleAutosave();
+    },
+    aiSuggestForValueItem(kind, id) {
+      const arr = kind === 'pains' ? this.valuePains : this.valueGains;
+      const it = arr.find(x => x && x.id === id);
+      if (!it) return;
+      const text = (it.text || '').trim();
+      if (!text) {
+        alert(this.$t(kind === 'pains' ? 'agileTraining.poPath.play.valueAiPainNeed' : 'agileTraining.poPath.play.valueAiGainNeed'));
+        return;
+      }
+      const promptText = (kind === 'pains'
+        ? 'Боль: ' + text + (it.reliever ? '\nТекущее болеутоляющее: ' + it.reliever : '')
+        : 'Выгода: ' + text + (it.creator ? '\nТекущий создатель выгоды: ' + it.creator : '')
+      ) + '\n\nПредложи 1-2 коротких варианта, как ' + (kind === 'pains' ? 'продукт может снять эту боль' : 'продукт может создать эту выгоду') + '.';
+      this.aiAssistGeneric('value_help', promptText);
     },
     // ---------- AI ----------
     async aiAssistGeneric(mode, userInput) {
@@ -747,10 +1147,26 @@ export default {
       lines.push('=== ' + this.content.title + ' ===');
       for (const s of STAGES) {
         const items = this.summaryStage(s);
-        if (!items.length) continue;
+        const painList = s === 'value' ? this.valueSummaryItems('pains') : [];
+        const gainList = s === 'value' ? this.valueSummaryItems('gains') : [];
+        if (!items.length && !painList.length && !gainList.length) continue;
         lines.push('');
         lines.push('--- ' + (this.content.stages?.[s]?.title || s) + ' ---');
         for (const it of items) lines.push(it.label + ': ' + it.value);
+        if (painList.length) {
+          lines.push('');
+          lines.push(this.valueField('pains').label || 'Боли');
+          painList.forEach((it, i) => {
+            lines.push((i + 1) + '. ' + (it.text || '—') + (it.reliever ? '\n   → ' + it.reliever : ''));
+          });
+        }
+        if (gainList.length) {
+          lines.push('');
+          lines.push(this.valueField('gains').label || 'Выгоды');
+          gainList.forEach((it, i) => {
+            lines.push((i + 1) + '. ' + (it.text || '—') + (it.creator ? '\n   → ' + it.creator : ''));
+          });
+        }
       }
       try {
         navigator.clipboard.writeText(lines.join('\n'));
@@ -805,6 +1221,7 @@ export default {
 .po-stage__kicker { font-size: 12px; color: #7c3aed; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 .po-stage__head h2 { margin: 0; }
 .po-stage__context { color: #64748b; margin-top: 4px; }
+.po-stage__next { color: #047857; margin: 6px 0 0; font-size: 13px; font-weight: 600; }
 .po-status { padding: 4px 12px; border-radius: 999px; background: #f1f5f9; color: #334155; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .po-status--approved { background: #dcfce7; color: #166534; }
 .po-status--needs_revision { background: #fee2e2; color: #b91c1c; }
@@ -881,6 +1298,65 @@ export default {
 @media (max-width: 540px) {
   .po-canvas-form { grid-template-columns: 1fr; }
 }
+
+.po-vp { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.po-vp__col { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.po-vp__col--pains { border-color: #fecaca; background: #fff8f7; }
+.po-vp__col--gains { border-color: #bbf7d0; background: #f0fdf4; }
+.po-vp__col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.po-vp__col-head h3 { margin: 0; font-size: 16px; }
+.po-vp__counter { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(15,23,42,0.05); color: #475569; }
+.po-vp__hint { color: #475569; font-size: 13px; line-height: 1.4; margin: 0; }
+.po-vp__empty { color: #94a3b8; font-size: 13px; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 10px; text-align: center; }
+.po-vp__items { display: flex; flex-direction: column; gap: 10px; }
+.po-vp__item { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+.po-vp__item--pain { border-left: 3px solid #fca5a5; }
+.po-vp__item--gain { border-left: 3px solid #6ee7b7; }
+.po-vp__item-head { display: flex; align-items: center; justify-content: space-between; }
+.po-vp__item-num { font-weight: 700; font-size: 13px; color: #475569; background: rgba(15,23,42,0.05); border-radius: 999px; padding: 1px 8px; }
+.po-vp__remove { background: transparent; border: 1px solid #e5e7eb; color: #94a3b8; width: 24px; height: 24px; line-height: 1; padding: 0; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.po-vp__remove:hover:not(:disabled) { color: #b91c1c; border-color: #fca5a5; background: #fef2f2; }
+.po-vp__remove:disabled { opacity: 0.4; cursor: not-allowed; }
+.po-vp__item label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+.po-vp__item textarea { width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 13.5px; resize: vertical; line-height: 1.45; background: #fff; min-height: 50px; }
+.po-vp__item textarea:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+.po-vp__item textarea:disabled { background: #f1f5f9; color: #475569; }
+.po-vp__per-actions { display: flex; gap: 10px; margin-top: 4px; }
+.po-vp__rule { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; background: #faf5ff; color: #4c1d95; border: 1px solid #c4b5fd; border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+.po-vp__rule-icon { font-size: 16px; }
+.po-vp__top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -4px 0 4px; }
+.po-vp__top-hint { color: #64748b; font-size: 12px; }
+.po-vp__chips { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.po-vp__chip { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; line-height: 1.4; }
+.po-vp__chip:disabled { cursor: not-allowed; opacity: 0.6; }
+.po-vp__chip--on { box-shadow: 0 0 0 2px rgba(124,58,237,0.18); border-color: #8b5cf6; color: #4c1d95; }
+.po-vp__chip--low.po-vp__chip--on { background: #ecfdf5; color: #047857; border-color: #6ee7b7; box-shadow: 0 0 0 2px rgba(16,185,129,0.18); }
+.po-vp__chip--mid.po-vp__chip--on { background: #fff7ed; color: #c2410c; border-color: #fdba74; box-shadow: 0 0 0 2px rgba(249,115,22,0.18); }
+.po-vp__chip--high.po-vp__chip--on { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; box-shadow: 0 0 0 2px rgba(220,38,38,0.18); }
+.po-vp__chip--imp-low.po-vp__chip--on { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.po-vp__chip--imp-mid.po-vp__chip--on { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; box-shadow: 0 0 0 2px rgba(37,99,235,0.18); }
+.po-vp__chip--imp-high.po-vp__chip--on { background: #fef3c7; color: #92400e; border-color: #fcd34d; box-shadow: 0 0 0 2px rgba(245,158,11,0.18); }
+.po-vp__item--sev-high { box-shadow: 0 0 0 1px #fca5a5, 0 1px 4px rgba(220,38,38,0.1); }
+.po-vp__item--sev-low { opacity: 0.92; }
+.po-vp__item--imp-high { box-shadow: 0 0 0 1px #fcd34d, 0 1px 4px rgba(245,158,11,0.1); }
+.po-vp__bridge { display: flex; align-items: center; gap: 8px; color: #b45309; font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 0; }
+.po-vp__bridge::before, .po-vp__bridge::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #fcd34d, transparent); }
+.po-vp__bridge--gain { color: #047857; }
+.po-vp__bridge--gain::before, .po-vp__bridge--gain::after { background: linear-gradient(90deg, transparent, #6ee7b7, transparent); }
+.po-vp__add { background: #fff; border: 1px dashed #c4b5fd; color: #6d28d9; padding: 9px 12px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 14px; }
+.po-vp__add:hover:not(:disabled) { background: #faf5ff; border-color: #8b5cf6; }
+.po-vp__add:disabled { opacity: 0.5; cursor: not-allowed; }
+.po-vp__limit { font-size: 12px; color: #94a3b8; }
+@media (max-width: 800px) {
+  .po-vp { grid-template-columns: 1fr; }
+}
+
+.po-final__sub { margin-top: 10px; }
+.po-final__sub-h { font-weight: 700; font-size: 13px; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.po-final__pairs { padding-left: 18px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.po-final__pair-text { color: #0f172a; display: flex; gap: 6px; align-items: baseline; }
+.po-final__pair-tag { font-size: 12px; }
+.po-final__pair-action { color: #475569; font-style: italic; padding-left: 6px; }
 
 .po-uncomfortable { margin-top: 16px; padding: 14px 16px; border: 1px solid #fbbf24; background: #fffbeb; border-radius: 12px; }
 .po-uncomfortable__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }

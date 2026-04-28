@@ -1,22 +1,25 @@
-"""Контент тренажёра «Кто отвечает?» (RACI-quiz по ситуациям).
+"""Контент тренажёра «Кто отвечает?» (упрощённый, для обсуждения с фасилитатором).
 
 Участник видит реалистичные ситуации в работе продуктовой команды и для каждой
-расставляет роли по уровню вовлечённости (RACI):
-  - A (accountable) — главный ответственный, единственный «accountable»;
-  - R (responsible) — выполняет работу;
-  - C (consulted)   — у которого спрашивают мнение;
-  - I (informed)    — кого нужно держать в курсе;
-  - none            — не вовлечён.
+ставит роли по уровню вовлечённости:
+  - responsible — Ответственный (и выполняет работу), может быть несколько;
+  - participates — Участвующий (помогает, но не отвечает за итог);
+  - informed     — Информируемый (его нужно держать в курсе);
+  - not_involved — Не вовлекается.
 
-Контент — на русском и английском. Все «правильные ответы» можно поправить —
-это эталон, а не догма; в `rationale` объясняем, почему именно так.
+Тут нет автоматической проверки и оценок — упражнение разбирается вместе с
+фасилитатором. Поэтому в выдаче — расшифровка («почему так бывает») и типовая
+ошибка для разговора, а не единственно правильный ответ.
+
+Контент — на русском и английском.
 
 Модуль задаёт:
-  - LEVELS    — 5 уровней RACI + «not involved»
-  - ROLES     — продуктовые роли (PO, SM, Agile-коуч, Product Manager / стрим-лидер,
-                 команда, Stakeholder)
-  - SITUATIONS — список ситуаций c expected[role_key] = level
-  - sanitize_*, evaluate_selection — переиспользуем pattern из scrum_roles.
+  - LEVELS    — 4 уровня + локализация
+  - ROLES     — 6 ролей (PO, SM, Agile-коуч, Product Manager / стрим-лидер,
+                команда, Stakeholder)
+  - SITUATIONS — список ситуаций c hint[role_key] = level (это «ориентир для
+                обсуждения», не «правильный ответ»)
+  - sanitize_selection — валидирует пришедший выбор
 """
 
 from __future__ import annotations
@@ -24,57 +27,53 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Set
 
 
-# --------------------------- Уровни RACI ---------------------------
+# --------------------------- Уровни вовлечённости ---------------------------
+#
+# Сознательно сводим к 4 уровням «как принято разбирать с командой»:
+# accountable + responsible (RACI) → один Ответственный, который и делает;
+# consulted (RACI)                  → Участвующий;
+# informed (RACI)                   → Информируемый;
+# not involved                      → Не вовлекается.
 
 LEVELS: List[Dict] = [
     {
-        "key": "accountable",
-        "title": {"ru": "Главный ответственный (A)", "en": "Accountable (A)"},
-        "short": {"ru": "A", "en": "A"},
+        "key": "responsible",
+        "title": {"ru": "Ответственный", "en": "Responsible"},
+        "short": {"ru": "О", "en": "R"},
         "emoji": "👑",
         "desc": {
-            "ru": "Один человек, отвечающий за исход. Если что — спрос с него.",
-            "en": "Exactly one person owning the outcome. The buck stops here.",
+            "ru": "Несёт ответственность за результат и выполняет работу. На каждую ситуацию обычно ровно один.",
+            "en": "Owns the outcome and does the work. Usually exactly one per situation.",
         },
     },
     {
-        "key": "responsible",
-        "title": {"ru": "Выполняет (R)", "en": "Responsible (R)"},
-        "short": {"ru": "R", "en": "R"},
-        "emoji": "🛠",
+        "key": "participates",
+        "title": {"ru": "Участвующий", "en": "Participates"},
+        "short": {"ru": "У", "en": "P"},
+        "emoji": "🤝",
         "desc": {
-            "ru": "Делает работу руками. Может быть несколько человек.",
-            "en": "Does the actual work. There can be several R's.",
-        },
-    },
-    {
-        "key": "consulted",
-        "title": {"ru": "Консультируется (C)", "en": "Consulted (C)"},
-        "short": {"ru": "C", "en": "C"},
-        "emoji": "💬",
-        "desc": {
-            "ru": "С ним обсуждают до решения, его мнение влияет на выбор.",
-            "en": "Two-way conversation before the decision; their input shapes it.",
+            "ru": "Активно вовлечён: советует, согласовывает, помогает с экспертизой. Не отвечает за итог.",
+            "en": "Actively involved: advises, aligns, contributes expertise — but doesn't own the outcome.",
         },
     },
     {
         "key": "informed",
-        "title": {"ru": "Информируется (I)", "en": "Informed (I)"},
-        "short": {"ru": "I", "en": "I"},
+        "title": {"ru": "Информируемый", "en": "Informed"},
+        "short": {"ru": "И", "en": "I"},
         "emoji": "📣",
         "desc": {
-            "ru": "Должен знать о решении/результате, но в обсуждении не участвует.",
-            "en": "Kept in the loop after the fact. No back-and-forth needed.",
+            "ru": "Достаточно держать его в курсе: статус, итог, важные изменения. Без обсуждения по существу.",
+            "en": "Just needs to be kept in the loop: status, outcome, key changes — no back-and-forth.",
         },
     },
     {
         "key": "not_involved",
-        "title": {"ru": "Не вовлечён", "en": "Not involved"},
+        "title": {"ru": "Не вовлекается", "en": "Not involved"},
         "short": {"ru": "—", "en": "—"},
         "emoji": "⚪",
         "desc": {
-            "ru": "Эта роль в данной ситуации не нужна.",
-            "en": "This role is not needed for this situation.",
+            "ru": "В этой ситуации эта роль не нужна.",
+            "en": "This role isn't needed for this situation.",
         },
     },
 ]
@@ -163,8 +162,9 @@ def valid_role_keys() -> Set[str]:
 
 # --------------------------- Ситуации ---------------------------
 #
-# expected[role_key] — эталонный уровень. Если уровень не указан — считаем
-# "not_involved". В каждой ситуации ровно один accountable.
+# `hint[role_key]` — это НЕ «правильный ответ», а ориентир для обсуждения.
+# Не отображаем участнику автопроверкой; используем как подсказку «как это
+# обычно бывает в типичной продуктовой команде» при разговоре с фасилитатором.
 
 SITUATIONS: List[Dict] = [
     {
@@ -177,21 +177,21 @@ SITUATIONS: List[Dict] = [
             "ru": "Внешний руководитель просит «дайте метрики, я хочу понимать, что вы можете».",
             "en": "An outside manager asks: 'show me metrics so I can understand what you can do'.",
         },
-        "expected": {
-            "po": "accountable",
-            "sm": "responsible",
-            "pm": "consulted",
+        "hint": {
+            "po": "responsible",
+            "sm": "participates",
+            "pm": "participates",
             "coach": "informed",
-            "team": "consulted",
+            "team": "participates",
             "stakeholder": "informed",
         },
-        "rationale": {
-            "ru": "PO отвечает, что наружу идёт корректная картина продукта; SM помогает достать метрики поставки; команду спрашиваем по «как», а не «дайте все цифры».",
-            "en": "PO owns the outward picture; SM pulls delivery metrics; the team is consulted on 'how', not raw data dumps.",
+        "discussion": {
+            "ru": "Часто метрики уходят без продуктового контекста — стейк видит цифры, но не понимает, что они значат для бизнеса. PO отвечает за «как это выглядит снаружи», SM помогает достать поставочные данные, команду спрашиваем по «как».",
+            "en": "Numbers often leave the team without product context — the stakeholder sees figures but can't tell what they mean for the business. PO owns the outward picture, SM pulls delivery data, the team contributes the 'how'.",
         },
         "common_mistake": {
-            "ru": "Часто SM делается accountable, а PO «не в курсе» — внешним показывают цифры без продуктового контекста.",
-            "en": "Often SM becomes accountable while PO is out of the loop, so stakeholders see numbers with no product context.",
+            "ru": "SM становится «ответственным», а PO «не в курсе» — внешним показывают цифры без продуктового смысла.",
+            "en": "SM becomes 'the owner' while PO is out of the loop — stakeholders see numbers with no product context.",
         },
     },
     {
@@ -201,24 +201,24 @@ SITUATIONS: List[Dict] = [
             "en": "I need to raise the priority of specific tasks",
         },
         "subtitle": {
-            "ru": "В бэклоге накопились задачи, и кто-то приходит с запросом «сделайте быстрее».",
-            "en": "Items pile up in the backlog and someone says: 'do these sooner'.",
+            "ru": "Кто-то приходит с запросом «сделайте быстрее» по конкретным задачам в бэклоге.",
+            "en": "Someone shows up asking to bump specific backlog items.",
         },
-        "expected": {
-            "po": "accountable",
+        "hint": {
+            "po": "responsible",
             "sm": "informed",
-            "pm": "consulted",
+            "pm": "participates",
             "coach": "not_involved",
-            "team": "consulted",
-            "stakeholder": "consulted",
+            "team": "participates",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Приоритеты бэклога — зона PO. PM/стейкхолдеров слушаем как контекст, команду спрашиваем про реализуемость, SM просто в курсе.",
-            "en": "Backlog priorities are the PO's area. PM/stakeholders give context, the team is consulted on feasibility, SM is informed.",
+        "discussion": {
+            "ru": "Приоритеты бэклога — зона PO. PM/стейк дают контекст («почему сейчас это важнее»), команду слушаем про реализуемость, SM просто в курсе, чтобы планировать работу.",
+            "en": "Backlog priorities live with the PO. PM/stakeholders bring context ('why now'), the team weighs in on feasibility, SM stays informed to plan delivery.",
         },
         "common_mistake": {
-            "ru": "PM или стейкхолдер «двигает» задачи в бэклоге сам — PO теряет управление продуктом.",
-            "en": "PM or a stakeholder reshuffles the backlog directly — PO loses control of the product.",
+            "ru": "PM или стейк двигают задачи в бэклоге сами, в обход PO — PO теряет управление продуктом.",
+            "en": "PM or a stakeholder reshuffles the backlog directly, bypassing the PO — product control is lost.",
         },
     },
     {
@@ -231,21 +231,21 @@ SITUATIONS: List[Dict] = [
             "ru": "Полный бюджет продукта/стрима: люди, инфраструктура, подрядчики.",
             "en": "Full product/stream budget: people, infra, vendors.",
         },
-        "expected": {
-            "po": "consulted",
+        "hint": {
+            "po": "participates",
             "sm": "informed",
-            "pm": "accountable",
+            "pm": "responsible",
             "coach": "not_involved",
             "team": "informed",
-            "stakeholder": "consulted",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Бюджет/FTE — стримовая зона PM. PO консультирует по составу работ, команду и SM держим в курсе.",
-            "en": "Budget and FTE belong to the PM's stream view. PO consults on scope, team and SM are informed.",
+        "discussion": {
+            "ru": "Бюджет/FTE — стримовая зона PM. PO активно участвует по составу работ, команду и SM держим в курсе, стейк может уточнять рамки.",
+            "en": "Budget and FTE belong to the PM's stream view. PO actively contributes scope, team and SM are informed, stakeholders may help frame constraints.",
         },
         "common_mistake": {
-            "ru": "Бюджет считает PO «на коленке» — потом цифры не бьются с реальной финансовой моделью.",
-            "en": "PO eyeballs the budget and the numbers later don't match the real financial model.",
+            "ru": "Бюджет считает PO «на коленке» — потом цифры не бьются с финмоделью.",
+            "en": "PO eyeballs the budget — numbers later don't match the financial model.",
         },
     },
     {
@@ -258,20 +258,20 @@ SITUATIONS: List[Dict] = [
             "ru": "Несколько команд внутри стрима делают связанные вещи — нужно общее понимание.",
             "en": "A few teams in the stream are doing related work — they need a shared picture.",
         },
-        "expected": {
-            "po": "responsible",
-            "sm": "consulted",
-            "pm": "accountable",
-            "coach": "consulted",
+        "hint": {
+            "po": "participates",
+            "sm": "participates",
+            "pm": "responsible",
+            "coach": "participates",
             "team": "informed",
             "stakeholder": "informed",
         },
-        "rationale": {
-            "ru": "Кросс-командная синхронизация — это PM. PO активно участвует за свою команду, коуч помогает с форматом встречи.",
-            "en": "Cross-team sync is the PM's job. PO actively contributes for their team, the coach helps shape the format.",
+        "discussion": {
+            "ru": "Кросс-командный синк — обычно зона PM. PO активно участвует за свою команду, коуч помогает с форматом встречи, SM подключается по поставке.",
+            "en": "Cross-team sync usually belongs to the PM. PO actively contributes for their team, the coach helps with the format, SM joins on delivery.",
         },
         "common_mistake": {
-            "ru": "SM каждой команды «организует синк сам» — получаются параллельные созвоны без общей картины.",
+            "ru": "SM каждой команды «организует синк сам» — параллельные созвоны без общей картины.",
             "en": "Each SM organises their own sync — parallel calls with no shared picture.",
         },
     },
@@ -285,21 +285,21 @@ SITUATIONS: List[Dict] = [
             "ru": "Roadmap на 2–4 квартала: цели, гипотезы, крупные блоки работы.",
             "en": "A 2–4 quarter roadmap: goals, hypotheses, big chunks of work.",
         },
-        "expected": {
-            "po": "accountable",
+        "hint": {
+            "po": "responsible",
             "sm": "informed",
-            "pm": "consulted",
+            "pm": "participates",
             "coach": "not_involved",
-            "team": "consulted",
-            "stakeholder": "consulted",
+            "team": "participates",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Roadmap — продукт, значит PO. PM смотрит за стрим, команду спрашиваем про реализуемость и риски, стейкхолдеров — про ожидания.",
+        "discussion": {
+            "ru": "Roadmap — продуктовая зона. PO собирает, PM смотрит за стрим, команда говорит про реализуемость и риски, стейк — про ожидания.",
             "en": "Roadmap is product → PO. PM weighs in for the stream, team consults on feasibility, stakeholders on expectations.",
         },
         "common_mistake": {
-            "ru": "Roadmap пишут «вверху» (PM/стейкхолдер), а PO потом «доносит». Команда узнаёт всё постфактум — мотивация падает.",
-            "en": "Roadmap is written 'at the top' and PO just communicates it. The team finds out late and motivation drops.",
+            "ru": "Roadmap пишется «вверху» (PM/стейк), PO «доносит» — команда узнаёт постфактум, мотивация падает.",
+            "en": "Roadmap is written 'at the top' and PO just communicates it — the team learns late, motivation drops.",
         },
     },
     {
@@ -312,21 +312,21 @@ SITUATIONS: List[Dict] = [
             "ru": "Конфликты, низкое доверие, плохое качество совместной работы.",
             "en": "Conflicts, low trust, poor collaboration quality.",
         },
-        "expected": {
-            "po": "consulted",
-            "sm": "accountable",
+        "hint": {
+            "po": "participates",
+            "sm": "responsible",
             "pm": "informed",
-            "coach": "responsible",
-            "team": "consulted",
+            "coach": "participates",
+            "team": "participates",
             "stakeholder": "not_involved",
         },
-        "rationale": {
-            "ru": "Здоровье процесса и отношений — SM, на тяжёлых случаях ему помогает коуч. PO и команда — собеседники, PM просто в курсе.",
-            "en": "Process and relationship health is the SM's area; coach helps on harder cases. PO and team are consulted, PM is informed.",
+        "discussion": {
+            "ru": "Здоровье процесса и отношений — обычно зона SM, на тяжёлых случаях помогает коуч. PO и команда — собеседники, PM просто в курсе.",
+            "en": "Process and relationship health usually sits with the SM; coach helps on harder cases. PO and team are conversation partners, PM is informed.",
         },
         "common_mistake": {
-            "ru": "PM/PO «идёт разбираться сам» — увеличивается давление, SM перестаёт работать с командой системно.",
-            "en": "PM/PO 'goes to fix it directly' — pressure rises, SM stops doing systemic work with the team.",
+            "ru": "PM/PO «идут разбираться сами» — давление растёт, SM перестаёт работать с командой системно.",
+            "en": "PM/PO 'go to fix it directly' — pressure rises, SM stops doing systemic work with the team.",
         },
     },
     {
@@ -339,17 +339,17 @@ SITUATIONS: List[Dict] = [
             "ru": "Что входит в фичу, что нет, какая «достаточная версия» под цель.",
             "en": "What's in the feature, what's not, what 'enough' looks like for the goal.",
         },
-        "expected": {
-            "po": "accountable",
+        "hint": {
+            "po": "responsible",
             "sm": "not_involved",
-            "pm": "consulted",
+            "pm": "participates",
             "coach": "not_involved",
-            "team": "responsible",
-            "stakeholder": "consulted",
+            "team": "participates",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Scope — продукт. PO решает, команда делает декомпозицию, PM консультирует по бизнес-целям, стейкхолдеры — по ожиданиям.",
-            "en": "Scope is a product call. PO decides, team breaks it down, PM consults on business goals, stakeholders on expectations.",
+        "discussion": {
+            "ru": "Scope — продуктовое решение. PO решает, команда декомпозирует и говорит про сложность, PM — про бизнес-цели, стейк — про ожидания.",
+            "en": "Scope is a product call. PO decides, team breaks it down and talks complexity, PM contributes business goals, stakeholders bring expectations.",
         },
         "common_mistake": {
             "ru": "Команда сама добавляет «полезные мелочи» в scope — фича расползается, релиз буксует.",
@@ -366,17 +366,17 @@ SITUATIONS: List[Dict] = [
             "ru": "Прозрачность статуса по работе для команды и за её пределами.",
             "en": "Status visibility for the team and outside.",
         },
-        "expected": {
-            "po": "consulted",
-            "sm": "accountable",
+        "hint": {
+            "po": "participates",
+            "sm": "responsible",
             "pm": "informed",
-            "coach": "consulted",
-            "team": "responsible",
+            "coach": "participates",
+            "team": "participates",
             "stakeholder": "informed",
         },
-        "rationale": {
-            "ru": "Прозрачность поставки — зона SM (доска, метрики, обзор). PO консультирует по «что важно показать наружу».",
-            "en": "Delivery transparency is the SM's area (board, metrics, review). PO advises on what matters externally.",
+        "discussion": {
+            "ru": "Прозрачность поставки — обычно зона SM (доска, метрики, обзор). PO активно участвует по «что важно показать наружу».",
+            "en": "Delivery transparency typically sits with the SM (board, metrics, review). PO actively contributes on 'what to show externally'.",
         },
         "common_mistake": {
             "ru": "PM строит свой trackeр поверх — команда заполняет 2 системы и теряет фокус.",
@@ -393,20 +393,20 @@ SITUATIONS: List[Dict] = [
             "ru": "Что может пойти не так, что мы делаем «если что», как мониторим.",
             "en": "What could go wrong, what we'll do if it does, how we'll watch for it.",
         },
-        "expected": {
-            "po": "responsible",
-            "sm": "consulted",
-            "pm": "accountable",
-            "coach": "consulted",
-            "team": "consulted",
+        "hint": {
+            "po": "participates",
+            "sm": "participates",
+            "pm": "responsible",
+            "coach": "participates",
+            "team": "participates",
             "stakeholder": "informed",
         },
-        "rationale": {
-            "ru": "Стратегия рисков по стриму — за PM. PO собирает продуктовую часть, команду и SM спрашиваем про поставку и процесс.",
-            "en": "Stream-level risk strategy is the PM's. PO assembles the product part; team and SM consult on delivery and process.",
+        "discussion": {
+            "ru": "Стратегия рисков по стриму — обычно за PM. PO собирает продуктовую часть, команду и SM подключаем по поставке и процессу.",
+            "en": "Stream-level risk strategy is usually the PM's. PO assembles the product part; team and SM contribute on delivery and process.",
         },
         "common_mistake": {
-            "ru": "Риски «знают только в голове PO», план реагирования не оформлен — стейкхолдеры узнают о проблеме постфактум.",
+            "ru": "Риски «знают только в голове PO», план реагирования не оформлен — стейк узнаёт о проблеме постфактум.",
             "en": "Risks live only in the PO's head, no documented response plan — stakeholders learn about issues too late.",
         },
     },
@@ -420,20 +420,20 @@ SITUATIONS: List[Dict] = [
             "ru": "Регулярные отчёты, демо, статус-апдейты для тех, кто не в команде.",
             "en": "Regular reports, demos, and status updates for people outside the team.",
         },
-        "expected": {
-            "po": "accountable",
-            "sm": "responsible",
-            "pm": "consulted",
+        "hint": {
+            "po": "responsible",
+            "sm": "participates",
+            "pm": "participates",
             "coach": "informed",
             "team": "informed",
             "stakeholder": "informed",
         },
-        "rationale": {
-            "ru": "PO отвечает, что и как сообщаем; SM помогает форматами и фактами по поставке; PM смотрит за стримовый контекст.",
-            "en": "PO owns what and how we communicate; SM helps with formats and delivery facts; PM keeps the stream context.",
+        "discussion": {
+            "ru": "PO отвечает, что и как сообщаем; SM помогает форматами и фактами по поставке; PM подключается за стримовый контекст.",
+            "en": "PO owns what and how we communicate; SM helps with formats and delivery facts; PM brings the stream context.",
         },
         "common_mistake": {
-            "ru": "Каждый присылает свои отчёты — стейкхолдеры получают 3 разные правды.",
+            "ru": "Каждый присылает свои отчёты — стейк получает 3 разные правды.",
             "en": "Everyone sends their own reports — stakeholders get three different versions of the truth.",
         },
     },
@@ -447,15 +447,15 @@ SITUATIONS: List[Dict] = [
             "ru": "Регулярные церемонии команды и встречи со смежниками.",
             "en": "Team ceremonies and cross-team syncs.",
         },
-        "expected": {
-            "po": "consulted",
-            "sm": "accountable",
+        "hint": {
+            "po": "participates",
+            "sm": "responsible",
             "pm": "informed",
-            "coach": "consulted",
-            "team": "consulted",
+            "coach": "participates",
+            "team": "participates",
             "stakeholder": "informed",
         },
-        "rationale": {
+        "discussion": {
             "ru": "Фасилитация команды — за SM, состав уточняется с PO/командой, коуч помогает с форматом.",
             "en": "Team facilitation belongs to SM; PO/team weigh in on attendees; coach helps with format.",
         },
@@ -474,15 +474,15 @@ SITUATIONS: List[Dict] = [
             "ru": "Хочется поменять то, как команда работает — практики, ритуалы, договорённости.",
             "en": "Want to change how the team works — practices, rituals, agreements.",
         },
-        "expected": {
-            "po": "consulted",
-            "sm": "accountable",
+        "hint": {
+            "po": "informed",
+            "sm": "responsible",
             "pm": "informed",
-            "coach": "responsible",
-            "team": "responsible",
+            "coach": "participates",
+            "team": "participates",
             "stakeholder": "not_involved",
         },
-        "rationale": {
+        "discussion": {
             "ru": "Процесс — совместная зона SM и команды, коуч помогает экспериментами; PO в курсе и подключается, если влияет на продукт.",
             "en": "Process is jointly owned by SM and team; coach supports with experiments; PO is consulted when it affects the product.",
         },
@@ -498,23 +498,23 @@ SITUATIONS: List[Dict] = [
             "en": "I need to add new stakeholder requirements to the backlog",
         },
         "subtitle": {
-            "ru": "Стейкхолдер пришёл с новой просьбой — куда и как её зафиксировать.",
+            "ru": "Стейк пришёл с новой просьбой — куда и как её зафиксировать.",
             "en": "A stakeholder shows up with a new ask — where and how to capture it.",
         },
-        "expected": {
-            "po": "accountable",
+        "hint": {
+            "po": "responsible",
             "sm": "informed",
-            "pm": "consulted",
+            "pm": "participates",
             "coach": "not_involved",
             "team": "informed",
-            "stakeholder": "consulted",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Бэклог принадлежит PO; он формулирует и приоритизирует. Стейкхолдер уточняет суть, PM смотрит, что это значит для стрима.",
+        "discussion": {
+            "ru": "Бэклог принадлежит PO; он формулирует и приоритизирует. Стейк уточняет суть, PM смотрит, что это значит для стрима.",
             "en": "Backlog belongs to PO who phrases and prioritises items. Stakeholder is consulted on intent; PM checks the stream impact.",
         },
         "common_mistake": {
-            "ru": "Стейкхолдер пишет задачу прямо в трекер — она «попадает в работу» в обход PO.",
+            "ru": "Стейк пишет задачу прямо в трекер — она «попадает в работу» в обход PO.",
             "en": "Stakeholder files the ticket directly — it sneaks into work bypassing the PO.",
         },
     },
@@ -528,15 +528,15 @@ SITUATIONS: List[Dict] = [
             "ru": "Бизнес-ситуация поменялась — нужны новые сроки.",
             "en": "Business situation changed — we need new dates.",
         },
-        "expected": {
-            "po": "accountable",
+        "hint": {
+            "po": "responsible",
             "sm": "informed",
-            "pm": "consulted",
+            "pm": "participates",
             "coach": "not_involved",
-            "team": "consulted",
-            "stakeholder": "consulted",
+            "team": "participates",
+            "stakeholder": "participates",
         },
-        "rationale": {
+        "discussion": {
             "ru": "Продукт-решение — за PO, но он не имеет права обещать сроки без оценки команды и согласования с PM/стейком.",
             "en": "Release timing is a product call but PO can't promise dates without team estimates and PM/stakeholder alignment.",
         },
@@ -555,15 +555,15 @@ SITUATIONS: List[Dict] = [
             "ru": "Внешний показ продукта потенциальному или реальному клиенту.",
             "en": "An external demo to a current or potential customer.",
         },
-        "expected": {
-            "po": "accountable",
+        "hint": {
+            "po": "responsible",
             "sm": "informed",
-            "pm": "consulted",
+            "pm": "participates",
             "coach": "not_involved",
-            "team": "responsible",
+            "team": "participates",
             "stakeholder": "informed",
         },
-        "rationale": {
+        "discussion": {
             "ru": "Демо клиенту — продуктовая история. PO готовит сценарий, команда показывает; PM подключается за коммерческий контекст.",
             "en": "A customer demo is a product story. PO sets the scenario, team demos; PM brings the commercial context.",
         },
@@ -582,17 +582,17 @@ SITUATIONS: List[Dict] = [
             "ru": "Большая встреча на квартал: цели, ставки, синхронизация по командам.",
             "en": "A big quarterly meeting: goals, bets, cross-team alignment.",
         },
-        "expected": {
-            "po": "consulted",
-            "sm": "consulted",
-            "pm": "accountable",
-            "coach": "responsible",
+        "hint": {
+            "po": "participates",
+            "sm": "participates",
+            "pm": "responsible",
+            "coach": "participates",
             "team": "informed",
-            "stakeholder": "consulted",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Кросс-командная сессия — PM как accountable за итог, коуч ведёт фасилитацию, PO/SM активно участвуют по своей команде.",
-            "en": "Cross-team session: PM is accountable for the outcome, coach facilitates, PO/SM bring their team's view.",
+        "discussion": {
+            "ru": "Кросс-командная сессия — PM как ответственный за итог, коуч ведёт фасилитацию, PO/SM активно участвуют по своей команде.",
+            "en": "Cross-team session: PM owns the outcome, coach facilitates, PO/SM bring their team's view.",
         },
         "common_mistake": {
             "ru": "SM или PO «фасилитируют» квартал сами — нет нейтрального ведущего и теряется stream-уровень.",
@@ -609,15 +609,15 @@ SITUATIONS: List[Dict] = [
             "ru": "Понять, где мы относительно рынка, чем отличаемся, что выбирают клиенты.",
             "en": "Understand where we sit in the market, what's different, what customers pick.",
         },
-        "expected": {
-            "po": "responsible",
+        "hint": {
+            "po": "participates",
             "sm": "not_involved",
-            "pm": "accountable",
+            "pm": "responsible",
             "coach": "not_involved",
             "team": "informed",
-            "stakeholder": "consulted",
+            "stakeholder": "participates",
         },
-        "rationale": {
+        "discussion": {
             "ru": "Рынок и конкуренты — стримовый/продуктовый уровень PM. PO собирает продуктовую часть и фидбэк пользователей.",
             "en": "Market and competition is a PM/stream-level concern. PO gathers the product part and user feedback.",
         },
@@ -636,17 +636,17 @@ SITUATIONS: List[Dict] = [
             "ru": "Как продукт зарабатывает: подписка, реклама, freemium, B2B-контракты и т. п.",
             "en": "How the product earns: subscription, ads, freemium, B2B contracts, etc.",
         },
-        "expected": {
-            "po": "consulted",
+        "hint": {
+            "po": "participates",
             "sm": "not_involved",
-            "pm": "accountable",
+            "pm": "responsible",
             "coach": "not_involved",
             "team": "informed",
-            "stakeholder": "consulted",
+            "stakeholder": "participates",
         },
-        "rationale": {
-            "ru": "Бизнес-модель стрима — у PM, PO консультирует продуктовый ракурс и UX-последствия.",
-            "en": "The stream's business model is PM-owned. PO advises on product fit and UX impact.",
+        "discussion": {
+            "ru": "Бизнес-модель стрима — у PM, PO активно участвует с продуктовым ракурсом и UX-последствиями.",
+            "en": "The stream's business model is PM-owned. PO actively contributes product fit and UX impact.",
         },
         "common_mistake": {
             "ru": "Модель «спускается» сверху без обсуждения с PO — продукт обрастает несовместимыми с UX механиками.",
@@ -663,17 +663,17 @@ SITUATIONS: List[Dict] = [
             "ru": "Реалистичный объём работы на ближайший спринт/итерацию.",
             "en": "A realistic plan for the upcoming sprint.",
         },
-        "expected": {
-            "po": "consulted",
+        "hint": {
+            "po": "participates",
             "sm": "informed",
             "pm": "informed",
             "coach": "not_involved",
-            "team": "accountable",
+            "team": "responsible",
             "stakeholder": "not_involved",
         },
-        "rationale": {
-            "ru": "Сколько и что взять — решает команда, потому что она и реализует. PO консультирует по приоритетам.",
-            "en": "How much and what to commit to is the team's call — they're the ones building it. PO consults on priorities.",
+        "discussion": {
+            "ru": "Сколько и что взять — решает команда, потому что она и реализует. PO активно участвует по приоритетам.",
+            "en": "How much and what to commit to is the team's call — they're the ones building it. PO actively contributes priorities.",
         },
         "common_mistake": {
             "ru": "PO «договаривается» о scope в обход команды — обещания не выполняются.",
@@ -690,20 +690,20 @@ SITUATIONS: List[Dict] = [
             "ru": "Срочное реагирование, восстановление работы, коммуникация наружу.",
             "en": "Urgent response, recovery, external communication.",
         },
-        "expected": {
-            "po": "consulted",
+        "hint": {
+            "po": "participates",
             "sm": "informed",
             "pm": "informed",
             "coach": "not_involved",
-            "team": "accountable",
+            "team": "responsible",
             "stakeholder": "informed",
         },
-        "rationale": {
+        "discussion": {
             "ru": "Восстановление продукта — команда. PO держит продуктовую сторону (что говорим клиентам, какой режим), стейк/PM в курсе.",
             "en": "Recovery is the team's job. PO handles the product side (customer messaging, fallback mode); stakeholders/PM are informed.",
         },
         "common_mistake": {
-            "ru": "PM или стейкхолдер «лезут в скайп» с командой во время инцидента — мешают реагированию.",
+            "ru": "PM или стейк «лезут в скайп» с командой во время инцидента — мешают реагированию.",
             "en": "PM or a stakeholder jumps into the team's call during the incident — slowing the response.",
         },
     },
@@ -757,7 +757,7 @@ def get_content_for_locale(locale: str) -> Dict:
             "key": s["key"],
             "title": _loc(s["title"], locale),
             "subtitle": _loc(s.get("subtitle") or {}, locale),
-            "rationale": _loc(s["rationale"], locale),
+            "discussion": _loc(s.get("discussion") or {}, locale),
             "common_mistake": _loc(s.get("common_mistake") or {}, locale),
         }
         for s in SITUATIONS
@@ -770,44 +770,6 @@ def get_content_for_locale(locale: str) -> Dict:
 
 
 # --------------------------- Валидация ---------------------------
-
-
-def _expected_level(situation_key: str, role_key: str) -> str:
-    s = _situation(situation_key)
-    if not s:
-        return "not_involved"
-    return (s.get("expected") or {}).get(role_key, "not_involved")
-
-
-def _expected_role(situation_key: str) -> Dict[str, str]:
-    s = _situation(situation_key)
-    if not s:
-        return {}
-    return dict(s.get("expected") or {})
-
-
-# Близкие уровни — за них даём «жёлтый», за противоположные — «красный».
-_NEIGHBOURS = {
-    ("accountable", "responsible"),
-    ("responsible", "accountable"),
-    ("consulted", "informed"),
-    ("informed", "consulted"),
-    ("responsible", "consulted"),
-    ("consulted", "responsible"),
-    ("informed", "not_involved"),
-    ("not_involved", "informed"),
-}
-
-
-def _classify(expected: str, picked: Optional[str]) -> str:
-    """→ 'green' | 'yellow' | 'red' | 'missing'."""
-    if picked is None:
-        return "green" if expected == "not_involved" else "missing"
-    if picked == expected:
-        return "green"
-    if (expected, picked) in _NEIGHBOURS:
-        return "yellow"
-    return "red"
 
 
 def sanitize_selection(raw) -> Dict[str, Dict[str, Optional[str]]]:
@@ -832,76 +794,6 @@ def sanitize_selection(raw) -> Dict[str, Dict[str, Optional[str]]]:
                 clean[role_key] = None
         out[sit_key] = clean
     return out
-
-
-def evaluate_selection(selection: Dict[str, Dict[str, Optional[str]]]) -> Dict:
-    """Сравнивает выбор с эталоном.
-
-    Возвращает структуру, аналогичную scrum_roles: per_role, total и
-    разбор по каждой ситуации. Дополнительно отмечаем:
-      - missing_accountable: ни одной A не выставлено;
-      - extra_accountable: A назначена нескольким ролям сразу.
-    """
-    per_role = {rk: {"green": 0, "yellow": 0, "red": 0, "missing": 0} for rk in ROLE_KEYS}
-    total = {"green": 0, "yellow": 0, "red": 0, "missing": 0}
-    situations_eval: Dict[str, Dict] = {}
-    answered = 0
-    accountable_correct = 0
-
-    for sit in SITUATIONS:
-        sk = sit["key"]
-        roles_eval: Dict[str, Dict] = {}
-        colors_here: List[str] = []
-        picked_count_a = 0
-        picked_a_correct = False
-        sel_for_situation = selection.get(sk) or {}
-        any_picked = False
-        for rk in ROLE_KEYS:
-            expected = _expected_level(sk, rk)
-            picked = sel_for_situation.get(rk)
-            if picked:
-                any_picked = True
-                if picked == "accountable":
-                    picked_count_a += 1
-            color = _classify(expected, picked)
-            roles_eval[rk] = {"expected": expected, "picked": picked, "color": color}
-            per_role[rk][color] += 1
-            total[color] += 1
-            colors_here.append(color)
-            if expected == "accountable" and picked == "accountable":
-                picked_a_correct = True
-
-        if any_picked:
-            answered += 1
-            if picked_a_correct and picked_count_a == 1:
-                accountable_correct += 1
-
-        if "red" in colors_here:
-            sit_color = "red"
-        elif "missing" in colors_here:
-            sit_color = "red"
-        elif "yellow" in colors_here:
-            sit_color = "yellow"
-        else:
-            sit_color = "green"
-        situations_eval[sk] = {
-            "roles": roles_eval,
-            "color": sit_color,
-            "extra_accountable": picked_count_a > 1,
-            "missing_accountable": picked_count_a == 0,
-        }
-
-    cells = len(SITUATIONS) * len(ROLE_KEYS)
-    score = total["green"] * 2 + total["yellow"] * 1 - total["red"] * 1
-    max_score = cells * 2
-    health_pct = round(max(score, 0) / max_score * 100) if max_score > 0 else 0
-    return {
-        "situations": situations_eval,
-        "per_role": per_role,
-        "total": {**total, "max": max_score, "score": score, "health_pct": health_pct},
-        "answered": answered,
-        "accountable_correct": accountable_correct,
-    }
 
 
 def situation_title(key: str, locale: str) -> str:

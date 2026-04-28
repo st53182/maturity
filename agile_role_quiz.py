@@ -1,19 +1,24 @@
-"""Backend тренажёра «Кто отвечает?» (RACI-квиз по ситуациям).
+"""Backend тренажёра «Кто отвечает?» (упрощённая версия — без автопроверки).
 
 API под префиксом `/api/agile-training/role-quiz`.
 
-Одна запись на участника (AgileTrainingRoleQuizAnswer). В `data_json` лежит:
-  - selection[situation_key][role_key] = 'accountable' | 'responsible' |
-                                          'consulted' | 'informed' | 'not_involved' | null
-  - evaluation: подробная разбивка по эталону
-  - notes_seen: какие «типовые ошибки» / расшифровки участник уже посмотрел
+Одна запись на участника (`AgileTrainingRoleQuizAnswer`). В `data_json` лежит:
+  - selection[situation_key][role_key] = 'responsible' | 'participates' |
+                                          'informed' | 'not_involved' | null
+  - submitted: bool — пользователь финализировал ответ для обсуждения
+  - submitted_at: ISO timestamp последней отправки
+
+Здесь нет оценок (`score`, `health_pct`): упражнение разбирается вместе с
+фасилитатором. Поля БД оставляем как есть для совместимости со схемой —
+просто пишем туда `null` или количество отвеченных ситуаций.
 """
 
 from __future__ import annotations
 
 import json
 from collections import defaultdict
-from typing import Dict, List, Optional, Set
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -27,15 +32,14 @@ from models import (
 )
 from role_quiz_content import (
     LEVEL_KEYS,
+    LEVELS,
     ROLE_KEYS,
     SITUATIONS,
-    evaluate_selection,
     get_content_for_locale,
     level_title,
     role_title,
     sanitize_selection,
     situation_title,
-    valid_situation_keys,
 )
 
 
@@ -77,18 +81,17 @@ def _safe_json_load(raw: Optional[str]) -> Dict:
         return {}
 
 
-def _sanitize_notes_seen(raw) -> List[str]:
-    """Какие ситуации участник «раскрыл» (увидел rationale + common_mistake)."""
-    if not isinstance(raw, list):
-        return []
-    valid = valid_situation_keys()
-    seen: Set[str] = set()
-    out: List[str] = []
-    for k in raw:
-        if isinstance(k, str) and k in valid and k not in seen:
-            seen.add(k)
-            out.append(k)
-    return out
+def _now_iso() -> str:
+    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+
+
+def _count_answered(selection: Dict[str, Dict[str, Optional[str]]]) -> int:
+    n = 0
+    for sit in SITUATIONS:
+        row = selection.get(sit["key"]) or {}
+        if any(v for v in row.values()):
+            n += 1
+    return n
 
 
 # --------------------------- public (participant) ---------------------------
@@ -124,10 +127,8 @@ def participant_state(slug: str):
             )
             if a:
                 answer_payload = {
-                    "score": a.score,
-                    "max_score": a.max_score,
-                    "health_pct": a.health_pct,
                     "data": _safe_json_load(a.data_json),
+                    "answered": int(a.score or 0),
                 }
 
     return jsonify({
@@ -142,11 +143,13 @@ def participant_state(slug: str):
 
 @bp_agile_role_quiz.post("/g/<slug>/answer")
 def participant_answer(slug: str):
-    """body:
+    """Сохраняет/перезаписывает выбор участника.
+
+    body:
       {
         "participant_token": "...",
         "selection": { situation_key: { role_key: level|null } },
-        "notes_seen": [...]
+        "submitted": bool   # true = «отдал на обсуждение»
       }
     """
     g = _group_by_slug(slug)
@@ -167,8 +170,7 @@ def participant_answer(slug: str):
         return jsonify({"error": "Participant not found"}), 404
 
     clean_selection = sanitize_selection(body.get("selection"))
-    evaluation = evaluate_selection(clean_selection)
-    notes_seen = _sanitize_notes_seen(body.get("notes_seen"))
+    submitted = bool(body.get("submitted"))
 
     a = (
         AgileTrainingRoleQuizAnswer.query
@@ -185,13 +187,16 @@ def participant_answer(slug: str):
 
     payload = {
         "selection": clean_selection,
-        "evaluation": evaluation,
-        "notes_seen": notes_seen,
+        "submitted": submitted,
+        "submitted_at": _now_iso() if submitted else (
+            _safe_json_load(a.data_json).get("submitted_at")
+        ),
     }
     a.data_json = json.dumps(payload, ensure_ascii=False)
-    a.score = int(evaluation["total"]["score"])
-    a.max_score = int(evaluation["total"]["max"])
-    a.health_pct = int(evaluation["total"]["health_pct"])
+    answered = _count_answered(clean_selection)
+    a.score = answered
+    a.max_score = len(SITUATIONS)
+    a.health_pct = round((answered / len(SITUATIONS)) * 100) if SITUATIONS else 0
 
     try:
         db.session.commit()
@@ -201,11 +206,10 @@ def participant_answer(slug: str):
 
     return jsonify({
         "saved": True,
-        "score": a.score,
-        "max_score": a.max_score,
-        "health_pct": a.health_pct,
-        "evaluation": evaluation,
-        "notes_seen": notes_seen,
+        "answered": answered,
+        "max_situations": len(SITUATIONS),
+        "submitted": submitted,
+        "submitted_at": payload["submitted_at"],
     })
 
 
@@ -213,95 +217,100 @@ def participant_answer(slug: str):
 
 
 def _aggregate_group(group_id: int, locale: str) -> Dict:
+    """Сводная картина по группе для фасилитатора.
+
+    Не оценивает «правильно/неправильно». Считает, как распределились
+    ответы по каждой ячейке (ситуация × роль), и подсвечивает «горячие
+    точки» — где у команды нет согласия.
+    """
     rows = AgileTrainingRoleQuizAnswer.query.filter_by(group_id=group_id).all()
-    participants = len(rows)
-    if not participants:
+    submitted_rows: List[AgileTrainingRoleQuizAnswer] = []
+    in_progress = 0
+    for r in rows:
+        data = _safe_json_load(r.data_json)
+        if data.get("submitted"):
+            submitted_rows.append(r)
+        elif data.get("selection"):
+            in_progress += 1
+
+    submitted_count = len(submitted_rows)
+    if submitted_count == 0:
         return {
-            "participants_count": 0,
-            "avg_health_pct": 0,
-            "avg_accountable_correct": 0,
+            "participants_count": len(rows),
+            "submitted_count": 0,
+            "in_progress_count": in_progress,
             "situations": [],
-            "color_totals": {"green": 0, "yellow": 0, "red": 0, "missing": 0},
-            "weak_situations": [],
+            "disagreements": [],
         }
 
-    total_health = 0
-    total_acc_correct = 0
     counts: Dict[str, Dict[str, Dict[str, int]]] = {
         s["key"]: {rk: defaultdict(int) for rk in ROLE_KEYS} for s in SITUATIONS
     }
-    color_counts_per_cell: Dict[str, Dict[str, Dict[str, int]]] = {
-        s["key"]: {rk: defaultdict(int) for rk in ROLE_KEYS} for s in SITUATIONS
-    }
-    color_totals = {"green": 0, "yellow": 0, "red": 0, "missing": 0}
-    situation_color_counts: Dict[str, Dict[str, int]] = {
-        s["key"]: defaultdict(int) for s in SITUATIONS
-    }
 
-    for r in rows:
-        total_health += int(r.health_pct or 0)
+    for r in submitted_rows:
         data = _safe_json_load(r.data_json)
-        evaluation = data.get("evaluation") or {}
-        total_acc_correct += int(evaluation.get("accountable_correct") or 0)
         selection = data.get("selection") or {}
-        sit_eval = evaluation.get("situations") or {}
         for sk in counts.keys():
-            sit_color = (sit_eval.get(sk) or {}).get("color")
-            if sit_color:
-                situation_color_counts[sk][sit_color] += 1
             for rk in ROLE_KEYS:
                 picked = (selection.get(sk) or {}).get(rk)
                 counts[sk][rk][picked or "none"] += 1
-                col = ((sit_eval.get(sk) or {}).get("roles") or {}).get(rk, {}).get("color")
-                if col:
-                    color_counts_per_cell[sk][rk][col] += 1
-                    color_totals[col] = color_totals.get(col, 0) + 1
 
-    situations_view = []
+    situations_view: List[Dict[str, Any]] = []
+    disagreement_index: List[Dict[str, Any]] = []
+
     for s in SITUATIONS:
         sk = s["key"]
-        role_view = {}
+        role_view: Dict[str, Dict] = {}
+        situation_disagreement = 0
         for rk in ROLE_KEYS:
             level_map = counts[sk][rk]
-            items = []
+            items: List[Dict[str, Any]] = []
+            non_none_total = 0
             for lk in [*LEVEL_KEYS, "none"]:
-                cnt = level_map.get(lk, 0)
+                cnt = int(level_map.get(lk, 0) or 0)
                 if cnt == 0:
                     continue
                 items.append({
                     "level": lk if lk != "none" else None,
                     "level_title": level_title(lk, locale) if lk != "none" else "",
                     "count": cnt,
-                    "pct": round(cnt / participants * 100),
+                    "pct": round(cnt / submitted_count * 100),
                 })
+                if lk != "none":
+                    non_none_total += cnt
+            # «Спор»: сколько разных ненулевых вариантов выставили на эту ячейку.
+            distinct_levels_picked = sum(
+                1 for lk in LEVEL_KEYS if int(level_map.get(lk, 0) or 0) > 0
+            )
             role_view[rk] = {
                 "levels": items,
-                "colors": dict(color_counts_per_cell[sk][rk]),
+                "distinct_picks": distinct_levels_picked,
             }
-        sit_color_map = dict(situation_color_counts[sk])
-        red_pct = round((sit_color_map.get("red", 0) / participants) * 100)
+            if distinct_levels_picked >= 2:
+                situation_disagreement += distinct_levels_picked
         situations_view.append({
             "key": sk,
             "title": situation_title(sk, locale),
+            "subtitle": (s.get("subtitle") or {}).get(locale)
+                or (s.get("subtitle") or {}).get("ru")
+                or "",
             "roles": role_view,
-            "color_counts": sit_color_map,
-            "red_pct": red_pct,
+            "disagreement_score": situation_disagreement,
         })
+        if situation_disagreement > 0:
+            disagreement_index.append({
+                "key": sk,
+                "title": situation_title(sk, locale),
+                "score": situation_disagreement,
+            })
 
-    weak_situations = sorted(
-        situations_view, key=lambda x: -x["red_pct"]
-    )[:5]
-
+    disagreement_index.sort(key=lambda x: -x["score"])
     return {
-        "participants_count": participants,
-        "avg_health_pct": round(total_health / participants),
-        "avg_accountable_correct": round(total_acc_correct / participants, 1),
+        "participants_count": len(rows),
+        "submitted_count": submitted_count,
+        "in_progress_count": in_progress,
         "situations": situations_view,
-        "color_totals": color_totals,
-        "weak_situations": [
-            {"key": w["key"], "title": w["title"], "red_pct": w["red_pct"]}
-            for w in weak_situations if w["red_pct"] > 0
-        ],
+        "disagreements": disagreement_index[:8],
     }
 
 
@@ -332,26 +341,18 @@ def session_results(session_id: int):
 
     groups = AgileTrainingGroup.query.filter_by(session_id=session_id).all()
     out = []
-    total_participants = 0
-    total_health = 0
-    groups_with_answers = 0
+    total_submitted = 0
+    total_in_progress = 0
     for g in groups:
         agg = _aggregate_group(g.id, locale)
-        total_participants += agg["participants_count"]
-        if agg["participants_count"]:
-            total_health += agg["avg_health_pct"]
-            groups_with_answers += 1
+        total_submitted += agg["submitted_count"]
+        total_in_progress += agg["in_progress_count"]
         out.append({
             "id": g.id,
             "name": g.name,
             "slug": g.slug,
             **agg,
         })
-
-    leaderboard = sorted(
-        [g for g in out if g["participants_count"]],
-        key=lambda x: (-x["avg_health_pct"], x["id"]),
-    )
 
     return jsonify({
         "session": {
@@ -362,12 +363,10 @@ def session_results(session_id: int):
         },
         "groups": out,
         "totals": {
-            "participants": total_participants,
-            "avg_health_pct": round(total_health / groups_with_answers) if groups_with_answers else 0,
-            "groups_with_answers": groups_with_answers,
             "groups_total": len(groups),
+            "submitted_total": total_submitted,
+            "in_progress_total": total_in_progress,
         },
-        "leaderboard": leaderboard,
     })
 
 
@@ -417,39 +416,30 @@ def group_participants(group_id: int):
             continue
         data = _safe_json_load(a.data_json)
         selection = data.get("selection") or {}
-        evaluation = (data.get("evaluation") or {}).get("situations") or {}
         situations_view = []
         for s in SITUATIONS:
             sk = s["key"]
-            ev_roles = (evaluation.get(sk) or {}).get("roles") or {}
             sel_roles = selection.get(sk) or {}
             role_view: Dict[str, Dict] = {}
             for rk in ROLE_KEYS:
                 picked = sel_roles.get(rk)
-                expected = (ev_roles.get(rk) or {}).get("expected")
-                color = (ev_roles.get(rk) or {}).get("color")
                 role_view[rk] = {
                     "picked": picked,
                     "picked_title": level_title(picked, locale) if picked else "",
-                    "expected": expected,
-                    "expected_title": level_title(expected, locale) if expected else "",
-                    "color": color,
                 }
             situations_view.append({
                 "key": sk,
                 "title": situation_title(sk, locale),
-                "color": (evaluation.get(sk) or {}).get("color"),
                 "roles": role_view,
             })
         out.append({
             "id": p.id,
             "display_name": p.display_name,
             "has_answer": True,
-            "score": a.score,
-            "max_score": a.max_score,
-            "health_pct": a.health_pct,
+            "submitted": bool(data.get("submitted")),
+            "submitted_at": data.get("submitted_at"),
+            "answered": int(a.score or 0),
             "situations": situations_view,
-            "notes_seen": data.get("notes_seen") or [],
         })
     return jsonify({"participants": out})
 

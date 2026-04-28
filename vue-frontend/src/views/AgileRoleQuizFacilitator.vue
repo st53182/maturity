@@ -1,5 +1,5 @@
 <template>
-  <div class="rqf">
+  <div class="rqf modern-ui">
     <header class="rqf__head">
       <div>
         <h1>🎯 {{ $t('agileTraining.roleQuiz.facTitle') }}</h1>
@@ -41,7 +41,7 @@
               </span>
             </div>
           </div>
-          <button class="rqf__open-btn" @click="openSession(s.id)">
+          <button type="button" class="rqf__open-btn" @click="openSession(s.id)">
             {{ $t('agileTraining.facilitator.open') }}
           </button>
         </li>
@@ -59,13 +59,10 @@
           </div>
         </div>
         <div class="rqf__active-actions">
-          <button class="btn-ghost" @click="openCompareAll" :disabled="!groups.length">
-            🏁 {{ $t('agileTraining.roleQuiz.compareAll') }}
-          </button>
-          <button class="btn-ghost" @click="closeSession">
+          <button type="button" class="btn-ghost" @click="closeSession">
             ← {{ $t('agileTraining.facilitator.backToList') }}
           </button>
-          <button class="btn-danger" @click="deleteSession">
+          <button type="button" class="btn-danger" @click="deleteSession">
             {{ $t('agileTraining.facilitator.deleteSession') }}
           </button>
         </div>
@@ -96,7 +93,7 @@
             </div>
             <div class="rqf__link">
               <code>{{ publicLink(g.slug) }}</code>
-              <button class="rqf__copy" @click="copyLink(g.slug)">
+              <button type="button" class="rqf__copy" @click="copyLink(g.slug)">
                 {{ copiedSlug === g.slug
                    ? $t('agileTraining.facilitator.copied')
                    : $t('agileTraining.facilitator.copyLink') }}
@@ -104,13 +101,13 @@
             </div>
           </div>
           <div class="rqf__group-actions">
-            <button class="btn-ghost" @click="openGroupResults(g)">
+            <button type="button" class="btn-ghost" @click="openGroupResults(g)">
               {{ $t('agileTraining.facilitator.viewResults') }}
             </button>
-            <button class="btn-ghost" @click="resetGroup(g)">
+            <button type="button" class="btn-ghost" @click="resetGroup(g)">
               {{ $t('agileTraining.facilitator.reset') }}
             </button>
-            <button class="btn-danger" @click="removeGroup(g)">
+            <button type="button" class="btn-danger" @click="removeGroup(g)">
               {{ $t('agileTraining.facilitator.delete') }}
             </button>
           </div>
@@ -123,66 +120,68 @@
       <div class="rqf__modal-body">
         <div class="rqf__modal-head">
           <h3>{{ $t('agileTraining.roleQuiz.groupResults') }}: {{ resultsModal.group?.name }}</h3>
-          <button class="rqf__modal-close" @click="closeResults">✕</button>
+          <button type="button" class="rqf__modal-close" @click="closeResults">✕</button>
         </div>
         <div v-if="resultsModal.loading" class="rqf__hint">{{ $t('common.loading') }}…</div>
         <div v-else-if="resultsModal.data">
           <p class="rqf__lead">
-            {{ $t('agileTraining.facilitator.participants',
-                  { n: resultsModal.data.participants_count || 0 },
-                  resultsModal.data.participants_count || 0) }}
-            · {{ $t('agileTraining.roleQuiz.avgHealth') }}:
-            <b>{{ resultsModal.data.avg_health_pct || 0 }}%</b>
-            · {{ $t('agileTraining.roleQuiz.accountableCorrect') }}:
-            <b>{{ resultsModal.data.avg_accountable_correct || 0 }}</b>
+            {{ $t('agileTraining.roleQuiz.statSubmitted',
+                  { n: resultsModal.data.submitted_count || 0 }) }}
+            <span v-if="resultsModal.data.in_progress_count">
+              · {{ $t('agileTraining.roleQuiz.statInProgress',
+                       { n: resultsModal.data.in_progress_count }) }}
+            </span>
           </p>
 
-          <div class="rqf__color-totals">
-            <span class="rqf__pill rqf__pill--green">🟢 {{ resultsModal.data.color_totals.green || 0 }}</span>
-            <span class="rqf__pill rqf__pill--yellow">🟡 {{ resultsModal.data.color_totals.yellow || 0 }}</span>
-            <span class="rqf__pill rqf__pill--red">🔴 {{ resultsModal.data.color_totals.red || 0 }}</span>
-            <span class="rqf__pill rqf__pill--muted">◻ {{ resultsModal.data.color_totals.missing || 0 }}</span>
-          </div>
+          <p v-if="!resultsModal.data.submitted_count" class="rqf__empty">
+            {{ $t('agileTraining.roleQuiz.noSubmitsYet') }}
+          </p>
 
-          <h4 v-if="resultsModal.data.weak_situations?.length" class="rqf__section-h">
-            🔴 {{ $t('agileTraining.roleQuiz.weakSituations') }}
-          </h4>
-          <ol v-if="resultsModal.data.weak_situations?.length" class="rqf__weak">
-            <li v-for="w in resultsModal.data.weak_situations" :key="'w-' + w.key">
-              <b>{{ w.title }}</b>
-              <span class="rqf__pill rqf__pill--red">{{ w.red_pct }}% 🔴</span>
-            </li>
-          </ol>
+          <template v-else>
+            <div v-if="resultsModal.data.disagreements?.length" class="rqf__disagreements">
+              <h4 class="rqf__section-h">⚡ {{ $t('agileTraining.roleQuiz.disagreementsTitle') }}</h4>
+              <p class="rqf__hint">{{ $t('agileTraining.roleQuiz.disagreementsLead') }}</p>
+              <ol class="rqf__weak">
+                <li v-for="d in resultsModal.data.disagreements" :key="'d-' + d.key">
+                  <b>{{ d.title }}</b>
+                  <span class="rqf__pill rqf__pill--warn">×{{ d.score }}</span>
+                </li>
+              </ol>
+            </div>
 
-          <h4 class="rqf__section-h">📊 {{ $t('agileTraining.roleQuiz.heatmap') }}</h4>
-          <div class="rqf__heatmap">
-            <table>
-              <thead>
-                <tr>
-                  <th>{{ $t('agileTraining.roleQuiz.situationCol') }}</th>
-                  <th v-for="r in ROLE_KEYS" :key="r">{{ roleTitle(r) }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="s in resultsModal.data.situations" :key="s.key">
-                  <td><b>{{ s.title }}</b></td>
-                  <td v-for="r in ROLE_KEYS" :key="'cell-' + s.key + '-' + r">
-                    <div class="rqf__cell">
+            <h4 class="rqf__section-h">📊 {{ $t('agileTraining.roleQuiz.heatmap') }}</h4>
+            <p class="rqf__hint">{{ $t('agileTraining.roleQuiz.heatmapLead') }}</p>
+            <div class="rqf__heatmap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ $t('agileTraining.roleQuiz.situationCol') }}</th>
+                    <th v-for="r in ROLE_KEYS" :key="r">{{ roleTitle(r) }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="s in resultsModal.data.situations" :key="s.key">
+                    <td class="rqf__situation-cell">
+                      <b>{{ s.title }}</b>
+                      <div v-if="s.subtitle" class="rqf__hint">{{ s.subtitle }}</div>
+                    </td>
+                    <td v-for="r in ROLE_KEYS" :key="'cell-' + s.key + '-' + r"
+                        :class="['rqf__cell', s.roles[r]?.distinct_picks >= 2 ? 'rqf__cell--mixed' : '']">
                       <div v-for="lv in (s.roles[r]?.levels || [])" :key="lv.level || 'none'"
-                           class="rqf__cell-row">
+                           :class="`rqf__cell-row rqf__cell-row--${lv.level || 'empty'}`">
                         <span>{{ lv.level_title || $t('agileTraining.roleQuiz.notPicked') }}</span>
                         <b>{{ lv.pct }}%</b>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
 
           <!-- per-participant drilldown -->
           <div v-if="resultsModal.participants.length" class="rqf__parts">
-            <button class="rqf__parts-toggle"
+            <button type="button" class="rqf__parts-toggle"
                     @click="resultsModal.showParticipants = !resultsModal.showParticipants">
               {{ resultsModal.showParticipants ? '▾' : '▸' }}
               {{ $t('agileTraining.roleQuiz.participantsDrill') }}
@@ -190,10 +189,11 @@
             </button>
             <div v-if="resultsModal.showParticipants" class="rqf__parts-body">
               <div v-for="p in resultsModal.participants" :key="p.id" class="rqf__part">
-                <button class="rqf__part-toggle" @click="togglePart(p.id)">
+                <button type="button" class="rqf__part-toggle" @click="togglePart(p.id)">
                   <span>{{ resultsModal.expanded[p.id] ? '▾' : '▸' }}</span>
                   <b>{{ p.display_name }}</b>
-                  <span v-if="p.has_answer" class="rqf__pill">{{ p.health_pct }}%</span>
+                  <span v-if="p.has_answer && p.submitted" class="rqf__pill rqf__pill--good">{{ $t('agileTraining.roleQuiz.partSubmitted') }}</span>
+                  <span v-else-if="p.has_answer" class="rqf__pill">{{ $t('agileTraining.roleQuiz.partInProgress', { n: p.answered }) }}</span>
                   <span v-else class="rqf__pill rqf__pill--muted">
                     {{ $t('agileTraining.roleQuiz.noAnswer') }}
                   </span>
@@ -210,14 +210,9 @@
                       <tr v-for="s in p.situations" :key="s.key">
                         <td>{{ s.title }}</td>
                         <td v-for="r in ROLE_KEYS" :key="s.key + '-' + r"
-                            :class="'rqf__cell-' + (s.roles[r]?.color || 'gray')">
-                          <div>
-                            <b>{{ s.roles[r]?.picked ? levelShort(s.roles[r].picked) : '—' }}</b>
-                          </div>
-                          <div class="rqf__hint">
-                            {{ $t('agileTraining.roleQuiz.expected') }}:
-                            {{ levelShort(s.roles[r]?.expected) }}
-                          </div>
+                            :class="`rqf__cell-row--${s.roles[r]?.picked || 'empty'}`">
+                          <b v-if="s.roles[r]?.picked">{{ s.roles[r].picked_title }}</b>
+                          <span v-else>—</span>
                         </td>
                       </tr>
                     </tbody>
@@ -226,39 +221,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Compare all groups modal -->
-    <div v-if="compareAll.open" class="rqf__modal" @click.self="closeCompareAll">
-      <div class="rqf__modal-body">
-        <div class="rqf__modal-head">
-          <h3>🏁 {{ $t('agileTraining.roleQuiz.leaderboard') }}</h3>
-          <button class="rqf__modal-close" @click="closeCompareAll">✕</button>
-        </div>
-        <div v-if="compareAll.loading" class="rqf__hint">{{ $t('common.loading') }}…</div>
-        <div v-else-if="compareAll.data">
-          <p class="rqf__lead">
-            {{ $t('agileTraining.roleQuiz.avgHealth') }}:
-            <b>{{ compareAll.data.totals.avg_health_pct || 0 }}%</b>
-            · {{ $t('agileTraining.facilitator.participants',
-                    { n: compareAll.data.totals.participants || 0 },
-                    compareAll.data.totals.participants || 0) }}
-          </p>
-          <ol class="rqf__leaderboard">
-            <li v-for="(g, idx) in compareAll.data.leaderboard" :key="g.id">
-              <b>{{ idx + 1 }}.</b> {{ g.name }}
-              <span class="rqf__pill rqf__pill--good">{{ g.avg_health_pct }}%</span>
-              <span class="rqf__hint">
-                · {{ $t('agileTraining.facilitator.participants',
-                        { n: g.participants_count }, g.participants_count) }}
-              </span>
-            </li>
-            <li v-if="!compareAll.data.leaderboard.length" class="rqf__hint">
-              — {{ $t('agileTraining.roleQuiz.noAnswersYet') }}
-            </li>
-          </ol>
         </div>
       </div>
     </div>
@@ -283,7 +245,6 @@ export default {
         open: false, group: null, loading: false, data: null,
         participants: [], expanded: {}, showParticipants: false,
       },
-      compareAll: { open: false, loading: false, data: null },
       ROLE_KEYS: ['po', 'sm', 'pm', 'coach', 'team', 'stakeholder'],
     };
   },
@@ -310,12 +271,6 @@ export default {
     },
     roleTitle(key) {
       const path = 'agileTraining.roleQuiz.roles.' + key + '.title';
-      if (this.$te(path)) return this.$t(path);
-      return key;
-    },
-    levelShort(key) {
-      if (!key) return '—';
-      const path = 'agileTraining.roleQuiz.levels.' + key + '.short';
       if (this.$te(path)) return this.$t(path);
       return key;
     },
@@ -423,17 +378,6 @@ export default {
         [id]: !this.resultsModal.expanded[id],
       };
     },
-    async openCompareAll() {
-      this.compareAll = { open: true, loading: true, data: null };
-      try {
-        const r = await axios.get(
-          `/api/agile-training/role-quiz/sessions/${this.activeSession.id}/results`,
-          { headers: this.authHeaders() });
-        this.compareAll.data = r.data;
-      } catch (e) { alert(e.response?.data?.error || 'Failed'); }
-      finally { this.compareAll.loading = false; }
-    },
-    closeCompareAll() { this.compareAll.open = false; },
   },
 };
 </script>
@@ -488,11 +432,8 @@ export default {
 .rqf__modal-head h3 { margin: 0; font-size: 17px; }
 .rqf__modal-close { background: transparent; border: none; cursor: pointer; font-size: 18px; color: #64748b; }
 .rqf__lead { color: #475569; }
-.rqf__color-totals { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
-.rqf__pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #f1f5f9; }
-.rqf__pill--green { background: #ecfdf5; color: #065f46; }
-.rqf__pill--yellow { background: #fffbeb; color: #92400e; }
-.rqf__pill--red { background: #fef2f2; color: #7f1d1d; }
+.rqf__pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #f1f5f9; color: #1e293b; }
+.rqf__pill--warn { background: #fef3c7; color: #92400e; }
 .rqf__pill--muted { background: #f1f5f9; color: #475569; }
 .rqf__pill--good { background: #ecfdf5; color: #065f46; }
 
@@ -504,21 +445,21 @@ export default {
 .rqf__heatmap table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13px; }
 .rqf__heatmap th, .rqf__heatmap td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
 .rqf__heatmap th { background: #f8fafc; position: sticky; top: 0; }
+.rqf__situation-cell { max-width: 280px; }
 .rqf__cell { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
-.rqf__cell-row { display: flex; justify-content: space-between; gap: 6px; }
+.rqf__cell--mixed { box-shadow: inset 0 0 0 2px #fcd34d; }
+.rqf__cell-row { display: flex; justify-content: space-between; gap: 6px; padding: 2px 4px; border-radius: 4px; }
+.rqf__cell-row--responsible { background: #fee2e2; color: #7f1d1d; }
+.rqf__cell-row--participates { background: #d1fae5; color: #065f46; }
+.rqf__cell-row--informed { background: #ede9fe; color: #5b21b6; }
+.rqf__cell-row--not_involved { background: #e2e8f0; color: #1e293b; }
+.rqf__cell-row--empty { color: #94a3b8; }
 
 .rqf__parts { margin-top: 14px; }
 .rqf__parts-toggle { background: transparent; border: none; cursor: pointer; font-weight: 700; color: #4338ca; font-size: 13px; }
 .rqf__part { border: 1px solid #e2e8f0; border-radius: 10px; margin: 6px 0; padding: 8px 10px; }
-.rqf__part-toggle { background: transparent; border: none; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; color: #0f172a; }
+.rqf__part-toggle { background: transparent; border: none; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; color: #0f172a; flex-wrap: wrap; }
 .rqf__part-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
 .rqf__part-table th, .rqf__part-table td { padding: 5px 8px; border: 1px solid #e2e8f0; vertical-align: top; }
 .rqf__part-table th { background: #f8fafc; }
-.rqf__cell-green td, .rqf__cell-green { background: #ecfdf5; }
-.rqf__cell-yellow { background: #fffbeb; }
-.rqf__cell-red { background: #fef2f2; }
-.rqf__cell-missing { background: #f1f5f9; }
-
-.rqf__leaderboard { padding-left: 18px; margin: 8px 0 0; }
-.rqf__leaderboard li { margin: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 </style>

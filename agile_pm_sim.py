@@ -2927,22 +2927,17 @@ def participant_feature_release(slug: str):
     if not data.get("feature_choice_open"):
         return jsonify({"error": "feature window closed"}), 400
 
-    # capacity / pick rule guard:
-    #   - максимум 2 фичи в цикле
-    #   - если есть «большая» (>=40 cap) — она должна быть единственной
-    #   - если выбрана «Стабилизация» — она тоже должна быть единственной
-    #   - суммарный cap не больше текущего capacity_left
-    # Структурные правила проверяем РАНЬШЕ capacity, чтобы пользователь видел
-    # «настоящую» ошибку выбора, а не просто «не хватает capacity».
+    # Правило выбора фич — максимально простое:
+    #   • суммарный cap выбранных фич не должен превышать текущий
+    #     capacity_left (запас цикла);
+    #   • «Стабилизация» — солирующее действие: смысл этого пункта
+    #     «замораживаем продуктовые фичи в пользу качества», поэтому
+    #     комбинировать его с релизом фич нельзя по самой постановке.
+    # Раньше тут также было «не больше 2 фич» и «большая фича только в
+    # одиночку», но это создавало ситуации «cap=50/100, есть бюджет — но
+    # система не даёт выбрать ещё». Теперь решает только capacity.
     by_key = {f["key"]: f for f in _FEATURES_RU}
     chosen = [by_key[k] for k in feature_keys if k in by_key]
-    if len(chosen) > 2:
-        return jsonify({"error": "max_two_features"}), 400
-    big_count = sum(1 for f in chosen if int(f.get("capacity", 0)) >= 40)
-    if big_count > 1:
-        return jsonify({"error": "max_one_big"}), 400
-    if big_count == 1 and len(chosen) > 1:
-        return jsonify({"error": "big_must_be_alone"}), 400
     if any(f.get("key") == "stabilize" for f in chosen) and len(chosen) > 1:
         return jsonify({"error": "stabilize_must_be_alone"}), 400
     total_cap = sum(int(f.get("capacity", 0)) for f in chosen)

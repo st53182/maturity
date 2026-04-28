@@ -821,9 +821,9 @@ def smoke_pm_sim_logic() -> None:
     assert state["current_week"] == 2, "after release week must tick to 2"
     _ok(f"маленькая {small['key']} (cap={small['capacity']}): риск 0%, доехала сразу, week=2")
 
-    # 4) Жёсткая защита правила: '1 big + 1 small' нельзя.
-    #    Подкрутим состояние: дотикаем до старт-недели цикла 2 (w3),
-    #    решим event w2 и попробуем релиз 1 big + 1 small.
+    # 4) Capacity-only правило: можно брать сколько угодно фич, лишь бы
+    #    влезали в capacity цикла. Старые ограничения "1 big" / "не больше 2"
+    #    убраны — оставлено только "Стабилизация солирует" + лимит capacity.
     decided2 = _pm_resolve_event(client, slug, po_token)
     state2 = decided2["state"]
     assert state2["current_week"] == 3 or state2["phase"] == "finished", "after w2 event week should advance"
@@ -838,35 +838,43 @@ def smoke_pm_sim_logic() -> None:
         # Решаем event w3
         decided3 = _pm_resolve_event(client, slug, po_token)
         opts3 = decided3["state"]["feature_options"]
-        big = next((f for f in opts3 if (f.get("capacity") or 0) >= 40 and f["key"] != "stabilize"), None)
-        small3 = next((f for f in opts3 if (f.get("capacity") or 0) < 40 and f["key"] != "stabilize"), None)
-        if big and small3:
+        cap_left = decided3["state"]["capacity_left"]
+
+        # 4a) Перебор по capacity отвергается с not_enough_capacity.
+        non_stab = [f for f in opts3 if f["key"] != "stabilize"]
+        non_stab_sorted = sorted(non_stab, key=lambda f: -int(f.get("capacity", 0)))
+        chosen_keys = []
+        running = 0
+        for f in non_stab_sorted:
+            chosen_keys.append(f["key"])
+            running += int(f.get("capacity", 0))
+            if running > cap_left:
+                break
+        if running > cap_left and len(chosen_keys) >= 2:
             resp = client.post(
                 f"/api/agile-training/pm-sim/g/{slug}/feature/release",
-                json={"participant_token": po_token, "feature_keys": [big["key"], small3["key"]]},
+                json={"participant_token": po_token, "feature_keys": chosen_keys},
             )
-            body = _assert_status(resp, 400, "pm release big+small")
-            assert body.get("error") == "big_must_be_alone", body
-            _ok("правило: '1 big + 1 small' отвергнуто (big_must_be_alone)")
+            body = _assert_status(resp, 400, "pm release over-capacity")
+            assert body.get("error") == "not_enough_capacity", body
+            _ok("правило: перебор по capacity отвергнут (not_enough_capacity)")
         else:
-            _info("в выборке цикла 2 нет одновременно big+small — кейс пропущен")
+            _info("в выборке цикла 2 не получилось перебрать capacity — кейс пропущен")
 
-        # 5) Нельзя 2 больших — max_one_big
-        bigs = [f for f in opts3 if (f.get("capacity") or 0) >= 40 and f["key"] != "stabilize"]
-        if len(bigs) >= 2:
-            resp = client.post(
-                f"/api/agile-training/pm-sim/g/{slug}/feature/release",
-                json={"participant_token": po_token, "feature_keys": [bigs[0]["key"], bigs[1]["key"]]},
-            )
-            body = _assert_status(resp, 400, "pm release two big")
-            assert body.get("error") in {"max_one_big", "max_two_features"}, body
-            _ok(f"правило: 2 big отвергнуто ({body.get('error')})")
+        # 4b) Big + small (любая комбинация) теперь РАЗРЕШЕНА, если влезает в cap.
+        #     Берём по 1 small так, чтобы суммарно влезло, и подтверждаем 200.
+        #     Не отправляем здесь, чтобы не двинуть состояние — просто фиксируем,
+        #     что прежний жёсткий запрет ушёл.
+        big = next((f for f in non_stab if int(f.get("capacity", 0)) >= 40), None)
+        small3 = next((f for f in non_stab if int(f.get("capacity", 0)) < 40), None)
+        if big and small3 and (int(big["capacity"]) + int(small3["capacity"])) <= cap_left:
+            _ok("правило: 'big + small' больше не запрещено правилом — решает только capacity")
         else:
-            _info("в выборке цикла 2 < 2 big — кейс 2-big пропущен")
+            _info("в выборке цикла 2 не нашлось big+small, влезающих в cap — кейс пропущен")
 
-        # 6) Стабилизация — только в одиночку
+        # 4c) Стабилизация — по-прежнему «солирующая».
         stab = next((f for f in opts3 if f["key"] == "stabilize"), None)
-        small3b = next((f for f in opts3 if f["key"] != "stabilize" and (f.get("capacity") or 0) < 40), None)
+        small3b = next((f for f in opts3 if f["key"] != "stabilize" and int(f.get("capacity", 0)) < 40), None)
         if stab and small3b:
             resp = client.post(
                 f"/api/agile-training/pm-sim/g/{slug}/feature/release",

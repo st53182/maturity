@@ -336,7 +336,6 @@
             :key="String(f.key)"
             :class="['pmsim__feature',
                      { 'pmsim__feature--picked': featurePicksStr.includes(String(f.key)),
-                       'pmsim__feature--big': Number(f.capacity) >= 40 && String(f.key) !== 'stabilize',
                        'pmsim__feature--stabilize': String(f.key) === 'stabilize',
                        'pmsim__feature--recommended': !!f.recommended }]"
             @click="toggleFeaturePick(f)">
@@ -353,12 +352,6 @@
               </span>
               <span v-if="String(f.key) === 'stabilize'" class="pmsim__pick-badge pmsim__pick-badge--solo">
                 {{ $t('agileTraining.pmSim.feat.solo') }}
-              </span>
-              <span v-else-if="Number(f.capacity) >= 40" class="pmsim__pick-badge pmsim__pick-badge--big">
-                {{ $t('agileTraining.pmSim.feat.big') }}
-              </span>
-              <span v-else class="pmsim__pick-badge pmsim__pick-badge--small">
-                {{ $t('agileTraining.pmSim.feat.small') }}
               </span>
               <span v-if="f.recommended" class="pmsim__pick-badge pmsim__pick-badge--rec">
                 {{ $t('agileTraining.pmSim.feat.recommended') }}
@@ -759,18 +752,11 @@ export default {
     pickedHasStabilize() {
       return (this.featurePicks || []).some((k) => String(k) === 'stabilize');
     },
-    pickedBigCount() {
-      return (this.featurePicks || []).filter((k) => {
-        const f = (this.state.feature_options || []).find((x) => String(x.key) === String(k));
-        return f && (f.capacity || 0) >= 40;
-      }).length;
-    },
     canConfirmFeatures() {
+      // Простое правило: что-то выбрано, влезает в capacity, и
+      // «Стабилизация» — solo (по смыслу противоположна релизу фич).
       if (!this.featurePicks.length) return false;
       if (this.featureCapacityUsed > this.state.capacity_left) return false;
-      if (this.featurePicks.length > 2) return false;
-      if (this.pickedBigCount > 1) return false;
-      if (this.pickedBigCount === 1 && this.featurePicks.length > 1) return false;
       if (this.pickedHasStabilize && this.featurePicks.length > 1) return false;
       return true;
     },
@@ -885,10 +871,9 @@ export default {
       const t = (k, v) => this.$t(`agileTraining.pmSim.feat.${k}`, v || {});
       if (!this.featurePicks.length) return t('helpEmpty');
       if (this.pickedHasStabilize) return t('helpStabilize');
-      if (this.pickedBigCount === 1) return t('helpBig');
-      if (this.featurePicks.length === 2) return t('helpTwo');
-      if (this.featurePicks.length === 1) return t('helpOneSmall');
-      return '';
+      const left = (this.state.capacity_left || 0) - this.featureCapacityUsed;
+      if (left < 0) return t('helpOverCap', { over: -left });
+      return t('helpCapLeft', { left, used: this.featureCapacityUsed });
     },
     discoveryPoolBadges() {
       // Reasons приходят с бэка (state.feature_pool_caps.reasons): один
@@ -1120,7 +1105,6 @@ export default {
       return { key: k, cap, isBig: cap >= 40, isStabilize: k === 'stabilize' };
     },
     toggleFeaturePick(f) {
-      // Если PO заблокирован (idle observer) — игнорим.
       if (!this.isPO) return;
       const m = this.featMeta(f.key);
       const key = m.key;
@@ -1133,25 +1117,15 @@ export default {
         this.featurePicks = next;
         return;
       }
-      // Stabilize и Big — «соло»: выбор чего-то ещё всегда сбрасывает остальное.
-      if (m.isStabilize || m.isBig) {
+      // «Стабилизация» — единственное соло-действие: означает «замораживаем
+      // фичи в пользу качества», поэтому не комбинируется с релизами.
+      if (m.isStabilize) {
         this.featurePicks = [key];
         return;
       }
-      // Если в выборе уже стояла Stabilize или Big — её надо вытеснить
-      // (несовместимо с малой). Оставляем только малые.
-      const smalls = cur.filter((k) => {
-        const e = this.featMeta(k);
-        return !e.isStabilize && !e.isBig;
-      });
-      if (smalls.length >= 2) {
-        // Уже две малые — самую старую заменяем на новую,
-        // более старая (smalls[0]) уходит, smalls[1] остаётся.
-        this.featurePicks = [smalls[1], key];
-        return;
-      }
-      // 0 или 1 малая — просто добавляем новую.
-      this.featurePicks = [...smalls, key];
+      // Если в текущем выборе уже стояла Стабилизация — её надо вытеснить.
+      const others = cur.filter((k) => k !== 'stabilize');
+      this.featurePicks = [...others, key];
     },
     selectToolkitAction(a) {
       if (!this.isPO) return;

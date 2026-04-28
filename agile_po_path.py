@@ -798,8 +798,11 @@ def _clean_value_items(raw, action_key: str) -> List[Dict]:
             continue
         text = _clamp_text(item.get("text"))
         action = _clamp_text(item.get(action_key)) or ""
-        if not text and not action:
-            continue
+        # Карточку, добавленную пользователем, мы НЕ выкидываем даже если text
+        # и action ещё пустые: иначе только что созданный «+ добавить боль»
+        # / «+ добавить выгоду» исчезает после ближайшего автосейва. Удаление
+        # остаётся явным — кнопкой ✕. Лимит VALUE_LIST_LIMIT защищает от
+        # неконтролируемого роста.
         item_id = str(item.get("id") or "").strip()[:32] or _new_item_id()
         weight_raw = str(item.get(weight_key) or "").strip().lower()
         weight = weight_raw if weight_raw in _SEVERITY_LEVELS else default_weight

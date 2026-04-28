@@ -474,6 +474,35 @@ _FEATURES_RU: List[Dict[str, Any]] = [
      "description": "Автоматический пайплайн поставки. Команда быстрее доезжает до релиза, меньше регрессий.",
      "capacity": 30, "budget": 0, "focus": "tech_debt",
      "effects": {"stability": 5, "tech_debt": -7, "capacity_delta": 0}},
+    # --- Дополнительный пул фич: подмешиваются, если PO провёл product
+    # discovery (problem_interview / solution_interview) и расширил пул.
+    {"key": "onboarding", "title": "Онбординг для новичков",
+     "description": "Шаги первого знакомства: подсказки, чек-лист, первый «aha»-момент за 90 секунд.",
+     "capacity": 25, "budget": 0, "focus": "business",
+     "effects": {"satisfaction": 6, "active_users_pct": 5, "trust": 2}},
+    {"key": "search", "title": "Умный поиск по сообщениям",
+     "description": "Быстрый, контекстный поиск — пользователи реже теряют ценные диалоги.",
+     "capacity": 30, "budget": 0, "focus": "business",
+     "effects": {"satisfaction": 7, "active_users_pct": 4, "tech_debt": 3}},
+    {"key": "moderation", "title": "Инструменты модерации",
+     "description": "Жалобы, отчёты, авто-фильтр спама. Снижает риск массовых проблем в каналах.",
+     "capacity": 35, "budget": 0, "focus": "tech_debt",
+     "effects": {"trust": 9, "satisfaction": 3, "stability": 3, "tech_debt": -2},
+     "requires": {"feature": "channels"}},
+    {"key": "referral", "title": "Реферальная программа",
+     "description": "Пользователи приводят друзей за бонус. Дешевле платного трафика, если есть удержание.",
+     "capacity": 25, "budget": 0, "focus": "business",
+     "effects": {"users_pct": 7, "active_users_pct": 3, "satisfaction": 1},
+     "requires": {"satisfaction": 55}},
+    {"key": "data_export", "title": "Экспорт данных пользователя",
+     "description": "Скачать переписку и медиа одним архивом. Бьёт прямо в страх «застрять» в продукте — доверие растёт.",
+     "capacity": 20, "budget": 0, "focus": "architecture",
+     "effects": {"trust": 12, "satisfaction": 3}},
+    {"key": "translate", "title": "Перевод сообщений",
+     "description": "Автоперевод подписей и сообщений: открывает международную аудиторию.",
+     "capacity": 30, "budget": 0, "focus": "business",
+     "effects": {"users_pct": 6, "satisfaction": 4, "tech_debt": 4},
+     "requires": {"satisfaction": 50}},
 ]
 
 
@@ -864,6 +893,18 @@ _FEATURE_EN: Dict[str, Dict[str, str]] = {
         "description": "Big architecture investment: split into services. Pays off debt, raises stability."},
     "ci_cd": {"title": "CI/CD & autotests",
         "description": "Automated delivery pipeline. Faster releases, fewer regressions."},
+    "onboarding": {"title": "First-run onboarding",
+        "description": "Tooltips, checklist, the first 'aha' moment in 90 seconds."},
+    "search": {"title": "Smart message search",
+        "description": "Fast, contextual search — users stop losing valuable threads."},
+    "moderation": {"title": "Moderation tools",
+        "description": "Reports, complaints, auto-spam filter. Lowers the risk of channel-wide blow-ups."},
+    "referral": {"title": "Referral program",
+        "description": "Users invite friends for a perk. Cheaper than paid traffic if retention holds."},
+    "data_export": {"title": "User data export",
+        "description": "Download all chats and media as an archive. Trust grows because the lock-in feels lighter."},
+    "translate": {"title": "Message translation",
+        "description": "Auto-translate captions and messages: opens up an international audience."},
 }
 
 
@@ -1029,6 +1070,7 @@ def _initial_state() -> Dict[str, Any]:
         "consequences_text": "",
         "recent_feature_count": 0,
         "weeks_without_revenue_after_monetization": 0,
+        "weekly_metric_log": [],   # per-metric reasoning: почему изменилась метрика
         "updated_at": _now_iso(),
     }
 
@@ -1043,20 +1085,36 @@ def _apply_metric_delta(
     data: Dict[str, Any],
     delta: Dict[str, Any],
     struct: Optional[List[Dict[str, Any]]] = None,
+    source: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """Применяет числовой эффект варианта/фичи к data, возвращает человеческие лейблы изменений.
 
     Если передан `struct` — заполняет его машинно-читаемыми записями вида
     ``{"key": "satisfaction", "delta": 5, "type": "metric"}``. Это нужно фронту,
     чтобы локализовать названия метрик (RU/EN), а не показывать английские ключи.
+
+    Если передан `source` — каждое заполненное в `struct` событие также
+    регистрируется в `data["weekly_metric_log"]` с указанием источника
+    (decision / feature_release / po_action / passive / scrum_penalty).
+    Используется для построения «почему изменилась метрика» в recap.
     """
     m = data["metrics"]
     notes: List[str] = []
     track = struct if struct is not None else None
+    week_log = data.setdefault("weekly_metric_log", []) if source else None
 
     def push_struct(record: Dict[str, Any]) -> None:
         if track is not None:
             track.append(record)
+        if week_log is not None:
+            log_rec = dict(record)
+            log_rec["week"] = int(source.get("week", data.get("current_week", 0)) or 0)
+            log_rec["source"] = source.get("source")
+            if "source_id" in source:
+                log_rec["source_id"] = source["source_id"]
+            if "source_title" in source:
+                log_rec["source_title"] = source["source_title"]
+            week_log.append(log_rec)
 
     def bump(name: str, value: float, lo=0, hi=100, fmt="±{v}"):
         cur = m[name]
@@ -1133,9 +1191,44 @@ def _apply_metric_delta(
     return notes
 
 
+def _push_metric_log(
+    data: Dict[str, Any],
+    *,
+    week: int,
+    metric: str,
+    delta: int,
+    source: str,
+    source_id: Optional[str] = None,
+    source_title: Optional[str] = None,
+    extra: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Дописывает в `weekly_metric_log` запись «метрика X изменилась на Y из-за Z».
+
+    Используется для пассивных и системных эффектов, которые не идут через
+    `_apply_metric_delta` (рост/отток, штрафы за пропуск Scrum-ритуалов и т.п.).
+    """
+    if not metric or delta == 0:
+        return
+    rec = {
+        "week": int(week or 0),
+        "type": "metric",
+        "key": metric,
+        "delta": int(delta),
+        "source": source,
+    }
+    if source_id is not None:
+        rec["source_id"] = source_id
+    if source_title is not None:
+        rec["source_title"] = source_title
+    if extra:
+        rec.update(extra)
+    data.setdefault("weekly_metric_log", []).append(rec)
+
+
 def _apply_passive_week(data: Dict[str, Any]) -> None:
     """Пассивный шаг недели: рост/отток, выручка, давление техдолга."""
     m = data["metrics"]
+    week_now = int(data.get("current_week", 0) or 0)
     # active ratio тяготеет к функции от satisfaction & stability
     target_ratio = 0.30 + 0.30 * (m["satisfaction"] / 100.0) + 0.10 * (m["stability"] / 100.0)
     target_ratio = _clamp(target_ratio, 0.15, 0.85)
@@ -1151,15 +1244,32 @@ def _apply_passive_week(data: Dict[str, Any]) -> None:
     churn += max(0.0, (data.get("ad_strength", 0)) * 0.003)
 
     delta_users = int(round(m["users"] * (base_growth - churn)))
+    if delta_users != 0:
+        # Понятное «почему»: положительная дельта — органический рост от
+        # satisfaction/trust; отрицательная — отток. Источник один,
+        # просто разные знаки.
+        if base_growth >= churn:
+            _push_metric_log(data, week=week_now, metric="users", delta=delta_users,
+                             source="passive", source_id="organic_growth")
+        else:
+            _push_metric_log(data, week=week_now, metric="users", delta=delta_users,
+                             source="passive", source_id="churn")
     m["users"] = max(0, m["users"] + delta_users)
     m["active_users"] = min(m["active_users"], m["users"])
 
     # техдолг медленно растёт сам по себе
+    prev_debt = int(m["tech_debt"])
     m["tech_debt"] = int(_clamp(m["tech_debt"] + 0.5, 0, 100))
+    if int(m["tech_debt"]) > prev_debt:
+        _push_metric_log(data, week=week_now, metric="tech_debt",
+                         delta=int(m["tech_debt"]) - prev_debt,
+                         source="passive", source_id="time_drift")
 
     # стабильность зависит от техдолга
     if m["tech_debt"] > 70 and m["stability"] > 30:
         m["stability"] = int(_clamp(m["stability"] - 1, 0, 100))
+        _push_metric_log(data, week=week_now, metric="stability", delta=-1,
+                         source="passive", source_id="high_tech_debt")
 
     # выручка
     rev = int(data.get("revenue_per_week", 0))
@@ -1257,7 +1367,11 @@ def _pick_event(data: Dict[str, Any], week: int, group_id: int) -> Dict[str, Any
 def _apply_event_appearance(data: Dict[str, Any], ev: Dict[str, Any]) -> None:
     """Эффекты, которые применяются в момент появления события (до решения)."""
     if "applied_on_appear" in ev:
-        _apply_metric_delta(data, ev["applied_on_appear"])
+        _apply_metric_delta(
+            data,
+            ev["applied_on_appear"],
+            source={"source": "event_appearance", "source_id": ev.get("id"), "source_title": ev.get("title")},
+        )
 
 
 def _resolve_event_decision(
@@ -1270,7 +1384,16 @@ def _resolve_event_decision(
     if not chosen:
         chosen = ev["options"][0]
     struct: List[Dict[str, Any]] = []
-    notes = _apply_metric_delta(data, chosen.get("effects", {}), struct)
+    notes = _apply_metric_delta(
+        data,
+        chosen.get("effects", {}),
+        struct,
+        source={
+            "source": "event_decision",
+            "source_id": ev.get("id"),
+            "source_title": chosen.get("title") or ev.get("title"),
+        },
+    )
 
     if chosen.get("unlocks"):
         data.setdefault("unlocked_feature_keys", []).append(chosen["unlocks"])
@@ -1295,20 +1418,97 @@ def _eligible_features(data: Dict[str, Any], locale: str) -> List[Dict[str, Any]
     return out
 
 
-def _select_feature_options(data: Dict[str, Any], group_id: int, week: int, locale: str) -> List[Dict[str, Any]]:
-    """Собираем 5 опций для окна выбора фич.
+def _feature_pool_caps(data: Dict[str, Any]) -> Dict[str, int]:
+    """Размер пула фич и сколько из них можно пометить как recommended.
 
-    Правила пула:
-      • «Стабилизация» всегда показывается — это страховка от тех. долга.
-      • Гарантируем минимум две «маленькие» фичи (cap < 40), чтобы PO мог
-        собрать комбинацию из двух мелких — иначе мульти-выбор бессмысленен.
-      • Если в пуле есть architecture/tech_debt опции — поднимаем хотя бы одну,
-        чтобы участникам было что выбрать под соответствующую квоту.
+    Базово показываем 5 опций. Если PO провёл проблемное интервью — пул
+    расширяется до 8 (PO «лучше понимает аудиторию»). Если ещё и solution-
+    интервью — до 10, и две лучшие фичи помечаются ⭐ как «попадание в боль»
+    (бэк отдаст их с `recommended=True` и небольшим бонусом к эффекту при
+    релизе). Маленькие синергии: воркшоп по приоритизации и архитектурный
+    обзор открывают +1 опцию в своём фокусе. Лимит сверху — 12.
+
+    Идея: PO видит «прямую связь» между тем, что он делает с тулкитом,
+    и тем, какой выбор у него на следующем цикле. Это держит мотивацию.
+    """
+    actions = data.get("po_actions") or {}
+
+    def has_done(action_id: str) -> bool:
+        ent = actions.get(action_id) or {}
+        return int(ent.get("count", 0) or 0) >= 1
+
+    base_count = 5
+    recommended_slots = 0
+    bonus_extra_arch = 0
+    bonus_extra_business = 0
+
+    if has_done("problem_interview"):
+        base_count += 3  # 5 -> 8
+    if has_done("solution_interview"):
+        base_count += 2  # +2 -> 10
+        recommended_slots = 2
+    if has_done("ab_test") and recommended_slots < 1:
+        recommended_slots = 1
+    if has_done("prioritization_workshop"):
+        bonus_extra_business += 1
+    if has_done("arch_review"):
+        bonus_extra_arch += 1
+    if has_done("tech_debt_sprint"):
+        bonus_extra_arch += 1
+    total = min(12, base_count + bonus_extra_arch + bonus_extra_business)
+    return {
+        "total": int(total),
+        "recommended_slots": int(recommended_slots),
+        "bonus_extra_arch": int(bonus_extra_arch),
+        "bonus_extra_business": int(bonus_extra_business),
+    }
+
+
+def _score_feature_impact(data: Dict[str, Any], f: Dict[str, Any]) -> float:
+    """Оценка «потенциальной полезности» фичи в текущем состоянии метрик.
+
+    Используется для выбора recommended-кандидатов после solution-интервью.
+    Идея: если у нас низкое доверие — фичи, дающие trust, ценнее; если
+    проседает stability — ценнее техдолговые/архитектурные.
+    """
+    eff = f.get("effects") or {}
+    m = data.get("metrics") or {}
+    score = 0.0
+    score += float(eff.get("satisfaction", 0)) * (1.0 + max(0, 60 - int(m.get("satisfaction", 60))) / 30.0)
+    score += float(eff.get("trust", 0)) * (1.0 + max(0, 60 - int(m.get("trust", 60))) / 30.0)
+    score += float(eff.get("stability", 0)) * (1.0 + max(0, 60 - int(m.get("stability", 60))) / 30.0)
+    score -= float(eff.get("tech_debt", 0)) * (0.7 + max(0, int(m.get("tech_debt", 30)) - 30) / 40.0)
+    score += float(eff.get("active_users_pct", 0)) * 1.4
+    score += float(eff.get("users_pct", 0)) * 1.0
+    score += float(eff.get("revenue_per_week", 0)) / 1500.0
+    score -= max(0, int(f.get("capacity", 0)) - 30) * 0.05
+    if f.get("key") == "stabilize" and (m.get("stability", 100) < 55 or m.get("tech_debt", 0) > 65):
+        score += 4
+    return score
+
+
+def _select_feature_options(data: Dict[str, Any], group_id: int, week: int, locale: str) -> List[Dict[str, Any]]:
+    """Собираем опции для окна выбора фич.
+
+    Размер пула зависит от тулкит-активности PO (см. `_feature_pool_caps`):
+    минимум 5, максимум 12. Если PO провёл solution-интервью — две фичи
+    с лучшим «попаданием в текущие проблемы» помечаются ⭐ recommended.
+
+    Правила:
+      • «Стабилизация» всегда внутри пула.
+      • Гарантируем минимум две «маленькие» фичи (cap < 40).
+      • Поднимаем хотя бы одну architecture и одну tech_debt опцию.
+      • Бустеры из тулкита (`prioritization_workshop`, `arch_review`,
+        `tech_debt_sprint`) добавляют дополнительный слот в нужном фокусе.
       • Остаток заполняется случайными вариантами по сиду.
     """
     rnd = _seeded_random(group_id, week, salt="features")
     pool = _eligible_features(data, locale)
     by_key = {f["key"]: f for f in pool}
+
+    caps = _feature_pool_caps(data)
+    target_total = caps["total"]
+    rec_slots = caps["recommended_slots"]
 
     def take(predicate, count, picked_keys):
         out: List[Dict[str, Any]] = []
@@ -1327,10 +1527,12 @@ def _select_feature_options(data: Dict[str, Any], group_id: int, week: int, loca
         picked_keys.add("stabilize")
 
     picked.extend(take(lambda f: int(f.get("capacity", 0)) < 40 and f["key"] != "stabilize", 2, picked_keys))
-    picked.extend(take(lambda f: f.get("focus") == "architecture", 1, picked_keys))
+    picked.extend(take(lambda f: f.get("focus") == "architecture", 1 + caps["bonus_extra_arch"], picked_keys))
     picked.extend(take(lambda f: f.get("focus") == "tech_debt", 1, picked_keys))
+    picked.extend(take(lambda f: f.get("focus") == "business" and f["key"] not in picked_keys,
+                      caps["bonus_extra_business"], picked_keys))
 
-    while len(picked) < 5:
+    while len(picked) < target_total:
         rest = [f for f in pool if f["key"] not in picked_keys]
         if not rest:
             break
@@ -1339,11 +1541,32 @@ def _select_feature_options(data: Dict[str, Any], group_id: int, week: int, loca
         picked.append(f)
         picked_keys.add(f["key"])
 
+    # Помечаем recommended после solution-интервью.
+    if rec_slots > 0:
+        scored = sorted(
+            [f for f in picked if f.get("key") != "stabilize"],
+            key=lambda f: _score_feature_impact(data, f),
+            reverse=True,
+        )
+        rec_keys = {f["key"] for f in scored[:rec_slots]}
+        for f in picked:
+            if f["key"] in rec_keys:
+                f = dict(f)  # не мутируем _FEATURES_RU
+            # Фактически нужно мутировать локальную копию: пересоберём список.
+        # Перебираем заново, чтобы реально проставить флаг в копиях.
+        marked: List[Dict[str, Any]] = []
+        for f in picked:
+            if f["key"] in rec_keys:
+                marked.append({**f, "recommended": True})
+            else:
+                marked.append(f)
+        picked = marked
+
     rnd.shuffle(picked)
     if "stabilize" in picked_keys:
         stab = next(f for f in picked if f["key"] == "stabilize")
         picked = [stab] + [f for f in picked if f["key"] != "stabilize"]
-    return picked[:5]
+    return picked[:target_total]
 
 
 def _delivery_risk_pct(data: Dict[str, Any], total_committed_cap: int) -> float:
@@ -1405,7 +1628,7 @@ def _quota_evaluation_for_cycle(
 
     if max_dev <= QUOTA_DEVIATION_TOLERANCE_PCT:
         delta = {"trust": 1, "satisfaction": 1}
-        _apply_metric_delta(data, delta, struct)
+        _apply_metric_delta(data, delta, struct, source={"source": "quota_balance"})
         penalty = {"kind": "balance_bonus", "trust": 1, "satisfaction": 1}
     elif max_dev >= QUOTA_DEVIATION_PENALTY_HEAVY:
         # Кто перегнут — туда и боль. Если сильно загнули в business, страдает
@@ -1431,7 +1654,8 @@ def _quota_evaluation_for_cycle(
             # сильно недобрали в чём-то — мягкий штраф по доверию
             delta["trust"] = -2
             penalty = {"kind": "neglect", "trust": -2}
-        _apply_metric_delta(data, delta, struct)
+        _apply_metric_delta(data, delta, struct, source={"source": "quota_overshoot",
+                                                         "source_id": (penalty or {}).get("kind")})
     else:
         penalty = {"kind": "ok"}
 
@@ -1483,6 +1707,10 @@ def _release_feature(
         return None
     data["capacity_left"] = int(data["capacity_left"]) - cap
 
+    # Помечена ли эта фича как recommended (например, после solution_interview)?
+    opts_by_key = {opt.get("key"): opt for opt in (data.get("feature_options") or [])}
+    is_recommended = bool((opts_by_key.get(fkey) or {}).get("recommended"))
+
     risk_pct = _delivery_risk_pct(data, total_committed_cap or cap)
     risk_buff = float(data.get("next_release_risk_buff_pct", 0) or 0)
     if risk_buff > 0:
@@ -1490,6 +1718,9 @@ def _release_feature(
     slip_pen = float(data.get("next_release_slip_penalty_pct", 0) or 0)
     if slip_pen > 0:
         risk_pct = min(float(RISK_MAX_PCT), risk_pct + slip_pen)
+    if is_recommended:
+        # Выбор «по подсказке после solution-интервью» — стабильнее.
+        risk_pct = max(0.0, risk_pct - 6.0)
     slipped = False
     if risk_pct > 0 and rnd is not None:
         slipped = (rnd.random() * 100.0) < risk_pct
@@ -1507,6 +1738,7 @@ def _release_feature(
         "delivery_cycle": cur_cycle,
         "risk_pct": round(risk_pct, 1),
         "slipped": False,
+        "recommended": is_recommended,
     }
 
     focus = f.get("focus")
@@ -1522,8 +1754,35 @@ def _release_feature(
         data.setdefault("pending_releases", []).append(base_rec)
         return base_rec
 
+    effects = dict(f.get("effects", {}) or {})
+    bonuses_struct: List[Dict[str, Any]] = []
+    if is_recommended:
+        # Рекомендованная фича после discovery — небольшой бонус: «попадание в боль».
+        # Бонусы применяем как отдельный delta, чтобы фронт мог показать их
+        # отдельной строкой «потому что вы сделали solution-интервью».
+        boost: Dict[str, Any] = {}
+        for k in ("satisfaction", "trust"):
+            if effects.get(k, 0):
+                boost[k] = max(1, int(round(float(effects[k]) * 0.4)))
+        if effects.get("active_users_pct", 0):
+            boost["active_users_pct"] = max(1, int(round(float(effects["active_users_pct"]) * 0.5)))
+        if not boost:
+            boost = {"satisfaction": 2}
+        _apply_metric_delta(
+            data, boost, bonuses_struct,
+            source={"source": "po_action_synergy", "source_id": "solution_interview",
+                    "source_title": _localize_feature(f, locale).get("title")},
+        )
+        for rec_struct in bonuses_struct:
+            rec_struct["source"] = "po_action_synergy"
+            rec_struct["source_id"] = "solution_interview"
+
     struct: List[Dict[str, Any]] = []
-    notes = _apply_metric_delta(data, f.get("effects", {}), struct)
+    notes = _apply_metric_delta(
+        data, effects, struct,
+        source={"source": "feature_release", "source_id": fkey,
+                "source_title": _localize_feature(f, locale).get("title")},
+    )
     _bump_recent_feature_count(data, fkey)
     rec = dict(base_rec)
     rec["week"] = week
@@ -1531,6 +1790,7 @@ def _release_feature(
     rec["delivered_at_week"] = week
     rec["notes"] = notes
     rec["notes_struct"] = struct
+    rec["bonus_struct"] = bonuses_struct
     data.setdefault("feature_releases", []).append(rec)
     return rec
 
@@ -1540,9 +1800,14 @@ def _process_due_pending_releases(data: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     Эффекты применяются только сейчас, а в `feature_releases` появляется
     запись с пометкой «доехало с опозданием».
+
+    Лог per-metric reasons помечается прошлой неделей (week_closed = cur_week-1),
+    чтобы попасть в свежий weekly recap, который показывается пользователю
+    сразу после закрытия недели.
     """
     cur_cycle = int(data.get("cycle_index", 1))
     cur_week = int(data.get("current_week", 0))
+    log_week = max(0, cur_week - 1)
     pending = data.get("pending_releases") or []
     if not pending:
         return []
@@ -1556,14 +1821,38 @@ def _process_due_pending_releases(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         if not f:
             continue
         struct: List[Dict[str, Any]] = []
-        notes = _apply_metric_delta(data, f.get("effects", {}), struct)
+        notes = _apply_metric_delta(
+            data, f.get("effects", {}), struct,
+            source={"source": "feature_release_late", "source_id": rec.get("key"),
+                    "source_title": rec.get("title"), "week": log_week},
+        )
         _bump_recent_feature_count(data, rec.get("key", ""))
+        bonuses_struct: List[Dict[str, Any]] = []
+        if rec.get("recommended"):
+            # Опоздавшая, но рекомендованная фича всё равно даёт бонус —
+            # она была подобрана под боль, просто доехала позже.
+            effects = f.get("effects") or {}
+            boost: Dict[str, Any] = {}
+            for k in ("satisfaction", "trust"):
+                if effects.get(k, 0):
+                    boost[k] = max(1, int(round(float(effects[k]) * 0.4)))
+            if not boost:
+                boost = {"satisfaction": 2}
+            _apply_metric_delta(
+                data, boost, bonuses_struct,
+                source={"source": "po_action_synergy", "source_id": "solution_interview",
+                        "source_title": rec.get("title"), "week": log_week},
+            )
+            for rec_struct in bonuses_struct:
+                rec_struct["source"] = "po_action_synergy"
+                rec_struct["source_id"] = "solution_interview"
         out = dict(rec)
         out["week"] = cur_week
         out["cycle"] = cur_cycle
         out["delivered_at_week"] = cur_week
         out["notes"] = notes
         out["notes_struct"] = struct
+        out["bonus_struct"] = bonuses_struct
         data.setdefault("feature_releases", []).append(out)
         delivered.append(out)
     data["pending_releases"] = keep
@@ -1730,6 +2019,8 @@ def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingPmSimSta
         data["po_actions_used_this_week"] = 0
     if "po_actions_per_week_limit" not in data:
         data["po_actions_per_week_limit"] = PO_ACTIONS_PER_WEEK_LIMIT
+    if "weekly_metric_log" not in data:
+        data["weekly_metric_log"] = []
     return row, data
 
 
@@ -1823,7 +2114,11 @@ def _apply_po_action(
     _focus_load_add(data, focus, cap_cost)
 
     struct: List[Dict[str, Any]] = []
-    notes = _apply_metric_delta(data, action.get("effects") or {}, struct)
+    notes = _apply_metric_delta(
+        data, action.get("effects") or {}, struct,
+        source={"source": "po_action", "source_id": action_id,
+                "source_title": (action.get("title_en") if locale == "en" else action.get("title_ru"))},
+    )
 
     side = action.get("side_effects") or {}
     if side.get("mark_daily"):
@@ -2019,6 +2314,49 @@ def _focus_for_next_week(data: Dict[str, Any], next_week: int) -> Dict[str, Any]
     }
 
 
+def _build_metric_reasons(data: Dict[str, Any], week: int) -> Dict[str, List[Dict[str, Any]]]:
+    """Группирует журнал per-metric изменений за указанную неделю по метрикам.
+
+    Возвращает {metric_key: [ {delta, source, source_id, source_title}, ... ]} —
+    готовая для UI «расшифровка», почему каждая метрика поменялась за неделю.
+    Чтобы не показывать слишком длинные списки, ужимаем одинаковые источники.
+    """
+    log = data.get("weekly_metric_log") or []
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for rec in log:
+        if int(rec.get("week", -1)) != int(week):
+            continue
+        key = rec.get("key")
+        delta = int(rec.get("delta") or 0)
+        if not key or delta == 0:
+            continue
+        bucket = out.setdefault(key, [])
+        # Если в этой группе уже есть запись с тем же source/source_id —
+        # суммируем, чтобы не плодить дубликаты «satisfaction +2 (release X) ×3».
+        merged = None
+        for prev in bucket:
+            if prev.get("source") == rec.get("source") and prev.get("source_id") == rec.get("source_id"):
+                merged = prev
+                break
+        if merged:
+            merged["delta"] = int(merged["delta"]) + delta
+        else:
+            bucket.append({
+                "delta": delta,
+                "source": rec.get("source"),
+                "source_id": rec.get("source_id"),
+                "source_title": rec.get("source_title"),
+            })
+    # сортируем по убыванию модуля — самые значимые первыми
+    for k in list(out.keys()):
+        out[k].sort(key=lambda r: -abs(int(r.get("delta") or 0)))
+        # отсекаем нулевые после слияния
+        out[k] = [r for r in out[k] if int(r.get("delta") or 0) != 0]
+        if not out[k]:
+            del out[k]
+    return out
+
+
 def _build_weekly_recap(
     data: Dict[str, Any],
     week: int,
@@ -2033,12 +2371,14 @@ def _build_weekly_recap(
         if v_after != v_before:
             diffs[k] = {"before": v_before, "after": v_after, "delta": v_after - v_before}
     next_week = min(TOTAL_WEEKS, week + 1)
+    metric_reasons = _build_metric_reasons(data, week)
     return {
         "week": week,
         "next_week": next_week,
         "before": before,
         "after": after,
         "deltas": diffs,
+        "metric_reasons": metric_reasons,
         "event": extras.get("event"),
         "decision": extras.get("decision"),
         "decision_notes": extras.get("decision_notes") or [],
@@ -2074,6 +2414,10 @@ def _apply_scrum_penalty_if_needed(data: Dict[str, Any], week_closed: int) -> Li
         m["trust"] = int(_clamp(m.get("trust", 0) - 1, 0, 100))
         cap_adj += 3
         data["skipped_daily_last_week"] = True
+        _push_metric_log(data, week=week_closed, metric="tech_debt", delta=1,
+                         source="scrum_penalty", source_id="no_daily")
+        _push_metric_log(data, week=week_closed, metric="trust", delta=-1,
+                         source="scrum_penalty", source_id="no_daily")
         notes.append(
             {
                 "reason": "no_daily",
@@ -2093,6 +2437,8 @@ def _apply_scrum_penalty_if_needed(data: Dict[str, Any], week_closed: int) -> Li
             m["trust"] = int(_clamp(m.get("trust", 0) - 2, 0, 100))
             prev = float(data.get("next_release_slip_penalty_pct", 0) or 0)
             data["next_release_slip_penalty_pct"] = min(25.0, prev + 5.0)
+            _push_metric_log(data, week=week_closed, metric="trust", delta=-2,
+                             source="scrum_penalty", source_id="no_sprint_review")
             notes.append(
                 {
                     "reason": "no_sprint_review",
@@ -2104,6 +2450,8 @@ def _apply_scrum_penalty_if_needed(data: Dict[str, Any], week_closed: int) -> Li
         if not sc.get("retro"):
             m["tech_debt"] = int(_clamp(m.get("tech_debt", 0) + 2, 0, 100))
             cap_adj += 2
+            _push_metric_log(data, week=week_closed, metric="tech_debt", delta=2,
+                             source="scrum_penalty", source_id="no_retro")
             notes.append(
                 {
                     "reason": "no_retro",
@@ -2244,6 +2592,12 @@ def _push_recap(data: Dict[str, Any], recap: Dict[str, Any]) -> None:
     if len(arr) > _RECAP_KEEP:
         del arr[: len(arr) - _RECAP_KEEP]
     data["pending_recap_week"] = recap["week"]
+    # Лог per-metric reasons держим только за последние _RECAP_KEEP недель,
+    # чтобы JSON не пух бесконечно — recap уже содержит свою копию reasons.
+    log = data.get("weekly_metric_log") or []
+    cutoff = int(recap.get("week", 0)) - _RECAP_KEEP
+    if log:
+        data["weekly_metric_log"] = [r for r in log if int(r.get("week", 0) or 0) > cutoff]
 
 
 # --------------------------- ai helper ---------------------------

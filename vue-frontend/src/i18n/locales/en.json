@@ -2782,7 +2782,17 @@
         "helpStabilize": "Stabilize is a quality investment — it can't be combined with other features this cycle.",
         "helpBig": "A big feature takes the whole cycle — nothing else fits with it.",
         "helpOneSmall": "Add one more small feature of the same or different focus.",
-        "helpTwo": "Two small features — a balanced mix. Click again to deselect and swap."
+        "helpTwo": "Two small features — a balanced mix. Click again to deselect and swap.",
+        "errPickFirst": "Pick at least one feature first — or press 'Skip (focus on stabilization)'.",
+        "recommended": "⭐ matches user pain",
+        "recommendedHint": "After a solution interview you know which feature truly solves the problem. These features ship more reliably and bring a small bonus to satisfaction/trust.",
+        "poolBadge": {
+          "problem": "🎤 Problem interviews unlocked extra options",
+          "solution": "⭐ Solution interviews highlighted the strongest features",
+          "prioritization": "🗂 Prioritization workshop added a business option",
+          "arch": "🏛 Arch review opened another architecture option",
+          "debt": "🧹 Tech-debt sprint added an engineering option"
+        }
       },
       "using": "using",
       "picked": "Picked",
@@ -2892,6 +2902,18 @@
           "generic": "Ritual discipline issues — see the metric deltas."
         },
         "metricsTitle": "Metrics changes",
+        "reasonSource": {
+          "event_decision": "Event decision: \"{title}\"",
+          "event_appearance": "Event impact at appearance: \"{title}\"",
+          "feature_release": "Feature release: \"{title}\"",
+          "feature_release_late": "Late delivery: \"{title}\"",
+          "po_action": "PO action: \"{title}\"",
+          "po_action_synergy": "Bonus: feature matches user pain (after solution interview) — \"{title}\"",
+          "scrum_penalty": "Skipped Scrum ritual ({id})",
+          "passive": "Weekly passive shift ({id})",
+          "quota_balance": "PO quota balance — small bonus",
+          "quota_overshoot": "PO quota overshoot ({id})"
+        },
         "quotaTitle": "Quotas vs actual",
         "quotaBalanced": "Balanced cycle — small bonus to trust and satisfaction.",
         "quotaPenalty": "Heavy skew — investment must move closer to PO quotas.",

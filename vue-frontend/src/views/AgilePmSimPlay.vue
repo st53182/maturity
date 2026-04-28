@@ -305,6 +305,11 @@
       <section v-if="state.feature_choice_open" class="pmsim__features">
         <h2>{{ $t('agileTraining.pmSim.featureCycleTitle', { c: state.cycle_index }) }}</h2>
         <p class="pmsim__hint">{{ $t('agileTraining.pmSim.featureRules') }}</p>
+        <div v-if="discoveryPoolBadges.length" class="pmsim__discovery-banner">
+          <span v-for="b in discoveryPoolBadges" :key="b.key" class="pmsim__discovery-pill">
+            {{ b.label }}
+          </span>
+        </div>
         <div class="pmsim__pick-help" v-if="featurePickHelp">
           <span>{{ featurePickHelp }}</span>
         </div>
@@ -331,10 +336,14 @@
             :class="['pmsim__feature',
                      { 'pmsim__feature--picked': featurePicksStr.includes(String(f.key)),
                        'pmsim__feature--big': Number(f.capacity) >= 40 && String(f.key) !== 'stabilize',
-                       'pmsim__feature--stabilize': String(f.key) === 'stabilize' }]"
+                       'pmsim__feature--stabilize': String(f.key) === 'stabilize',
+                       'pmsim__feature--recommended': !!f.recommended }]"
             @click="toggleFeaturePick(f)">
             <header>
-              <strong>{{ f.title }}</strong>
+              <strong>
+                <span v-if="f.recommended" class="pmsim__rec-star" :title="$t('agileTraining.pmSim.feat.recommendedHint')">⭐</span>
+                {{ f.title }}
+              </strong>
               <span class="pmsim__feat-cap">{{ f.capacity }} cap</span>
             </header>
             <div class="pmsim__feat-tags">
@@ -349,6 +358,9 @@
               </span>
               <span v-else class="pmsim__pick-badge pmsim__pick-badge--small">
                 {{ $t('agileTraining.pmSim.feat.small') }}
+              </span>
+              <span v-if="f.recommended" class="pmsim__pick-badge pmsim__pick-badge--rec">
+                {{ $t('agileTraining.pmSim.feat.recommended') }}
               </span>
             </div>
             <p>{{ f.description }}</p>
@@ -370,7 +382,7 @@
         <div class="pmsim__decision-bar">
           <button class="pmsim__btn pmsim__btn--primary"
                   :disabled="!isPO || !canConfirmFeatures || submitting"
-                  @click="confirmFeatureRelease">
+                  @click="confirmFeatureRelease(false)">
             {{ $t('agileTraining.pmSim.releaseFeatures') }}
           </button>
           <button class="pmsim__btn pmsim__btn--ghost" :disabled="!isPO" @click="confirmFeatureRelease(true)">
@@ -578,13 +590,23 @@
           <h4>{{ $t('agileTraining.pmSim.recap.metricsTitle') }}</h4>
           <ul class="pmsim__recap-deltas">
             <li v-for="d in recapDeltas" :key="d.key" :class="['pmsim__recap-delta', d.delta > 0 ? 'pmsim__recap-delta--up' : 'pmsim__recap-delta--down']">
-              <span class="pmsim__recap-key">{{ effectLabel(d.key) }}</span>
-              <span class="pmsim__recap-vals">
-                <span class="pmsim__recap-before">{{ d.before }}</span>
-                →
-                <span class="pmsim__recap-after">{{ d.after }}</span>
-                <em>({{ d.delta > 0 ? '+' : '' }}{{ d.delta }})</em>
-              </span>
+              <div class="pmsim__recap-delta-row">
+                <span class="pmsim__recap-key">{{ effectLabel(d.key) }}</span>
+                <span class="pmsim__recap-vals">
+                  <span class="pmsim__recap-before">{{ d.before }}</span>
+                  →
+                  <span class="pmsim__recap-after">{{ d.after }}</span>
+                  <em>({{ d.delta > 0 ? '+' : '' }}{{ d.delta }})</em>
+                </span>
+              </div>
+              <ul v-if="recapReasonsFor(d.key).length" class="pmsim__recap-reasons">
+                <li v-for="(r, ri) in recapReasonsFor(d.key)" :key="ri"
+                    :class="['pmsim__recap-reason', r.delta > 0 ? 'pmsim__recap-reason--up' : 'pmsim__recap-reason--down']">
+                  <span class="pmsim__recap-reason-mark">{{ r.delta > 0 ? '↑' : '↓' }}</span>
+                  <span class="pmsim__recap-reason-d">{{ r.delta > 0 ? '+' : '' }}{{ r.delta }}</span>
+                  <span class="pmsim__recap-reason-text">{{ recapReasonLabel(r) }}</span>
+                </li>
+              </ul>
             </li>
           </ul>
         </div>
@@ -867,6 +889,27 @@ export default {
       if (this.featurePicks.length === 1) return t('helpOneSmall');
       return '';
     },
+    discoveryPoolBadges() {
+      const out = [];
+      const actions = (this.state.po_actions || {});
+      const did = (id) => Number(((actions[id] || {}).count) || 0) >= 1;
+      if (did('problem_interview')) {
+        out.push({ key: 'problem', label: this.$t('agileTraining.pmSim.feat.poolBadge.problem') });
+      }
+      if (did('solution_interview')) {
+        out.push({ key: 'solution', label: this.$t('agileTraining.pmSim.feat.poolBadge.solution') });
+      }
+      if (did('prioritization_workshop')) {
+        out.push({ key: 'prioritization', label: this.$t('agileTraining.pmSim.feat.poolBadge.prioritization') });
+      }
+      if (did('arch_review')) {
+        out.push({ key: 'arch', label: this.$t('agileTraining.pmSim.feat.poolBadge.arch') });
+      }
+      if (did('tech_debt_sprint')) {
+        out.push({ key: 'debt', label: this.$t('agileTraining.pmSim.feat.poolBadge.debt') });
+      }
+      return out;
+    },
     latestBackendRecap() {
       const arr = this.state.weekly_recaps || [];
       return arr.length ? arr[arr.length - 1] : null;
@@ -1062,36 +1105,38 @@ export default {
       return { key: k, cap, isBig: cap >= 40, isStabilize: k === 'stabilize' };
     },
     toggleFeaturePick(f) {
+      // Если PO заблокирован (idle observer) — игнорим.
+      if (!this.isPO) return;
       const m = this.featMeta(f.key);
       const key = m.key;
-      let n = (this.featurePicks || []).map((x) => String(x));
-      const i = n.indexOf(key);
+      const cur = (this.featurePicks || []).map((x) => String(x));
+      const i = cur.indexOf(key);
       if (i >= 0) {
-        n.splice(i, 1);
-        this.featurePicks = n;
+        // повторный клик = снять выбор
+        const next = cur.slice();
+        next.splice(i, 1);
+        this.featurePicks = next;
         return;
       }
-      if (m.isStabilize) {
+      // Stabilize и Big — «соло»: выбор чего-то ещё всегда сбрасывает остальное.
+      if (m.isStabilize || m.isBig) {
         this.featurePicks = [key];
         return;
       }
-      if (m.isBig) {
-        this.featurePicks = [key];
-        return;
-      }
-      const onlySmall = n.filter((k) => {
+      // Если в выборе уже стояла Stabilize или Big — её надо вытеснить
+      // (несовместимо с малой). Оставляем только малые.
+      const smalls = cur.filter((k) => {
         const e = this.featMeta(k);
         return !e.isStabilize && !e.isBig;
       });
-      if (onlySmall.length === 0) {
-        this.featurePicks = [key];
+      if (smalls.length >= 2) {
+        // Уже две малые — самую старую заменяем на новую,
+        // более старая (smalls[0]) уходит, smalls[1] остаётся.
+        this.featurePicks = [smalls[1], key];
         return;
       }
-      if (onlySmall.length === 1) {
-        this.featurePicks = [onlySmall[0], key];
-        return;
-      }
-      this.featurePicks = [onlySmall[1], key];
+      // 0 или 1 малая — просто добавляем новую.
+      this.featurePicks = [...smalls, key];
     },
     selectToolkitAction(a) {
       if (!this.isPO) return;
@@ -1118,10 +1163,38 @@ export default {
       if (this.$te(path)) return this.$t(path);
       return this.$t('agileTraining.pmSim.recap.scrumNarrative.generic');
     },
+    recapReasonsFor(metricKey) {
+      const r = this.recapToShow;
+      if (!r) return [];
+      const all = (r.metric_reasons || {})[metricKey] || [];
+      return all.slice(0, 4);
+    },
+    recapReasonLabel(reason) {
+      if (!reason) return '';
+      const src = String(reason.source || '');
+      const id = reason.source_id || '';
+      const title = reason.source_title || '';
+      const fallbackTitle = title || (id ? this.$t('agileTraining.pmSim.metricKey.' + id, id) : '');
+      const path = `agileTraining.pmSim.recap.reasonSource.${src}`;
+      if (this.$te(path)) {
+        const tpl = this.$t(path, { title: fallbackTitle, id });
+        if (tpl) return tpl;
+      }
+      if (fallbackTitle) return fallbackTitle;
+      if (id) return id;
+      return src || '';
+    },
     async confirmFeatureRelease(skip) {
+      // Защита от Vue passes $event when handler is bound without parens:
+      // считаем skip=true только если это явный boolean true.
+      const isSkip = skip === true;
+      if (!isSkip && !this.canConfirmFeatures) {
+        this.loadError = this.$t('agileTraining.pmSim.feat.errPickFirst');
+        return;
+      }
       this.submitting = true;
       try {
-        const keys = skip ? [] : this.featurePicks.map((k) => String(k));
+        const keys = isSkip ? [] : this.featurePicks.map((k) => String(k));
         await axios.post(`/api/agile-training/pm-sim/g/${this.slug}/feature/release`, {
           participant_token: this.participantToken, feature_keys: keys,
         });
@@ -1377,6 +1450,11 @@ export default {
 
 .pmsim__features { background: #fff; border: 2px dashed #22c55e; border-radius: 14px; padding: 16px; margin: 12px 0; }
 .pmsim__capacity-line { font-size: 13px; color: #475569; }
+.pmsim__discovery-banner { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.pmsim__discovery-pill {
+  background: #eef2ff; color: #312e81; border: 1px solid #c7d2fe;
+  border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600;
+}
 .pmsim__feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .pmsim__feature { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all .15s ease; }
 .pmsim__feature:hover { border-color: #6366f1; }
@@ -1515,13 +1593,21 @@ export default {
 .pmsim__recap-section ul { margin: 4px 0 0 16px; padding: 0; font-size: 13px; color: #1e293b; }
 .pmsim__recap-deltas { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .pmsim__recap-delta {
-  display: flex; justify-content: space-between; padding: 4px 8px; border-radius: 6px;
+  display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; border-radius: 6px;
   background: #f8fafc; font-size: 13px;
 }
+.pmsim__recap-delta-row { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .pmsim__recap-delta--up { background: #ecfdf5; color: #065f46; }
 .pmsim__recap-delta--down { background: #fef2f2; color: #7f1d1d; }
 .pmsim__recap-key { font-weight: 600; }
 .pmsim__recap-vals em { font-style: normal; opacity: 0.7; margin-left: 4px; }
+.pmsim__recap-reasons { list-style: none; margin: 0; padding: 4px 0 0 16px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.pmsim__recap-reason { display: flex; gap: 6px; align-items: baseline; color: #334155; }
+.pmsim__recap-reason--up .pmsim__recap-reason-mark { color: #047857; }
+.pmsim__recap-reason--down .pmsim__recap-reason-mark { color: #b91c1c; }
+.pmsim__recap-reason-mark { font-weight: 700; }
+.pmsim__recap-reason-d { font-variant-numeric: tabular-nums; min-width: 28px; font-weight: 600; }
+.pmsim__recap-reason-text { opacity: 0.9; }
 .pmsim__recap-focus { background: #eef2ff; border-radius: 8px; padding: 8px 10px; }
 .pmsim__recap-focus h4 { color: #312e81; }
 .pmsim__recap-focus p { margin: 0; font-size: 13px; color: #312e81; }
@@ -1559,6 +1645,10 @@ export default {
 .pmsim__pick-badge--small { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
 .pmsim__feature--big { border-style: dashed; }
 .pmsim__feature--stabilize header strong { color: #047857; }
+.pmsim__feature--recommended { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.15); background: #fffbeb; }
+.pmsim__feature--recommended.pmsim__feature--picked { border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22,163,74,0.2); background: #f0fdf4; }
+.pmsim__rec-star { margin-right: 4px; font-size: 14px; }
+.pmsim__pick-badge--rec { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 .pmsim__pick-help {
   background: #eef2ff; border: 1px solid #c7d2fe; color: #312e81;
   padding: 6px 10px; border-radius: 8px; font-size: 12px; margin: 6px 0;

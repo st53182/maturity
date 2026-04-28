@@ -2796,10 +2796,15 @@
         "poolBadge": {
           "problem": "🎤 Problem interviews unlocked extra options",
           "solution": "⭐ Solution interviews highlighted the strongest features",
+          "ab_test": "🆎 A/B test added an experimental option",
           "prioritization": "🗂 Prioritization workshop added a business option",
+          "stakeholder_sync": "🤝 Stakeholder sync surfaced their expectations",
           "arch": "🏛 Arch review opened another architecture option",
-          "debt": "🧹 Tech-debt sprint added an engineering option"
-        }
+          "debt": "🧹 Tech-debt sprint added an engineering option",
+          "team_one_on_one": "👂 Eng 1:1s — another architecture option",
+          "pivot": "🔄 Pivot — fresh angle, one more ⭐ recommended"
+        },
+        "poolSizeHint": "This cycle has {total} options. {recommended} marked ⭐ as 'matches user pain'."
       },
       "using": "using",
       "picked": "Picked",

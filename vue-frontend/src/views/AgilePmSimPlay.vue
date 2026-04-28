@@ -305,6 +305,7 @@
       <section v-if="state.feature_choice_open" class="pmsim__features">
         <h2>{{ $t('agileTraining.pmSim.featureCycleTitle', { c: state.cycle_index }) }}</h2>
         <p class="pmsim__hint">{{ $t('agileTraining.pmSim.featureRules') }}</p>
+        <p class="pmsim__pool-line">📋 {{ featurePoolSizeHint }}</p>
         <div v-if="discoveryPoolBadges.length" class="pmsim__discovery-banner">
           <span v-for="b in discoveryPoolBadges" :key="b.key" class="pmsim__discovery-pill">
             {{ b.label }}
@@ -890,25 +891,39 @@ export default {
       return '';
     },
     discoveryPoolBadges() {
-      const out = [];
+      // Reasons приходят с бэка (state.feature_pool_caps.reasons): один
+      // источник правды, не нужно дублировать логику. Падаем обратно на
+      // клиентскую проверку po_actions, чтобы не пустеть на старых сейвах.
+      const reasons = (this.state.feature_pool_caps && this.state.feature_pool_caps.reasons) || null;
+      const t = (k) => this.$t('agileTraining.pmSim.feat.poolBadge.' + k);
+      const map = {
+        problem_interview: 'problem',
+        solution_interview: 'solution',
+        ab_test: 'ab_test',
+        prioritization_workshop: 'prioritization',
+        stakeholder_sync: 'stakeholder_sync',
+        arch_review: 'arch',
+        tech_debt_sprint: 'debt',
+        team_one_on_one: 'team_one_on_one',
+        pivot: 'pivot',
+      };
+      if (Array.isArray(reasons)) {
+        return reasons
+          .map((r) => map[r] && { key: map[r], label: t(map[r]) })
+          .filter(Boolean);
+      }
       const actions = (this.state.po_actions || {});
       const did = (id) => Number(((actions[id] || {}).count) || 0) >= 1;
-      if (did('problem_interview')) {
-        out.push({ key: 'problem', label: this.$t('agileTraining.pmSim.feat.poolBadge.problem') });
-      }
-      if (did('solution_interview')) {
-        out.push({ key: 'solution', label: this.$t('agileTraining.pmSim.feat.poolBadge.solution') });
-      }
-      if (did('prioritization_workshop')) {
-        out.push({ key: 'prioritization', label: this.$t('agileTraining.pmSim.feat.poolBadge.prioritization') });
-      }
-      if (did('arch_review')) {
-        out.push({ key: 'arch', label: this.$t('agileTraining.pmSim.feat.poolBadge.arch') });
-      }
-      if (did('tech_debt_sprint')) {
-        out.push({ key: 'debt', label: this.$t('agileTraining.pmSim.feat.poolBadge.debt') });
-      }
+      const out = [];
+      Object.keys(map).forEach((id) => {
+        if (did(id)) out.push({ key: map[id], label: t(map[id]) });
+      });
       return out;
+    },
+    featurePoolSizeHint() {
+      const total = (this.state.feature_pool_caps && this.state.feature_pool_caps.total) || 5;
+      const recommended = (this.state.feature_pool_caps && this.state.feature_pool_caps.recommended_slots) || 0;
+      return this.$t('agileTraining.pmSim.feat.poolSizeHint', { total, recommended });
     },
     latestBackendRecap() {
       const arr = this.state.weekly_recaps || [];
@@ -1450,6 +1465,7 @@ export default {
 
 .pmsim__features { background: #fff; border: 2px dashed #22c55e; border-radius: 14px; padding: 16px; margin: 12px 0; }
 .pmsim__capacity-line { font-size: 13px; color: #475569; }
+.pmsim__pool-line { font-size: 13px; color: #312e81; margin: 4px 0 0; font-weight: 600; }
 .pmsim__discovery-banner { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
 .pmsim__discovery-pill {
   background: #eef2ff; color: #312e81; border: 1px solid #c7d2fe;

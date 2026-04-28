@@ -503,6 +503,24 @@ _FEATURES_RU: List[Dict[str, Any]] = [
      "capacity": 30, "budget": 0, "focus": "business",
      "effects": {"users_pct": 6, "satisfaction": 4, "tech_debt": 4},
      "requires": {"satisfaction": 50}},
+    {"key": "mobile_perf", "title": "Оптимизация мобильного клиента",
+     "description": "Быстрее открытие чатов, меньше батареи, плавнее скролл. Незаметно — и поэтому ценно.",
+     "capacity": 25, "budget": 0, "focus": "tech_debt",
+     "effects": {"stability": 6, "satisfaction": 5, "tech_debt": -4}},
+    {"key": "private_groups", "title": "Приватные группы по приглашению",
+     "description": "Закрытые сообщества с инвайтами и модерацией — премиальный сегмент.",
+     "capacity": 30, "budget": 0, "focus": "business",
+     "effects": {"trust": 6, "satisfaction": 4, "active_users_pct": 4},
+     "requires": {"feature": "channels"}},
+    {"key": "user_testing", "title": "Юзабилити-тесты ключевых сценариев",
+     "description": "Прогон 5 пользователей через 3 сценария — находим узкие места до релиза.",
+     "capacity": 15, "budget": 0, "focus": "business",
+     "effects": {"satisfaction": 4, "trust": 2, "tech_debt": -1}},
+    {"key": "mini_app_sdk", "title": "SDK для мини-приложений",
+     "description": "Открываем платформу для сторонних разработчиков. Большая инвестиция в экосистему.",
+     "capacity": 50, "budget": 0, "focus": "architecture",
+     "effects": {"users_pct": 10, "satisfaction": 3, "tech_debt": 6, "stability": -2},
+     "requires": {"satisfaction": 60}},
 ]
 
 
@@ -905,6 +923,14 @@ _FEATURE_EN: Dict[str, Dict[str, str]] = {
         "description": "Download all chats and media as an archive. Trust grows because the lock-in feels lighter."},
     "translate": {"title": "Message translation",
         "description": "Auto-translate captions and messages: opens up an international audience."},
+    "mobile_perf": {"title": "Mobile client optimisation",
+        "description": "Faster chat open, less battery drain, smoother scroll. Invisible — and therefore valuable."},
+    "private_groups": {"title": "Invite-only private groups",
+        "description": "Closed communities with invites and moderation — a premium segment."},
+    "user_testing": {"title": "Usability tests on key flows",
+        "description": "5 users through 3 scenarios — find friction before release."},
+    "mini_app_sdk": {"title": "Mini-apps SDK",
+        "description": "Open the platform to third-party developers. A big ecosystem bet."},
 }
 
 
@@ -1421,15 +1447,26 @@ def _eligible_features(data: Dict[str, Any], locale: str) -> List[Dict[str, Any]
 def _feature_pool_caps(data: Dict[str, Any]) -> Dict[str, int]:
     """Размер пула фич и сколько из них можно пометить как recommended.
 
-    Базово показываем 5 опций. Если PO провёл проблемное интервью — пул
-    расширяется до 8 (PO «лучше понимает аудиторию»). Если ещё и solution-
-    интервью — до 10, и две лучшие фичи помечаются ⭐ как «попадание в боль»
-    (бэк отдаст их с `recommended=True` и небольшим бонусом к эффекту при
-    релизе). Маленькие синергии: воркшоп по приоритизации и архитектурный
-    обзор открывают +1 опцию в своём фокусе. Лимит сверху — 12.
+    Базово показываем 5 опций. Каждое продуктовое действие из тулкита PO,
+    сделанное хотя бы один раз, расширяет «понимание контекста» и открывает
+    дополнительные опции:
 
-    Идея: PO видит «прямую связь» между тем, что он делает с тулкитом,
-    и тем, какой выбор у него на следующем цикле. Это держит мотивацию.
+      problem_interview      → +3 опций (PO лучше понимает аудиторию)
+      solution_interview     → +2 + 2 ⭐ recommended (попадание в боль)
+      ab_test                → +1 + 1 ⭐ recommended (если ещё нет)
+      prioritization_workshop→ +1 бизнес-опция
+      stakeholder_sync       → +1 бизнес-опция (узнали ожидания)
+      arch_review            → +1 архитектурная опция
+      tech_debt_sprint       → +1 архитектурная опция
+      team_one_on_one        → +1 архитектурная опция (инженеры подсказали)
+      pivot (хотя бы раз)    → +1 ⭐ recommended (свежий взгляд)
+
+    Жёсткий потолок — 14. Идея в том, что PO видит «прямую связь» между
+    тем, что он делает с тулкитом, и тем, какой выбор у него на следующем
+    цикле. Это держит мотивацию пробовать разные инструменты.
+
+    Возвращает также `reasons` — список ключей причин расширения пула,
+    чтобы фронт мог показать «откуда у вас столько опций».
     """
     actions = data.get("po_actions") or {}
 
@@ -1441,26 +1478,45 @@ def _feature_pool_caps(data: Dict[str, Any]) -> Dict[str, int]:
     recommended_slots = 0
     bonus_extra_arch = 0
     bonus_extra_business = 0
+    reasons: List[str] = []
 
     if has_done("problem_interview"):
-        base_count += 3  # 5 -> 8
+        base_count += 3
+        reasons.append("problem_interview")
     if has_done("solution_interview"):
-        base_count += 2  # +2 -> 10
+        base_count += 2
         recommended_slots = 2
-    if has_done("ab_test") and recommended_slots < 1:
-        recommended_slots = 1
+        reasons.append("solution_interview")
+    if has_done("ab_test"):
+        base_count += 1
+        if recommended_slots < 1:
+            recommended_slots = 1
+        reasons.append("ab_test")
     if has_done("prioritization_workshop"):
         bonus_extra_business += 1
+        reasons.append("prioritization_workshop")
+    if has_done("stakeholder_sync"):
+        bonus_extra_business += 1
+        reasons.append("stakeholder_sync")
     if has_done("arch_review"):
         bonus_extra_arch += 1
+        reasons.append("arch_review")
     if has_done("tech_debt_sprint"):
         bonus_extra_arch += 1
-    total = min(12, base_count + bonus_extra_arch + bonus_extra_business)
+        reasons.append("tech_debt_sprint")
+    if has_done("team_one_on_one"):
+        bonus_extra_arch += 1
+        reasons.append("team_one_on_one")
+    if has_done("pivot"):
+        recommended_slots = max(recommended_slots, 1) + 1
+        reasons.append("pivot")
+    total = min(14, base_count + bonus_extra_arch + bonus_extra_business)
     return {
         "total": int(total),
         "recommended_slots": int(recommended_slots),
         "bonus_extra_arch": int(bonus_extra_arch),
         "bonus_extra_business": int(bonus_extra_business),
+        "reasons": reasons,
     }
 
 
@@ -1929,6 +1985,7 @@ def _serialize_state(
         "capacity_left": int(data.get("capacity_left", 0)),
         "feature_choice_open": bool(data.get("feature_choice_open", False)),
         "feature_options": [_localize_feature(f, locale) for f in feature_opts],
+        "feature_pool_caps": _feature_pool_caps(data),
         "feature_releases": data.get("feature_releases", []),
         "pending_releases": data.get("pending_releases", []),
         "risk_factors": {

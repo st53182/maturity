@@ -926,6 +926,44 @@ class AgileTrainingScrumRolesAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingRoleQuizAnswer(db.Model):
+    """Ответ участника тренажёра «Кто отвечает?» (RACI-квиз по ситуациям).
+
+    Одна запись на участника. `data_json` хранит:
+      - selection[situation_key][role_key] = level | null
+      - evaluation: подробная разбивка по эталону
+      - notes_seen: типовые ошибки, которые показали участнику
+    """
+
+    __tablename__ = "agile_training_role_quiz_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_role_quiz_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    score = db.Column(db.Integer, nullable=True, index=True)
+    max_score = db.Column(db.Integer, nullable=True)
+    health_pct = db.Column(db.Integer, nullable=True, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingScrumEventsAnswer(db.Model):
     """Ответ участника тренажёра Scrum events / «Ритм работы команды».
 

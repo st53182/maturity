@@ -51,6 +51,20 @@ OPTIONS: List[Dict] = [
         "revenue_label": {"ru": "рост активации", "en": "activation growth"},
         "time_label": {"ru": "~4 недели", "en": "~4 weeks"},
         "expected_scores": {"reach": 5000, "impact": 2.0, "confidence": 0.7, "effort": 4},
+        "rice_clues": {
+            "ru": [
+                "Reach: онбординг затрагивает почти весь новый трафик (~4-6k новых пользователей/мес), но часть каналов размечена криво.",
+                "Impact: если убрать 2 главных шага трения, активация обычно растёт заметно; эффект средний/выше среднего.",
+                "Confidence: есть поведенческие данные и записи сессий, но сегментация частично «грязная» — уверенность не максимальная.",
+                "Effort: 2 клиента + 1 backend endpoint + аналитика событий; реалистично 3-5 недель.",
+            ],
+            "en": [
+                "Reach: onboarding touches most new traffic (~4-6k new users/month), but some channels are mislabeled.",
+                "Impact: removing two key friction steps usually improves activation; impact is medium to high.",
+                "Confidence: there is behavioral data and session recordings, but segmentation is partly noisy.",
+                "Effort: two clients + one backend endpoint + analytics events; realistically 3-5 weeks.",
+            ],
+        },
         "strengths": {
             "ru": ["Быстрый запуск", "Есть наблюдаемая проблема", "Низкий технологический риск"],
             "en": ["Fast launch", "Observable problem exists", "Low tech risk"],
@@ -71,6 +85,20 @@ OPTIONS: List[Dict] = [
         "revenue_label": {"ru": "виральный рост", "en": "viral growth"},
         "time_label": {"ru": "~7 недель", "en": "~7 weeks"},
         "expected_scores": {"reach": 14000, "impact": 1.2, "confidence": 0.45, "effort": 8},
+        "rice_clues": {
+            "ru": [
+                "Reach: маркетинг обещает до 14k, но цифра основана на старом A/B и другой аудитории; возможен сильный оверэстимейт.",
+                "Impact: виральность может дать рост MAU, но на core-ретеншн влияет слабо.",
+                "Confidence: источник данных слабый (устаревший тест + сменившийся канал трафика), уверенность низкая.",
+                "Effort: нужно переделывать механику и антифрод/лимиты, плюс саппорт потоков — 6-9 недель.",
+            ],
+            "en": [
+                "Reach: marketing promises up to 14k, but the estimate is from an old A/B test on a different audience.",
+                "Impact: virality can move MAU, but effect on core retention is limited.",
+                "Confidence: evidence quality is weak (outdated test + changed acquisition mix), confidence should be low.",
+                "Effort: mechanics rewrite + anti-fraud/rate limits + support load, typically 6-9 weeks.",
+            ],
+        },
         "strengths": {
             "ru": ["Потенциально высокий охват", "Понятно для коммуникации с инвестором"],
             "en": ["Potentially high reach", "Easy to communicate to investors"],
@@ -91,6 +119,20 @@ OPTIONS: List[Dict] = [
         "revenue_label": {"ru": "удержание core", "en": "core retention"},
         "time_label": {"ru": "~6 недель", "en": "~6 weeks"},
         "expected_scores": {"reach": 3000, "impact": 3.0, "confidence": 0.6, "effort": 5},
+        "rice_clues": {
+            "ru": [
+                "Reach: затрагивает меньший сегмент (~2.5-3.5k активных core users), а не весь MAU.",
+                "Impact: для этого сегмента влияние высокое — поиск на критическом пути и напрямую бьёт в churn.",
+                "Confidence: часть iOS-метрик сломана, но жалобы и тикеты саппорта подтверждают проблему.",
+                "Effort: потребуется индексация + ranking + правка iOS SDK, обычно 4-6 недель.",
+            ],
+            "en": [
+                "Reach: affects a smaller segment (~2.5-3.5k active core users), not the whole MAU.",
+                "Impact: impact is high for this segment; search is on a critical path and tied to churn.",
+                "Confidence: some iOS metrics are broken, but complaints and support tickets confirm the issue.",
+                "Effort: indexing + ranking + iOS SDK fixes, usually 4-6 weeks.",
+            ],
+        },
         "strengths": {
             "ru": ["Сильный эффект на удержание", "Улучшение ключевого UX"],
             "en": ["Strong retention effect", "Improves key UX"],
@@ -295,6 +337,7 @@ def get_content_for_locale(locale: str) -> Dict:
                 "expected_scores": dict(o["expected_scores"]),
                 "strengths": list(o["strengths"][loc]),
                 "risks": list(o["risks"][loc]),
+                "rice_clues": list(o.get("rice_clues", {}).get(loc, [])),
             }
             for o in OPTIONS
         ],

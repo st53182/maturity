@@ -94,6 +94,18 @@
               <ul><li v-for="rk in o.risks" :key="rk">{{ rk }}</li></ul>
             </div>
           </div>
+          <div v-if="o.context_facts && o.context_facts.length" class="rice-option__facts">
+            <b>📌 {{ $t('agileTraining.rice.contextFacts') }}</b>
+            <ul>
+              <li v-for="f in o.context_facts" :key="f">{{ f }}</li>
+            </ul>
+          </div>
+          <div v-if="o.data_quality && o.data_quality.length" class="rice-option__facts">
+            <b>🧪 {{ $t('agileTraining.rice.dataQualityFlags') }}</b>
+            <ul>
+              <li v-for="dq in o.data_quality" :key="dq">{{ dq }}</li>
+            </ul>
+          </div>
         </article>
       </div>
       <div class="rice-card__actions">

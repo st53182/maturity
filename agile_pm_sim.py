@@ -1748,34 +1748,119 @@ def _premium_tick(data: Dict[str, Any]) -> None:
                                  source="passive", source_id="premium_overpriced")
 
 
+def _has_recent_engineering_investment(data: Dict[str, Any], week: int, *, lookback_weeks: int = 4) -> bool:
+    """Есть ли в последние `lookback_weeks` явные вложения в техдолг/архитектуру.
+
+    Считаем как PO-действия (focus=tech_debt|architecture), так и релизы
+    соответствующих фич. Нужен, чтобы отличать «долг растёт, но мы лечим» от
+    «долг растёт, и мы уже давно туда не смотрим».
+    """
+    if lookback_weeks <= 0:
+        return False
+    from_week = max(1, int(week) - int(lookback_weeks) + 1)
+
+    for rec in (data.get("po_action_log") or []):
+        r_week = int(rec.get("week", 0) or 0)
+        if r_week < from_week:
+            continue
+        if rec.get("focus") in {"tech_debt", "architecture"}:
+            return True
+
+    for rel in (data.get("feature_releases") or []):
+        r_week = int(rel.get("delivered_at_week", rel.get("week", 0)) or 0)
+        if r_week < from_week:
+            continue
+        if rel.get("focus") in {"tech_debt", "architecture"}:
+            return True
+    return False
+
+
 def _engineering_neglect_tick(data: Dict[str, Any]) -> None:
     """Каждую неделю: если PO долго игнорирует архитектуру/тех.долг/
     стабильность — продукт «реально начинает разваливаться».
 
-    Триггер: tech_debt > 70 ИЛИ stability < 50.
-    Жёсткий уровень: tech_debt > 85 ИЛИ stability < 35.
-    Эффекты:
-      • churn: 0.6%/нед на мягком, 1.6%/нед на жёстком (дополнительно к
-        обычному оттоку);
-      • satisfaction −1 / trust −1 на мягком, −2 / −2 на жёстком;
-      • slip-штраф для следующего релиза +5pp / +12pp;
-      • 1 раз пишет note в weekly_metric_log с источником
-        engineering_neglect, чтобы PO видел в recap «вот за что».
+    Теперь штрафы начинаются рано: уже при tech_debt > 20, особенно если
+    команда несколько недель почти не инвестирует в tech_debt/architecture.
+    Это даёт запрошенный «capacity падает, пользователи уходят», но сохраняет
+    путь выхода: регулярные инженерные инвестиции заметно смягчают урон.
     """
     m = data.get("metrics") or {}
     debt = int(m.get("tech_debt", 0))
     stab = int(m.get("stability", 100))
     week = int(data.get("current_week", 0) or 0)
+    recent_eng_investment = _has_recent_engineering_investment(data, week, lookback_weeks=4)
 
     hard = debt > ENG_NEGLECT_DEBT_HARD or stab < ENG_NEGLECT_STAB_HARD
     soft = (debt > ENG_NEGLECT_DEBT_TRIGGER or stab < ENG_NEGLECT_STAB_TRIGGER) and not hard
-    if not (hard or soft):
+
+    # Ранний порог: debt > 20 уже «съедает» delivery-скорость и retention.
+    # Если команда инвестирует в тех. основание, штрафы сильно мягче.
+    early_debt = debt > 20
+    arch_ignored = (week >= 5) and (not recent_eng_investment)
+
+    churn_pct = 0.0
+    sat_d = 0
+    trust_d = 0
+    slip_bump = 0.0
+    cap_adj = 0
+    source_id = "early_debt"
+
+    if hard:
+        churn_pct = ENG_NEGLECT_CHURN_HARD_PCT
+        sat_d = -4
+        trust_d = -4
+        slip_bump = 18.0
+        cap_adj = 16
+        source_id = "hard"
+    elif soft:
+        churn_pct = ENG_NEGLECT_CHURN_SOFT_PCT
+        sat_d = -2
+        trust_d = -2
+        slip_bump = 8.0
+        cap_adj = 8
+        source_id = "soft"
+    elif early_debt:
+        if debt >= 55:
+            churn_pct = 1.8
+            sat_d = -3
+            trust_d = -3
+            slip_bump = 8.0
+            cap_adj = 14
+            source_id = "debt_55"
+        elif debt >= 35:
+            churn_pct = 1.2
+            sat_d = -2
+            trust_d = -2
+            slip_bump = 5.0
+            cap_adj = 10
+            source_id = "debt_35"
+        else:  # 21..34
+            churn_pct = 0.8
+            sat_d = -1
+            trust_d = -1
+            slip_bump = 3.0
+            cap_adj = 6
+            source_id = "debt_20"
+        # Инвестировали в инженерку недавно — всё ещё больно, но заметно мягче.
+        if recent_eng_investment:
+            churn_pct *= 0.5
+            sat_d = int(round(sat_d * 0.5))
+            trust_d = int(round(trust_d * 0.5))
+            slip_bump *= 0.5
+            cap_adj = int(round(cap_adj * 0.5))
+            source_id = f"{source_id}_mitigated"
+
+    if not (hard or soft or early_debt):
         return
 
-    churn_pct = ENG_NEGLECT_CHURN_HARD_PCT if hard else ENG_NEGLECT_CHURN_SOFT_PCT
-    sat_d = -4 if hard else -2
-    trust_d = -4 if hard else -2
-    slip_bump = 18.0 if hard else 8.0
+    if arch_ignored:
+        # «Долго не смотрим в архитектуру» — дополнительный системный налог.
+        sat_d -= 1
+        trust_d -= 1
+        churn_pct += 0.4
+        slip_bump += 3.0
+        cap_adj += 4
+        source_id = f"{source_id}_arch_ignored"
 
     cur_users = max(0, int(m.get("users", 0)))
     lost = int(round(cur_users * churn_pct / 100.0))
@@ -1784,19 +1869,23 @@ def _engineering_neglect_tick(data: Dict[str, Any]) -> None:
         m["active_users"] = max(0, int(m.get("active_users", 0)) - int(lost * 0.5))
         _push_metric_log(data, week=week, metric="users", delta=-lost,
                          source="engineering_neglect",
-                         source_id=("hard" if hard else "soft"))
+                         source_id=source_id)
     if sat_d:
         m["satisfaction"] = int(_clamp(m["satisfaction"] + sat_d, 0, 100))
         _push_metric_log(data, week=week, metric="satisfaction", delta=sat_d,
                          source="engineering_neglect",
-                         source_id=("hard" if hard else "soft"))
+                         source_id=source_id)
     if trust_d:
         m["trust"] = int(_clamp(m["trust"] + trust_d, 0, 100))
         _push_metric_log(data, week=week, metric="trust", delta=trust_d,
                          source="engineering_neglect",
-                         source_id=("hard" if hard else "soft"))
+                         source_id=source_id)
     prev = float(data.get("next_release_slip_penalty_pct", 0) or 0)
     data["next_release_slip_penalty_pct"] = min(40.0, prev + slip_bump)
+    if cap_adj > 0:
+        # На следующей неделе команда «тушит пожары», эффективная емкость ниже.
+        prev_cap_adj = int(data.get("next_week_cap_adj", 0) or 0)
+        data["next_week_cap_adj"] = min(70, prev_cap_adj + int(cap_adj))
 
 
 def _premium_state_view(data: Dict[str, Any]) -> Dict[str, Any]:

@@ -22,7 +22,7 @@ from models import (
     AgileTrainingGroup,
     AgileTrainingParticipant,
     AgileTrainingSession,
-    AgileTrainingWsjfAnswer,
+    AgileTrainingRiceAnswer,
 )
 from rice_content import (
     EVENTS,
@@ -95,7 +95,7 @@ def _event_for_response(key: Optional[str], locale: str) -> Optional[Dict]:
     }
 
 
-def _recompute_adaptation(a: AgileTrainingWsjfAnswer) -> None:
+def _recompute_adaptation(a: AgileTrainingRiceAnswer) -> None:
     event = _event_by_key(a.event_key)
     adaptation = analyze_adaptation(a.initial_choice, a.revised_choice, event)
     a.adaptation = adaptation["status"]
@@ -124,7 +124,7 @@ def participant_state(slug: str):
             .first()
         )
         if p:
-            a = AgileTrainingWsjfAnswer.query.filter_by(participant_id=p.id).first()
+            a = AgileTrainingRiceAnswer.query.filter_by(participant_id=p.id).first()
             if a:
                 payload = _load_json(a.data_json)
                 if payload.get("exercise_key") == "rice":
@@ -178,9 +178,9 @@ def participant_answer(slug: str):
     clean = sanitize_round(body)
     evaluation = evaluate_round(role_key, body)
 
-    a = AgileTrainingWsjfAnswer.query.filter_by(participant_id=p.id).first()
+    a = AgileTrainingRiceAnswer.query.filter_by(participant_id=p.id).first()
     if not a:
-        a = AgileTrainingWsjfAnswer(
+        a = AgileTrainingRiceAnswer(
             group_id=g.id,
             participant_id=p.id,
             role_key=role_key,
@@ -245,7 +245,7 @@ def participant_results(slug: str):
     if not g:
         return jsonify({"error": "Group not found"}), 404
 
-    rows = AgileTrainingWsjfAnswer.query.filter_by(group_id=g.id).all()
+    rows = AgileTrainingRiceAnswer.query.filter_by(group_id=g.id).all()
     rows = [r for r in rows if (_load_json(r.data_json).get("exercise_key") == "rice")]
     total = len(rows)
     if not total:
@@ -319,7 +319,7 @@ def sessions_results(session_id: int):
     totals = {"groups": 0, "participants": 0, "answers": 0}
 
     for g in groups:
-        rows = AgileTrainingWsjfAnswer.query.filter_by(group_id=g.id).all()
+        rows = AgileTrainingRiceAnswer.query.filter_by(group_id=g.id).all()
         rows = [r for r in rows if (_load_json(r.data_json).get("exercise_key") == "rice")]
         participants_count = g.participants.count()
         totals["groups"] += 1
@@ -379,7 +379,7 @@ def group_results(group_id: int):
     options_index = {o["key"]: o for o in content["options"]}
     roles_index = {r["key"]: r for r in content["roles"]}
 
-    rows = AgileTrainingWsjfAnswer.query.filter_by(group_id=g.id).all()
+    rows = AgileTrainingRiceAnswer.query.filter_by(group_id=g.id).all()
     rows = [r for r in rows if (_load_json(r.data_json).get("exercise_key") == "rice")]
 
     init_cnt: Dict[str, int] = defaultdict(int)
@@ -502,7 +502,7 @@ def group_participants(group_id: int):
     )
     rows_out = []
     for idx, p in enumerate(participants, start=1):
-        a = AgileTrainingWsjfAnswer.query.filter_by(participant_id=p.id).first()
+        a = AgileTrainingRiceAnswer.query.filter_by(participant_id=p.id).first()
         payload = _load_json(a.data_json) if a else {}
         if (not a) or payload.get("exercise_key") != "rice":
             rows_out.append({
@@ -586,7 +586,7 @@ def group_reset(group_id: int):
     if not g:
         return jsonify({"error": "Not found"}), 404
 
-    rows = AgileTrainingWsjfAnswer.query.filter_by(group_id=g.id).all()
+    rows = AgileTrainingRiceAnswer.query.filter_by(group_id=g.id).all()
     for row in rows:
         payload = _load_json(row.data_json)
         if payload.get("exercise_key") == "rice":

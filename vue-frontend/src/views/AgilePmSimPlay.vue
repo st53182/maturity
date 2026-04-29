@@ -398,6 +398,84 @@
         </div>
       </section>
 
+      <!-- Premium pricing -->
+      <section v-if="premium && premium.unlocked" class="pmsim__pricing">
+        <header class="pmsim__pricing-head">
+          <h3>💎 {{ $t('agileTraining.pmSim.pricing.title') }}</h3>
+          <span class="pmsim__pricing-market">
+            {{ $t('agileTraining.pmSim.pricing.market', { v: premium.market_price }) }}
+          </span>
+        </header>
+        <p class="pmsim__pricing-hint">{{ $t('agileTraining.pmSim.pricing.hint') }}</p>
+
+        <div class="pmsim__pricing-grid">
+          <div class="pmsim__pricing-stat">
+            <div class="pmsim__pricing-stat-label">{{ $t('agileTraining.pmSim.pricing.subscribers') }}</div>
+            <div class="pmsim__pricing-stat-value">{{ formatNumber(premium.subscribers) }}</div>
+            <div class="pmsim__pricing-stat-sub" v-if="premium.subscribers !== premium.subscribers_target">
+              → {{ formatNumber(premium.subscribers_target) }}
+              <em class="pmsim__pricing-stat-tag">{{ $t('agileTraining.pmSim.pricing.targetHint') }}</em>
+            </div>
+          </div>
+          <div class="pmsim__pricing-stat">
+            <div class="pmsim__pricing-stat-label">{{ $t('agileTraining.pmSim.pricing.weeklyRev') }}</div>
+            <div class="pmsim__pricing-stat-value">{{ formatNumber(premium.weekly_revenue) }} ₽</div>
+            <div class="pmsim__pricing-stat-sub">
+              ≈ {{ formatNumber(premium.monthly_revenue) }} ₽/мес
+            </div>
+          </div>
+          <div class="pmsim__pricing-stat">
+            <div class="pmsim__pricing-stat-label">{{ $t('agileTraining.pmSim.pricing.factor') }}</div>
+            <div class="pmsim__pricing-stat-value" :class="conversionFactorClass">
+              ×{{ premium.conversion_factor.toFixed(2) }}
+            </div>
+            <div class="pmsim__pricing-stat-sub">{{ conversionFactorHint }}</div>
+          </div>
+        </div>
+
+        <div class="pmsim__pricing-control" v-if="isPO">
+          <label class="pmsim__pricing-label">
+            {{ $t('agileTraining.pmSim.pricing.priceLabel') }}
+            <span class="pmsim__pricing-cur">{{ premium.price }} ₽/мес</span>
+          </label>
+          <input
+            type="range"
+            class="pmsim__pricing-slider"
+            :min="premium.min_price"
+            :max="premium.max_price"
+            step="10"
+            v-model.number="premiumDraftPrice"
+            :disabled="!canChangePrice || pricingSaving"
+          />
+          <div class="pmsim__pricing-range">
+            <span>{{ premium.min_price }} ₽</span>
+            <span class="pmsim__pricing-marker"
+                  :style="{ left: marketMarkerPct + '%' }"
+                  :title="$t('agileTraining.pmSim.pricing.market', { v: premium.market_price })">
+              📊 {{ premium.market_price }} ₽
+            </span>
+            <span>{{ premium.max_price }} ₽</span>
+          </div>
+          <div class="pmsim__pricing-actions">
+            <span v-if="!canChangePrice" class="pmsim__pricing-cooldown">
+              ⏳ {{ $t('agileTraining.pmSim.pricing.cooldown', { n: premium.cooldown_left_weeks }) }}
+            </span>
+            <span v-else-if="premiumDraftPrice !== premium.price" class="pmsim__pricing-preview">
+              {{ $t('agileTraining.pmSim.pricing.preview', { v: premiumDraftPrice }) }}
+            </span>
+            <button class="pmsim__btn pmsim__btn--primary"
+                    :disabled="!canChangePrice || pricingSaving || premiumDraftPrice === premium.price"
+                    @click="savePremiumPrice">
+              {{ pricingSaving ? $t('agileTraining.pmSim.pricing.saving') : $t('agileTraining.pmSim.pricing.save') }}
+            </button>
+          </div>
+          <p v-if="pricingError" class="pmsim__pricing-err">{{ pricingError }}</p>
+        </div>
+        <p v-else class="pmsim__pricing-readonly">
+          {{ $t('agileTraining.pmSim.pricing.poOnly') }}
+        </p>
+      </section>
+
       <!-- Last consequences -->
       <section v-if="lastConsequencesParts.length || state.consequences_text" class="pmsim__consequences">
         <strong>{{ $t('agileTraining.pmSim.lastConsequences') }}:</strong>
@@ -689,6 +767,10 @@ export default {
       quotasSaving: false,
       quotasError: '',
       quotasSavedFlash: false,
+      // Premium pricing
+      premiumDraftPrice: null,
+      pricingSaving: false,
+      pricingError: '',
     };
   },
   computed: {
@@ -910,6 +992,33 @@ export default {
       const recommended = (this.state.feature_pool_caps && this.state.feature_pool_caps.recommended_slots) || 0;
       return this.$t('agileTraining.pmSim.feat.poolSizeHint', { total, recommended });
     },
+    premium() {
+      return this.state.premium || null;
+    },
+    canChangePrice() {
+      return !!(this.premium && this.premium.unlocked && (this.premium.cooldown_left_weeks || 0) <= 0);
+    },
+    marketMarkerPct() {
+      const p = this.premium;
+      if (!p || p.max_price <= p.min_price) return 50;
+      const pct = ((p.market_price - p.min_price) / (p.max_price - p.min_price)) * 100;
+      return Math.max(0, Math.min(100, pct));
+    },
+    conversionFactorClass() {
+      const f = (this.premium && this.premium.conversion_factor) || 1;
+      if (f >= 1.05) return 'pmsim__pricing-stat-value--good';
+      if (f >= 0.6) return 'pmsim__pricing-stat-value--ok';
+      if (f >= 0.2) return 'pmsim__pricing-stat-value--warn';
+      return 'pmsim__pricing-stat-value--bad';
+    },
+    conversionFactorHint() {
+      const f = (this.premium && this.premium.conversion_factor) || 1;
+      const t = (k) => this.$t('agileTraining.pmSim.pricing.factorHint.' + k);
+      if (f >= 1.05) return t('cheap');
+      if (f >= 0.6) return t('ok');
+      if (f >= 0.2) return t('over');
+      return t('tooHigh');
+    },
     latestBackendRecap() {
       const arr = this.state.weekly_recaps || [];
       return arr.length ? arr[arr.length - 1] : null;
@@ -949,6 +1058,17 @@ export default {
     'state.quotas': {
       deep: true,
       handler(val) { this.syncQuotaDraft(val); },
+    },
+    'state.premium.price': {
+      immediate: true,
+      handler(val) {
+        if (val != null && this.premiumDraftPrice == null) this.premiumDraftPrice = val;
+      },
+    },
+    'state.premium.unlocked'(val) {
+      if (val && this.premiumDraftPrice == null && this.state.premium) {
+        this.premiumDraftPrice = this.state.premium.price;
+      }
     },
   },
   async mounted() {
@@ -1277,6 +1397,40 @@ export default {
       if (d >= heavy) return 'pmsim__quota-actual--bad';
       return 'pmsim__quota-actual--warn';
     },
+    async savePremiumPrice() {
+      if (!this.isPO || !this.premium || !this.premium.unlocked) return;
+      if (!this.canChangePrice) return;
+      const draft = Number(this.premiumDraftPrice);
+      if (!Number.isFinite(draft) || draft < this.premium.min_price || draft > this.premium.max_price) {
+        this.pricingError = this.$t('agileTraining.pmSim.pricing.errors.range');
+        return;
+      }
+      if (draft === this.premium.price) return;
+      this.pricingSaving = true;
+      this.pricingError = '';
+      try {
+        await axios.post(`/api/agile-training/pm-sim/g/${this.slug}/premium-price`, {
+          participant_token: this.participantToken,
+          price: draft,
+        });
+        await this.loadState(true);
+      } catch (e) {
+        const err = e.response && e.response.data;
+        const msg = (err && err.error) || e.message || 'Error';
+        if (msg === 'cooldown') {
+          this.pricingError = this.$t('agileTraining.pmSim.pricing.errors.cooldown',
+            { n: (err && err.cooldown_left_weeks) || this.premium.cooldown_left_weeks });
+        } else if (msg === 'price_out_of_range') {
+          this.pricingError = this.$t('agileTraining.pmSim.pricing.errors.range');
+        } else if (msg === 'premium_locked') {
+          this.pricingError = this.$t('agileTraining.pmSim.pricing.errors.locked');
+        } else {
+          this.pricingError = msg;
+        }
+      } finally {
+        this.pricingSaving = false;
+      }
+    },
     async saveQuotas() {
       if (!this.isPO) return;
       this.quotasError = '';
@@ -1458,6 +1612,34 @@ export default {
 .pmsim__fe-value.pmsim__fe--down { color: #b91c1c; }
 .pmsim__feat-pick { color: #047857; font-weight: 700; margin-top: 6px; font-size: 12px; }
 .pmsim__votes-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+
+.pmsim__pricing { margin: 12px 0; padding: 14px 16px; background: linear-gradient(135deg, #faf5ff, #fffbeb); border: 1px solid #ddd6fe; border-radius: 14px; }
+.pmsim__pricing-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.pmsim__pricing-head h3 { margin: 0; font-size: 16px; }
+.pmsim__pricing-market { font-size: 12.5px; color: #6d28d9; background: #ede9fe; padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+.pmsim__pricing-hint { color: #6b21a8; font-size: 13px; margin: 0 0 10px; }
+.pmsim__pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.pmsim__pricing-stat { background: #fff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 8px 12px; }
+.pmsim__pricing-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #7c3aed; font-weight: 700; }
+.pmsim__pricing-stat-value { font-size: 22px; font-weight: 800; color: #1e1b4b; line-height: 1.1; margin-top: 2px; }
+.pmsim__pricing-stat-value--good { color: #047857; }
+.pmsim__pricing-stat-value--ok   { color: #1e40af; }
+.pmsim__pricing-stat-value--warn { color: #b45309; }
+.pmsim__pricing-stat-value--bad  { color: #b91c1c; }
+.pmsim__pricing-stat-sub { font-size: 12px; color: #475569; margin-top: 2px; }
+.pmsim__pricing-stat-tag { font-style: italic; color: #94a3b8; margin-left: 4px; }
+.pmsim__pricing-control { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #c4b5fd; }
+.pmsim__pricing-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 600; color: #4c1d95; font-size: 13px; }
+.pmsim__pricing-cur { font-weight: 800; font-size: 18px; color: #1e1b4b; }
+.pmsim__pricing-slider { width: 100%; margin: 6px 0 4px; accent-color: #7c3aed; }
+.pmsim__pricing-slider:disabled { opacity: 0.5; cursor: not-allowed; }
+.pmsim__pricing-range { position: relative; display: flex; justify-content: space-between; font-size: 11.5px; color: #64748b; padding: 0 4px 14px; }
+.pmsim__pricing-marker { position: absolute; transform: translateX(-50%); background: #ede9fe; color: #5b21b6; padding: 1px 6px; border-radius: 999px; font-weight: 700; font-size: 11px; top: 14px; white-space: nowrap; }
+.pmsim__pricing-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.pmsim__pricing-cooldown { color: #b45309; font-size: 12.5px; background: #fffbeb; border: 1px solid #fcd34d; padding: 3px 10px; border-radius: 999px; }
+.pmsim__pricing-preview { color: #1d4ed8; font-size: 12.5px; }
+.pmsim__pricing-err { color: #b91c1c; font-size: 12.5px; margin: 6px 0 0; }
+.pmsim__pricing-readonly { color: #64748b; font-size: 12.5px; margin-top: 8px; font-style: italic; }
 
 .pmsim__released { margin: 10px 0; }
 .pmsim__released-list { display: flex; flex-wrap: wrap; gap: 6px; }

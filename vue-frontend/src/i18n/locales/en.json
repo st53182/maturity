@@ -2898,6 +2898,32 @@
         "budget": "Budget",
         "revenue_total": "Revenue (total)"
       },
+      "pricing": {
+        "title": "Premium subscription: price",
+        "market": "Market: {v} ₽/mo",
+        "hint": "Too cheap — leaving money on the table. Too expensive — paying users churn and drag satisfaction/trust down. Price can be changed once every 2 weeks.",
+        "subscribers": "Paying now",
+        "targetHint": "(by next week)",
+        "weeklyRev": "Revenue / week",
+        "factor": "Conversion (× market)",
+        "factorHint": {
+          "cheap": "Price below market — conversion goes up but ARPU drops",
+          "ok": "Near market — healthy balance",
+          "over": "Above market — paying users start thinking about leaving",
+          "tooHigh": "Way above market — almost nobody pays, churn accelerates"
+        },
+        "priceLabel": "Price ₽/mo",
+        "preview": "Apply: {v} ₽/mo",
+        "save": "Apply price",
+        "saving": "Saving…",
+        "cooldown": "Can change in {n} week(s)",
+        "poOnly": "Only the Product Owner can change the price.",
+        "errors": {
+          "range": "Price out of allowed range.",
+          "cooldown": "Price changes once every 2 weeks — {n} week(s) left.",
+          "locked": "Ship the Premium subscription feature first."
+        }
+      },
       "recap": {
         "title": "Week {w} recap",
         "lead": "What happened, how it moved the product, and what to look at on week {next}.",
@@ -2922,7 +2948,8 @@
           "scrum_penalty": "Skipped Scrum ritual ({id})",
           "passive": "Weekly passive shift ({id})",
           "quota_balance": "PO quota balance — small bonus",
-          "quota_overshoot": "PO quota overshoot ({id})"
+          "quota_overshoot": "PO quota overshoot ({id})",
+          "engineering_neglect": "Ignored architecture/tech-debt/stability — product unstable ({id})"
         },
         "quotaTitle": "Quotas vs actual",
         "quotaBalanced": "Balanced cycle — small bonus to trust and satisfaction.",

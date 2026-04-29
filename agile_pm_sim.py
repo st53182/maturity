@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import random
 from datetime import datetime
@@ -101,6 +102,31 @@ QUOTA_FOCUSES = ("business", "tech_debt", "architecture")
 QUOTA_DEFAULTS = {"business": 50, "tech_debt": 30, "architecture": 20}
 QUOTA_DEVIATION_TOLERANCE_PCT = 18  # ±18 п.п. по каждой оси — норма
 QUOTA_DEVIATION_PENALTY_HEAVY = 22   # >22 п.п. — серьёзный штраф
+
+# --- Premium subscription pricing ---
+# После релиза фичи Premium у PO открывается возможность задать цену.
+# Балансировка между «дёшево — много платящих, мало с каждого» и
+# «дорого — мало платящих, и платящие быстрее уходят».
+PREMIUM_BASE_PRICE = 290              # ₽/мес — базовая «эталонная» цена
+PREMIUM_MIN_PRICE = 49
+PREMIUM_MAX_PRICE = 1990
+PREMIUM_BASE_CONVERSION = 0.015       # 1.5% активных пользователей готовы платить при цене ~рынка
+PREMIUM_OVERPRICE_DECAY = 1.4         # за каждое +1× к рынку конверсия падает на 1.4×
+PREMIUM_UNDERPRICE_BOOST = 0.6        # за каждое 1×−px/market в плюс к конверсии (в пределах 0..1)
+PREMIUM_WEEKS_PER_MONTH = 4.33        # упрощение для перевода monthly→weekly
+PREMIUM_PRICE_CHANGE_COOLDOWN = 2     # PO может менять цену не чаще раза в 2 недели
+PREMIUM_SUBSCRIBER_INERTIA = 0.4      # доля смещения к target за неделю (медленный отклик базы)
+
+# --- Engineering neglect ---
+# Если PO долго игнорирует архитектуру/тех. долг/стабильность, бизнес-метрики
+# начинают разрушаться по-настоящему: продукт нестабилен → пользователи уходят,
+# падает удовлетворённость и доверие, плюс растёт slip risk на следующий релиз.
+ENG_NEGLECT_DEBT_TRIGGER = 70         # tech_debt, при котором начинаются потери
+ENG_NEGLECT_DEBT_HARD = 85
+ENG_NEGLECT_STAB_TRIGGER = 50         # stability, ниже которой начинаются потери
+ENG_NEGLECT_STAB_HARD = 35
+ENG_NEGLECT_CHURN_HARD_PCT = 1.6      # %/нед оттока при «жестком» уровне
+ENG_NEGLECT_CHURN_SOFT_PCT = 0.6      # %/нед при «мягком» уровне
 
 
 # --------------------------- catalog: events ---------------------------
@@ -1307,6 +1333,15 @@ def _initial_state() -> Dict[str, Any]:
         "recent_feature_count": 0,
         "weeks_without_revenue_after_monetization": 0,
         "weekly_metric_log": [],   # per-metric reasoning: почему изменилась метрика
+        # --- Premium subscription pricing ---
+        # Активируется после релиза фичи `premium`. До релиза price=None и
+        # фронт прячет панель цены.
+        "premium_unlocked": False,
+        "premium_price": PREMIUM_BASE_PRICE,
+        "premium_subscribers": 0,           # текущая платящая база (медленно меняется)
+        "premium_revenue_per_week": 0,      # сколько Premium приносит в неделю
+        "premium_price_history": [],        # [{week, price}]
+        "premium_last_changed_week": 0,     # для cooldown
         "updated_at": _now_iso(),
     }
 
@@ -1507,16 +1542,186 @@ def _apply_passive_week(data: Dict[str, Any]) -> None:
         _push_metric_log(data, week=week_now, metric="stability", delta=-1,
                          source="passive", source_id="high_tech_debt")
 
+    # Premium pricing — пересчёт подписчиков и недельной выручки от Premium.
+    _premium_tick(data)
+    # Engineering neglect — разрушение бизнес-метрик при долгом игноре платформы.
+    _engineering_neglect_tick(data)
+
     # выручка
     rev = int(data.get("revenue_per_week", 0))
     # реклама даёт надбавку, пропорциональную active_users
     rev += int((data.get("ad_strength", 0)) * (m["active_users"] / 1000) * 30)
+    # Premium subscription добавляет к недельной выручке.
+    rev += int(data.get("premium_revenue_per_week", 0) or 0)
     if data.get("monetization_on") and rev <= 0:
         data["weeks_without_revenue_after_monetization"] = int(data.get("weeks_without_revenue_after_monetization", 0)) + 1
     elif rev > 0:
         data["weeks_without_revenue_after_monetization"] = 0
     data["revenue_total"] = int(data.get("revenue_total", 0)) + rev
     data["revenue_this_week"] = rev
+
+
+def _premium_market_price(week: int) -> int:
+    """«Цена на рынке» для Premium-подписки.
+
+    Маленькая синусоида ±10% вокруг базовой — даёт понятный публичный
+    ориентир и слегка сдвигается по неделям, как в реальности.
+    """
+    base = PREMIUM_BASE_PRICE
+    swing = 0.1
+    factor = 1.0 + swing * math.sin(week / 4.0)
+    return int(round(base * factor / 5.0)) * 5  # округляем до 5 ₽
+
+
+def _premium_conversion_factor(price: int, market: int) -> float:
+    """Множитель к базовой конверсии активных пользователей.
+
+    `1.0` — цена ≈ рынок. Выше — конверсия падает (overprice). Ниже —
+    немного растёт, но не безгранично (underprice). Возвращает >= 0.
+    """
+    if market <= 0:
+        return 1.0
+    ratio = float(price) / float(market)
+    if ratio >= 1.0:
+        # Над-цена: 1.5× → 0.30; 2.0× → 0.0
+        factor = 1.0 - (ratio - 1.0) * PREMIUM_OVERPRICE_DECAY
+        return max(0.0, factor)
+    # Под-цена: 0.5× → 1.30
+    factor = 1.0 + (1.0 - ratio) * PREMIUM_UNDERPRICE_BOOST
+    return factor
+
+
+def _premium_target_subscribers(data: Dict[str, Any], week: int) -> int:
+    """Сколько подписчиков должно быть при текущей цене и активной базе."""
+    if not data.get("premium_unlocked"):
+        return 0
+    m = data.get("metrics") or {}
+    active = max(0, int(m.get("active_users", 0)))
+    market = _premium_market_price(week)
+    price = int(data.get("premium_price") or PREMIUM_BASE_PRICE)
+    conv = _premium_conversion_factor(price, market) * PREMIUM_BASE_CONVERSION
+    # Доверие/удовлетворённость влияют на готовность платить
+    sat = int(m.get("satisfaction", 60))
+    trust = int(m.get("trust", 60))
+    morale = (sat + trust) / 200.0  # 0..1
+    morale_factor = 0.4 + morale * 1.2  # 0.4..1.6
+    return int(round(active * conv * morale_factor))
+
+
+def _premium_tick(data: Dict[str, Any]) -> None:
+    """Каждую неделю: subscribers подтягиваются к target, начисляется выручка
+    Premium, и при сильной над-цене падают satisfaction/trust (платящие злятся).
+    """
+    if not data.get("premium_unlocked"):
+        data["premium_revenue_per_week"] = 0
+        return
+    week = int(data.get("current_week", 0) or 0)
+    target = _premium_target_subscribers(data, week)
+    cur = int(data.get("premium_subscribers", 0) or 0)
+    new = int(round(cur + (target - cur) * PREMIUM_SUBSCRIBER_INERTIA))
+    new = max(0, new)
+    data["premium_subscribers"] = new
+    price = int(data.get("premium_price") or PREMIUM_BASE_PRICE)
+    weekly_rev = int(round(new * price / PREMIUM_WEEKS_PER_MONTH))
+    # Premium revenue заходит в общую выручку (revenue_per_week приплюсуется
+    # ниже в _apply_passive_week к итоговому rev). Чтобы не задваивать,
+    # хранится отдельно и складывается с базовой rate.
+    data["premium_revenue_per_week"] = weekly_rev
+
+    # Над-цена → недовольство платящих, отток. Применяем мягко еженедельно.
+    market = _premium_market_price(week)
+    if price > market:
+        over = (price - market) / float(market)
+        if over > 0.3:
+            sat_delta = -int(round(min(4, over * 4)))
+            trust_delta = -int(round(min(2, over * 2)))
+            m = data["metrics"]
+            m["satisfaction"] = int(_clamp(m["satisfaction"] + sat_delta, 0, 100))
+            m["trust"] = int(_clamp(m["trust"] + trust_delta, 0, 100))
+            if sat_delta:
+                _push_metric_log(data, week=week, metric="satisfaction", delta=sat_delta,
+                                 source="passive", source_id="premium_overpriced")
+            if trust_delta:
+                _push_metric_log(data, week=week, metric="trust", delta=trust_delta,
+                                 source="passive", source_id="premium_overpriced")
+
+
+def _engineering_neglect_tick(data: Dict[str, Any]) -> None:
+    """Каждую неделю: если PO долго игнорирует архитектуру/тех.долг/
+    стабильность — продукт «реально начинает разваливаться».
+
+    Триггер: tech_debt > 70 ИЛИ stability < 50.
+    Жёсткий уровень: tech_debt > 85 ИЛИ stability < 35.
+    Эффекты:
+      • churn: 0.6%/нед на мягком, 1.6%/нед на жёстком (дополнительно к
+        обычному оттоку);
+      • satisfaction −1 / trust −1 на мягком, −2 / −2 на жёстком;
+      • slip-штраф для следующего релиза +5pp / +12pp;
+      • 1 раз пишет note в weekly_metric_log с источником
+        engineering_neglect, чтобы PO видел в recap «вот за что».
+    """
+    m = data.get("metrics") or {}
+    debt = int(m.get("tech_debt", 0))
+    stab = int(m.get("stability", 100))
+    week = int(data.get("current_week", 0) or 0)
+
+    hard = debt > ENG_NEGLECT_DEBT_HARD or stab < ENG_NEGLECT_STAB_HARD
+    soft = (debt > ENG_NEGLECT_DEBT_TRIGGER or stab < ENG_NEGLECT_STAB_TRIGGER) and not hard
+    if not (hard or soft):
+        return
+
+    churn_pct = ENG_NEGLECT_CHURN_HARD_PCT if hard else ENG_NEGLECT_CHURN_SOFT_PCT
+    sat_d = -2 if hard else -1
+    trust_d = -2 if hard else -1
+    slip_bump = 12.0 if hard else 5.0
+
+    cur_users = max(0, int(m.get("users", 0)))
+    lost = int(round(cur_users * churn_pct / 100.0))
+    if lost > 0:
+        m["users"] = max(0, cur_users - lost)
+        m["active_users"] = max(0, int(m.get("active_users", 0)) - int(lost * 0.5))
+        _push_metric_log(data, week=week, metric="users", delta=-lost,
+                         source="engineering_neglect",
+                         source_id=("hard" if hard else "soft"))
+    if sat_d:
+        m["satisfaction"] = int(_clamp(m["satisfaction"] + sat_d, 0, 100))
+        _push_metric_log(data, week=week, metric="satisfaction", delta=sat_d,
+                         source="engineering_neglect",
+                         source_id=("hard" if hard else "soft"))
+    if trust_d:
+        m["trust"] = int(_clamp(m["trust"] + trust_d, 0, 100))
+        _push_metric_log(data, week=week, metric="trust", delta=trust_d,
+                         source="engineering_neglect",
+                         source_id=("hard" if hard else "soft"))
+    prev = float(data.get("next_release_slip_penalty_pct", 0) or 0)
+    data["next_release_slip_penalty_pct"] = min(40.0, prev + slip_bump)
+
+
+def _premium_state_view(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Сериализованное состояние pricing-панели для фронта."""
+    week = int(data.get("current_week", 0) or 0)
+    last_changed = int(data.get("premium_last_changed_week", 0) or 0)
+    cd_left = max(0, (last_changed + PREMIUM_PRICE_CHANGE_COOLDOWN) - week) if last_changed else 0
+    market = _premium_market_price(week)
+    price = int(data.get("premium_price") or PREMIUM_BASE_PRICE)
+    target = _premium_target_subscribers(data, week) if data.get("premium_unlocked") else 0
+    return {
+        "unlocked": bool(data.get("premium_unlocked")),
+        "price": price,
+        "min_price": PREMIUM_MIN_PRICE,
+        "max_price": PREMIUM_MAX_PRICE,
+        "base_price": PREMIUM_BASE_PRICE,
+        "market_price": market,
+        "subscribers": int(data.get("premium_subscribers", 0) or 0),
+        "subscribers_target": int(target),
+        "weekly_revenue": int(data.get("premium_revenue_per_week", 0) or 0),
+        "monthly_revenue": int(round(int(data.get("premium_revenue_per_week", 0) or 0) * PREMIUM_WEEKS_PER_MONTH)),
+        "cooldown_left_weeks": int(cd_left),
+        "cooldown_total_weeks": int(PREMIUM_PRICE_CHANGE_COOLDOWN),
+        "last_changed_week": int(last_changed) if last_changed else None,
+        "history": list(data.get("premium_price_history") or [])[-10:],
+        "conversion_factor": round(_premium_conversion_factor(price, market), 3),
+    }
 
 
 def _evaluate_status(data: Dict[str, Any]) -> Tuple[str, Optional[str]]:
@@ -2062,6 +2267,11 @@ def _release_feature(
                 "source_title": _localize_feature(f, locale).get("title")},
     )
     _bump_recent_feature_count(data, fkey)
+    if fkey == "premium":
+        # Premium subscription теперь активна — открываем PO панель цены.
+        data["premium_unlocked"] = True
+        if not data.get("premium_price"):
+            data["premium_price"] = PREMIUM_BASE_PRICE
     rec = dict(base_rec)
     rec["week"] = week
     rec["cycle"] = cur_cycle
@@ -2105,6 +2315,10 @@ def _process_due_pending_releases(data: Dict[str, Any]) -> List[Dict[str, Any]]:
                     "source_title": rec.get("title"), "week": log_week},
         )
         _bump_recent_feature_count(data, rec.get("key", ""))
+        if rec.get("key") == "premium":
+            data["premium_unlocked"] = True
+            if not data.get("premium_price"):
+                data["premium_price"] = PREMIUM_BASE_PRICE
         bonuses_struct: List[Dict[str, Any]] = []
         if rec.get("recommended"):
             # Опоздавшая, но рекомендованная фича всё равно даёт бонус —
@@ -2246,6 +2460,7 @@ def _serialize_state(
         "quota_focuses": list(QUOTA_FOCUSES),
         "quota_history": (data.get("quota_history") or [])[-6:],
         "cycle_focus_load": data.get("cycle_focus_load") or {f: 0 for f in QUOTA_FOCUSES},
+        "premium": _premium_state_view(data),
         "consequences_struct": data.get("consequences_struct") or [],
         "next_release_risk_buff_pct": float(data.get("next_release_risk_buff_pct", 0)),
         "next_release_slip_penalty_pct": float(data.get("next_release_slip_penalty_pct", 0) or 0),
@@ -2300,6 +2515,15 @@ def _get_or_init_state(group: AgileTrainingGroup) -> Tuple[AgileTrainingPmSimSta
         data["po_actions_per_week_limit"] = PO_ACTIONS_PER_WEEK_LIMIT
     if "weekly_metric_log" not in data:
         data["weekly_metric_log"] = []
+    if "premium_unlocked" not in data:
+        # Если в текущей игре уже зарелизили Premium — открываем pricing-панель.
+        released_keys = {f.get("key") for f in (data.get("feature_releases") or [])}
+        data["premium_unlocked"] = "premium" in released_keys
+        data.setdefault("premium_price", PREMIUM_BASE_PRICE)
+        data.setdefault("premium_subscribers", 0)
+        data.setdefault("premium_revenue_per_week", 0)
+        data.setdefault("premium_price_history", [])
+        data.setdefault("premium_last_changed_week", 0)
     return row, data
 
 
@@ -3318,6 +3542,67 @@ def participant_set_quotas(slug: str):
     _touch_participant(data, p)
     _save_state(row, data)
     return jsonify({"ok": True, "quotas": parsed, "state": _serialize_state(row, data, locale, token)})
+
+
+@bp_agile_pm_sim.post("/g/<slug>/premium-price")
+def participant_set_premium_price(slug: str):
+    """PO устанавливает цену Premium-подписки.
+
+    Доступно только после релиза фичи `premium`. Изменять можно не чаще
+    раза в `PREMIUM_PRICE_CHANGE_COOLDOWN` недель. Цена валидируется по
+    диапазону `[PREMIUM_MIN_PRICE, PREMIUM_MAX_PRICE]`. Эффекты
+    (новая база подписчиков, выручка, штраф за над-цену) применяются
+    в обычном `_premium_tick` в конце недели.
+    """
+    g, sess = _group_and_session(slug)
+    if not g:
+        return jsonify({"error": "Group not found"}), 404
+    locale = _resolve_locale(request.args.get("locale"), sess)
+    body = request.get_json(silent=True) or {}
+    token = (body.get("participant_token") or "").strip()
+    raw_price = body.get("price")
+    if not token or raw_price is None:
+        return jsonify({"error": "bad request"}), 400
+    try:
+        price = int(round(float(raw_price)))
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid_price"}), 400
+    if price < PREMIUM_MIN_PRICE or price > PREMIUM_MAX_PRICE:
+        return jsonify({"error": "price_out_of_range",
+                        "min": PREMIUM_MIN_PRICE, "max": PREMIUM_MAX_PRICE}), 400
+    p = _require_participant(g, token)
+    if not p:
+        return jsonify({"error": "Participant not found"}), 404
+    row, data = _get_or_init_state(g)
+    if (data.get("roles", {}) or {}).get(token) != ROLE_PO:
+        return jsonify({"error": "only_po"}), 403
+    if data.get("phase") != PHASE_PLAYING:
+        return jsonify({"error": "not_playing"}), 400
+    if not data.get("premium_unlocked"):
+        return jsonify({"error": "premium_locked"}), 400
+
+    week = int(data.get("current_week", 0) or 0)
+    last_changed = int(data.get("premium_last_changed_week", 0) or 0)
+    if last_changed:
+        cd_left = (last_changed + PREMIUM_PRICE_CHANGE_COOLDOWN) - week
+        if cd_left > 0:
+            return jsonify({"error": "cooldown",
+                            "cooldown_left_weeks": int(cd_left)}), 400
+
+    prev_price = int(data.get("premium_price") or PREMIUM_BASE_PRICE)
+    if price == prev_price:
+        # Молча возвращаем актуальный state — менять нечего.
+        return jsonify({"ok": True, "state": _serialize_state(row, data, locale, token)})
+
+    data["premium_price"] = price
+    data["premium_last_changed_week"] = week
+    history = data.setdefault("premium_price_history", [])
+    history.append({"week": week, "price": price, "previous": prev_price})
+    if len(history) > 12:
+        del history[: len(history) - 12]
+    _touch_participant(data, p)
+    _save_state(row, data)
+    return jsonify({"ok": True, "state": _serialize_state(row, data, locale, token)})
 
 
 @bp_agile_pm_sim.post("/g/<slug>/po-action")

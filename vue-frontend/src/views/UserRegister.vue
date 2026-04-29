@@ -27,6 +27,12 @@ export default {
 
     };
   },
+  mounted() {
+    const inviteFromLink = (this.$route.query.invite || '').toString().trim();
+    if (inviteFromLink) {
+      this.inviteCode = inviteFromLink;
+    }
+  },
   methods: {
     changeLanguage(lang) {
       this.$i18n.locale = lang;

@@ -51,6 +51,11 @@ def _new_invite_code() -> str:
     return f"{uuid.uuid4().hex}_{secrets.token_urlsafe(12)}"
 
 
+def _invite_registration_link(invite_code: str) -> str:
+    base = (request.host_url or "").rstrip("/")
+    return f"{base}/register?invite={invite_code}"
+
+
 _DEMO_TEAM_SCORE_PATTERN = (3, 3, 4, 3, 4, 3, 4, 3, 3, 4)
 _DEMO_RECOMMENDATIONS_HTML = (
     "<p><strong>Демо / Demo</strong></p>"
@@ -191,6 +196,7 @@ def create_invite():
     return jsonify({
         "id": invite.id,
         "code": invite.code,
+        "registration_link": _invite_registration_link(invite.code),
         "invitee_email": invite.invitee_email,
         "max_uses": invite.max_uses,
         "use_count": invite.use_count,
@@ -225,6 +231,7 @@ def my_invites():
         out.append({
             "id": inv.id,
             "code": inv.code,
+            "registration_link": _invite_registration_link(inv.code),
             "invitee_email": inv.invitee_email,
             "max_uses": max_uses,
             "use_count": use_count,

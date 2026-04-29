@@ -82,6 +82,11 @@
         {{ inviteLoading ? 'Создание…' : 'Создать инвайт' }}
       </button>
       <p v-if="newInviteCode" class="invite-code"><strong>Код:</strong> {{ newInviteCode }}</p>
+      <p v-if="newInviteLink" class="invite-code">
+        <strong>Ссылка регистрации:</strong>
+        <a :href="newInviteLink" target="_blank" rel="noopener">{{ newInviteLink }}</a>
+        <button type="button" class="jwt-btn" @click="copyText(newInviteLink)">Копировать ссылку</button>
+      </p>
       <div v-if="myInvites.length" class="invite-list">
         <div v-for="inv in myInvites" :key="inv.id" class="invite-item">
           <div><strong>{{ inv.code }}</strong></div>
@@ -91,6 +96,10 @@
               · использовано {{ inv.use_count || 0 }} / {{ inv.max_uses || 1 }}
               (осталось {{ inv.uses_remaining != null ? inv.uses_remaining : Math.max(0, (inv.max_uses || 1) - (inv.use_count || 0)) }})
             </span>
+          </div>
+          <div v-if="inv.registration_link" class="invite-link-row">
+            <a :href="inv.registration_link" target="_blank" rel="noopener">{{ inv.registration_link }}</a>
+            <button type="button" class="jwt-btn" @click="copyText(inv.registration_link)">Копировать</button>
           </div>
         </div>
       </div>
@@ -166,6 +175,7 @@ export default {
       inviteeEmail: '',
       maxInviteUses: 1,
       newInviteCode: '',
+      newInviteLink: '',
       myInvites: [],
       inviteLoading: false,
       jwtVisible: false,
@@ -282,6 +292,7 @@ export default {
     async createInvite() {
       this.inviteLoading = true;
       this.newInviteCode = '';
+      this.newInviteLink = '';
       try {
         const token = localStorage.getItem('token');
         const maxUses = Math.min(100, Math.max(1, parseInt(this.maxInviteUses, 10) || 1));
@@ -292,6 +303,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.newInviteCode = response.data?.code || '';
+        this.newInviteLink = response.data?.registration_link || '';
         await this.fetchMyInvites();
       } catch (error) {
         alert(error.response?.data?.error || 'Не удалось создать инвайт');
@@ -324,23 +336,28 @@ export default {
       const token = this.jwtToken;
       if (!token) return;
       try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(token);
-        } else {
-          const ta = document.createElement('textarea');
-          ta.value = token;
-          ta.style.position = 'fixed';
-          ta.style.left = '-9999px';
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        }
+        await this.copyText(token);
         this.jwtCopied = true;
         setTimeout(() => { this.jwtCopied = false; }, 1600);
       } catch (e) {
         alert(this.$t('profile.jwtCopyFailed'));
       }
+    },
+
+    async copyText(text) {
+      if (!text) return;
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
     },
 
     toggleRecommendations(assessmentId) {
@@ -867,5 +884,12 @@ hr {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   background: #fff;
+}
+.invite-link-row {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 </style>

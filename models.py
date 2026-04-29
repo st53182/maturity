@@ -889,6 +889,44 @@ class AgileTrainingWsjfAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class AgileTrainingRiceAnswer(db.Model):
+    """Ответ участника тренажёра RICE-приоритизации.
+
+    По структуре повторяет WSJF: одна запись на участника с двумя раундами
+    (initial/revised) в `data_json` и ключевыми полями в колонках.
+    """
+
+    __tablename__ = "agile_training_rice_answer"
+    __table_args__ = (
+        db.UniqueConstraint(
+            "participant_id",
+            name="uq_rice_answer_participant",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_group.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    participant_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agile_training_participant.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role_key = db.Column(db.String(32), nullable=False, index=True)
+    event_key = db.Column(db.String(64), nullable=True, index=True)
+    initial_choice = db.Column(db.String(32), nullable=True, index=True)
+    revised_choice = db.Column(db.String(32), nullable=True, index=True)
+    adaptation = db.Column(db.String(32), nullable=True, index=True)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
 class AgileTrainingScrumRolesAnswer(db.Model):
     """Ответ участника тренажёра «Роли в Scrum».
 

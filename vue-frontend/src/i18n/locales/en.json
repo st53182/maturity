@@ -1540,6 +1540,13 @@
         "bullet2": "Fibonacci-like scale 1–13 and WSJF: (user–business value + time criticality + RROE) / job size",
         "bullet3": "News event and revision reveal who actually adapts"
       },
+      "rice": {
+        "title": "RICE: prioritization at a noisy-data prioritization",
+        "desc": "The team picks a direction at a car company — hybrid, electric or hydrogen. They score SAFe-style RICE (Reach/Impact/Confidence/Effort plus context quality checks), see consequences, get breaking news and revise the decision.",
+        "bullet1": "Strong business context and 3 options with limited resources",
+        "bullet2": "Fibonacci-like scale 1–13 and RICE: (user–business value + time criticality + RROE) / job size",
+        "bullet3": "News event and revision reveal who actually adapts"
+      },
       "scrumEvents": {
         "title": "Team rhythm: Scrum events",
         "desc": "Participants assemble 5 events (Planning, Backlog Refinement, Daily, Review, Retro) from atomic cards, see why each step exists, meet typical mistakes and get a Miro-style board of their process.",
@@ -2346,6 +2353,153 @@
           "hybrid": "Hybrid — fast revenue with a short window.",
           "electric": "Electric — heavy capex, but large revenue and a growing market.",
           "hydrogen": "Hydrogen — a long and risky bet with breakthrough potential."
+        }
+      }
+    },
+    "rice": {
+      "facTitle": "RICE — facilitator panel",
+      "facSubtitle": "Create a training, add teams and share links. For each group you can see initial choices, revisions and common traps.",
+      "playTitle": "RICE prioritization trainer",
+      "newSessionTitle": "RICE training title",
+      "answersCount": "no answers | {n} answer | {n} answers",
+      "groupResults": "Group results",
+      "compareAll": "Compare teams",
+      "groupScoreboard": "Scoreboard",
+      "initialChoice": "Initial choice",
+      "revisedChoice": "After the news",
+      "changedMind": "Changed mind",
+      "noAdaptationYet": "no revisions yet",
+      "choicesFlow": "How choices shifted",
+      "option": "Option",
+      "initialPct": "Before the news",
+      "revisedPct": "After the news",
+      "avgReach": "Reach (avg)",
+      "avgImpact": "Impact (avg)",
+      "avgConfidence": "Confidence (avg)",
+      "avgEffort": "Effort (avg)",
+      "expected": "expert",
+      "byRole": "By role",
+      "noRevisedYet": "no revisions yet",
+      "topErrors": "Top traps",
+      "noErrors": "no traps captured",
+      "eventsShown": "News events shown",
+      "participantsDrill": "Per-participant details",
+      "noAnswer": "no answer",
+      "startTitle": "What should we prioritize?",
+      "startLead": "You are a product team. Context is intentionally noisy: marketing estimates conflict with support data. Your task is to choose under uncertainty.",
+      "startBullet1": "Four RICE dimensions: Reach, Impact, Confidence, Effort",
+      "startBullet2": "Reach is absolute, others are relative inputs",
+      "startBullet3": "After decision, you'll get new data and a chance to revise",
+      "start": "Start",
+      "next": "Next",
+      "back": "Back",
+      "roleTitle": "Pick your role",
+      "roleLead": "Role biases what you value in ambiguity. Formula is the same — interpretation differs.",
+      "contextTitle": "Case context",
+      "goToScores": "Go to scoring",
+      "scoresTitle": "Score each option",
+      "reviseScoresTitle": "Re-score options",
+      "scoresLead": "Estimate RICE for each option. Numbers are imperfect by design — discuss assumptions, not only arithmetic.",
+      "legend": {
+        "low": "low",
+        "mid": "medium",
+        "high": "high"
+      },
+      "dim": {
+        "reach": "Reach",
+        "impact": "Impact",
+        "confidence": "Confidence",
+        "effort": "Effort",
+        "reachHint": "How many users/events are affected in the period",
+        "impactHint": "How much value each affected user gets",
+        "confidenceHint": "How trustworthy your estimates are",
+        "effortHint": "Relative effort in team-weeks/points"
+      },
+      "dimAbbr": {
+        "reach": "R",
+        "impact": "I",
+        "confidence": "C",
+        "effort": "E"
+      },
+      "calcPriority": "Calculate priorities",
+      "prioritiesTitle": "Priority ranking",
+      "prioritiesLead": "Math gives a baseline, but with bad context your assumptions can dominate the result.",
+      "formula": "RICE = Reach × Impact × Confidence / Effort",
+      "goToChoose": "Choose option",
+      "chooseTitle": "What do we do first?",
+      "reviseChooseTitle": "What do we do after new info?",
+      "chooseLead": "Pick one option and be ready to explain your assumptions.",
+      "lockIn": "Lock in",
+      "finish": "Finish",
+      "consequencesTitle": "Consequences",
+      "youGained": "What you gained",
+      "youLost": "What you lost",
+      "heyLook": "Watch out",
+      "nextNews": "Read update",
+      "breaking": "UPDATE",
+      "eventNote": "New evidence changes confidence and reach. Good teams adapt without panic.",
+      "rethink": "Reconsider",
+      "finalTitle": "Done",
+      "adaptationLead": {
+        "stayed_right": "You stayed with your choice, and the update supported it.",
+        "stayed_risky": "You stayed with your choice, but new evidence moved against it.",
+        "adapted_well": "You adjusted in line with the new signal — strong adaptation.",
+        "over_adjusted": "You changed direction, but likely overreacted to noisy data.",
+        "no_change": "Finish the revision round to see your adaptation profile."
+      },
+      "yesChanged": "Yes",
+      "noKept": "No",
+      "yourGroup": "Your group",
+      "adaptations": "Adaptation",
+      "refreshGroup": "Refresh group stats",
+      "tryAgain": "Try again",
+      "adaptation": {
+        "stayed_right": "stayed and was right",
+        "stayed_risky": "stayed though risky",
+        "adapted_well": "adapted well",
+        "over_adjusted": "over-adjusted",
+        "no_change": "not revised"
+      },
+      "err": {
+        "overconfident_signal": "Confidence seems overestimated against context quality",
+        "effort_too_low": "Effort appears underestimated",
+        "math_blind": "Choice differs from top RICE score",
+        "role_mismatch_engineering_growth_bet": "Engineering role picked high-growth bet with weak confidence"
+      },
+      "strengths": "Strengths",
+      "risks": "Risks",
+      "round": {
+        "initial": "Initial round",
+        "revised": "After update"
+      },
+      "step": {
+        "role": "Role",
+        "context": "Context",
+        "scores": "Scoring",
+        "priorities": "Ranking",
+        "choose": "Choice",
+        "consequences": "Consequences",
+        "event": "Update",
+        "final": "Final"
+      },
+      "consequences": {
+        "gain": {
+          "quick_activation": "You improved activation quickly.",
+          "clean_learning": "You gained clearer learning signal.",
+          "visible_growth": "Headline growth improved.",
+          "core_retention": "Core user retention improved.",
+          "product_quality": "Perceived product quality improved."
+        },
+        "loss": {
+          "not_biggest_reach": "Not the largest top-line reach outcome.",
+          "low_confidence_bet": "You bet on a low-confidence growth assumption.",
+          "quality_risk": "Quality/support risk increased due to rework.",
+          "harder_to_explain": "Harder to explain to stakeholders quickly."
+        },
+        "summary": {
+          "onboarding": "Balanced move with fast learning.",
+          "referral": "Growth-first move with noisy assumptions.",
+          "search": "Quality-first move with lower immediate reach."
         }
       }
     },

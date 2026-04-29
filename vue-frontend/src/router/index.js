@@ -76,6 +76,7 @@ const routes = [
   {path: '/agile-training/mvp', name: 'AgileMvpFacilitator', component: () => import('@/views/AgileMvpFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/dor-dod', name: 'AgileDorDodFacilitator', component: () => import('@/views/AgileDorDodFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/wsjf', name: 'AgileWsjfFacilitator', component: () => import('@/views/AgileWsjfFacilitator.vue'), meta: { requiresAuth: true }},
+  {path: '/agile-training/rice', name: 'AgileRiceFacilitator', component: () => import('@/views/AgileRiceFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/scrum-events', name: 'AgileScrumEventsFacilitator', component: () => import('@/views/AgileScrumEventsFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/scrum-roles', name: 'AgileScrumRolesFacilitator', component: () => import('@/views/AgileScrumRolesFacilitator.vue'), meta: { requiresAuth: true }},
   {path: '/agile-training/product-thinking', name: 'AgileProductThinkingFacilitator', component: () => import('@/views/AgileProductThinkingFacilitator.vue'), meta: { requiresAuth: true }},

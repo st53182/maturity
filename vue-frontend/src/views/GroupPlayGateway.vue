@@ -60,6 +60,7 @@ import AgilePoPathPlay from '@/views/AgilePoPathPlay.vue';
 import AgilePmSimPlay from '@/views/AgilePmSimPlay.vue';
 import StakeholderMatrixPlay from '@/views/StakeholderMatrixPlay.vue';
 import AgileRoleQuizPlay from '@/views/AgileRoleQuizPlay.vue';
+import AgileRicePlay from '@/views/AgileRicePlay.vue';
 
 const REMOVED_WORKSHOP_KEYS = new Set(['product_stories', 'user_story_map']);
 
@@ -81,6 +82,7 @@ export default {
     AgilePmSimPlay,
     StakeholderMatrixPlay,
     AgileRoleQuizPlay,
+    AgileRicePlay,
   },
   computed: {
     slug() { return this.$route.params.slug; },
@@ -105,6 +107,7 @@ export default {
       if (this.exerciseKey === 'pm_sim') return 'AgilePmSimPlay';
       if (this.exerciseKey === 'stakeholder_matrix') return 'StakeholderMatrixPlay';
       if (this.exerciseKey === 'role_quiz') return 'AgileRoleQuizPlay';
+      if (this.exerciseKey === 'rice') return 'AgileRicePlay';
       return 'AgilePrinciplesPlay';
     },
   },

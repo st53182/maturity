@@ -115,6 +115,7 @@ from agile_scrum_sim import bp_agile_scrum_sim
 from agile_po_path import bp_agile_po_path
 from agile_pm_sim import bp_agile_pm_sim
 from agile_role_quiz import bp_agile_role_quiz
+from agile_rice import bp_agile_rice
 from flask_socketio import SocketIO
 from ai_limits import bp_ai_limits, register_ai_limit_hooks, AiLimitExceeded
 from tests_runner import bp_tests
@@ -273,6 +274,7 @@ app.register_blueprint(bp_agile_scrum_sim)
 app.register_blueprint(bp_agile_po_path)
 app.register_blueprint(bp_agile_pm_sim)
 app.register_blueprint(bp_agile_role_quiz)
+app.register_blueprint(bp_agile_rice)
 app.register_blueprint(bp_ai_limits)
 app.register_blueprint(bp_tests)
 app.register_blueprint(bp_interview_simulator)

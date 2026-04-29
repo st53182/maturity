@@ -411,6 +411,160 @@ _EVENTS_RU: List[Dict[str, Any]] = [
              "effects": {"satisfaction": -4, "trust": -3}},
         ],
     }),
+    _ev({
+        "id": "flaky_login",
+        "type": "tech",
+        "title": "Флаки на логине",
+        "description": "Часть пользователей не может зайти после обновления — отчёты по разным платформам.",
+        "trigger": _after(2),
+        "weight": 5,
+        "applied_on_appear": {"trust": -4, "satisfaction": -3},
+        "options": [
+            {"id": "hotfix", "title": "Срочный хотфикс",
+             "description": "Откат + патч за 1 день. Команда отвлечётся от спринта.",
+             "effects": {"stability": 6, "trust": 4, "capacity_delta": -10}},
+            {"id": "investigate", "title": "Полноценное расследование",
+             "description": "Берём 3 дня, чиним корневую причину, добавляем алёрт.",
+             "effects": {"stability": 10, "tech_debt": -4, "capacity_delta": -18}},
+            {"id": "communicate_only", "title": "Сообщить, не чинить",
+             "description": "Извиниться, попросить переустановить — само рассосётся.",
+             "effects": {"trust": -4, "satisfaction": -3}},
+        ],
+    }),
+    _ev({
+        "id": "key_dev_offer",
+        "type": "team",
+        "title": "Ключевому инженеру делают оффер",
+        "description": "Один из ведущих инженеров получил оффер. От него зависят 2 крупных компонента.",
+        "trigger": _after(6),
+        "weight": 4,
+        "options": [
+            {"id": "counter_offer", "title": "Контр-оффер и план роста",
+             "description": "Удерживаем человека: премия, рост, понятные следующие 6 месяцев.",
+             "effects": {"trust": 3, "satisfaction": 3, "budget_delta": -12000}},
+            {"id": "share_knowledge", "title": "Запустить knowledge sharing",
+             "description": "Не удерживаем любой ценой — разносим экспертизу по команде.",
+             "effects": {"tech_debt": -4, "stability": 3, "capacity_delta": -10}},
+            {"id": "let_go", "title": "Отпустить",
+             "description": "Решаем, что справимся. Риск сильно подскочит.",
+             "effects": {"stability": -8, "tech_debt": 8, "satisfaction": -2}},
+        ],
+    }),
+    _ev({
+        "id": "pricing_pressure",
+        "type": "business",
+        "title": "Конкуренты снизили цены",
+        "description": "Главный конкурент сделал тариф на 30% дешевле. Часть платящих пользователей задаёт вопросы.",
+        "trigger": _and(_after(8), lambda d, _w: d.get("monetization_on")),
+        "weight": 5,
+        "options": [
+            {"id": "match_price", "title": "Снизить цену",
+             "description": "Догнать рынок: меньше выручки, но не теряем платящих.",
+             "effects": {"revenue_per_week": -1500, "satisfaction": 3, "trust": 2}},
+            {"id": "value_pack", "title": "Добавить ценность в тариф",
+             "description": "Не трогаем цену, докладываем фичи в платный пакет.",
+             "effects": {"satisfaction": 4, "tech_debt": 4, "capacity_delta": -10}},
+            {"id": "ignore_market", "title": "Не реагировать",
+             "description": "Цена и так оправдана — пусть рынок решит.",
+             "effects": {"churn_bump": 2, "trust": -2}},
+        ],
+    }),
+    _ev({
+        "id": "partner_integration",
+        "type": "business",
+        "title": "Крупный партнёр предлагает интеграцию",
+        "description": "Известный сервис хочет встроить ваш мессенджер у себя — это тысячи новых пользователей, но ресурс на интеграцию.",
+        "trigger": _and(_after(7), lambda d, _w: d["metrics"]["users"] >= 10000),
+        "weight": 4,
+        "options": [
+            {"id": "build_integration", "title": "Сделать интеграцию",
+             "description": "2 недели команды на API, документацию и SLA.",
+             "effects": {"users_pct": 10, "trust": 3, "capacity_delta": -22, "tech_debt": 4}},
+            {"id": "minimal_api", "title": "Минимальный публичный API",
+             "description": "Открываем endpoints как есть — пусть партнёр сам встраивает.",
+             "effects": {"users_pct": 4, "tech_debt": 6, "capacity_delta": -8}},
+            {"id": "decline", "title": "Отказаться",
+             "description": "Сейчас не наш приоритет — сосредоточимся на ядре продукта.",
+             "effects": {"trust": -1}},
+        ],
+    }),
+    _ev({
+        "id": "analytics_blind",
+        "type": "user",
+        "title": "Слепые зоны в аналитике",
+        "description": "Команда понимает: непонятно, какие фичи реально используются. Решения принимаются «на ощущениях».",
+        "trigger": _and(_after(4), lambda d, _w: d.get("recent_feature_count", 0) >= 2),
+        "weight": 4,
+        "options": [
+            {"id": "instrument", "title": "Внедрить продуктовую аналитику",
+             "description": "События, воронки, дашборды — теперь видим, как реально пользуются.",
+             "effects": {"tech_debt": 2, "capacity_delta": -12, "trust": 1, "satisfaction": 1}},
+            {"id": "user_panel", "title": "Собрать панель пользователей",
+             "description": "Регулярные интервью с фиксированной группой — поймём поведение качественно.",
+             "effects": {"trust": 3, "satisfaction": 2, "budget_delta": -3000}},
+            {"id": "trust_gut", "title": "Полагаться на интуицию",
+             "description": "Решаем, что хватит и так — двигаемся по ощущениям команды.",
+             "effects": {"tech_debt": 2, "trust": -2}},
+        ],
+    }),
+    _ev({
+        "id": "accessibility_complaint",
+        "type": "reputation",
+        "title": "Жалоба по доступности",
+        "description": "Пользователь с особыми потребностями написал публичный пост: «вашим продуктом невозможно пользоваться».",
+        "trigger": _after(5),
+        "weight": 3,
+        "applied_on_appear": {"trust": -3},
+        "options": [
+            {"id": "fix_a11y", "title": "Исправить ключевые проблемы",
+             "description": "Контраст, размер кнопок, screen-reader на главных экранах.",
+             "effects": {"trust": 6, "satisfaction": 3, "capacity_delta": -12}},
+            {"id": "audit_only", "title": "Заказать аудит",
+             "description": "Команда продолжает работу, аудит покажет масштаб проблемы.",
+             "effects": {"trust": 2, "budget_delta": -3500}},
+            {"id": "deflect", "title": "Ответить шаблоном",
+             "description": "PR-отписка: «спасибо за обратную связь, мы работаем над этим».",
+             "effects": {"trust": -5, "satisfaction": -2}},
+        ],
+    }),
+    _ev({
+        "id": "appstore_review",
+        "type": "regulatory",
+        "title": "AppStore просит изменить продукт",
+        "description": "Магазин требует убрать одну из фич или переработать политику данных, иначе релиз не пропустят.",
+        "trigger": _after(9),
+        "weight": 3,
+        "options": [
+            {"id": "comply_quick", "title": "Согласиться и доработать",
+             "description": "Команда быстро адаптирует продукт под требования.",
+             "effects": {"capacity_delta": -15, "trust": 2, "stability": 2}},
+            {"id": "negotiate", "title": "Юристы пытаются переубедить",
+             "description": "Тратим время и деньги на переговоры — релиз задержится.",
+             "effects": {"budget_delta": -6000, "trust": -2}},
+            {"id": "remove_feature", "title": "Убрать фичу из стора",
+             "description": "Самый быстрый путь — потеря части пользователей.",
+             "effects": {"users_pct": -3, "satisfaction": -2}},
+        ],
+    }),
+    _ev({
+        "id": "infra_cost_spike",
+        "type": "business",
+        "title": "Скачок инфраструктурных затрат",
+        "description": "Облачный счёт на этот месяц вырос в 1.7 раза — рост трафика и неудачные конфиги.",
+        "trigger": _and(_after(7), lambda d, _w: d["metrics"]["users"] >= 8000),
+        "weight": 4,
+        "options": [
+            {"id": "optimize", "title": "Оптимизировать инфраструктуру",
+             "description": "Команда садится за конфиги, кэши, размер инстансов.",
+             "effects": {"capacity_delta": -12, "tech_debt": -4, "stability": 3}},
+            {"id": "reserve", "title": "Купить резервы",
+             "description": "Контракт со скидкой за объём — экономим на проде.",
+             "effects": {"budget_delta": -10000, "stability": 2}},
+            {"id": "absorb", "title": "Просто платить больше",
+             "description": "Не отвлекаем команду — но дыра в бюджете растёт.",
+             "effects": {"budget_delta": -8000, "investor_pressure_delta": 1}},
+        ],
+    }),
 ]
 
 
@@ -550,7 +704,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "discovery",
         "focus": "business",
         "icon": "🎤",
-        "cap_cost": 8,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 1,
@@ -565,7 +719,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "discovery",
         "focus": "business",
         "icon": "🧪",
-        "cap_cost": 6,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 1,
@@ -581,7 +735,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "discovery",
         "focus": "business",
         "icon": "🆎",
-        "cap_cost": 10,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 1,
@@ -596,7 +750,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "growth",
         "focus": "business",
         "icon": "💸",
-        "cap_cost": 5,
+        "cap_cost": 0,
         "budget_cost": 15000,
         "cooldown_weeks": 3,
         "po_action_cost": 1,
@@ -628,7 +782,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "business",
         "focus": "business",
         "icon": "🤝",
-        "cap_cost": 4,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 1,
@@ -643,7 +797,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "business",
         "focus": "business",
         "icon": "🗂️",
-        "cap_cost": 6,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 3,
         "po_action_cost": 1,
@@ -674,7 +828,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "engineering",
         "focus": "tech_debt",
         "icon": "👂",
-        "cap_cost": 4,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 1,
@@ -690,7 +844,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "engineering",
         "focus": "architecture",
         "icon": "🏛️",
-        "cap_cost": 6,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 1,
@@ -736,7 +890,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "scrum",
         "focus": None,
         "icon": "📋",
-        "cap_cost": 3,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 1,
         "po_action_cost": 1,
@@ -766,7 +920,7 @@ PO_ACTIONS: Dict[str, Dict[str, Any]] = {
         "category": "scrum",
         "focus": None,
         "icon": "🔧",
-        "cap_cost": 2,
+        "cap_cost": 0,
         "budget_cost": 0,
         "cooldown_weeks": 2,
         "po_action_cost": 0,
@@ -825,6 +979,22 @@ _EVENT_TITLES_EN: Dict[str, Dict[str, str]] = {
         "description": "Users openly complain that ads in a messenger are too much."},
     "support_overload": {"title": "Support overloaded",
         "description": "The queue grew, replies are slow, users are angry."},
+    "flaky_login": {"title": "Flaky login",
+        "description": "Some users can't sign in after the latest update — reports across platforms."},
+    "key_dev_offer": {"title": "Key engineer got an offer",
+        "description": "A senior engineer got an offer. Two big components depend on them."},
+    "pricing_pressure": {"title": "Competitor cut prices",
+        "description": "The main rival cut their plan by 30%. Some paying users start asking questions."},
+    "partner_integration": {"title": "Big partner wants integration",
+        "description": "A well-known service wants to embed your messenger — thousands of new users, but engineering work."},
+    "analytics_blind": {"title": "Blind spots in analytics",
+        "description": "The team realises: nobody knows which features are actually used. Decisions are made on hunches."},
+    "accessibility_complaint": {"title": "Accessibility complaint",
+        "description": "A user with special needs posted publicly: 'your product is impossible to use'."},
+    "appstore_review": {"title": "AppStore wants product changes",
+        "description": "The store demands you remove a feature or rework the data policy, otherwise no release."},
+    "infra_cost_spike": {"title": "Infrastructure cost spike",
+        "description": "This month's cloud bill is up 1.7× — traffic growth and bad configs."},
 }
 
 _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
@@ -891,6 +1061,46 @@ _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
         "scale_support": {"title": "Scale support", "description": "Hire, train, set SLAs."},
         "ai_bot": {"title": "Launch an AI bot", "description": "Cover routine, risk on edge cases."},
         "fyi": {"title": "Just a FAQ", "description": "Cheapest path."},
+    },
+    "flaky_login": {
+        "hotfix": {"title": "Urgent hotfix", "description": "Rollback + patch in 1 day. Distracts the team from the sprint."},
+        "investigate": {"title": "Full investigation", "description": "Take 3 days, fix the root cause, add an alert."},
+        "communicate_only": {"title": "Communicate, don't fix", "description": "Apologise, ask people to reinstall — it'll fade."},
+    },
+    "key_dev_offer": {
+        "counter_offer": {"title": "Counter-offer + growth plan", "description": "Keep them: bonus, growth track, clear next 6 months."},
+        "share_knowledge": {"title": "Spread the knowledge", "description": "Don't keep them at any cost — distribute the expertise."},
+        "let_go": {"title": "Let them go", "description": "We'll cope. Risk goes up sharply."},
+    },
+    "pricing_pressure": {
+        "match_price": {"title": "Lower the price", "description": "Catch up to the market: less revenue, but no churn."},
+        "value_pack": {"title": "Add value to the plan", "description": "Don't touch price, ship more features into the paid tier."},
+        "ignore_market": {"title": "Don't react", "description": "Our price is justified — let the market decide."},
+    },
+    "partner_integration": {
+        "build_integration": {"title": "Build the integration", "description": "Two weeks of team time on API, docs, SLAs."},
+        "minimal_api": {"title": "Minimal public API", "description": "Open endpoints as-is — let the partner integrate themselves."},
+        "decline": {"title": "Decline", "description": "Not our priority right now — focus on the core product."},
+    },
+    "analytics_blind": {
+        "instrument": {"title": "Roll out product analytics", "description": "Events, funnels, dashboards — see how it's actually used."},
+        "user_panel": {"title": "Set up a user panel", "description": "Recurring interviews with a fixed cohort — qualitative depth."},
+        "trust_gut": {"title": "Trust the team's gut", "description": "Decide we have enough — keep moving on intuition."},
+    },
+    "accessibility_complaint": {
+        "fix_a11y": {"title": "Fix the key issues", "description": "Contrast, button size, screen-reader support on main screens."},
+        "audit_only": {"title": "Order an audit", "description": "Team keeps building; the audit will reveal the scope."},
+        "deflect": {"title": "Reply with a template", "description": "PR brush-off: 'thanks for the feedback, we're working on it'."},
+    },
+    "appstore_review": {
+        "comply_quick": {"title": "Comply and ship", "description": "Team quickly adapts to the requirements."},
+        "negotiate": {"title": "Lawyers try to negotiate", "description": "Time and money on talks — release will slip."},
+        "remove_feature": {"title": "Pull the feature", "description": "Quickest path — lose part of the user base."},
+    },
+    "infra_cost_spike": {
+        "optimize": {"title": "Optimise infrastructure", "description": "Team digs into configs, caches, instance sizes."},
+        "reserve": {"title": "Buy reserves", "description": "Volume contract — save on prod."},
+        "absorb": {"title": "Just keep paying", "description": "Don't distract the team — but the budget hole grows."},
     },
 }
 
@@ -1343,15 +1553,16 @@ def _evaluate_status(data: Dict[str, Any]) -> Tuple[str, Optional[str]]:
 
 
 def _eligible_events(data: Dict[str, Any], week: int) -> List[Dict[str, Any]]:
+    """События, валидные на этой неделе (триггеры срабатывают, ещё не использованы).
+
+    Жёсткое правило: одно событие = один раз за игру. В каталоге уже больше
+    `TOTAL_WEEKS` уникальных событий, так что повторы не нужны.
+    """
     used_ids = {h.get("event", {}).get("id") for h in data.get("history", []) if h.get("event")}
     out = []
     for ev in _EVENTS_RU:
-        if ev.get("once") and ev["id"] in used_ids:
+        if ev["id"] in used_ids:
             continue
-        if ev["id"] in used_ids and not ev.get("repeats", False):
-            # допустим повторы только для investor_money, ads_backlash
-            if ev["id"] not in {"investor_money", "ads_backlash", "outage", "support_overload"}:
-                continue
         try:
             if ev["trigger"](data, week):
                 out.append(ev)
@@ -1372,21 +1583,32 @@ def _strip_callables(obj: Any) -> Any:
 
 
 def _pick_event(data: Dict[str, Any], week: int, group_id: int) -> Dict[str, Any]:
+    """Подбирает событие на неделю.
+
+    Главное правило: за одну игру каждое событие — максимум один раз.
+    Сначала смотрим события, у которых уже сработал триггер (есть контекст).
+    Если на этой неделе ничего не подошло по триггерам — берём любое из ещё
+    не использованных (мягкий fallback). Если все 20+ событий уже были —
+    вынужденно повторяем (теоретически невозможно при TOTAL_WEEKS=20).
+    """
     rnd = _seeded_random(group_id, week, salt="event")
+    used_ids = {h.get("event", {}).get("id") for h in data.get("history", []) if h.get("event")}
     candidates = _eligible_events(data, week)
+    if not candidates:
+        # Fallback: берём из всех неиспользованных, игнорируя триггеры.
+        candidates = [e for e in _EVENTS_RU if e["id"] not in used_ids]
+    if not candidates:
+        # Совсем последний резерв — каталог исчерпан, разрешаем повтор.
+        candidates = list(_EVENTS_RU)
+
     last_id = data.get("last_event_id")
-    # Антиповтор: если есть альтернативы, не повторяем событие сразу же.
     if last_id and len(candidates) > 1:
         filtered = [c for c in candidates if c["id"] != last_id]
         if filtered:
             candidates = filtered
-    if not candidates:
-        # fallback — берём первое событие, которое не повторяет прошлую неделю.
-        pool = [e for e in _EVENTS_RU if e["id"] != last_id]
-        chosen = pool[0] if pool else _EVENTS_RU[0]
-    else:
-        weights = [int(c.get("weight", 5)) for c in candidates]
-        chosen = rnd.choices(candidates, weights=weights, k=1)[0]
+
+    weights = [max(1, int(c.get("weight", 5))) for c in candidates]
+    chosen = rnd.choices(candidates, weights=weights, k=1)[0]
     return _strip_callables(chosen)
 
 
@@ -2099,7 +2321,12 @@ def _po_action_status(data: Dict[str, Any], action_id: str, action: Dict[str, An
     cap_left = int(data.get("capacity_left", 0) or 0)
     cap_cost = int(action.get("cap_cost", 0) or 0)
     if cap_cost > 0 and cap_left < cap_cost:
-        reasons.append("not_enough_capacity")
+        # Команда уже занята фичами — её sprint capacity недостаточно для
+        # этого действия. У PO свой бюджет внимания (po_weekly_limit) — если
+        # team capacity мало, а PO-бюджет ещё есть, значит выбираем что-то
+        # «лёгкое» из тулкита (discovery / scrum), которое не съедает
+        # команду. Имя ошибки сужено, чтобы фронт мог показать понятный текст.
+        reasons.append("not_enough_team_capacity")
     budget = int(data.get("budget", 0) or 0)
     bcost = int(action.get("budget_cost", 0) or 0)
     if bcost > 0 and budget < bcost:

@@ -2845,6 +2845,7 @@
         "blockedReason": {
           "cooldown": "cooldown {n}w left",
           "max_per_game": "limit reached",
+          "not_enough_team_capacity": "team is busy with features — this action takes a big chunk of dev capacity. Postpone or free up capacity first.",
           "not_enough_capacity": "not enough team capacity",
           "not_enough_budget": "not enough budget",
           "too_early": "too early",
@@ -2852,7 +2853,7 @@
           "low_satisfaction": "satisfaction too low",
           "not_playing": "game is not in playing phase",
           "need_problem_interview": "run problem interviews first",
-          "po_weekly_limit": "PO action budget for this week is exhausted"
+          "po_weekly_limit": "PO action budget for this week is exhausted — wait for the next week"
         }
       },
       "quotas": {

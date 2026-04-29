@@ -591,6 +591,76 @@ _EVENTS_RU: List[Dict[str, Any]] = [
              "effects": {"budget_delta": -8000, "investor_pressure_delta": 1}},
         ],
     }),
+    _ev({
+        "id": "payment_outage_crisis",
+        "type": "crisis",
+        "title": "Кризис: платежи нестабильны",
+        "description": "После релиза монетизации часть списаний проходит дважды, часть не проходит вовсе. Поддержка и соцсети кипят.",
+        "trigger": _and(
+            _after(6),
+            lambda d, _w: d.get("monetization_on")
+            and (d["metrics"]["stability"] < 78 or d["metrics"]["tech_debt"] > 35),
+        ),
+        "weight": 5,
+        "applied_on_appear": {"trust": -6, "satisfaction": -4, "budget_delta": -4000},
+        "options": [
+            {"id": "war_room", "title": "Собрать crisis war-room",
+             "description": "Заморозить часть roadmap и чинить инцидент вместе с саппортом и финком.",
+             "effects": {"stability": 8, "trust": 4, "capacity_delta": -22, "budget_delta": -7000, "tech_debt": -3}},
+            {"id": "rollback_payments", "title": "Откатить платёжный релиз",
+             "description": "Временно выключить проблемный поток, потерять деньги, но вернуть контроль.",
+             "effects": {"revenue_per_week": -2200, "satisfaction": 3, "trust": 4, "tech_debt": -2}},
+            {"id": "deny_issue", "title": "Списать на «единичные кейсы»",
+             "description": "Публично минимизировать масштаб и не останавливать продажи.",
+             "effects": {"trust": -12, "satisfaction": -7, "churn_bump": 5}},
+        ],
+    }),
+    _ev({
+        "id": "security_zero_day_crisis",
+        "type": "crisis",
+        "title": "Кризис: zero-day в проде",
+        "description": "Обнаружена критичная уязвимость: потенциально можно читать часть личных данных через цепочку старых сервисов.",
+        "trigger": _and(
+            _after(9),
+            lambda d, _w: d["metrics"]["tech_debt"] > 45 or d["metrics"]["stability"] < 65,
+        ),
+        "weight": 4,
+        "applied_on_appear": {"trust": -10, "satisfaction": -5},
+        "options": [
+            {"id": "containment", "title": "Изоляция и аварийный патч",
+             "description": "Срочно отрезать рискованные контуры, выпустить патч и жить с ограничениями.",
+             "effects": {"stability": 6, "trust": 3, "users_pct": -3, "capacity_delta": -18, "tech_debt": -4}},
+            {"id": "full_audit", "title": "Полный security-аудит + bug bounty",
+             "description": "Дорого и долго, но радикально снижает повторяемость подобных инцидентов.",
+             "effects": {"trust": 8, "stability": 3, "tech_debt": -10, "capacity_delta": -25, "budget_delta": -12000}},
+            {"id": "quiet_fix", "title": "Тихо починить без публичного признания",
+             "description": "Экономим лицо сейчас, рискуем репутацией, если всплывёт позже.",
+             "effects": {"trust": -14, "satisfaction": -6, "churn_bump": 6}},
+        ],
+    }),
+    _ev({
+        "id": "funding_crunch_crisis",
+        "type": "crisis",
+        "title": "Кризис: кассовый разрыв",
+        "description": "Денежный буфер тает быстрее плана: инвестор требует жёсткий план экономии и доказательства дисциплины.",
+        "trigger": _and(
+            _after(10),
+            lambda d, _w: d.get("budget", 0) < 75_000 or d.get("investor_pressure", 0) >= 2,
+        ),
+        "weight": 4,
+        "applied_on_appear": {"trust": -4, "satisfaction": -2},
+        "options": [
+            {"id": "cost_freeze", "title": "Режим жёсткой экономии",
+             "description": "Сократить активности, сфокусироваться на выживаемости unit-экономики.",
+             "effects": {"budget_delta": 12000, "capacity_delta": -12, "satisfaction": -3, "trust": -2}},
+            {"id": "bridge_round", "title": "Поднять bridge-раунд",
+             "description": "Купить время за счёт новой договорённости с инвестором и более жёстких KPI.",
+             "effects": {"budget_delta": 25000, "trust": -3, "investor_pressure_delta": 1}},
+            {"id": "cut_people", "title": "Сократить команду",
+             "description": "Быстрый финансовый эффект ценой морального и технического удара.",
+             "effects": {"budget_delta": 18000, "stability": -10, "trust": -8, "satisfaction": -6}},
+        ],
+    }),
 ]
 
 
@@ -1021,6 +1091,12 @@ _EVENT_TITLES_EN: Dict[str, Dict[str, str]] = {
         "description": "The store demands you remove a feature or rework the data policy, otherwise no release."},
     "infra_cost_spike": {"title": "Infrastructure cost spike",
         "description": "This month's cloud bill is up 1.7× — traffic growth and bad configs."},
+    "payment_outage_crisis": {"title": "Crisis: payments unstable",
+        "description": "After monetization launch, some charges are duplicated while others fail. Support and social channels are on fire."},
+    "security_zero_day_crisis": {"title": "Crisis: zero-day in production",
+        "description": "A critical vulnerability surfaced: parts of private data could be exposed through legacy service chains."},
+    "funding_crunch_crisis": {"title": "Crisis: funding crunch",
+        "description": "Cash runway is shrinking faster than planned: investors demand hard cost discipline and proof of execution."},
 }
 
 _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
@@ -1127,6 +1203,21 @@ _EVENT_OPTIONS_EN: Dict[str, Dict[str, Dict[str, str]]] = {
         "optimize": {"title": "Optimise infrastructure", "description": "Team digs into configs, caches, instance sizes."},
         "reserve": {"title": "Buy reserves", "description": "Volume contract — save on prod."},
         "absorb": {"title": "Just keep paying", "description": "Don't distract the team — but the budget hole grows."},
+    },
+    "payment_outage_crisis": {
+        "war_room": {"title": "Run a crisis war room", "description": "Freeze part of the roadmap and fix the incident with support and finance together."},
+        "rollback_payments": {"title": "Roll back payment release", "description": "Temporarily disable the broken flow: lose money, regain control."},
+        "deny_issue": {"title": "Call it isolated cases", "description": "Publicly minimise the scope and keep pushing sales."},
+    },
+    "security_zero_day_crisis": {
+        "containment": {"title": "Containment + emergency patch", "description": "Isolate risky flows fast, ship a patch, accept temporary limits."},
+        "full_audit": {"title": "Full security audit + bug bounty", "description": "Expensive and heavy, but sharply reduces repeat incidents."},
+        "quiet_fix": {"title": "Quiet fix without public statement", "description": "Save face now, risk bigger fallout if it leaks later."},
+    },
+    "funding_crunch_crisis": {
+        "cost_freeze": {"title": "Hard cost freeze", "description": "Cut non-core activities, focus only on unit-economics survival."},
+        "bridge_round": {"title": "Raise a bridge round", "description": "Buy time via investor deal with tougher KPIs."},
+        "cut_people": {"title": "Cut the team", "description": "Fast financial relief with heavy morale and engineering damage."},
     },
 }
 

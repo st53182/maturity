@@ -2288,13 +2288,87 @@ def _ensure_event_for_week(data: Dict[str, Any], group_id: int, locale: str) -> 
 
 
 def _ensure_feature_options(data: Dict[str, Any], group_id: int, locale: str) -> None:
+    """Поддерживает актуальность пула фич в окне выбора.
+
+    Вызывается каждый раз, когда отдаём `/state` пользователю. Если окно
+    выбора закрыто — ничего не делаем. Если ещё не было пула — собираем
+    с нуля. Если пул уже есть, но PO между делом сделал тулкит-действия
+    и `_feature_pool_caps` подрос — **дополняем** существующий пул, не
+    выбрасывая уже видимые карточки и не теряя голоса.
+    """
     if not data.get("feature_choice_open"):
         return
-    if data.get("feature_options"):
+    week = int(data.get("current_week", 0) or 0)
+    existing = data.get("feature_options") or []
+    if not existing:
+        data["feature_options"] = _select_feature_options(data, group_id, week, locale)
+        data.setdefault("votes", {})["feature"] = {}
+        data.setdefault("vote_by_token", {})["feature"] = {}
         return
-    data["feature_options"] = _select_feature_options(data, group_id, int(data["current_week"]), locale)
-    data.setdefault("votes", {})["feature"] = {}
-    data.setdefault("vote_by_token", {})["feature"] = {}
+
+    caps = _feature_pool_caps(data)
+    target_total = int(caps["total"])
+    rec_slots = int(caps["recommended_slots"])
+    existing_keys = {f.get("key") for f in existing if isinstance(f, dict)}
+    current_recommended = sum(1 for f in existing if isinstance(f, dict) and f.get("recommended"))
+    needs_more = len(existing) < target_total
+    needs_recs = rec_slots > current_recommended
+    if not needs_more and not needs_recs:
+        return
+
+    rnd = _seeded_random(group_id, week, salt="features-extend")
+    pool = _eligible_features(data, locale)
+
+    if needs_more:
+        # Сначала пробуем закрыть бизнес/арх/техдолг бонусные слоты, потом
+        # добираем случайно. Стабилизацию и уже выбранные не повторяем.
+        def take_extra(predicate, count):
+            cands = [f for f in pool if predicate(f) and f["key"] not in existing_keys]
+            rnd.shuffle(cands)
+            out: List[Dict[str, Any]] = []
+            for f in cands[:count]:
+                out.append(f)
+                existing_keys.add(f["key"])
+            return out
+
+        slots_left = target_total - len(existing)
+        if slots_left > 0:
+            existing.extend(take_extra(lambda f: f.get("focus") == "business", min(slots_left, int(caps["bonus_extra_business"]))))
+            slots_left = target_total - len(existing)
+        if slots_left > 0:
+            existing.extend(take_extra(lambda f: f.get("focus") == "architecture", min(slots_left, int(caps["bonus_extra_arch"]))))
+            slots_left = target_total - len(existing)
+        # любые оставшиеся
+        if slots_left > 0:
+            rest = [f for f in pool if f["key"] not in existing_keys]
+            rnd.shuffle(rest)
+            for f in rest[:slots_left]:
+                existing.append(f)
+                existing_keys.add(f["key"])
+
+    if rec_slots > 0:
+        # Пересчитаем «попадание в боль» для актуального списка и помечаем
+        # топ rec_slots среди не-стабилизационных фич. Работаем с копиями,
+        # чтобы не мутировать _FEATURES_RU.
+        non_stab = [f for f in existing if f.get("key") != "stabilize"]
+        scored = sorted(non_stab, key=lambda f: _score_feature_impact(data, f), reverse=True)
+        rec_keys = {f["key"] for f in scored[:rec_slots]}
+        for i, f in enumerate(existing):
+            if not isinstance(f, dict):
+                continue
+            should_be_rec = f.get("key") in rec_keys
+            if should_be_rec and not f.get("recommended"):
+                existing[i] = {**f, "recommended": True}
+            elif not should_be_rec and f.get("recommended"):
+                # Если раньше была помечена, но решение по топу сменилось —
+                # снимаем флаг.
+                cleared = dict(f)
+                cleared.pop("recommended", None)
+                existing[i] = cleared
+
+    # Гарантируем порядок: «Стабилизация» — первая.
+    existing.sort(key=lambda f: 0 if f.get("key") == "stabilize" else 1)
+    data["feature_options"] = existing
 
 
 def _record_metrics_snapshot(data: Dict[str, Any]) -> None:
@@ -3049,6 +3123,10 @@ def participant_po_action(slug: str):
         return jsonify({"error": "blocked", "reasons": status["blocked_reasons"]}), 400
 
     rec = _apply_po_action(data, action_id, locale)
+    # Discovery/scrum-действия меняют размер пула фич (см. _feature_pool_caps).
+    # Если окно выбора уже открыто — синхронизируем существующий пул прямо
+    # сейчас, чтобы PO увидел новые опции, а не только новую цифру в подсказке.
+    _ensure_feature_options(data, g.id, locale)
     _touch_participant(data, p)
     _save_state(row, data)
     return jsonify({"ok": True, "applied": rec, "state": _serialize_state(row, data, locale, token)})

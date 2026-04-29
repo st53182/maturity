@@ -90,7 +90,9 @@ def _event_for_response(key: Optional[str], locale: str) -> Optional[Dict]:
         "key": raw["key"],
         "title": raw["title"][loc],
         "lead": raw["lead"][loc],
-        "shifts": [dict(s) for s in raw["shifts"]],
+        # В RICE-сценариях shifts могут отсутствовать (оставляем совместимость
+        # с WSJF-форматом, но не требуем поле обязательно).
+        "shifts": [dict(s) for s in (raw.get("shifts") or [])],
         "favors": raw["favors"],
     }
 

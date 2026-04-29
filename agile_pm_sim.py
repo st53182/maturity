@@ -683,7 +683,7 @@ _FEATURES_RU: List[Dict[str, Any]] = [
      "description": "Платный пакет: облачное хранение, темы, эмодзи.",
      "capacity": 40, "budget": 0, "focus": "business",
      "effects": {"satisfaction": -2, "monetization_on": True, "revenue_per_week": 4000},
-     "requires": {"satisfaction": 60}},
+     "requires": {"week_min": 3, "satisfaction": 52}},
     {"key": "ads", "title": "Реклама в каналах",
      "description": "Быстрый источник денег.",
      "capacity": 20, "budget": 0, "focus": "business",
@@ -2048,11 +2048,14 @@ def _eligible_features(data: Dict[str, Any], locale: str) -> List[Dict[str, Any]
     """Список фич, доступных в текущем состоянии."""
     released = {f["key"] for f in data.get("feature_releases", [])}
     sat = data["metrics"]["satisfaction"]
+    week = int(data.get("current_week", 0) or 0)
     out = []
     for f in _FEATURES_RU:
         if f["key"] in released:
             continue
         req = f.get("requires") or {}
+        if "week_min" in req and week < int(req["week_min"]):
+            continue
         if "satisfaction" in req and sat < float(req["satisfaction"]):
             continue
         if "feature" in req and req["feature"] not in released:

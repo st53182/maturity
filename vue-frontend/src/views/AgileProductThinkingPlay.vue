@@ -330,6 +330,26 @@
           </article>
         </div>
 
+        <div class="pt-ready" v-if="readyStories.length">
+          <div class="pt-ready__head">
+            <h3>{{ $t('agileTraining.productThinking.decompositionExample.readyStoriesTitle') }}</h3>
+            <p>{{ $t('agileTraining.productThinking.decompositionExample.readyStoriesLead') }}</p>
+          </div>
+          <div class="pt-ready__grid">
+            <article class="pt-ready-card" v-for="(story, si) in readyStories" :key="`story-${si}`">
+              <div class="pt-ready-card__num">{{ si + 1 }}</div>
+              <div class="pt-ready-card__body">
+                <div class="pt-ready-card__story">{{ story.story }}</div>
+                <p class="pt-ready-card__detail" v-if="story.detail">{{ story.detail }}</p>
+                <div class="pt-ready-card__ac-title">{{ $t('agileTraining.productThinking.decompositionExample.acceptanceTitle') }}</div>
+                <ul class="pt-ready-card__ac">
+                  <li v-for="(ac, ai) in story.acceptance" :key="`ac-${si}-${ai}`">{{ ac }}</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+        </div>
+
         <p class="pt-explain">{{ $t('agileTraining.productThinking.decompositionExample.compare') }}</p>
       </div>
 
@@ -639,6 +659,11 @@ export default {
     decompositionVariants() {
       return this.selectedCase && Array.isArray(this.selectedCase.decomposition_examples)
         ? this.selectedCase.decomposition_examples
+        : [];
+    },
+    readyStories() {
+      return this.selectedCase && Array.isArray(this.selectedCase.ready_stories)
+        ? this.selectedCase.ready_stories
         : [];
     },
     aiRemaining() { return Math.max(0, this.aiLimit - (this.aiCalls || 0)); },
@@ -1056,6 +1081,77 @@ export default {
 }
 .pt-variant__h { font-weight: 700; color: #5b21b6; font-size: 15px; }
 .pt-variant__sub { font-size: 13px; color: #64748b; margin: 4px 0 10px; line-height: 1.5; }
+
+.pt-ready {
+  margin: 18px 0 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.pt-ready__head h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: #0f172a;
+}
+.pt-ready__head p {
+  margin: 0 0 12px;
+  color: #475569;
+  line-height: 1.55;
+  font-size: 14px;
+}
+.pt-ready__grid {
+  display: grid;
+  gap: 10px;
+}
+.pt-ready-card {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #dbeafe;
+}
+.pt-ready-card__num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.pt-ready-card__body { min-width: 0; }
+.pt-ready-card__story {
+  font-weight: 700;
+  color: #1e3a8a;
+  line-height: 1.45;
+}
+.pt-ready-card__detail {
+  margin: 8px 0 10px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.pt-ready-card__ac-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.pt-ready-card__ac {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: #334155;
+  line-height: 1.55;
+  font-size: 13px;
+}
 
 .pt-example-warn {
   margin: 14px 0; padding: 10px 14px;

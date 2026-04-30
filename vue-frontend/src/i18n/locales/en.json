@@ -3452,7 +3452,10 @@
       "decompositionExample": {
         "title": "Step 7 — example decomposition",
         "lead": "Teams rarely do it all at once — they move step by step. The same epic can be sliced in 4 ways: along the customer journey, from simple to rich, by SPIDR (Spike, Path, Interfaces, Data, Rules) and by the 7 dimensions of decomposition.",
-        "compare": "All four options are valid. Different angles help you see the epic from different sides. On the next step pick one approach (or combine) and apply it to your own epic."
+        "compare": "All four options are valid. Different angles help you see the epic from different sides. On the next step pick one approach (or combine) and apply it to your own epic.",
+        "readyStoriesTitle": "12 ready user stories from this epic",
+        "readyStoriesLead": "Use these as examples of decomposition granularity: each story has clear acceptance criteria and implementation details.",
+        "acceptanceTitle": "Acceptance criteria"
       },
       "decomposition": {
         "title": "Step 8 — decomposition",
